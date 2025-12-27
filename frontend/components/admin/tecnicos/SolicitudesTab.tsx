@@ -40,7 +40,6 @@ export default function SolicitudesTab() {
   const [password, setPassword] = useState('')
   const [procesando, setProcesando] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState<'todas' | 'pendiente' | 'aprobada' | 'rechazada'>('todas')
-  const [filtroEspecialidad, setFiltroEspecialidad] = useState<string>('todas')
 
   const supabase = createClient()
 
@@ -160,26 +159,10 @@ export default function SolicitudesTab() {
     setPassword(newPass)
   }
 
-  // Obtener especialidades únicas
-  const especialidadesUnicas = Array.from(
-    new Set(
-      solicitudes
-        .map((s) => s.especialidad)
-        .filter((e) => e !== null && e !== '')
-    )
-  ).sort()
-
-  // Filtrar solicitudes según los filtros seleccionados
+  // Filtrar solicitudes según el estado seleccionado
   const solicitudesFiltradas = solicitudes.filter((solicitud) => {
-    // Filtro por estado
-    const cumpleEstado = filtroEstado === 'todas' || solicitud.estado_solicitud === filtroEstado
-
-    // Filtro por especialidad
-    const cumpleEspecialidad =
-      filtroEspecialidad === 'todas' ||
-      solicitud.especialidad === filtroEspecialidad
-
-    return cumpleEstado && cumpleEspecialidad
+    if (filtroEstado === 'todas') return true
+    return solicitud.estado_solicitud === filtroEstado
   })
 
   return (
@@ -194,35 +177,18 @@ export default function SolicitudesTab() {
               </CardDescription>
             </div>
 
-            {/* Filtros */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500 hidden sm:block" />
-
-              {/* Filtro de Estado */}
+            {/* Filtro de Estado */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500" />
               <Select value={filtroEstado} onValueChange={(value: any) => setFiltroEstado(value)}>
-                <SelectTrigger className="w-full sm:w-[160px]">
-                  <SelectValue placeholder="Estado" />
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas">Todos los estados</SelectItem>
+                  <SelectItem value="todas">Todas</SelectItem>
                   <SelectItem value="pendiente">Pendientes</SelectItem>
                   <SelectItem value="aprobada">Aprobadas</SelectItem>
                   <SelectItem value="rechazada">Rechazadas</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Filtro de Especialidad */}
-              <Select value={filtroEspecialidad} onValueChange={(value: string) => setFiltroEspecialidad(value)}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Especialidad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas las especialidades</SelectItem>
-                  {especialidadesUnicas.map((esp) => (
-                    <SelectItem key={esp} value={esp!}>
-                      {esp}
-                    </SelectItem>
-                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -237,9 +203,7 @@ export default function SolicitudesTab() {
             </p>
           ) : solicitudesFiltradas.length === 0 ? (
             <p className="text-center text-gray-600 py-4">
-              No hay solicitudes
-              {filtroEstado !== 'todas' && ` en estado "${filtroEstado}"`}
-              {filtroEspecialidad !== 'todas' && ` con especialidad "${filtroEspecialidad}"`}
+              No hay solicitudes {filtroEstado !== 'todas' ? `en estado "${filtroEstado}"` : ''}
             </p>
           ) : (
             <Table>
