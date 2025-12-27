@@ -42,37 +42,53 @@ export async function DELETE(
 
     if (usuario) {
       console.log(`Eliminando cliente ${idCliente} con usuario asociado ${usuario.id}...`)
-    } else {
-      console.log(`Eliminando cliente ${idCliente} sin usuario asociado (cliente huérfano)...`)
-    }
 
-    // 2. Eliminar de tabla clientes
-    const { error: clienteError } = await supabase
-      .from('clientes')
-      .delete()
-      .eq('id_cliente', idCliente)
-
-    if (clienteError) {
-      console.error('Error al eliminar cliente:', clienteError)
-      return NextResponse.json(
-        { error: `Error al eliminar cliente: ${clienteError.message}` },
-        { status: 400 }
-      )
-    }
-
-    console.log('✓ Cliente eliminado de tabla clientes')
-
-    // 3. Si existe usuario asociado, eliminarlo de Auth (esto CASCADE a usuarios)
-    if (usuario) {
+      // 2. Primero eliminar de Auth (esto hace CASCADE a usuarios, eliminando la FK constraint)
       const { error: authError } = await supabase.auth.admin.deleteUser(usuario.id)
 
       if (authError) {
         console.error('Error al eliminar usuario de Auth:', authError)
-        // No retornamos error porque el cliente ya se eliminó
-        console.log('⚠️  Cliente eliminado pero hubo error al eliminar usuario de Auth')
-      } else {
-        console.log('✓ Usuario eliminado de auth.users y usuarios')
+        return NextResponse.json(
+          { error: `Error al eliminar usuario de Auth: ${authError.message}` },
+          { status: 400 }
+        )
       }
+
+      console.log('✓ Usuario eliminado de auth.users y usuarios (CASCADE)')
+
+      // 3. Ahora eliminar de tabla clientes (ya no hay FK constraint)
+      const { error: clienteError } = await supabase
+        .from('clientes')
+        .delete()
+        .eq('id_cliente', idCliente)
+
+      if (clienteError) {
+        console.error('Error al eliminar cliente:', clienteError)
+        return NextResponse.json(
+          { error: `Error al eliminar cliente: ${clienteError.message}` },
+          { status: 400 }
+        )
+      }
+
+      console.log('✓ Cliente eliminado de tabla clientes')
+    } else {
+      console.log(`Eliminando cliente ${idCliente} sin usuario asociado (cliente huérfano)...`)
+
+      // Si no hay usuario asociado, solo eliminar de clientes
+      const { error: clienteError } = await supabase
+        .from('clientes')
+        .delete()
+        .eq('id_cliente', idCliente)
+
+      if (clienteError) {
+        console.error('Error al eliminar cliente:', clienteError)
+        return NextResponse.json(
+          { error: `Error al eliminar cliente: ${clienteError.message}` },
+          { status: 400 }
+        )
+      }
+
+      console.log('✓ Cliente huérfano eliminado de tabla clientes')
     }
 
     return NextResponse.json({
