@@ -127,7 +127,6 @@ export default function ClientesPage() {
       setApellido('')
       setDni('')
       setTelefono('')
-      setTipoCliente('particular')
 
       // Cerrar dialog y recargar
       setDialogOpen(false)
