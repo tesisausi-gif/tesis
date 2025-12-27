@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { eliminarTecnico as eliminarTecnicoAction } from '@/app/actions/tecnicos'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -122,38 +123,15 @@ export default function TecnicosTab() {
 
     setDeleting(true)
     try {
-      // Primero, eliminar el usuario asociado si existe
-      const { data: usuario } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('id_tecnico', tecnicoAEliminar.id_tecnico)
-        .single()
+      const result = await eliminarTecnicoAction(tecnicoAEliminar.id_tecnico)
 
-      if (usuario) {
-        const { error: userError } = await supabase.auth.admin.deleteUser(
-          usuario.id
-        )
-
-        if (userError) {
-          console.error('Error al eliminar usuario de auth:', userError)
-          // Continuar con la eliminación del técnico aunque falle la eliminación del usuario de auth
-        }
-      }
-
-      // Eliminar el técnico (esto también eliminará todas las referencias en cascada)
-      const { error } = await supabase
-        .from('tecnicos')
-        .delete()
-        .eq('id_tecnico', tecnicoAEliminar.id_tecnico)
-
-      if (error) {
-        toast.error('Error al eliminar técnico')
-        console.error(error)
-      } else {
+      if (result.success) {
         toast.success(`Técnico ${tecnicoAEliminar.nombre} ${tecnicoAEliminar.apellido} eliminado correctamente`)
         setDeleteDialogOpen(false)
         setTecnicoAEliminar(null)
         cargarTecnicos()
+      } else {
+        toast.error(result.error || 'Error al eliminar técnico')
       }
     } catch (error) {
       toast.error('Error al eliminar técnico')
