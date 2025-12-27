@@ -51,27 +51,23 @@ export default function ClientesPage() {
     try {
       console.log('🔍 Cargando clientes...')
 
-      // Debug: verificar sesión actual
-      const { data: session } = await supabase.auth.getSession()
-      console.log('📋 Sesión actual:', session?.session?.user?.id || 'No autenticado')
+      // Usar el endpoint de API que tiene acceso service role
+      const response = await fetch('/api/admin/get-clientes')
+      const result = await response.json()
 
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .order('fecha_creacion', { ascending: false })
+      console.log('📊 Resultado API clientes:', result)
 
-      console.log('📊 Resultado query clientes:', { data, error })
-
-      if (error) {
-        console.error('❌ Error al cargar clientes:', error)
-        toast.error(`Error al cargar clientes: ${error.message}`)
+      if (!response.ok) {
+        console.error('❌ Error al cargar clientes:', result.error)
+        toast.error(`Error al cargar clientes: ${result.error}`)
         return
       }
 
-      console.log(`✅ Clientes cargados: ${data?.length || 0}`)
-      setClientes(data || [])
+      console.log(`✅ Clientes cargados: ${result.data?.length || 0}`)
+      setClientes(result.data || [])
     } catch (error) {
       console.error('❌ Error catch:', error)
+      toast.error('Error al cargar clientes')
     } finally {
       setLoading(false)
     }
