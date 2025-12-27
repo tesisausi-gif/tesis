@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { CheckCircle2, XCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, Star } from 'lucide-react'
+import TecnicoCalificacionesDialog from './TecnicoCalificacionesDialog'
 
 interface Tecnico {
   id_tecnico: number
@@ -27,6 +28,11 @@ interface Tecnico {
 export default function TecnicosTab() {
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [loading, setLoading] = useState(true)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState<{
+    id: number
+    nombre: string
+  } | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -62,6 +68,14 @@ export default function TecnicosTab() {
       toast.success(tecnico.esta_activo ? 'Técnico desactivado' : 'Técnico activado')
       cargarTecnicos()
     }
+  }
+
+  const abrirCalificaciones = (tecnico: Tecnico) => {
+    setTecnicoSeleccionado({
+      id: tecnico.id_tecnico,
+      nombre: `${tecnico.nombre} ${tecnico.apellido}`,
+    })
+    setDialogOpen(true)
   }
 
   return (
@@ -127,13 +141,23 @@ export default function TecnicosTab() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant={tecnico.esta_activo ? 'outline' : 'default'}
-                      size="sm"
-                      onClick={() => toggleActivo(tecnico)}
-                    >
-                      {tecnico.esta_activo ? 'Desactivar' : 'Activar'}
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => abrirCalificaciones(tecnico)}
+                      >
+                        <Star className="h-4 w-4 mr-1" />
+                        Ver calificaciones
+                      </Button>
+                      <Button
+                        variant={tecnico.esta_activo ? 'outline' : 'default'}
+                        size="sm"
+                        onClick={() => toggleActivo(tecnico)}
+                      >
+                        {tecnico.esta_activo ? 'Desactivar' : 'Activar'}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -141,6 +165,15 @@ export default function TecnicosTab() {
           </Table>
         )}
       </CardContent>
+
+      {tecnicoSeleccionado && (
+        <TecnicoCalificacionesDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          idTecnico={tecnicoSeleccionado.id}
+          nombreTecnico={tecnicoSeleccionado.nombre}
+        />
+      )}
     </Card>
   )
 }
