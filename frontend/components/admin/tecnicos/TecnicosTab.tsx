@@ -45,6 +45,7 @@ export default function TecnicosTab() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [actionsDialogOpen, setActionsDialogOpen] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('activos')
+  const [filtroEspecialidad, setFiltroEspecialidad] = useState<string>('todas')
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState<{
     id: number
     nombre: string
@@ -106,11 +107,29 @@ export default function TecnicosTab() {
     await toggleActivo(tecnico)
   }
 
-  // Filtrar técnicos según el estado seleccionado
+  // Obtener especialidades únicas
+  const especialidadesUnicas = Array.from(
+    new Set(
+      tecnicos
+        .map((t) => t.especialidad)
+        .filter((e) => e !== null && e !== '')
+    )
+  ).sort()
+
+  // Filtrar técnicos según los filtros seleccionados
   const tecnicosFiltrados = tecnicos.filter((tecnico) => {
-    if (filtroEstado === 'activos') return tecnico.esta_activo === true
-    if (filtroEstado === 'inactivos') return tecnico.esta_activo === false
-    return true // 'todos'
+    // Filtro por estado
+    const cumpleEstado =
+      filtroEstado === 'todos' ||
+      (filtroEstado === 'activos' && tecnico.esta_activo === true) ||
+      (filtroEstado === 'inactivos' && tecnico.esta_activo === false)
+
+    // Filtro por especialidad
+    const cumpleEspecialidad =
+      filtroEspecialidad === 'todas' ||
+      tecnico.especialidad === filtroEspecialidad
+
+    return cumpleEstado && cumpleEspecialidad
   })
 
   return (
@@ -124,17 +143,34 @@ export default function TecnicosTab() {
             </CardDescription>
           </div>
 
-          {/* Filtro de Estado */}
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-500" />
+          {/* Filtros */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-500 hidden sm:block" />
+
+            {/* Filtro de Estado */}
             <Select value={filtroEstado} onValueChange={(value: any) => setFiltroEstado(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por estado" />
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="todos">Todos los estados</SelectItem>
                 <SelectItem value="activos">Activos</SelectItem>
                 <SelectItem value="inactivos">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Filtro de Especialidad */}
+            <Select value={filtroEspecialidad} onValueChange={(value: string) => setFiltroEspecialidad(value)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Especialidad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas las especialidades</SelectItem>
+                {especialidadesUnicas.map((esp) => (
+                  <SelectItem key={esp} value={esp!}>
+                    {esp}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -149,7 +185,9 @@ export default function TecnicosTab() {
           </p>
         ) : tecnicosFiltrados.length === 0 ? (
           <p className="text-center text-gray-600 py-4">
-            No hay técnicos {filtroEstado === 'activos' ? 'activos' : filtroEstado === 'inactivos' ? 'inactivos' : ''}
+            No hay técnicos
+            {filtroEstado !== 'todos' && ` ${filtroEstado}`}
+            {filtroEspecialidad !== 'todas' && ` con especialidad "${filtroEspecialidad}"`}
           </p>
         ) : (
           <Table>

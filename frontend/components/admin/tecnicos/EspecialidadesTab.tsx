@@ -10,7 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Plus, Edit, CheckCircle2, XCircle } from 'lucide-react'
+import { Plus, Edit, CheckCircle2, XCircle, Filter } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface Especialidad {
   id_especialidad: number
@@ -25,6 +32,7 @@ export default function EspecialidadesTab() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingEspecialidad, setEditingEspecialidad] = useState<Especialidad | null>(null)
+  const [filtroEstado, setFiltroEstado] = useState<'todas' | 'activas' | 'inactivas'>('todas')
 
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
@@ -136,9 +144,16 @@ export default function EspecialidadesTab() {
     }
   }
 
+  // Filtrar especialidades según el estado seleccionado
+  const especialidadesFiltradas = especialidades.filter((especialidad) => {
+    if (filtroEstado === 'activas') return especialidad.esta_activa === true
+    if (filtroEstado === 'inactivas') return especialidad.esta_activa === false
+    return true // 'todas'
+  })
+
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
         <div>
           <h3 className="text-lg font-semibold">Gestión de Especialidades</h3>
           <p className="text-sm text-gray-600">
@@ -146,13 +161,29 @@ export default function EspecialidadesTab() {
           </p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Especialidad
-            </Button>
-          </DialogTrigger>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+          {/* Filtro de Estado */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-500" />
+            <Select value={filtroEstado} onValueChange={(value: any) => setFiltroEstado(value)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="activas">Activas</SelectItem>
+                <SelectItem value="inactivas">Inactivas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
+            <DialogTrigger asChild>
+              <Button onClick={() => resetForm()}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva Especialidad
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -202,7 +233,8 @@ export default function EspecialidadesTab() {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {loading ? (
@@ -211,9 +243,17 @@ export default function EspecialidadesTab() {
             <p className="text-center text-gray-600">Cargando especialidades...</p>
           </CardContent>
         </Card>
+      ) : especialidadesFiltradas.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <p className="text-gray-600">
+              No hay especialidades {filtroEstado !== 'todas' ? `${filtroEstado}` : 'registradas'}
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {especialidades.map((especialidad) => (
+          {especialidadesFiltradas.map((especialidad) => (
             <Card key={especialidad.id_especialidad}>
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -265,16 +305,6 @@ export default function EspecialidadesTab() {
             </Card>
           ))}
         </div>
-      )}
-
-      {!loading && especialidades.length === 0 && (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-gray-600">
-              No hay especialidades registradas. Crea la primera.
-            </p>
-          </CardContent>
-        </Card>
       )}
     </>
   )
