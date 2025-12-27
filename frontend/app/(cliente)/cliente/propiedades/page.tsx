@@ -75,9 +75,7 @@ export default function ClientePropiedades() {
   // Location data
   const [provincias, setProvincias] = useState<Provincia[]>([])
   const [localidades, setLocalidades] = useState<Localidad[]>([])
-  const [barrios, setBarrios] = useState<string[]>([])
   const [loadingLocalidades, setLoadingLocalidades] = useState(false)
-  const [loadingBarrios, setLoadingBarrios] = useState(false)
 
   // Form state
   const [tipoInmueble, setTipoInmueble] = useState('')
@@ -107,16 +105,6 @@ export default function ClientePropiedades() {
       setLocalidad('')
     }
   }, [provincia])
-
-  // Cargar barrios cuando cambia la localidad
-  useEffect(() => {
-    if (localidad) {
-      cargarBarrios(localidad)
-    } else {
-      setBarrios([])
-      setBarrio('')
-    }
-  }, [localidad])
 
   const cargarInmuebles = async () => {
     try {
@@ -214,29 +202,6 @@ export default function ClientePropiedades() {
       toast.error('Error al cargar localidades')
     } finally {
       setLoadingLocalidades(false)
-    }
-  }
-
-  const cargarBarrios = async (localidadNombre: string) => {
-    setLoadingBarrios(true)
-    try {
-      // Para barrios, usaremos algunos barrios comunes de ciudades principales
-      // En producción, esto debería venir de una base de datos propia
-      const barriosComunes = [
-        'Centro',
-        'Norte',
-        'Sur',
-        'Este',
-        'Oeste',
-        'Microcentro',
-        'Barrio Residencial',
-        'Zona Industrial'
-      ]
-      setBarrios(barriosComunes)
-    } catch (error) {
-      console.error('Error al cargar barrios:', error)
-    } finally {
-      setLoadingBarrios(false)
     }
   }
 
@@ -632,28 +597,13 @@ export default function ClientePropiedades() {
               <Label htmlFor="barrio" className="text-sm md:text-base">
                 Barrio
               </Label>
-              <Select
+              <Input
+                id="barrio"
                 value={barrio}
-                onValueChange={setBarrio}
-                disabled={submitting || !localidad || loadingBarrios}
-              >
-                <SelectTrigger id="barrio">
-                  <SelectValue placeholder={
-                    loadingBarrios
-                      ? 'Cargando...'
-                      : !localidad
-                      ? 'Primero selecciona localidad'
-                      : 'Selecciona barrio (opcional)'
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {barrios.map((barr) => (
-                    <SelectItem key={barr} value={barr}>
-                      {barr}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => setBarrio(e.target.value)}
+                placeholder="Ej: Palermo, Recoleta, Centro... (opcional)"
+                disabled={submitting}
+              />
             </div>
 
             {/* Calle y Altura */}
