@@ -35,6 +35,16 @@ interface TipoInmueble {
   nombre: string
 }
 
+interface Provincia {
+  id: string
+  nombre: string
+}
+
+interface Localidad {
+  id: string
+  nombre: string
+}
+
 interface Inmueble {
   id_inmueble: number
   id_tipo_inmueble: number
@@ -62,6 +72,13 @@ export default function ClientePropiedades() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [inmuebleToDelete, setInmuebleToDelete] = useState<Inmueble | null>(null)
 
+  // Location data
+  const [provincias, setProvincias] = useState<Provincia[]>([])
+  const [localidades, setLocalidades] = useState<Localidad[]>([])
+  const [barrios, setBarrios] = useState<string[]>([])
+  const [loadingLocalidades, setLoadingLocalidades] = useState(false)
+  const [loadingBarrios, setLoadingBarrios] = useState(false)
+
   // Form state
   const [tipoInmueble, setTipoInmueble] = useState('')
   const [provincia, setProvincia] = useState('')
@@ -78,7 +95,28 @@ export default function ClientePropiedades() {
   useEffect(() => {
     cargarInmuebles()
     cargarTiposInmuebles()
+    cargarProvincias()
   }, [])
+
+  // Cargar localidades cuando cambia la provincia
+  useEffect(() => {
+    if (provincia) {
+      cargarLocalidades(provincia)
+    } else {
+      setLocalidades([])
+      setLocalidad('')
+    }
+  }, [provincia])
+
+  // Cargar barrios cuando cambia la localidad
+  useEffect(() => {
+    if (localidad) {
+      cargarBarrios(localidad)
+    } else {
+      setBarrios([])
+      setBarrio('')
+    }
+  }, [localidad])
 
   const cargarInmuebles = async () => {
     try {
@@ -133,6 +171,66 @@ export default function ClientePropiedades() {
       setTiposInmuebles(data || [])
     } catch (error) {
       console.error('Error:', error)
+    }
+  }
+
+  const cargarProvincias = async () => {
+    try {
+      const response = await fetch('https://apis.datos.gob.ar/georef/api/provincias?campos=id,nombre&max=24')
+      const data = await response.json()
+
+      if (data.provincias) {
+        setProvincias(data.provincias.sort((a: Provincia, b: Provincia) =>
+          a.nombre.localeCompare(b.nombre)
+        ))
+      }
+    } catch (error) {
+      console.error('Error al cargar provincias:', error)
+      toast.error('Error al cargar provincias')
+    }
+  }
+
+  const cargarLocalidades = async (provinciaNombre: string) => {
+    setLoadingLocalidades(true)
+    try {
+      const response = await fetch(
+        `https://apis.datos.gob.ar/georef/api/localidades?provincia=${encodeURIComponent(provinciaNombre)}&campos=id,nombre&max=1000`
+      )
+      const data = await response.json()
+
+      if (data.localidades) {
+        setLocalidades(data.localidades.sort((a: Localidad, b: Localidad) =>
+          a.nombre.localeCompare(b.nombre)
+        ))
+      }
+    } catch (error) {
+      console.error('Error al cargar localidades:', error)
+      toast.error('Error al cargar localidades')
+    } finally {
+      setLoadingLocalidades(false)
+    }
+  }
+
+  const cargarBarrios = async (localidadNombre: string) => {
+    setLoadingBarrios(true)
+    try {
+      // Para barrios, usaremos algunos barrios comunes de ciudades principales
+      // En producción, esto debería venir de una base de datos propia
+      const barriosComunes = [
+        'Centro',
+        'Norte',
+        'Sur',
+        'Este',
+        'Oeste',
+        'Microcentro',
+        'Barrio Residencial',
+        'Zona Industrial'
+      ]
+      setBarrios(barriosComunes)
+    } catch (error) {
+      console.error('Error al cargar barrios:', error)
+    } finally {
+      setLoadingBarrios(false)
     }
   }
 
@@ -480,28 +578,46 @@ export default function ClientePropiedades() {
                 <Label htmlFor="provincia" className="text-sm md:text-base">
                   Provincia *
                 </Label>
-                <Input
-                  id="provincia"
-                  value={provincia}
-                  onChange={(e) => setProvincia(e.target.value)}
-                  placeholder="Ej: Buenos Aires"
-                  required
-                  disabled={submitting}
-                />
+                <Select value={provincia} onValueChange={setProvincia} disabled={submitting}>
+                  <SelectTrigger id="provincia">
+                    <SelectValue placeholder="Selecciona provincia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {provincias.map((prov) => (
+                      <SelectItem key={prov.id} value={prov.nombre}>
+                        {prov.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="localidad" className="text-sm md:text-base">
                   Localidad *
                 </Label>
-                <Input
-                  id="localidad"
+                <Select
                   value={localidad}
-                  onChange={(e) => setLocalidad(e.target.value)}
-                  placeholder="Ej: La Plata"
-                  required
-                  disabled={submitting}
-                />
+                  onValueChange={setLocalidad}
+                  disabled={submitting || !provincia || loadingLocalidades}
+                >
+                  <SelectTrigger id="localidad">
+                    <SelectValue placeholder={
+                      loadingLocalidades
+                        ? 'Cargando...'
+                        : !provincia
+                        ? 'Primero selecciona provincia'
+                        : 'Selecciona localidad'
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {localidades.map((loc) => (
+                      <SelectItem key={loc.id} value={loc.nombre}>
+                        {loc.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -510,13 +626,28 @@ export default function ClientePropiedades() {
               <Label htmlFor="barrio" className="text-sm md:text-base">
                 Barrio
               </Label>
-              <Input
-                id="barrio"
+              <Select
                 value={barrio}
-                onChange={(e) => setBarrio(e.target.value)}
-                placeholder="Opcional"
-                disabled={submitting}
-              />
+                onValueChange={setBarrio}
+                disabled={submitting || !localidad || loadingBarrios}
+              >
+                <SelectTrigger id="barrio">
+                  <SelectValue placeholder={
+                    loadingBarrios
+                      ? 'Cargando...'
+                      : !localidad
+                      ? 'Primero selecciona localidad'
+                      : 'Selecciona barrio (opcional)'
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {barrios.map((barr) => (
+                    <SelectItem key={barr} value={barr}>
+                      {barr}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Calle y Altura */}
@@ -550,34 +681,37 @@ export default function ClientePropiedades() {
               </div>
             </div>
 
-            {/* Piso y Dpto (solo para departamentos) */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="piso" className="text-sm md:text-base">
-                  Piso
-                </Label>
-                <Input
-                  id="piso"
-                  value={piso}
-                  onChange={(e) => setPiso(e.target.value)}
-                  placeholder="Opcional"
-                  disabled={submitting}
-                />
-              </div>
+            {/* Piso y Dpto (solo si NO es Casa) */}
+            {tipoInmueble &&
+             tiposInmuebles.find(t => t.id_tipo_inmueble.toString() === tipoInmueble)?.nombre !== 'Casa' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="piso" className="text-sm md:text-base">
+                    Piso
+                  </Label>
+                  <Input
+                    id="piso"
+                    value={piso}
+                    onChange={(e) => setPiso(e.target.value)}
+                    placeholder="Opcional"
+                    disabled={submitting}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="dpto" className="text-sm md:text-base">
-                  Dpto
-                </Label>
-                <Input
-                  id="dpto"
-                  value={dpto}
-                  onChange={(e) => setDpto(e.target.value)}
-                  placeholder="Opcional"
-                  disabled={submitting}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="dpto" className="text-sm md:text-base">
+                    Dpto
+                  </Label>
+                  <Input
+                    id="dpto"
+                    value={dpto}
+                    onChange={(e) => setDpto(e.target.value)}
+                    placeholder="Opcional"
+                    disabled={submitting}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Información Adicional */}
             <div className="space-y-2">
