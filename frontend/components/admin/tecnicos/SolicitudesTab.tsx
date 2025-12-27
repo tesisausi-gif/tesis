@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Eye } from 'lucide-react'
+import { CheckCircle, XCircle } from 'lucide-react'
 
 interface Solicitud {
   id_solicitud: number
@@ -25,7 +25,7 @@ interface Solicitud {
   fecha_solicitud: string
 }
 
-export default function SolicitudesPage() {
+export default function SolicitudesTab() {
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSolicitud, setSelectedSolicitud] = useState<Solicitud | null>(null)
@@ -62,7 +62,7 @@ export default function SolicitudesPage() {
 
   const abrirDialog = (solicitud: Solicitud) => {
     setSelectedSolicitud(solicitud)
-    setPassword(Math.random().toString(36).slice(-8)) // Password temporal aleatorio
+    setPassword(Math.random().toString(36).slice(-8))
     setDialogOpen(true)
   }
 
@@ -75,7 +75,6 @@ export default function SolicitudesPage() {
     setProcesando(true)
 
     try {
-      // Llamar al endpoint para aprobar
       const response = await fetch('/api/admin/approve-technician', {
         method: 'POST',
         headers: {
@@ -153,26 +152,19 @@ export default function SolicitudesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Solicitudes de Técnicos</h2>
-        <p className="text-muted-foreground">
-          Revisa y aprueba las solicitudes de registro de técnicos
-        </p>
-      </div>
-
+    <>
       <Card>
         <CardHeader>
-          <CardTitle>Solicitudes Pendientes</CardTitle>
+          <CardTitle>Solicitudes de Registro</CardTitle>
           <CardDescription>
-            Lista de técnicos que han solicitado registro en el sistema
+            Revisa y aprueba las solicitudes de técnicos que desean registrarse
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-center text-muted-foreground py-4">Cargando solicitudes...</p>
+            <p className="text-center text-gray-600 py-4">Cargando solicitudes...</p>
           ) : solicitudes.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
+            <p className="text-center text-gray-600 py-4">
               No hay solicitudes
             </p>
           ) : (
@@ -233,7 +225,6 @@ export default function SolicitudesPage() {
         </CardContent>
       </Card>
 
-      {/* Dialog para aprobar con contraseña */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -276,7 +267,7 @@ export default function SolicitudesPage() {
                     Generar
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-600">
                   Esta contraseña se enviará al técnico por email
                 </p>
               </div>
@@ -299,6 +290,6 @@ export default function SolicitudesPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

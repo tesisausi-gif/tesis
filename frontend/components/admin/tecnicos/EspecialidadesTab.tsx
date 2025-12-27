@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Plus, Edit, Trash2, CheckCircle2, XCircle } from 'lucide-react'
+import { Plus, Edit, CheckCircle2, XCircle } from 'lucide-react'
 
 interface Especialidad {
   id_especialidad: number
@@ -20,13 +20,12 @@ interface Especialidad {
   fecha_creacion: string
 }
 
-export default function EspecialidadesPage() {
+export default function EspecialidadesTab() {
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingEspecialidad, setEditingEspecialidad] = useState<Especialidad | null>(null)
 
-  // Form state
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
 
@@ -61,7 +60,6 @@ export default function EspecialidadesPage() {
     }
 
     if (editingEspecialidad) {
-      // Actualizar
       const { error } = await supabase
         .from('especialidades')
         .update({
@@ -80,7 +78,6 @@ export default function EspecialidadesPage() {
         fetchEspecialidades()
       }
     } else {
-      // Crear nueva
       const { error } = await supabase
         .from('especialidades')
         .insert({
@@ -140,12 +137,12 @@ export default function EspecialidadesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <>
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-3xl font-bold">Especialidades</h1>
-          <p className="text-gray-600 mt-1">
-            Gestiona las especialidades disponibles para técnicos
+          <h3 className="text-lg font-semibold">Gestión de Especialidades</h3>
+          <p className="text-sm text-gray-600">
+            Define las especialidades disponibles para técnicos
           </p>
         </div>
 
@@ -279,6 +276,6 @@ export default function EspecialidadesPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </>
   )
 }

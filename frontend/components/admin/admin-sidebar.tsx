@@ -56,16 +56,6 @@ const menuItems = [
     href: '/dashboard/tecnicos',
   },
   {
-    title: 'Especialidades',
-    icon: Settings,
-    href: '/dashboard/especialidades',
-  },
-  {
-    title: 'Solicitudes',
-    icon: Users,
-    href: '/dashboard/solicitudes',
-  },
-  {
     title: 'Empleados',
     icon: UserCog,
     href: '/dashboard/usuarios',
@@ -79,11 +69,6 @@ const menuItems = [
     title: 'Pagos',
     icon: FileCheck,
     href: '/dashboard/pagos',
-  },
-  {
-    title: 'Calificaciones',
-    icon: Star,
-    href: '/dashboard/calificaciones',
   },
 ]
 
