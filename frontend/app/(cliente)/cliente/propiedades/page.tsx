@@ -287,7 +287,7 @@ export default function ClientePropiedades() {
           .insert({
             ...inmuebleData,
             id_cliente: idCliente,
-            esta_activo: true
+            esta_activo: 1
           })
 
         if (error) {
