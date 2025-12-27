@@ -199,7 +199,13 @@ export default function ClientePropiedades() {
       const data = await response.json()
 
       if (data.localidades) {
-        setLocalidades(data.localidades.sort((a: Localidad, b: Localidad) =>
+        // Eliminar duplicados por nombre
+        const localidadesUnicas = data.localidades.filter(
+          (loc: Localidad, index: number, self: Localidad[]) =>
+            index === self.findIndex((l: Localidad) => l.nombre === loc.nombre)
+        )
+
+        setLocalidades(localidadesUnicas.sort((a: Localidad, b: Localidad) =>
           a.nombre.localeCompare(b.nombre)
         ))
       }
