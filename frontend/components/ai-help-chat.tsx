@@ -131,6 +131,17 @@ export function AIHelpChat() {
     })
   }
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+    setHasMoved(false)
+    const touch = e.touches[0]
+    setDragStart({
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y
+    })
+  }
+
   const handleMouseMove = (e: MouseEvent) => {
     if (isDragging) {
       setHasMoved(true)
@@ -148,7 +159,29 @@ export function AIHelpChat() {
     }
   }
 
+  const handleTouchMove = (e: TouchEvent) => {
+    if (isDragging) {
+      setHasMoved(true)
+      const touch = e.touches[0]
+      const newX = touch.clientX - dragStart.x
+      const newY = touch.clientY - dragStart.y
+
+      // Limitar posición dentro de la ventana
+      const maxX = window.innerWidth - 60
+      const maxY = window.innerHeight - 60
+
+      setPosition({
+        x: Math.max(-20, Math.min(newX, maxX)),
+        y: Math.max(-20, Math.min(newY, maxY))
+      })
+    }
+  }
+
   const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const handleTouchEnd = () => {
     setIsDragging(false)
   }
 
@@ -163,9 +196,13 @@ export function AIHelpChat() {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener('touchmove', handleTouchMove, { passive: false })
+      document.addEventListener('touchend', handleTouchEnd)
       return () => {
         document.removeEventListener('mousemove', handleMouseMove)
         document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener('touchmove', handleTouchMove)
+        document.removeEventListener('touchend', handleTouchEnd)
       }
     }
   }, [isDragging, dragStart])
@@ -178,10 +215,13 @@ export function AIHelpChat() {
           ref={buttonRef}
           onClick={handleButtonClick}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
           style={{
             transform: `translate(${position.x}px, ${position.y}px)`,
             cursor: isDragging ? 'grabbing' : 'grab',
-            touchAction: 'none'
+            touchAction: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
           }}
           className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl transition-shadow duration-300 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 select-none"
           size="icon"
