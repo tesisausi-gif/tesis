@@ -38,7 +38,7 @@ export default function ClientesPage() {
   const [apellido, setApellido] = useState('')
   const [dni, setDni] = useState('')
   const [telefono, setTelefono] = useState('')
-  const [tipoCliente, setTipoCliente] = useState<string>('particular')
+  const [tipoCliente, setTipoCliente] = useState<string>('Propietario')
   const [submitting, setSubmitting] = useState(false)
 
   const supabase = createClient()
@@ -138,10 +138,10 @@ export default function ClientesPage() {
   const getTipoClienteColor = (tipo: string | null) => {
     if (!tipo) return 'bg-gray-100 text-gray-800'
     const colors: Record<string, string> = {
-      particular: 'bg-blue-100 text-blue-800',
-      empresa: 'bg-purple-100 text-purple-800',
-      propietario: 'bg-green-100 text-green-800',
-      inquilino: 'bg-orange-100 text-orange-800',
+      Particular: 'bg-blue-100 text-blue-800',
+      Empresa: 'bg-purple-100 text-purple-800',
+      Propietario: 'bg-green-100 text-green-800',
+      Inquilino: 'bg-orange-100 text-orange-800',
     }
     return colors[tipo] || 'bg-gray-100 text-gray-800'
   }
@@ -250,10 +250,10 @@ export default function ClientesPage() {
                     <SelectValue placeholder="Selecciona un tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="particular">Particular</SelectItem>
-                    <SelectItem value="empresa">Empresa</SelectItem>
-                    <SelectItem value="propietario">Propietario</SelectItem>
-                    <SelectItem value="inquilino">Inquilino</SelectItem>
+                    <SelectItem value="Particular">Particular</SelectItem>
+                    <SelectItem value="Empresa">Empresa</SelectItem>
+                    <SelectItem value="Propietario">Propietario</SelectItem>
+                    <SelectItem value="Inquilino">Inquilino</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

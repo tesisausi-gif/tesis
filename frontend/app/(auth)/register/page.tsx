@@ -27,7 +27,7 @@ export default function RegisterPage() {
   const [clienteApellido, setClienteApellido] = useState('')
   const [clienteTelefono, setClienteTelefono] = useState('')
   const [clienteDNI, setClienteDNI] = useState('')
-  const [clienteTipoCliente, setClienteTipoCliente] = useState('particular')
+  const [clienteTipoCliente, setClienteTipoCliente] = useState('Propietario')
 
   // Form state para Técnico
   const [tecnicoNombre, setTecnicoNombre] = useState('')
@@ -254,10 +254,10 @@ export default function RegisterPage() {
                     <SelectValue placeholder="Selecciona un tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="particular">Particular</SelectItem>
-                    <SelectItem value="empresa">Empresa</SelectItem>
-                    <SelectItem value="propietario">Propietario</SelectItem>
-                    <SelectItem value="inquilino">Inquilino</SelectItem>
+                    <SelectItem value="Particular">Particular</SelectItem>
+                    <SelectItem value="Empresa">Empresa</SelectItem>
+                    <SelectItem value="Propietario">Propietario</SelectItem>
+                    <SelectItem value="Inquilino">Inquilino</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
