@@ -72,7 +72,12 @@ export function AIHelpChat() {
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [hasMoved, setHasMoved] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -116,16 +121,72 @@ export function AIHelpChat() {
     }
   }
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+    setHasMoved(false)
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    })
+  }
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging) {
+      setHasMoved(true)
+      const newX = e.clientX - dragStart.x
+      const newY = e.clientY - dragStart.y
+
+      // Limitar posición dentro de la ventana
+      const maxX = window.innerWidth - 60
+      const maxY = window.innerHeight - 60
+
+      setPosition({
+        x: Math.max(-20, Math.min(newX, maxX)),
+        y: Math.max(-20, Math.min(newY, maxY))
+      })
+    }
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    // Solo abrir si no se movió el botón
+    if (!hasMoved) {
+      setIsOpen(true)
+    }
+  }
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isDragging, dragStart])
+
   return (
     <>
       {/* Botón flotante */}
       {!isOpen && (
         <Button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 animate-bounce-subtle"
+          ref={buttonRef}
+          onClick={handleButtonClick}
+          onMouseDown={handleMouseDown}
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px)`,
+            cursor: isDragging ? 'grabbing' : 'grab',
+            touchAction: 'none'
+          }}
+          className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl transition-shadow duration-300 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 select-none"
           size="icon"
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-5 w-5" />
         </Button>
       )}
 
@@ -214,20 +275,6 @@ export function AIHelpChat() {
           </div>
         </Card>
       )}
-
-      <style jsx global>{`
-        @keyframes bounce-subtle {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-8px);
-          }
-        }
-        .animate-bounce-subtle {
-          animation: bounce-subtle 3s ease-in-out infinite;
-        }
-      `}</style>
     </>
   )
 }

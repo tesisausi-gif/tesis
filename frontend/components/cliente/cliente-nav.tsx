@@ -63,7 +63,11 @@ export function ClienteNav() {
       <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-white shadow-lg pb-safe">
         <div className="flex justify-around">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            // Para el inicio (/cliente), solo marcar activo si es exactamente esa ruta
+            // Para otras rutas, marcar activo si coincide exactamente o si es una subruta
+            const isActive = item.href === '/cliente'
+              ? pathname === '/cliente'
+              : pathname === item.href || pathname.startsWith(item.href + '/')
             return (
               <Link
                 key={item.href}
