@@ -8,25 +8,26 @@ import { Button } from '@/components/ui/button'
 import { Building2, MapPin, Plus, Home } from 'lucide-react'
 import { toast } from 'sonner'
 
-interface Propiedad {
-  id_propiedad: number
+interface Inmueble {
+  id_inmueble: number
   tipo_propiedad: string
   direccion_completa: string
   descripcion: string | null
   esta_activo: boolean
+  id_cliente: number
 }
 
 export default function ClientePropiedades() {
-  const [propiedades, setPropiedades] = useState<Propiedad[]>([])
+  const [inmuebles, setInmuebles] = useState<Inmueble[]>([])
   const [loading, setLoading] = useState(true)
   const [idCliente, setIdCliente] = useState<number | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
-    cargarPropiedades()
+    cargarInmuebles()
   }, [])
 
-  const cargarPropiedades = async () => {
+  const cargarInmuebles = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
 
@@ -42,22 +43,22 @@ export default function ClientePropiedades() {
       if (usuario?.id_cliente) {
         setIdCliente(usuario.id_cliente)
 
-        // Obtener propiedades del cliente
-        const { data: propiedades, error } = await supabase
-          .from('propiedades')
+        // Obtener inmuebles del cliente
+        const { data: inmuebles, error } = await supabase
+          .from('inmuebles')
           .select('*')
-          .or(`id_propietario.eq.${usuario.id_cliente},id_inquilino.eq.${usuario.id_cliente}`)
+          .eq('id_cliente', usuario.id_cliente)
 
         if (error) {
-          toast.error('Error al cargar propiedades')
+          toast.error('Error al cargar inmuebles')
           return
         }
 
-        setPropiedades(propiedades || [])
+        setInmuebles(inmuebles || [])
       }
     } catch (error) {
       console.error('Error:', error)
-      toast.error('Error al cargar propiedades')
+      toast.error('Error al cargar inmuebles')
     } finally {
       setLoading(false)
     }
@@ -68,7 +69,7 @@ export default function ClientePropiedades() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando propiedades...</p>
+          <p className="text-muted-foreground">Cargando inmuebles...</p>
         </div>
       </div>
     )
@@ -79,17 +80,17 @@ export default function ClientePropiedades() {
       {/* Header - Mobile First */}
       <div className="space-y-2">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Mis Propiedades
+          Mis Inmuebles
         </h1>
         <p className="text-sm md:text-base text-gray-600">
-          Inmuebles asociados a tu cuenta
+          Propiedades asociadas a tu cuenta
         </p>
       </div>
 
-      {propiedades && propiedades.length > 0 ? (
+      {inmuebles && inmuebles.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {propiedades.map((propiedad) => (
-            <Card key={propiedad.id_propiedad} className="hover:shadow-lg transition-shadow">
+          {inmuebles.map((inmueble) => (
+            <Card key={inmueble.id_inmueble} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -98,25 +99,25 @@ export default function ClientePropiedades() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <CardTitle className="text-base md:text-lg truncate">
-                        {propiedad.tipo_propiedad || 'Propiedad'}
+                        {inmueble.tipo_propiedad || 'Inmueble'}
                       </CardTitle>
                       <CardDescription className="flex items-start gap-1 mt-1 text-xs md:text-sm">
                         <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-2">{propiedad.direccion_completa}</span>
+                        <span className="line-clamp-2">{inmueble.direccion_completa}</span>
                       </CardDescription>
                     </div>
                   </div>
-                  {propiedad.esta_activo && (
+                  {inmueble.esta_activo && (
                     <Badge className="bg-green-100 text-green-800 flex-shrink-0 text-xs">
-                      Activa
+                      Activo
                     </Badge>
                   )}
                 </div>
               </CardHeader>
-              {propiedad.descripcion && (
+              {inmueble.descripcion && (
                 <CardContent className="pt-0">
                   <p className="text-xs md:text-sm text-gray-700 line-clamp-3">
-                    {propiedad.descripcion}
+                    {inmueble.descripcion}
                   </p>
                 </CardContent>
               )}
@@ -132,11 +133,11 @@ export default function ClientePropiedades() {
             </div>
 
             <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">
-              ¡Aún no tienes propiedades registradas!
+              ¡Aún no tienes inmuebles registrados!
             </h3>
 
             <p className="text-sm md:text-base text-gray-600 mb-6 max-w-md">
-              Para poder reportar incidentes y solicitar servicios técnicos, primero debes registrar al menos una propiedad.
+              Para poder reportar incidentes y solicitar servicios técnicos, primero debes registrar al menos un inmueble.
             </p>
 
             <Button
@@ -144,11 +145,11 @@ export default function ClientePropiedades() {
               className="w-full md:w-auto gap-2 shadow-lg hover:shadow-xl transition-shadow"
             >
               <Plus className="h-5 w-5" />
-              Registrar mi primera propiedad
+              Registrar mi primer inmueble
             </Button>
 
             <p className="text-xs md:text-sm text-gray-500 mt-4">
-              Podrás gestionar tus incidentes una vez que registres una propiedad
+              Podrás gestionar tus incidentes una vez que registres un inmueble
             </p>
           </CardContent>
         </Card>
