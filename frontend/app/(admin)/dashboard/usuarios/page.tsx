@@ -159,9 +159,9 @@ export default function UsuariosPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Gestión de Usuarios</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Gestión de Empleados</h2>
           <p className="text-muted-foreground">
-            Administra los usuarios del sistema
+            Administra empleados del sistema (administradores, gestores y técnicos)
           </p>
         </div>
 
@@ -169,14 +169,14 @@ export default function UsuariosPage() {
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Nuevo Usuario
+              Nuevo Empleado
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Crear Nuevo Usuario</DialogTitle>
+              <DialogTitle>Crear Nuevo Empleado</DialogTitle>
               <DialogDescription>
-                Como admin, puedes crear usuarios de cualquier rol directamente
+                Crea empleados con roles de administrador, gestor o técnico
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={crearUsuario} className="space-y-4">
@@ -245,7 +245,7 @@ export default function UsuariosPage() {
               </div>
 
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? 'Creando...' : 'Crear Usuario'}
+                {submitting ? 'Creando...' : 'Crear Empleado'}
               </Button>
             </form>
           </DialogContent>
@@ -254,17 +254,17 @@ export default function UsuariosPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Usuarios del Sistema</CardTitle>
+          <CardTitle>Empleados del Sistema</CardTitle>
           <CardDescription>
-            Lista de todos los usuarios registrados
+            Lista de empleados (admins, gestores y técnicos)
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-center text-muted-foreground py-4">Cargando usuarios...</p>
+            <p className="text-center text-muted-foreground py-4">Cargando empleados...</p>
           ) : usuarios.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
-              No hay usuarios registrados
+              No hay empleados registrados
             </p>
           ) : (
             <Table>

@@ -13,6 +13,7 @@ import {
   Star,
   Settings,
   LogOut,
+  UserCog,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -65,8 +66,8 @@ const menuItems = [
     href: '/dashboard/solicitudes',
   },
   {
-    title: 'Usuarios',
-    icon: Users,
+    title: 'Empleados',
+    icon: UserCog,
     href: '/dashboard/usuarios',
   },
   {
