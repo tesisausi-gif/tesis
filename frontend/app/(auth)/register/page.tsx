@@ -60,6 +60,11 @@ export default function RegisterPage() {
   const handleClienteRegister = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!clienteTelefono || !clienteDNI) {
+      toast.error('Por favor completa todos los campos obligatorios')
+      return
+    }
+
     if (clientePassword !== clienteConfirmPassword) {
       toast.error('Las contraseñas no coinciden')
       return
@@ -223,22 +228,24 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cliente-telefono">Teléfono</Label>
+                  <Label htmlFor="cliente-telefono">Teléfono *</Label>
                   <Input
                     id="cliente-telefono"
                     type="tel"
                     value={clienteTelefono}
                     onChange={(e) => setClienteTelefono(e.target.value)}
+                    required
                     disabled={loading}
                     placeholder="+54 9 11 1234-5678"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cliente-dni">DNI</Label>
+                  <Label htmlFor="cliente-dni">DNI *</Label>
                   <Input
                     id="cliente-dni"
                     value={clienteDNI}
                     onChange={(e) => setClienteDNI(e.target.value)}
+                    required
                     disabled={loading}
                     placeholder="12345678"
                   />
