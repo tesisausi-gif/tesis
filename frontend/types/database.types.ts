@@ -49,35 +49,76 @@ export interface Database {
           fecha_modificacion?: string
         }
       }
-      propiedades: {
+      inmuebles: {
         Row: {
-          id_propiedad: number
-          direccion_completa: string
-          tipo_propiedad: string | null
-          id_propietario: number | null
-          id_inquilino: number | null
+          id_inmueble: number
+          id_tipo_inmueble: number
+          id_cliente: number
+          provincia: string | null
+          localidad: string | null
+          barrio: string | null
+          calle: string | null
+          altura: string | null
+          piso: string | null
+          dpto: string | null
+          informacion_adicional: string | null
+          esta_activo: boolean
+          fecha_creacion: string
+          fecha_modificacion: string
+        }
+        Insert: {
+          id_inmueble?: number
+          id_tipo_inmueble: number
+          id_cliente: number
+          provincia?: string | null
+          localidad?: string | null
+          barrio?: string | null
+          calle?: string | null
+          altura?: string | null
+          piso?: string | null
+          dpto?: string | null
+          informacion_adicional?: string | null
+          esta_activo?: boolean
+          fecha_creacion?: string
+          fecha_modificacion?: string
+        }
+        Update: {
+          id_inmueble?: number
+          id_tipo_inmueble?: number
+          id_cliente?: number
+          provincia?: string | null
+          localidad?: string | null
+          barrio?: string | null
+          calle?: string | null
+          altura?: string | null
+          piso?: string | null
+          dpto?: string | null
+          informacion_adicional?: string | null
+          esta_activo?: boolean
+          fecha_creacion?: string
+          fecha_modificacion?: string
+        }
+      }
+      tipos_inmuebles: {
+        Row: {
+          id_tipo_inmueble: number
+          nombre: string
           descripcion: string | null
           esta_activo: boolean
           fecha_creacion: string
           fecha_modificacion: string
         }
         Insert: {
-          id_propiedad?: number
-          direccion_completa: string
-          tipo_propiedad?: string | null
-          id_propietario?: number | null
-          id_inquilino?: number | null
+          id_tipo_inmueble?: number
+          nombre: string
           descripcion?: string | null
           esta_activo?: boolean
           fecha_creacion?: string
           fecha_modificacion?: string
         }
         Update: {
-          id_propiedad?: number
-          direccion_completa?: string
-          tipo_propiedad?: string | null
-          id_propietario?: number | null
-          id_inquilino?: number | null
+          id_tipo_inmueble?: number
+          nombre?: string
           descripcion?: string | null
           esta_activo?: boolean
           fecha_creacion?: string
@@ -87,7 +128,7 @@ export interface Database {
       incidentes: {
         Row: {
           id_incidente: number
-          id_propiedad: number
+          id_inmueble: number
           id_cliente_reporta: number
           descripcion_problema: string
           categoria: string | null
@@ -102,7 +143,7 @@ export interface Database {
         }
         Insert: {
           id_incidente?: number
-          id_propiedad: number
+          id_inmueble: number
           id_cliente_reporta: number
           descripcion_problema: string
           categoria?: string | null
@@ -117,7 +158,7 @@ export interface Database {
         }
         Update: {
           id_incidente?: number
-          id_propiedad?: number
+          id_inmueble?: number
           id_cliente_reporta?: number
           descripcion_problema?: string
           categoria?: string | null

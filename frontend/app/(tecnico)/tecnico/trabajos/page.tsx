@@ -21,16 +21,22 @@ export default async function TecnicoTrabajos() {
     .eq('id', user.id)
     .single()
 
-  // Obtener todas las asignaciones con sus incidentes y propiedades
+  // Obtener todas las asignaciones con sus incidentes e inmuebles
   const { data: asignaciones } = await supabase
     .from('asignaciones_tecnico')
     .select(`
       *,
       incidentes (
         *,
-        propiedades (
-          direccion_completa,
-          tipo_propiedad
+        inmuebles (
+          calle,
+          altura,
+          piso,
+          dpto,
+          barrio,
+          tipos_inmuebles (
+            nombre
+          )
         )
       )
     `)
@@ -79,7 +85,19 @@ export default async function TecnicoTrabajos() {
         <div className="space-y-4">
           {asignaciones.map((asignacion) => {
             const incidente = asignacion.incidentes
-            const propiedad = incidente?.propiedades
+            const inmueble = incidente?.inmuebles
+
+            // Construir dirección dinámicamente
+            const direccion = inmueble
+              ? [
+                  inmueble.calle,
+                  inmueble.altura,
+                  inmueble.piso && `Piso ${inmueble.piso}`,
+                  inmueble.dpto && `Dpto ${inmueble.dpto}`
+                ]
+                  .filter(Boolean)
+                  .join(' ') + (inmueble.barrio ? `, ${inmueble.barrio}` : '')
+              : null
 
             return (
               <Card key={asignacion.id_asignacion}>
@@ -89,10 +107,10 @@ export default async function TecnicoTrabajos() {
                       <CardTitle className="text-base">
                         Incidente #{asignacion.id_incidente}
                       </CardTitle>
-                      {propiedad && (
+                      {direccion && (
                         <CardDescription className="flex items-center gap-1 mt-1">
                           <MapPin className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{propiedad.direccion_completa}</span>
+                          <span className="truncate">{direccion}</span>
                         </CardDescription>
                       )}
                     </div>

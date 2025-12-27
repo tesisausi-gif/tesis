@@ -25,8 +25,12 @@ export default async function ClienteIncidentes() {
     .from('incidentes')
     .select(`
       *,
-      propiedades (
-        direccion_completa
+      inmuebles (
+        calle,
+        altura,
+        piso,
+        dpto,
+        barrio
       )
     `)
     .eq('id_cliente_reporta', usuario?.id_cliente)
@@ -71,18 +75,32 @@ export default async function ClienteIncidentes() {
 
       {incidentes && incidentes.length > 0 ? (
         <div className="grid gap-4">
-          {incidentes.map((incidente) => (
-            <Card key={incidente.id_incidente}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">
-                      Incidente #{incidente.id_incidente}
-                    </CardTitle>
-                    <CardDescription>
-                      {incidente.propiedades?.direccion_completa}
-                    </CardDescription>
-                  </div>
+          {incidentes.map((incidente) => {
+            // Construir dirección dinámicamente
+            const inmueble = incidente.inmuebles
+            const direccion = inmueble
+              ? [
+                  inmueble.calle,
+                  inmueble.altura,
+                  inmueble.piso && `Piso ${inmueble.piso}`,
+                  inmueble.dpto && `Dpto ${inmueble.dpto}`
+                ]
+                  .filter(Boolean)
+                  .join(' ') + (inmueble.barrio ? `, ${inmueble.barrio}` : '')
+              : 'Sin dirección'
+
+            return (
+              <Card key={incidente.id_incidente}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">
+                        Incidente #{incidente.id_incidente}
+                      </CardTitle>
+                      <CardDescription>
+                        {direccion}
+                      </CardDescription>
+                    </div>
                   <div className="flex gap-2">
                     <Badge className={getEstadoBadgeColor(incidente.estado_actual)}>
                       {incidente.estado_actual}
@@ -117,7 +135,8 @@ export default async function ClienteIncidentes() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <Card>

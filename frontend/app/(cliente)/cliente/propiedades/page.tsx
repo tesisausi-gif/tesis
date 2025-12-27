@@ -10,8 +10,25 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Building2, MapPin, Plus, Home } from 'lucide-react'
+import { Building2, MapPin, Plus, Home, Edit, Trash2, Power, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface TipoInmueble {
   id_tipo_inmueble: number
@@ -28,7 +45,6 @@ interface Inmueble {
   altura: string | null
   piso: string | null
   dpto: string | null
-  direccion_completa: string | null
   informacion_adicional: string | null
   esta_activo: boolean
   id_cliente: number
@@ -42,6 +58,9 @@ export default function ClientePropiedades() {
   const [idCliente, setIdCliente] = useState<number | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [editingInmueble, setEditingInmueble] = useState<Inmueble | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [inmuebleToDelete, setInmuebleToDelete] = useState<Inmueble | null>(null)
 
   // Form state
   const [tipoInmueble, setTipoInmueble] = useState('')
@@ -117,6 +136,38 @@ export default function ClientePropiedades() {
     }
   }
 
+  const limpiarFormulario = () => {
+    setTipoInmueble('')
+    setProvincia('')
+    setLocalidad('')
+    setBarrio('')
+    setCalle('')
+    setAltura('')
+    setPiso('')
+    setDpto('')
+    setInfoAdicional('')
+    setEditingInmueble(null)
+  }
+
+  const abrirDialogCrear = () => {
+    limpiarFormulario()
+    setDialogOpen(true)
+  }
+
+  const abrirDialogEditar = (inmueble: Inmueble) => {
+    setEditingInmueble(inmueble)
+    setTipoInmueble(inmueble.id_tipo_inmueble.toString())
+    setProvincia(inmueble.provincia || '')
+    setLocalidad(inmueble.localidad || '')
+    setBarrio(inmueble.barrio || '')
+    setCalle(inmueble.calle || '')
+    setAltura(inmueble.altura || '')
+    setPiso(inmueble.piso || '')
+    setDpto(inmueble.dpto || '')
+    setInfoAdicional(inmueble.informacion_adicional || '')
+    setDialogOpen(true)
+  }
+
   const registrarInmueble = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -125,7 +176,7 @@ export default function ClientePropiedades() {
       return
     }
 
-    if (!idCliente) {
+    if (!idCliente && !editingInmueble) {
       toast.error('No se pudo identificar el cliente')
       return
     }
@@ -133,42 +184,54 @@ export default function ClientePropiedades() {
     setSubmitting(true)
 
     try {
-      const { error } = await supabase
-        .from('inmuebles')
-        .insert({
-          id_tipo_inmueble: parseInt(tipoInmueble),
-          id_cliente: idCliente,
-          provincia,
-          localidad,
-          barrio: barrio || null,
-          calle,
-          altura,
-          piso: piso || null,
-          dpto: dpto || null,
-          informacion_adicional: infoAdicional || null,
-          esta_activo: true
-        })
-
-      if (error) {
-        toast.error('Error al registrar inmueble', {
-          description: error.message
-        })
-        return
+      const inmuebleData = {
+        id_tipo_inmueble: parseInt(tipoInmueble),
+        provincia,
+        localidad,
+        barrio: barrio || null,
+        calle,
+        altura,
+        piso: piso || null,
+        dpto: dpto || null,
+        informacion_adicional: infoAdicional || null,
       }
 
-      toast.success('Inmueble registrado exitosamente')
+      if (editingInmueble) {
+        // Actualizar inmueble existente
+        const { error } = await supabase
+          .from('inmuebles')
+          .update(inmuebleData)
+          .eq('id_inmueble', editingInmueble.id_inmueble)
 
-      // Limpiar formulario
-      setTipoInmueble('')
-      setProvincia('')
-      setLocalidad('')
-      setBarrio('')
-      setCalle('')
-      setAltura('')
-      setPiso('')
-      setDpto('')
-      setInfoAdicional('')
+        if (error) {
+          toast.error('Error al actualizar inmueble', {
+            description: error.message
+          })
+          return
+        }
 
+        toast.success('Inmueble actualizado exitosamente')
+      } else {
+        // Crear nuevo inmueble
+        const { error } = await supabase
+          .from('inmuebles')
+          .insert({
+            ...inmuebleData,
+            id_cliente: idCliente,
+            esta_activo: true
+          })
+
+        if (error) {
+          toast.error('Error al registrar inmueble', {
+            description: error.message
+          })
+          return
+        }
+
+        toast.success('Inmueble registrado exitosamente')
+      }
+
+      limpiarFormulario()
       setDialogOpen(false)
       cargarInmuebles()
     } catch (error) {
@@ -176,6 +239,62 @@ export default function ClientePropiedades() {
       toast.error('Error inesperado')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const toggleEstadoInmueble = async (inmueble: Inmueble) => {
+    try {
+      const nuevoEstado = !inmueble.esta_activo
+      const { error } = await supabase
+        .from('inmuebles')
+        .update({ esta_activo: nuevoEstado })
+        .eq('id_inmueble', inmueble.id_inmueble)
+
+      if (error) {
+        toast.error('Error al cambiar estado del inmueble')
+        return
+      }
+
+      toast.success(
+        nuevoEstado
+          ? 'Inmueble activado exitosamente'
+          : 'Inmueble dado de baja exitosamente'
+      )
+      cargarInmuebles()
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Error inesperado')
+    }
+  }
+
+  const confirmarEliminar = (inmueble: Inmueble) => {
+    setInmuebleToDelete(inmueble)
+    setDeleteDialogOpen(true)
+  }
+
+  const eliminarInmueble = async () => {
+    if (!inmuebleToDelete) return
+
+    try {
+      const { error } = await supabase
+        .from('inmuebles')
+        .delete()
+        .eq('id_inmueble', inmuebleToDelete.id_inmueble)
+
+      if (error) {
+        toast.error('Error al eliminar inmueble', {
+          description: error.message
+        })
+        return
+      }
+
+      toast.success('Inmueble eliminado exitosamente')
+      setDeleteDialogOpen(false)
+      setInmuebleToDelete(null)
+      cargarInmuebles()
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Error inesperado')
     }
   }
 
@@ -205,7 +324,7 @@ export default function ClientePropiedades() {
 
         {inmuebles && inmuebles.length > 0 && (
           <Button
-            onClick={() => setDialogOpen(true)}
+            onClick={abrirDialogCrear}
             className="w-full md:w-auto gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -239,11 +358,44 @@ export default function ClientePropiedades() {
                       </CardDescription>
                     </div>
                   </div>
-                  {inmueble.esta_activo && (
-                    <Badge className="bg-green-100 text-green-800 flex-shrink-0 text-xs">
-                      Activo
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {inmueble.esta_activo ? (
+                      <Badge className="bg-green-100 text-green-800 text-xs">
+                        Activo
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        Inactivo
+                      </Badge>
+                    )}
+
+                    {/* Menú de Acciones */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => abrirDialogEditar(inmueble)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => toggleEstadoInmueble(inmueble)}>
+                          <Power className="mr-2 h-4 w-4" />
+                          {inmueble.esta_activo ? 'Dar de Baja' : 'Activar'}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => confirmarEliminar(inmueble)}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </CardHeader>
               {inmueble.informacion_adicional && (
@@ -275,7 +427,7 @@ export default function ClientePropiedades() {
             <Button
               size="lg"
               className="w-full md:w-auto gap-2 shadow-lg hover:shadow-xl transition-shadow"
-              onClick={() => setDialogOpen(true)}
+              onClick={abrirDialogCrear}
             >
               <Plus className="h-5 w-5" />
               Registrar mi primer inmueble
@@ -288,13 +440,17 @@ export default function ClientePropiedades() {
         </Card>
       )}
 
-      {/* Dialog para registrar nuevo inmueble */}
+      {/* Dialog para registrar/editar inmueble */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl md:text-2xl">Registrar Inmueble</DialogTitle>
+            <DialogTitle className="text-xl md:text-2xl">
+              {editingInmueble ? 'Editar Inmueble' : 'Registrar Inmueble'}
+            </DialogTitle>
             <DialogDescription className="text-sm md:text-base">
-              Completa los datos de tu propiedad para poder gestionar incidentes
+              {editingInmueble
+                ? 'Actualiza los datos de tu propiedad'
+                : 'Completa los datos de tu propiedad para poder gestionar incidentes'}
             </DialogDescription>
           </DialogHeader>
 
@@ -454,12 +610,48 @@ export default function ClientePropiedades() {
                 className="w-full md:flex-1"
                 disabled={submitting}
               >
-                {submitting ? 'Registrando...' : 'Registrar Inmueble'}
+                {submitting
+                  ? editingInmueble ? 'Actualizando...' : 'Registrando...'
+                  : editingInmueble ? 'Actualizar Inmueble' : 'Registrar Inmueble'}
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Alert Dialog para confirmar eliminación */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El inmueble será eliminado permanentemente
+              de tu cuenta.
+              {inmuebleToDelete && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                  <p className="font-medium text-gray-900">
+                    {inmuebleToDelete.tipos_inmuebles?.nombre || 'Inmueble'}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {[inmuebleToDelete.calle, inmuebleToDelete.altura].filter(Boolean).join(' ')}
+                  </p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse md:flex-row gap-2">
+            <AlertDialogCancel className="w-full md:w-auto">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={eliminarInmueble}
+              className="w-full md:w-auto bg-red-600 hover:bg-red-700"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
