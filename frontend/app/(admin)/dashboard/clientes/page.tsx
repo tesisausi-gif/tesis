@@ -52,7 +52,12 @@ export default function ClientesPage() {
       console.log('🔍 Cargando clientes...')
 
       // Usar el endpoint de API que tiene acceso service role
-      const response = await fetch('/api/admin/get-clientes')
+      const response = await fetch('/api/admin/get-clientes', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
       const result = await response.json()
 
       console.log('📊 Resultado API clientes:', result)
