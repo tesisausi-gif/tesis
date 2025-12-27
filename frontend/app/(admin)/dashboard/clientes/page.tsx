@@ -38,7 +38,6 @@ export default function ClientesPage() {
   const [apellido, setApellido] = useState('')
   const [dni, setDni] = useState('')
   const [telefono, setTelefono] = useState('')
-  const [tipoCliente, setTipoCliente] = useState<string>('Propietario')
   const [submitting, setSubmitting] = useState(false)
 
   const supabase = createClient()
@@ -108,7 +107,6 @@ export default function ClientesPage() {
           rol: 'cliente',
           dni,
           telefono,
-          tipo_cliente: tipoCliente,
         }),
       })
 
@@ -144,16 +142,6 @@ export default function ClientesPage() {
     }
   }
 
-  const getTipoClienteColor = (tipo: string | null) => {
-    if (!tipo) return 'bg-gray-100 text-gray-800'
-    const colors: Record<string, string> = {
-      Particular: 'bg-blue-100 text-blue-800',
-      Empresa: 'bg-purple-100 text-purple-800',
-      Propietario: 'bg-green-100 text-green-800',
-      Inquilino: 'bg-orange-100 text-orange-800',
-    }
-    return colors[tipo] || 'bg-gray-100 text-gray-800'
-  }
 
   return (
     <div className="space-y-6">
@@ -252,21 +240,6 @@ export default function ClientesPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="tipo_cliente">Tipo de Cliente</Label>
-                <Select value={tipoCliente} onValueChange={setTipoCliente} disabled={submitting}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Particular">Particular</SelectItem>
-                    <SelectItem value="Empresa">Empresa</SelectItem>
-                    <SelectItem value="Propietario">Propietario</SelectItem>
-                    <SelectItem value="Inquilino">Inquilino</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting ? 'Creando...' : 'Crear Cliente'}
               </Button>
@@ -297,7 +270,6 @@ export default function ClientesPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>DNI</TableHead>
                   <TableHead>Teléfono</TableHead>
-                  <TableHead>Tipo</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Fecha Registro</TableHead>
                 </TableRow>
@@ -311,11 +283,6 @@ export default function ClientesPage() {
                     <TableCell>{cliente.correo_electronico || '-'}</TableCell>
                     <TableCell>{cliente.dni || '-'}</TableCell>
                     <TableCell>{cliente.telefono || '-'}</TableCell>
-                    <TableCell>
-                      <Badge className={getTipoClienteColor(cliente.tipo_cliente)}>
-                        {cliente.tipo_cliente || 'Sin definir'}
-                      </Badge>
-                    </TableCell>
                     <TableCell>
                       <Badge variant={cliente.esta_activo ? 'default' : 'secondary'}>
                         {cliente.esta_activo ? 'Activo' : 'Inactivo'}

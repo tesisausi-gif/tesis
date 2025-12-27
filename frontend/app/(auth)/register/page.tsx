@@ -27,7 +27,6 @@ export default function RegisterPage() {
   const [clienteApellido, setClienteApellido] = useState('')
   const [clienteTelefono, setClienteTelefono] = useState('')
   const [clienteDNI, setClienteDNI] = useState('')
-  const [clienteTipoCliente, setClienteTipoCliente] = useState('Propietario')
 
   // Form state para Técnico
   const [tecnicoNombre, setTecnicoNombre] = useState('')
@@ -84,7 +83,6 @@ export default function RegisterPage() {
             rol: 'cliente',
             telefono: clienteTelefono,
             dni: clienteDNI,
-            tipo_cliente: clienteTipoCliente,
           }
         }
       })
@@ -245,21 +243,6 @@ export default function RegisterPage() {
                     placeholder="12345678"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cliente-tipo">Tipo de Cliente</Label>
-                <Select value={clienteTipoCliente} onValueChange={setClienteTipoCliente} disabled={loading}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Particular">Particular</SelectItem>
-                    <SelectItem value="Empresa">Empresa</SelectItem>
-                    <SelectItem value="Propietario">Propietario</SelectItem>
-                    <SelectItem value="Inquilino">Inquilino</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="space-y-2">
