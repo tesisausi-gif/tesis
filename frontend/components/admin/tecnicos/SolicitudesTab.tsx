@@ -10,7 +10,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle } from 'lucide-react'
+import { CheckCircle, XCircle, Filter } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface Solicitud {
   id_solicitud: number
@@ -32,6 +39,7 @@ export default function SolicitudesTab() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [procesando, setProcesando] = useState(false)
+  const [filtroEstado, setFiltroEstado] = useState<'todas' | 'pendiente' | 'aprobada' | 'rechazada'>('todas')
 
   const supabase = createClient()
 
@@ -151,14 +159,40 @@ export default function SolicitudesTab() {
     setPassword(newPass)
   }
 
+  // Filtrar solicitudes según el estado seleccionado
+  const solicitudesFiltradas = solicitudes.filter((solicitud) => {
+    if (filtroEstado === 'todas') return true
+    return solicitud.estado_solicitud === filtroEstado
+  })
+
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Solicitudes de Registro</CardTitle>
-          <CardDescription>
-            Revisa y aprueba las solicitudes de técnicos que desean registrarse
-          </CardDescription>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle>Solicitudes de Registro</CardTitle>
+              <CardDescription>
+                Revisa y aprueba las solicitudes de técnicos que desean registrarse
+              </CardDescription>
+            </div>
+
+            {/* Filtro de Estado */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <Select value={filtroEstado} onValueChange={(value: any) => setFiltroEstado(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  <SelectItem value="pendiente">Pendientes</SelectItem>
+                  <SelectItem value="aprobada">Aprobadas</SelectItem>
+                  <SelectItem value="rechazada">Rechazadas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -166,6 +200,10 @@ export default function SolicitudesTab() {
           ) : solicitudes.length === 0 ? (
             <p className="text-center text-gray-600 py-4">
               No hay solicitudes
+            </p>
+          ) : solicitudesFiltradas.length === 0 ? (
+            <p className="text-center text-gray-600 py-4">
+              No hay solicitudes {filtroEstado !== 'todas' ? `en estado "${filtroEstado}"` : ''}
             </p>
           ) : (
             <Table>
@@ -180,7 +218,7 @@ export default function SolicitudesTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {solicitudes.map((solicitud) => (
+                {solicitudesFiltradas.map((solicitud) => (
                   <TableRow key={solicitud.id_solicitud}>
                     <TableCell className="font-medium">
                       {solicitud.nombre} {solicitud.apellido}
