@@ -29,6 +29,8 @@ export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null)
 
   // Form state
   const [email, setEmail] = useState('')
@@ -140,6 +142,97 @@ export default function ClientesPage() {
     }
   }
 
+  const abrirEditar = (cliente: Cliente) => {
+    setClienteEditando(cliente)
+    setNombre(cliente.nombre)
+    setApellido(cliente.apellido)
+    setDni(cliente.dni || '')
+    setTelefono(cliente.telefono || '')
+    setEmail(cliente.correo_electronico || '')
+    setEditDialogOpen(true)
+  }
+
+  const actualizarCliente = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!clienteEditando) return
+
+    setSubmitting(true)
+
+    try {
+      const { error } = await supabase
+        .from('clientes')
+        .update({
+          nombre,
+          apellido,
+          dni: dni || null,
+          telefono: telefono || null,
+          correo_electronico: email || null,
+        })
+        .eq('id_cliente', clienteEditando.id_cliente)
+
+      if (error) {
+        toast.error('Error al actualizar cliente', {
+          description: error.message
+        })
+        return
+      }
+
+      toast.success('Cliente actualizado exitosamente')
+
+      // Limpiar formulario
+      setNombre('')
+      setApellido('')
+      setDni('')
+      setTelefono('')
+      setEmail('')
+
+      // Cerrar dialog y recargar
+      setEditDialogOpen(false)
+      setClienteEditando(null)
+      cargarClientes()
+
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Error inesperado al actualizar cliente')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const eliminarCliente = async (idCliente: number) => {
+    if (!confirm('¿Estás seguro de eliminar este cliente? Esto también eliminará su usuario asociado.')) return
+
+    try {
+      // Primero obtener el ID del usuario asociado
+      const { data: usuario, error: usuarioError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('id_cliente', idCliente)
+        .single()
+
+      if (usuarioError || !usuario) {
+        toast.error('Error al encontrar el usuario asociado')
+        return
+      }
+
+      // Eliminar el usuario (esto también eliminará el cliente por cascade)
+      const response = await fetch(`/api/admin/delete-user/${usuario.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        toast.error('Error al eliminar cliente')
+        return
+      }
+
+      toast.success('Cliente eliminado exitosamente')
+      cargarClientes()
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Error al eliminar cliente')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -270,6 +363,7 @@ export default function ClientesPage() {
                   <TableHead>Teléfono</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Fecha Registro</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -289,6 +383,24 @@ export default function ClientesPage() {
                     <TableCell>
                       {new Date(cliente.fecha_creacion).toLocaleDateString()}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => abrirEditar(cliente)}
+                        >
+                          <Edit className="h-4 w-4 text-blue-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => eliminarCliente(cliente.id_cliente)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -296,6 +408,90 @@ export default function ClientesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog para Editar Cliente */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Editar Cliente</DialogTitle>
+            <DialogDescription>
+              Actualiza la información del cliente.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={actualizarCliente} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-nombre">Nombre *</Label>
+                <Input
+                  id="edit-nombre"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-apellido">Apellido *</Label>
+                <Input
+                  id="edit-apellido"
+                  value={apellido}
+                  onChange={(e) => setApellido(e.target.value)}
+                  required
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-dni">DNI</Label>
+                <Input
+                  id="edit-dni"
+                  value={dni}
+                  onChange={(e) => setDni(e.target.value)}
+                  disabled={submitting}
+                  placeholder="12345678"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-telefono">Teléfono</Label>
+                <Input
+                  id="edit-telefono"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  disabled={submitting}
+                  placeholder="+54 9 11 1234-5678"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1" disabled={submitting}>
+                {submitting ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
