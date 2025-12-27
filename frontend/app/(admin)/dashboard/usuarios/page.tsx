@@ -47,11 +47,12 @@ export default function UsuariosPage() {
       const { data, error } = await supabase
         .from('usuarios')
         .select('*')
+        .in('rol', ['admin', 'gestor'])
         .order('fecha_creacion', { ascending: false })
 
       if (error) {
         console.error('Error al cargar usuarios:', error)
-        toast.error('Error al cargar usuarios')
+        toast.error('Error al cargar empleados')
         return
       }
 
@@ -161,7 +162,7 @@ export default function UsuariosPage() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Gestión de Empleados</h2>
           <p className="text-muted-foreground">
-            Administra empleados del sistema (administradores, gestores y técnicos)
+            Administra empleados internos (administradores y gestores)
           </p>
         </div>
 
@@ -176,7 +177,7 @@ export default function UsuariosPage() {
             <DialogHeader>
               <DialogTitle>Crear Nuevo Empleado</DialogTitle>
               <DialogDescription>
-                Crea empleados con roles de administrador, gestor o técnico
+                Crea empleados internos con rol de administrador o gestor
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={crearUsuario} className="space-y-4">
@@ -224,8 +225,6 @@ export default function UsuariosPage() {
                   <SelectContent>
                     <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
                     <SelectItem value={UserRole.GESTOR}>Gestor</SelectItem>
-                    <SelectItem value={UserRole.TECNICO}>Técnico</SelectItem>
-                    <SelectItem value={UserRole.CLIENTE}>Cliente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -256,7 +255,7 @@ export default function UsuariosPage() {
         <CardHeader>
           <CardTitle>Empleados del Sistema</CardTitle>
           <CardDescription>
-            Lista de empleados (admins, gestores y técnicos)
+            Lista de empleados internos (administradores y gestores)
           </CardDescription>
         </CardHeader>
         <CardContent>
