@@ -108,8 +108,8 @@ export default function TecnicosTab() {
 
   // Filtrar técnicos según el estado seleccionado
   const tecnicosFiltrados = tecnicos.filter((tecnico) => {
-    if (filtroEstado === 'activos') return tecnico.esta_activo === true || tecnico.esta_activo === 1
-    if (filtroEstado === 'inactivos') return tecnico.esta_activo === false || tecnico.esta_activo === 0
+    if (filtroEstado === 'activos') return tecnico.esta_activo === true
+    if (filtroEstado === 'inactivos') return tecnico.esta_activo === false
     return true // 'todos'
   })
 
