@@ -29,9 +29,9 @@ export default async function ClienteLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16">
       <ClienteNav />
-      <main className="container mx-auto px-4 py-6 max-w-7xl">
+      <main className="p-4">
         {children}
       </main>
       <AIHelpChat />

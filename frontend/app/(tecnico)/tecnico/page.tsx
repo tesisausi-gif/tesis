@@ -38,74 +38,72 @@ export default async function TecnicoDashboard() {
   const totalTrabajos = asignaciones?.length || 0
 
   return (
-    <div className="space-y-4 max-w-2xl mx-auto">
-      {/* Welcome Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">
-            Hola, {tecnico?.nombre}
-          </CardTitle>
-          <CardDescription>
-            {tecnico?.especialidad && `Especialidad: ${tecnico.especialidad}`}
-          </CardDescription>
-        </CardHeader>
-      </Card>
+    <div className="space-y-4 px-4 py-6 md:px-6 md:py-8">
+      {/* Header - Mobile First */}
+      <div className="space-y-2 mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          Bienvenido, {tecnico?.nombre}
+        </h1>
+        <p className="text-sm md:text-base text-gray-600">
+          {tecnico?.especialidad && `Especialidad: ${tecnico.especialidad}`}
+        </p>
+      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
+      {/* Stats Grid - Responsive */}
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Trabajos Activos
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">
+                Activos
               </CardTitle>
-              <Clock className="h-4 w-4 text-orange-500" />
+              <Clock className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{trabajosActivos}</div>
+            <div className="text-2xl md:text-3xl font-bold text-orange-600">{trabajosActivos}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">
                 Completados
               </CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{trabajosCompletados}</div>
+            <div className="text-2xl md:text-3xl font-bold text-green-600">{trabajosCompletados}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Total Trabajos
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">
+                Total
               </CardTitle>
-              <ClipboardList className="h-4 w-4 text-blue-500" />
+              <ClipboardList className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalTrabajos}</div>
+            <div className="text-2xl md:text-3xl font-bold text-blue-600">{totalTrabajos}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">
                 Calificación
               </CardTitle>
-              <Star className="h-4 w-4 text-yellow-500" />
+              <Star className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-2xl md:text-3xl font-bold text-yellow-600">
               {tecnico?.calificacion_promedio ? tecnico.calificacion_promedio.toFixed(1) : '-'}
             </div>
           </CardContent>
@@ -113,10 +111,13 @@ export default async function TecnicoDashboard() {
       </div>
 
       {/* Trabajos Recientes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Trabajos Recientes</CardTitle>
-          <CardDescription>
+      <Card className="border-2 hover:shadow-lg transition-shadow">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl md:text-2xl flex items-center gap-2">
+            <ClipboardList className="h-6 w-6 md:h-7 md:w-7 text-blue-600" />
+            Trabajos Recientes
+          </CardTitle>
+          <CardDescription className="text-sm md:text-base">
             Tus últimas asignaciones
           </CardDescription>
         </CardHeader>
@@ -138,13 +139,13 @@ export default async function TecnicoDashboard() {
                 }
 
                 return (
-                  <div key={asignacion.id_asignacion} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={asignacion.id_asignacion} className="flex items-center justify-between p-3 md:p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex-1">
-                      <p className="font-medium text-sm">
+                      <p className="font-medium text-sm md:text-base">
                         Incidente #{asignacion.id_incidente}
                       </p>
                       {asignacion.observaciones && (
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs md:text-sm text-gray-600 mt-1">
                           {asignacion.observaciones}
                         </p>
                       )}
@@ -157,33 +158,10 @@ export default async function TecnicoDashboard() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-gray-600 text-center py-4">
+            <p className="text-sm md:text-base text-gray-600 text-center py-4">
               No tienes trabajos asignados
             </p>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Acciones Rápidas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Acciones Rápidas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <a
-            href="/tecnico/trabajos"
-            className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center">
-              <ClipboardList className="h-6 w-6 text-blue-600 mr-3" />
-              <div>
-                <h3 className="font-semibold">Ver Todos los Trabajos</h3>
-                <p className="text-sm text-gray-600">
-                  Gestiona tus asignaciones
-                </p>
-              </div>
-            </div>
-          </a>
         </CardContent>
       </Card>
     </div>

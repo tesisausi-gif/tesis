@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { TecnicoNav } from '@/components/tecnico/tecnico-nav'
+import { AIHelpChat } from '@/components/ai-help-chat'
 
 export default async function TecnicoLayout({
   children,
@@ -33,6 +34,7 @@ export default async function TecnicoLayout({
       <main className="p-4">
         {children}
       </main>
+      <AIHelpChat />
     </div>
   )
 }

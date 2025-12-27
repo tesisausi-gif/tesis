@@ -1,26 +1,39 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { Home, AlertCircle, Building2, User, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import {
-  Home,
-  AlertCircle,
-  Building2,
-  User,
-  LogOut,
-  Menu,
-  X
-} from 'lucide-react'
 import { toast } from 'sonner'
+
+const navItems = [
+  {
+    title: 'Inicio',
+    icon: Home,
+    href: '/cliente',
+  },
+  {
+    title: 'Incidentes',
+    icon: AlertCircle,
+    href: '/cliente/incidentes',
+  },
+  {
+    title: 'Inmuebles',
+    icon: Building2,
+    href: '/cliente/propiedades',
+  },
+  {
+    title: 'Perfil',
+    icon: User,
+    href: '/cliente/perfil',
+  },
+]
 
 export function ClienteNav() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
@@ -29,106 +42,45 @@ export function ClienteNav() {
     } else {
       toast.success('Sesión cerrada exitosamente')
       router.push('/login')
+      router.refresh()
     }
   }
 
-  const navItems = [
-    { href: '/cliente', label: 'Inicio', icon: Home },
-    { href: '/cliente/incidentes', label: 'Mis Incidentes', icon: AlertCircle },
-    { href: '/cliente/propiedades', label: 'Mis Propiedades', icon: Building2 },
-    { href: '/cliente/perfil', label: 'Mi Perfil', icon: User },
-  ]
-
   return (
     <>
-      {/* Desktop Navigation */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <Building2 className="h-6 w-6 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">
-                Portal Cliente
-              </span>
-            </div>
+      {/* Top bar for mobile */}
+      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-white shadow-sm px-4">
+        <div className="flex items-center space-x-2">
+          <Building2 className="h-5 w-5 text-blue-600" />
+          <h1 className="font-semibold text-lg">Portal Cliente</h1>
+        </div>
+        <Button variant="ghost" size="icon" onClick={handleLogout}>
+          <LogOut className="h-5 w-5 text-red-600" />
+        </Button>
+      </header>
 
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center space-x-1">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href
-                return (
-                  <Link key={item.href} href={item.href}>
-                    <Button
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      className="flex items-center space-x-2"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </Button>
-                  </Link>
-                )
-              })}
-              <Button
-                variant="ghost"
-                onClick={handleLogout}
-                className="flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+      {/* Bottom navigation for mobile */}
+      <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-white shadow-lg pb-safe">
+        <div className="flex justify-around">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-1 py-3 px-4 transition-colors ${
+                  isActive
+                    ? 'text-blue-600'
+                    : 'text-gray-600 hover:text-blue-600'
+                }`}
               >
-                <LogOut className="h-4 w-4" />
-                <span>Cerrar Sesión</span>
-              </Button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 rounded-md hover:bg-gray-100"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-          </div>
+                <item.icon className="h-5 w-5" />
+                <span className="text-xs font-medium">{item.title}</span>
+              </Link>
+            )
+          })}
         </div>
       </nav>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b shadow-lg">
-          <div className="container mx-auto px-4 py-4 space-y-2">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Button
-                    variant={isActive ? 'secondary' : 'ghost'}
-                    className="w-full justify-start space-x-2"
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Button>
-                </Link>
-              )
-            })}
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="w-full justify-start space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Cerrar Sesión</span>
-            </Button>
-          </div>
-        </div>
-      )}
     </>
   )
 }
