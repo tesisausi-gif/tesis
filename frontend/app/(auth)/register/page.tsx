@@ -25,6 +25,9 @@ export default function RegisterPage() {
   const [clienteConfirmPassword, setClienteConfirmPassword] = useState('')
   const [clienteNombre, setClienteNombre] = useState('')
   const [clienteApellido, setClienteApellido] = useState('')
+  const [clienteTelefono, setClienteTelefono] = useState('')
+  const [clienteDNI, setClienteDNI] = useState('')
+  const [clienteTipoCliente, setClienteTipoCliente] = useState('particular')
 
   // Form state para Técnico
   const [tecnicoNombre, setTecnicoNombre] = useState('')
@@ -79,6 +82,9 @@ export default function RegisterPage() {
             nombre: clienteNombre,
             apellido: clienteApellido,
             rol: 'cliente',
+            telefono: clienteTelefono,
+            dni: clienteDNI,
+            tipo_cliente: clienteTipoCliente,
           }
         }
       })
@@ -215,6 +221,45 @@ export default function RegisterPage() {
                   required
                   disabled={loading}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cliente-telefono">Teléfono</Label>
+                  <Input
+                    id="cliente-telefono"
+                    type="tel"
+                    value={clienteTelefono}
+                    onChange={(e) => setClienteTelefono(e.target.value)}
+                    disabled={loading}
+                    placeholder="+54 9 11 1234-5678"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cliente-dni">DNI</Label>
+                  <Input
+                    id="cliente-dni"
+                    value={clienteDNI}
+                    onChange={(e) => setClienteDNI(e.target.value)}
+                    disabled={loading}
+                    placeholder="12345678"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cliente-tipo">Tipo de Cliente</Label>
+                <Select value={clienteTipoCliente} onValueChange={setClienteTipoCliente} disabled={loading}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="particular">Particular</SelectItem>
+                    <SelectItem value="empresa">Empresa</SelectItem>
+                    <SelectItem value="propietario">Propietario</SelectItem>
+                    <SelectItem value="inquilino">Inquilino</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
