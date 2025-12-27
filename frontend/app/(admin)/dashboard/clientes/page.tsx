@@ -49,20 +49,29 @@ export default function ClientesPage() {
 
   const cargarClientes = async () => {
     try {
+      console.log('🔍 Cargando clientes...')
+
+      // Debug: verificar sesión actual
+      const { data: session } = await supabase.auth.getSession()
+      console.log('📋 Sesión actual:', session?.session?.user?.id || 'No autenticado')
+
       const { data, error } = await supabase
         .from('clientes')
         .select('*')
         .order('fecha_creacion', { ascending: false })
 
+      console.log('📊 Resultado query clientes:', { data, error })
+
       if (error) {
-        console.error('Error al cargar clientes:', error)
-        toast.error('Error al cargar clientes')
+        console.error('❌ Error al cargar clientes:', error)
+        toast.error(`Error al cargar clientes: ${error.message}`)
         return
       }
 
+      console.log(`✅ Clientes cargados: ${data?.length || 0}`)
       setClientes(data || [])
     } catch (error) {
-      console.error('Error:', error)
+      console.error('❌ Error catch:', error)
     } finally {
       setLoading(false)
     }
