@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ClienteNav } from '@/components/cliente/cliente-nav'
+import { AIHelpChat } from '@/components/ai-help-chat'
 
 export default async function ClienteLayout({
   children,
@@ -33,6 +34,7 @@ export default async function ClienteLayout({
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         {children}
       </main>
+      <AIHelpChat />
     </div>
   )
 }

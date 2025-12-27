@@ -58,6 +58,17 @@ export default async function ClienteDashboard() {
         </p>
       </div>
 
+      {/* Mensaje informativo minimalista - Solo si no hay inmuebles */}
+      {totalInmuebles === 0 && (
+        <Card className="border-dashed border-2 bg-blue-50 border-blue-200">
+          <CardContent className="py-4 text-center">
+            <p className="text-sm md:text-base text-gray-700">
+              💡 <strong>Importante:</strong> Para reportar incidentes, primero debes registrar al menos un inmueble
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Dos Secciones Principales */}
       <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
         {/* Sección 1: INCIDENTES - Con CTA destacado */}
@@ -179,17 +190,6 @@ export default async function ClienteDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Mensaje informativo minimalista */}
-      {totalInmuebles === 0 && (
-        <Card className="border-dashed border-2 bg-blue-50">
-          <CardContent className="py-4 text-center">
-            <p className="text-sm md:text-base text-gray-700">
-              💡 <strong>Importante:</strong> Para reportar incidentes, primero debes registrar al menos un inmueble
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }
