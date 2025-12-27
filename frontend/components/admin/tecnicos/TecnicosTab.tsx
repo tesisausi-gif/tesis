@@ -7,8 +7,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { CheckCircle2, XCircle, Star } from 'lucide-react'
+import { CheckCircle2, XCircle, Star, Trash2 } from 'lucide-react'
 import TecnicoCalificacionesDialog from './TecnicoCalificacionesDialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface Tecnico {
   id_tecnico: number
@@ -29,10 +39,13 @@ export default function TecnicosTab() {
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState<{
     id: number
     nombre: string
   } | null>(null)
+  const [tecnicoAEliminar, setTecnicoAEliminar] = useState<Tecnico | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -76,6 +89,57 @@ export default function TecnicosTab() {
       nombre: `${tecnico.nombre} ${tecnico.apellido}`,
     })
     setDialogOpen(true)
+  }
+
+  const abrirDialogoEliminar = (tecnico: Tecnico) => {
+    setTecnicoAEliminar(tecnico)
+    setDeleteDialogOpen(true)
+  }
+
+  const eliminarTecnico = async () => {
+    if (!tecnicoAEliminar) return
+
+    setDeleting(true)
+    try {
+      // Primero, eliminar el usuario asociado si existe
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('id_tecnico', tecnicoAEliminar.id_tecnico)
+        .single()
+
+      if (usuario) {
+        const { error: userError } = await supabase.auth.admin.deleteUser(
+          usuario.id
+        )
+
+        if (userError) {
+          console.error('Error al eliminar usuario de auth:', userError)
+          // Continuar con la eliminación del técnico aunque falle la eliminación del usuario de auth
+        }
+      }
+
+      // Eliminar el técnico (esto también eliminará todas las referencias en cascada)
+      const { error } = await supabase
+        .from('tecnicos')
+        .delete()
+        .eq('id_tecnico', tecnicoAEliminar.id_tecnico)
+
+      if (error) {
+        toast.error('Error al eliminar técnico')
+        console.error(error)
+      } else {
+        toast.success(`Técnico ${tecnicoAEliminar.nombre} ${tecnicoAEliminar.apellido} eliminado correctamente`)
+        setDeleteDialogOpen(false)
+        setTecnicoAEliminar(null)
+        cargarTecnicos()
+      }
+    } catch (error) {
+      toast.error('Error al eliminar técnico')
+      console.error(error)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
@@ -157,6 +221,13 @@ export default function TecnicosTab() {
                       >
                         {tecnico.esta_activo ? 'Desactivar' : 'Activar'}
                       </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => abrirDialogoEliminar(tecnico)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -174,6 +245,37 @@ export default function TecnicosTab() {
           nombreTecnico={tecnicoSeleccionado.nombre}
         />
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro de eliminar este técnico?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el técnico{' '}
+              <strong>
+                {tecnicoAEliminar?.nombre} {tecnicoAEliminar?.apellido}
+              </strong>{' '}
+              y todas sus referencias en el sistema:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Usuario asociado</li>
+                <li>Asignaciones a incidentes</li>
+                <li>Inspecciones realizadas</li>
+                <li>Calificaciones recibidas</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={eliminarTecnico}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? 'Eliminando...' : 'Eliminar técnico'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }
