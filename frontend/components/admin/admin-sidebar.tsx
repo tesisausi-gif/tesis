@@ -41,7 +41,7 @@ const menuItems = [
     href: '/dashboard/incidentes',
   },
   {
-    title: 'Propiedades',
+    title: 'Inmuebles',
     icon: Building2,
     href: '/dashboard/propiedades',
   },
