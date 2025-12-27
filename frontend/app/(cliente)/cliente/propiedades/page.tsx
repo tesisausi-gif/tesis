@@ -5,26 +5,60 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Building2, MapPin, Plus, Home } from 'lucide-react'
 import { toast } from 'sonner'
 
+interface TipoInmueble {
+  id_tipo_inmueble: number
+  nombre: string
+}
+
 interface Inmueble {
   id_inmueble: number
-  tipo_propiedad: string
-  direccion_completa: string
-  descripcion: string | null
+  id_tipo_inmueble: number
+  provincia: string | null
+  localidad: string | null
+  barrio: string | null
+  calle: string | null
+  altura: string | null
+  piso: string | null
+  dpto: string | null
+  direccion_completa: string | null
+  informacion_adicional: string | null
   esta_activo: boolean
   id_cliente: number
+  tipos_inmuebles?: TipoInmueble
 }
 
 export default function ClientePropiedades() {
   const [inmuebles, setInmuebles] = useState<Inmueble[]>([])
+  const [tiposInmuebles, setTiposInmuebles] = useState<TipoInmueble[]>([])
   const [loading, setLoading] = useState(true)
   const [idCliente, setIdCliente] = useState<number | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  // Form state
+  const [tipoInmueble, setTipoInmueble] = useState('')
+  const [provincia, setProvincia] = useState('')
+  const [localidad, setLocalidad] = useState('')
+  const [barrio, setBarrio] = useState('')
+  const [calle, setCalle] = useState('')
+  const [altura, setAltura] = useState('')
+  const [piso, setPiso] = useState('')
+  const [dpto, setDpto] = useState('')
+  const [infoAdicional, setInfoAdicional] = useState('')
+
   const supabase = createClient()
 
   useEffect(() => {
     cargarInmuebles()
+    cargarTiposInmuebles()
   }, [])
 
   const cargarInmuebles = async () => {
@@ -43,10 +77,10 @@ export default function ClientePropiedades() {
       if (usuario?.id_cliente) {
         setIdCliente(usuario.id_cliente)
 
-        // Obtener inmuebles del cliente
+        // Obtener inmuebles del cliente con tipo
         const { data: inmuebles, error } = await supabase
           .from('inmuebles')
-          .select('*')
+          .select('*, tipos_inmuebles(id_tipo_inmueble, nombre)')
           .eq('id_cliente', usuario.id_cliente)
 
         if (error) {
@@ -64,6 +98,87 @@ export default function ClientePropiedades() {
     }
   }
 
+  const cargarTiposInmuebles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tipos_inmuebles')
+        .select('*')
+        .eq('esta_activo', true)
+        .order('nombre')
+
+      if (error) {
+        console.error('Error al cargar tipos:', error)
+        return
+      }
+
+      setTiposInmuebles(data || [])
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
+
+  const registrarInmueble = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!tipoInmueble || !provincia || !localidad || !calle || !altura) {
+      toast.error('Por favor completa todos los campos obligatorios')
+      return
+    }
+
+    if (!idCliente) {
+      toast.error('No se pudo identificar el cliente')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      const { error } = await supabase
+        .from('inmuebles')
+        .insert({
+          id_tipo_inmueble: parseInt(tipoInmueble),
+          id_cliente: idCliente,
+          provincia,
+          localidad,
+          barrio: barrio || null,
+          calle,
+          altura,
+          piso: piso || null,
+          dpto: dpto || null,
+          informacion_adicional: infoAdicional || null,
+          esta_activo: true
+        })
+
+      if (error) {
+        toast.error('Error al registrar inmueble', {
+          description: error.message
+        })
+        return
+      }
+
+      toast.success('Inmueble registrado exitosamente')
+
+      // Limpiar formulario
+      setTipoInmueble('')
+      setProvincia('')
+      setLocalidad('')
+      setBarrio('')
+      setCalle('')
+      setAltura('')
+      setPiso('')
+      setDpto('')
+      setInfoAdicional('')
+
+      setDialogOpen(false)
+      cargarInmuebles()
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Error inesperado')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -78,13 +193,25 @@ export default function ClientePropiedades() {
   return (
     <div className="space-y-4 px-4 py-6 md:px-6 md:py-8">
       {/* Header - Mobile First */}
-      <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Mis Inmuebles
-        </h1>
-        <p className="text-sm md:text-base text-gray-600">
-          Propiedades asociadas a tu cuenta
-        </p>
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+            Mis Inmuebles
+          </h1>
+          <p className="text-sm md:text-base text-gray-600">
+            Propiedades asociadas a tu cuenta
+          </p>
+        </div>
+
+        {inmuebles && inmuebles.length > 0 && (
+          <Button
+            onClick={() => setDialogOpen(true)}
+            className="w-full md:w-auto gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Agregar Inmueble
+          </Button>
+        )}
       </div>
 
       {inmuebles && inmuebles.length > 0 ? (
@@ -99,11 +226,16 @@ export default function ClientePropiedades() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <CardTitle className="text-base md:text-lg truncate">
-                        {inmueble.tipo_propiedad || 'Inmueble'}
+                        {inmueble.tipos_inmuebles?.nombre || 'Inmueble'}
                       </CardTitle>
                       <CardDescription className="flex items-start gap-1 mt-1 text-xs md:text-sm">
                         <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-2">{inmueble.direccion_completa}</span>
+                        <span className="line-clamp-2">
+                          {[inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`]
+                            .filter(Boolean)
+                            .join(' ')}
+                          {inmueble.barrio && `, ${inmueble.barrio}`}
+                        </span>
                       </CardDescription>
                     </div>
                   </div>
@@ -114,10 +246,10 @@ export default function ClientePropiedades() {
                   )}
                 </div>
               </CardHeader>
-              {inmueble.descripcion && (
+              {inmueble.informacion_adicional && (
                 <CardContent className="pt-0">
                   <p className="text-xs md:text-sm text-gray-700 line-clamp-3">
-                    {inmueble.descripcion}
+                    {inmueble.informacion_adicional}
                   </p>
                 </CardContent>
               )}
@@ -143,6 +275,7 @@ export default function ClientePropiedades() {
             <Button
               size="lg"
               className="w-full md:w-auto gap-2 shadow-lg hover:shadow-xl transition-shadow"
+              onClick={() => setDialogOpen(true)}
             >
               <Plus className="h-5 w-5" />
               Registrar mi primer inmueble
@@ -154,6 +287,179 @@ export default function ClientePropiedades() {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialog para registrar nuevo inmueble */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl md:text-2xl">Registrar Inmueble</DialogTitle>
+            <DialogDescription className="text-sm md:text-base">
+              Completa los datos de tu propiedad para poder gestionar incidentes
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={registrarInmueble} className="space-y-4 mt-4">
+            {/* Tipo de Inmueble */}
+            <div className="space-y-2">
+              <Label htmlFor="tipo" className="text-sm md:text-base">
+                Tipo de Inmueble *
+              </Label>
+              <Select value={tipoInmueble} onValueChange={setTipoInmueble}>
+                <SelectTrigger id="tipo">
+                  <SelectValue placeholder="Selecciona el tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tiposInmuebles.map((tipo) => (
+                    <SelectItem key={tipo.id_tipo_inmueble} value={tipo.id_tipo_inmueble.toString()}>
+                      {tipo.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Provincia y Localidad */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="provincia" className="text-sm md:text-base">
+                  Provincia *
+                </Label>
+                <Input
+                  id="provincia"
+                  value={provincia}
+                  onChange={(e) => setProvincia(e.target.value)}
+                  placeholder="Ej: Buenos Aires"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="localidad" className="text-sm md:text-base">
+                  Localidad *
+                </Label>
+                <Input
+                  id="localidad"
+                  value={localidad}
+                  onChange={(e) => setLocalidad(e.target.value)}
+                  placeholder="Ej: La Plata"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            {/* Barrio */}
+            <div className="space-y-2">
+              <Label htmlFor="barrio" className="text-sm md:text-base">
+                Barrio
+              </Label>
+              <Input
+                id="barrio"
+                value={barrio}
+                onChange={(e) => setBarrio(e.target.value)}
+                placeholder="Opcional"
+                disabled={submitting}
+              />
+            </div>
+
+            {/* Calle y Altura */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="calle" className="text-sm md:text-base">
+                  Calle *
+                </Label>
+                <Input
+                  id="calle"
+                  value={calle}
+                  onChange={(e) => setCalle(e.target.value)}
+                  placeholder="Ej: Av. 7"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="altura" className="text-sm md:text-base">
+                  Altura *
+                </Label>
+                <Input
+                  id="altura"
+                  value={altura}
+                  onChange={(e) => setAltura(e.target.value)}
+                  placeholder="Ej: 1234"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            {/* Piso y Dpto (solo para departamentos) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="piso" className="text-sm md:text-base">
+                  Piso
+                </Label>
+                <Input
+                  id="piso"
+                  value={piso}
+                  onChange={(e) => setPiso(e.target.value)}
+                  placeholder="Opcional"
+                  disabled={submitting}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dpto" className="text-sm md:text-base">
+                  Dpto
+                </Label>
+                <Input
+                  id="dpto"
+                  value={dpto}
+                  onChange={(e) => setDpto(e.target.value)}
+                  placeholder="Opcional"
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            {/* Información Adicional */}
+            <div className="space-y-2">
+              <Label htmlFor="info-adicional" className="text-sm md:text-base">
+                Información Adicional
+              </Label>
+              <Textarea
+                id="info-adicional"
+                value={infoAdicional}
+                onChange={(e) => setInfoAdicional(e.target.value)}
+                placeholder="Detalles adicionales, referencias, etc."
+                rows={3}
+                disabled={submitting}
+              />
+            </div>
+
+            {/* Botones */}
+            <div className="flex flex-col-reverse md:flex-row gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full md:w-auto"
+                onClick={() => setDialogOpen(false)}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="w-full md:flex-1"
+                disabled={submitting}
+              >
+                {submitting ? 'Registrando...' : 'Registrar Inmueble'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
