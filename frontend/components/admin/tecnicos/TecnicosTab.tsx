@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { CheckCircle2, XCircle, Star, Trash2 } from 'lucide-react'
+import { CheckCircle2, XCircle, Star, Trash2, Eye, Power } from 'lucide-react'
 import TecnicoCalificacionesDialog from './TecnicoCalificacionesDialog'
 import {
   AlertDialog,
@@ -19,6 +19,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface Tecnico {
   id_tecnico: number
@@ -40,10 +47,12 @@ export default function TecnicosTab() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [actionsDialogOpen, setActionsDialogOpen] = useState(false)
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState<{
     id: number
     nombre: string
   } | null>(null)
+  const [tecnicoActual, setTecnicoActual] = useState<Tecnico | null>(null)
   const [tecnicoAEliminar, setTecnicoAEliminar] = useState<Tecnico | null>(null)
   const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
@@ -83,7 +92,13 @@ export default function TecnicosTab() {
     }
   }
 
+  const abrirModalAcciones = (tecnico: Tecnico) => {
+    setTecnicoActual(tecnico)
+    setActionsDialogOpen(true)
+  }
+
   const abrirCalificaciones = (tecnico: Tecnico) => {
+    setActionsDialogOpen(false)
     setTecnicoSeleccionado({
       id: tecnico.id_tecnico,
       nombre: `${tecnico.nombre} ${tecnico.apellido}`,
@@ -92,8 +107,14 @@ export default function TecnicosTab() {
   }
 
   const abrirDialogoEliminar = (tecnico: Tecnico) => {
+    setActionsDialogOpen(false)
     setTecnicoAEliminar(tecnico)
     setDeleteDialogOpen(true)
+  }
+
+  const handleToggleActivo = async (tecnico: Tecnico) => {
+    setActionsDialogOpen(false)
+    await toggleActivo(tecnico)
   }
 
   const eliminarTecnico = async () => {
@@ -205,30 +226,14 @@ export default function TecnicosTab() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => abrirCalificaciones(tecnico)}
-                      >
-                        <Star className="h-4 w-4 mr-1" />
-                        Ver calificaciones
-                      </Button>
-                      <Button
-                        variant={tecnico.esta_activo ? 'outline' : 'default'}
-                        size="sm"
-                        onClick={() => toggleActivo(tecnico)}
-                      >
-                        {tecnico.esta_activo ? 'Desactivar' : 'Activar'}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => abrirDialogoEliminar(tecnico)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => abrirModalAcciones(tecnico)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Ver
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -245,6 +250,82 @@ export default function TecnicosTab() {
           nombreTecnico={tecnicoSeleccionado.nombre}
         />
       )}
+
+      {/* Modal de Acciones */}
+      <Dialog open={actionsDialogOpen} onOpenChange={setActionsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Acciones de Técnico</DialogTitle>
+            <DialogDescription>
+              {tecnicoActual && `${tecnicoActual.nombre} ${tecnicoActual.apellido}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-4">
+            {/* Ver Calificaciones */}
+            <button
+              onClick={() => tecnicoActual && abrirCalificaciones(tecnicoActual)}
+              className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+            >
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                <Star className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-semibold text-gray-900">Ver Calificaciones</h3>
+                <p className="text-sm text-gray-600">
+                  Historial de calificaciones del técnico
+                </p>
+              </div>
+            </button>
+
+            {/* Activar/Desactivar */}
+            <button
+              onClick={() => tecnicoActual && handleToggleActivo(tecnicoActual)}
+              className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all group ${
+                tecnicoActual?.esta_activo
+                  ? 'border-gray-200 hover:border-orange-500 hover:bg-orange-50'
+                  : 'border-gray-200 hover:border-green-500 hover:bg-green-50'
+              }`}
+            >
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center transition-colors ${
+                tecnicoActual?.esta_activo
+                  ? 'bg-orange-100 group-hover:bg-orange-200'
+                  : 'bg-green-100 group-hover:bg-green-200'
+              }`}>
+                <Power className={`h-5 w-5 ${
+                  tecnicoActual?.esta_activo ? 'text-orange-600' : 'text-green-600'
+                }`} />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-semibold text-gray-900">
+                  {tecnicoActual?.esta_activo ? 'Desactivar' : 'Activar'} Técnico
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {tecnicoActual?.esta_activo
+                    ? 'El técnico no podrá recibir nuevos trabajos'
+                    : 'El técnico podrá recibir nuevos trabajos'}
+                </p>
+              </div>
+            </button>
+
+            {/* Eliminar */}
+            <button
+              onClick={() => tecnicoActual && abrirDialogoEliminar(tecnicoActual)}
+              className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-red-500 hover:bg-red-50 transition-all group"
+            >
+              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-semibold text-gray-900">Eliminar Técnico</h3>
+                <p className="text-sm text-gray-600">
+                  Eliminar permanentemente del sistema
+                </p>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
