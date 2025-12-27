@@ -2,24 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { eliminarTecnico as eliminarTecnicoAction } from '@/app/actions/tecnicos'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { CheckCircle2, XCircle, Star, Trash2, Eye, Power } from 'lucide-react'
+import { CheckCircle2, XCircle, Star, Eye, Power, Filter } from 'lucide-react'
 import TecnicoCalificacionesDialog from './TecnicoCalificacionesDialog'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import {
   Dialog,
   DialogContent,
@@ -27,6 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface Tecnico {
   id_tecnico: number
@@ -47,15 +43,13 @@ export default function TecnicosTab() {
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [actionsDialogOpen, setActionsDialogOpen] = useState(false)
+  const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('activos')
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState<{
     id: number
     nombre: string
   } | null>(null)
   const [tecnicoActual, setTecnicoActual] = useState<Tecnico | null>(null)
-  const [tecnicoAEliminar, setTecnicoAEliminar] = useState<Tecnico | null>(null)
-  const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -107,47 +101,44 @@ export default function TecnicosTab() {
     setDialogOpen(true)
   }
 
-  const abrirDialogoEliminar = (tecnico: Tecnico) => {
-    setActionsDialogOpen(false)
-    setTecnicoAEliminar(tecnico)
-    setDeleteDialogOpen(true)
-  }
-
   const handleToggleActivo = async (tecnico: Tecnico) => {
     setActionsDialogOpen(false)
     await toggleActivo(tecnico)
   }
 
-  const eliminarTecnico = async () => {
-    if (!tecnicoAEliminar) return
-
-    setDeleting(true)
-    try {
-      const result = await eliminarTecnicoAction(tecnicoAEliminar.id_tecnico)
-
-      if (result.success) {
-        toast.success(`Técnico ${tecnicoAEliminar.nombre} ${tecnicoAEliminar.apellido} eliminado correctamente`)
-        setDeleteDialogOpen(false)
-        setTecnicoAEliminar(null)
-        cargarTecnicos()
-      } else {
-        toast.error(result.error || 'Error al eliminar técnico')
-      }
-    } catch (error) {
-      toast.error('Error al eliminar técnico')
-      console.error(error)
-    } finally {
-      setDeleting(false)
-    }
-  }
+  // Filtrar técnicos según el estado seleccionado
+  const tecnicosFiltrados = tecnicos.filter((tecnico) => {
+    if (filtroEstado === 'activos') return tecnico.esta_activo === true || tecnico.esta_activo === 1
+    if (filtroEstado === 'inactivos') return tecnico.esta_activo === false || tecnico.esta_activo === 0
+    return true // 'todos'
+  })
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Técnicos Registrados</CardTitle>
-        <CardDescription>
-          Lista de todos los técnicos en el sistema
-        </CardDescription>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <CardTitle>Técnicos Registrados</CardTitle>
+            <CardDescription>
+              Lista de todos los técnicos en el sistema
+            </CardDescription>
+          </div>
+
+          {/* Filtro de Estado */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-500" />
+            <Select value={filtroEstado} onValueChange={(value: any) => setFiltroEstado(value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="activos">Activos</SelectItem>
+                <SelectItem value="inactivos">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -155,6 +146,10 @@ export default function TecnicosTab() {
         ) : tecnicos.length === 0 ? (
           <p className="text-center text-gray-600 py-4">
             No hay técnicos registrados
+          </p>
+        ) : tecnicosFiltrados.length === 0 ? (
+          <p className="text-center text-gray-600 py-4">
+            No hay técnicos {filtroEstado === 'activos' ? 'activos' : filtroEstado === 'inactivos' ? 'inactivos' : ''}
           </p>
         ) : (
           <Table>
@@ -171,7 +166,7 @@ export default function TecnicosTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tecnicos.map((tecnico) => (
+              {tecnicosFiltrados.map((tecnico) => (
                 <TableRow key={tecnico.id_tecnico}>
                   <TableCell className="font-medium">
                     {tecnico.nombre} {tecnico.apellido}
@@ -280,61 +275,21 @@ export default function TecnicosTab() {
                 </h3>
                 <p className="text-sm text-gray-600">
                   {tecnicoActual?.esta_activo
-                    ? 'El técnico no podrá recibir nuevos trabajos'
-                    : 'El técnico podrá recibir nuevos trabajos'}
+                    ? 'No podrá acceder al sistema ni recibir nuevos trabajos'
+                    : 'Podrá acceder al sistema y recibir nuevos trabajos'}
                 </p>
               </div>
             </button>
 
-            {/* Eliminar */}
-            <button
-              onClick={() => tecnicoActual && abrirDialogoEliminar(tecnicoActual)}
-              className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-red-500 hover:bg-red-50 transition-all group"
-            >
-              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                <Trash2 className="h-5 w-5 text-red-600" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-900">Eliminar Técnico</h3>
-                <p className="text-sm text-gray-600">
-                  Eliminar permanentemente del sistema
-                </p>
-              </div>
-            </button>
+            {/* Nota informativa */}
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-xs text-blue-800">
+                ℹ️ Los técnicos inactivos se mantienen en el sistema para preservar el historial de trabajos realizados
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro de eliminar este técnico?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el técnico{' '}
-              <strong>
-                {tecnicoAEliminar?.nombre} {tecnicoAEliminar?.apellido}
-              </strong>{' '}
-              y todas sus referencias en el sistema:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Usuario asociado</li>
-                <li>Asignaciones a incidentes</li>
-                <li>Inspecciones realizadas</li>
-                <li>Calificaciones recibidas</li>
-              </ul>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={eliminarTecnico}
-              disabled={deleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {deleting ? 'Eliminando...' : 'Eliminar técnico'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   )
 }
