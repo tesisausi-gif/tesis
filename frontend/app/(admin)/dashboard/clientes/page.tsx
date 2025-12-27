@@ -204,25 +204,17 @@ export default function ClientesPage() {
     if (!confirm('¿Estás seguro de eliminar este cliente? Esto también eliminará su usuario asociado.')) return
 
     try {
-      // Primero obtener el ID del usuario asociado
-      const { data: usuario, error: usuarioError } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('id_cliente', idCliente)
-        .single()
-
-      if (usuarioError || !usuario) {
-        toast.error('Error al encontrar el usuario asociado')
-        return
-      }
-
-      // Eliminar el usuario (esto también eliminará el cliente por cascade)
-      const response = await fetch(`/api/admin/delete-user/${usuario.id}`, {
+      // Llamar al endpoint que maneja la eliminación del cliente
+      const response = await fetch(`/api/admin/delete-cliente/${idCliente}`, {
         method: 'DELETE',
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        toast.error('Error al eliminar cliente')
+        toast.error('Error al eliminar cliente', {
+          description: result.error
+        })
         return
       }
 
