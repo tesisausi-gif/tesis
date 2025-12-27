@@ -35,6 +35,33 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Rutas protegidas que requieren autenticación
+  const protectedRoutes = ['/dashboard', '/profile', '/incidencias']
+  const isProtectedRoute = protectedRoutes.some(route =>
+    request.nextUrl.pathname.startsWith(route)
+  )
+
+  // Rutas públicas (login, register, etc.)
+  const publicRoutes = ['/login', '/register', '/']
+  const isPublicRoute = publicRoutes.some(route =>
+    request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith('/register')
+  )
+
+  // Si es una ruta protegida y no hay usuario, redirigir a login
+  if (isProtectedRoute && !user) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/login'
+    redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // Si el usuario está autenticado y trata de acceder a login, redirigir al dashboard
+  if (user && request.nextUrl.pathname === '/login') {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/dashboard'
+    return NextResponse.redirect(redirectUrl)
+  }
+
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
   // creating a new response object with NextResponse.next() make sure to:
   // 1. Pass the request in it, like so:
