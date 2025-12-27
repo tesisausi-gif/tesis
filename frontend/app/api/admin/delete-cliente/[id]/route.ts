@@ -43,22 +43,36 @@ export async function DELETE(
       )
     }
 
-    // 2. Eliminar de tabla usuarios (cascade eliminará el cliente)
-    await supabase
-      .from('usuarios')
-      .delete()
-      .eq('id', usuario.id)
+    console.log(`Eliminando cliente ${idCliente} y usuario ${usuario.id}...`)
 
-    // 3. Eliminar de Supabase Auth
+    // 2. Eliminar de tabla clientes primero
+    const { error: clienteError } = await supabase
+      .from('clientes')
+      .delete()
+      .eq('id_cliente', idCliente)
+
+    if (clienteError) {
+      console.error('Error al eliminar cliente:', clienteError)
+      return NextResponse.json(
+        { error: `Error al eliminar cliente: ${clienteError.message}` },
+        { status: 400 }
+      )
+    }
+
+    console.log('Cliente eliminado de tabla clientes')
+
+    // 3. Eliminar de Supabase Auth (esto eliminará de auth.users y CASCADE a usuarios)
     const { error: authError } = await supabase.auth.admin.deleteUser(usuario.id)
 
     if (authError) {
       console.error('Error al eliminar usuario de Auth:', authError)
       return NextResponse.json(
-        { error: authError.message },
+        { error: `Error al eliminar de Auth: ${authError.message}` },
         { status: 400 }
       )
     }
+
+    console.log('Usuario eliminado de auth.users y usuarios')
 
     return NextResponse.json({
       success: true,
