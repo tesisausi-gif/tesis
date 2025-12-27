@@ -20,7 +20,6 @@ interface Cliente {
   dni: string | null
   correo_electronico: string | null
   telefono: string | null
-  tipo_cliente: string | null
   esta_activo: boolean
   fecha_creacion: string
   fecha_modificacion: string

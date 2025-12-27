@@ -12,8 +12,7 @@ export async function POST(request: NextRequest) {
       telefono,
       dni,
       direccion,
-      especialidad,
-      tipo_cliente
+      especialidad
     } = await request.json()
 
     // Validaciones
@@ -59,8 +58,7 @@ export async function POST(request: NextRequest) {
         telefono,
         dni,
         direccion,
-        especialidad,
-        tipo_cliente
+        especialidad
       }
     })
 
