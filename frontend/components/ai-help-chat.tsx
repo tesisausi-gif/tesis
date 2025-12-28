@@ -78,26 +78,42 @@ export function AIHelpChat() {
   // Función para obtener posición segura
   const getSafePosition = () => {
     if (typeof window === 'undefined') {
-      return { x: 300, y: 500 } // Valores por defecto seguros
+      return { x: 16, y: 300 } // Posición conservadora por defecto
     }
     const buttonSize = 48
     const margin = 16
+    const topNavHeight = 56 // h-14 = 3.5rem
+    const bottomNavHeight = 80 // Estimado con padding y safe area
+    const totalNavSpace = topNavHeight + bottomNavHeight + margin
+
+    // Calcular posición visible en todas las pantallas
+    const maxX = window.innerWidth - buttonSize - margin
+    const maxY = window.innerHeight - buttonSize - totalNavSpace
+
+    // Asegurar que siempre esté dentro del viewport
     return {
-      x: Math.max(margin, window.innerWidth - buttonSize - margin),
-      y: Math.max(margin, window.innerHeight - buttonSize - margin - 100) // -100 para barra de navegación móvil
+      x: Math.min(maxX, window.innerWidth - buttonSize - margin * 2),
+      y: Math.min(maxY, window.innerHeight - buttonSize - totalNavSpace - margin)
     }
   }
 
   const [mounted, setMounted] = useState(false)
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
+  // Inicializar con valores seguros que funcionen en todas las pantallas
+  const x = useMotionValue(16)
+  const y = useMotionValue(300)
 
   // Inicializar cuando se monte
   useEffect(() => {
     const pos = getSafePosition()
     x.set(pos.x)
     y.set(pos.y)
-    setMounted(true)
+
+    // Pequeño delay para asegurar que el DOM esté listo
+    const timer = setTimeout(() => {
+      setMounted(true)
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [x, y])
 
   const scrollToBottom = () => {
