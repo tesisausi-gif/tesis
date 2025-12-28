@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -72,20 +73,16 @@ export function AIHelpChat() {
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const [hasMoved, setHasMoved] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
 
-  // Calcular posición inicial (bottom-right)
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+
+  // Inicializar posición en bottom-right
   useEffect(() => {
-    if (position === null && typeof window !== 'undefined') {
-      setPosition({
-        x: window.innerWidth - 72, // 48px button + 24px margin
-        y: window.innerHeight - 72
-      })
+    if (typeof window !== 'undefined') {
+      x.set(window.innerWidth - 72)
+      y.set(window.innerHeight - 72)
     }
   }, [])
 
@@ -131,80 +128,18 @@ export function AIHelpChat() {
     }
   }
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!position) return
-    e.preventDefault()
-    setIsDragging(true)
-    setHasMoved(false)
-    // Guardar el offset entre el click y la posición del botón
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    })
-  }
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!position) return
-    e.preventDefault()
-    setIsDragging(true)
-    setHasMoved(false)
-    const touch = e.touches[0]
-    setDragStart({
-      x: touch.clientX - position.x,
-      y: touch.clientY - position.y
-    })
-  }
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging && position) {
-      setHasMoved(true)
-      const newX = e.clientX - dragStart.x
-      const newY = e.clientY - dragStart.y
-
-      // Limitar posición dentro de la ventana (con margen para el botón de 48px)
-      const buttonSize = 48
-      const minPos = 0
-      const maxX = window.innerWidth - buttonSize
-      const maxY = window.innerHeight - buttonSize
-
-      setPosition({
-        x: Math.max(minPos, Math.min(newX, maxX)),
-        y: Math.max(minPos, Math.min(newY, maxY))
-      })
-    }
-  }
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (isDragging && position) {
-      setHasMoved(true)
-      const touch = e.touches[0]
-      const newX = touch.clientX - dragStart.x
-      const newY = touch.clientY - dragStart.y
-
-      // Limitar posición dentro de la ventana (con margen para el botón de 48px)
-      const buttonSize = 48
-      const minPos = 0
-      const maxX = window.innerWidth - buttonSize
-      const maxY = window.innerHeight - buttonSize
-
-      setPosition({
-        x: Math.max(minPos, Math.min(newX, maxX)),
-        y: Math.max(minPos, Math.min(newY, maxY))
-      })
-    }
-  }
-
-  const snapToEdge = () => {
-    if (!position) return
-
+  const handleDragEnd = (event: any, info: PanInfo) => {
     const buttonSize = 48
     const margin = 24
     const screenWidth = window.innerWidth
     const screenHeight = window.innerHeight
 
+    const currentX = x.get()
+    const currentY = y.get()
+
     // Centro del botón
-    const centerX = position.x + buttonSize / 2
-    const centerY = position.y + buttonSize / 2
+    const centerX = currentX + buttonSize / 2
+    const centerY = currentY + buttonSize / 2
 
     // Calcular distancias desde el centro del botón a cada borde
     const distToLeft = centerX
@@ -215,87 +150,40 @@ export function AIHelpChat() {
     // Encontrar el borde más cercano
     const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom)
 
-    let newX = position.x
-    let newY = position.y
-
-    // Pegar al borde más cercano (solo uno)
+    // Animar al borde más cercano
     if (minDist === distToLeft) {
-      // Pegar a la izquierda
-      newX = margin
+      x.set(margin, { type: 'spring', stiffness: 300, damping: 30 })
     } else if (minDist === distToRight) {
-      // Pegar a la derecha
-      newX = screenWidth - buttonSize - margin
+      x.set(screenWidth - buttonSize - margin, { type: 'spring', stiffness: 300, damping: 30 })
     } else if (minDist === distToTop) {
-      // Pegar arriba
-      newY = margin
+      y.set(margin, { type: 'spring', stiffness: 300, damping: 30 })
     } else if (minDist === distToBottom) {
-      // Pegar abajo
-      newY = screenHeight - buttonSize - margin
-    }
-
-    setPosition({ x: newX, y: newY })
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-    if (hasMoved) {
-      snapToEdge()
+      y.set(screenHeight - buttonSize - margin, { type: 'spring', stiffness: 300, damping: 30 })
     }
   }
-
-  const handleTouchEnd = () => {
-    setIsDragging(false)
-    if (hasMoved) {
-      snapToEdge()
-    }
-  }
-
-  const handleButtonClick = (e: React.MouseEvent) => {
-    // Solo abrir si no se movió el botón
-    if (!hasMoved) {
-      setIsOpen(true)
-    }
-  }
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-      document.addEventListener('touchmove', handleTouchMove, { passive: false })
-      document.addEventListener('touchend', handleTouchEnd)
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
-        document.removeEventListener('touchmove', handleTouchMove)
-        document.removeEventListener('touchend', handleTouchEnd)
-      }
-    }
-  }, [isDragging, dragStart])
 
   return (
     <>
       {/* Botón flotante */}
-      {!isOpen && position && (
-        <Button
-          ref={buttonRef}
-          onClick={handleButtonClick}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
+      {!isOpen && (
+        <motion.button
+          drag
+          dragElastic={0.1}
+          dragMomentum={false}
+          onDragEnd={handleDragEnd}
+          onClick={() => setIsOpen(true)}
           style={{
+            x,
+            y,
             position: 'fixed',
-            left: `${position.x}px`,
-            top: `${position.y}px`,
-            cursor: isDragging ? 'grabbing' : 'grab',
+            cursor: 'grab',
             touchAction: 'none',
-            WebkitUserSelect: 'none',
-            userSelect: 'none',
-            transition: isDragging ? 'none' : 'left 0.3s ease-out, top 0.3s ease-out'
           }}
-          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 select-none animate-float"
-          size="icon"
+          whileTap={{ cursor: 'grabbing' }}
+          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 select-none animate-float flex items-center justify-center border-0"
         >
-          <MessageCircle className="h-5 w-5" />
-        </Button>
+          <MessageCircle className="h-5 w-5 text-white" />
+        </motion.button>
       )}
 
       {/* Ventana de chat */}
