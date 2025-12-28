@@ -194,12 +194,54 @@ export function AIHelpChat() {
     }
   }
 
+  const snapToEdge = () => {
+    if (!position) return
+
+    const buttonSize = 48
+    const margin = 24
+    const screenWidth = window.innerWidth
+    const screenHeight = window.innerHeight
+
+    // Calcular distancias a cada borde
+    const distToLeft = position.x
+    const distToRight = screenWidth - (position.x + buttonSize)
+    const distToTop = position.y
+    const distToBottom = screenHeight - (position.y + buttonSize)
+
+    // Encontrar el borde más cercano
+    const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom)
+
+    let newX = position.x
+    let newY = position.y
+
+    // Pegar al borde más cercano
+    if (minDist === distToLeft) {
+      newX = margin
+    } else if (minDist === distToRight) {
+      newX = screenWidth - buttonSize - margin
+    }
+
+    if (minDist === distToTop) {
+      newY = margin
+    } else if (minDist === distToBottom) {
+      newY = screenHeight - buttonSize - margin
+    }
+
+    setPosition({ x: newX, y: newY })
+  }
+
   const handleMouseUp = () => {
     setIsDragging(false)
+    if (hasMoved) {
+      snapToEdge()
+    }
   }
 
   const handleTouchEnd = () => {
     setIsDragging(false)
+    if (hasMoved) {
+      snapToEdge()
+    }
   }
 
   const handleButtonClick = (e: React.MouseEvent) => {
@@ -240,9 +282,10 @@ export function AIHelpChat() {
             cursor: isDragging ? 'grabbing' : 'grab',
             touchAction: 'none',
             WebkitUserSelect: 'none',
-            userSelect: 'none'
+            userSelect: 'none',
+            transition: isDragging ? 'none' : 'left 0.3s ease-out, top 0.3s ease-out'
           }}
-          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl transition-shadow duration-300 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 select-none"
+          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 select-none animate-float"
           size="icon"
         >
           <MessageCircle className="h-5 w-5" />
@@ -334,6 +377,22 @@ export function AIHelpChat() {
           </div>
         </Card>
       )}
+
+      {/* Estilos de animación */}
+      <style jsx global>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+      `}</style>
     </>
   )
 }
