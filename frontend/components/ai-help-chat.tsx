@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion'
+import { motion, useMotionValue, useTransform, PanInfo, animate } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -152,13 +152,13 @@ export function AIHelpChat() {
 
     // Animar al borde más cercano
     if (minDist === distToLeft) {
-      x.set(margin, { type: 'spring', stiffness: 300, damping: 30 })
+      animate(x, margin, { type: 'spring', stiffness: 300, damping: 30 })
     } else if (minDist === distToRight) {
-      x.set(screenWidth - buttonSize - margin, { type: 'spring', stiffness: 300, damping: 30 })
+      animate(x, screenWidth - buttonSize - margin, { type: 'spring', stiffness: 300, damping: 30 })
     } else if (minDist === distToTop) {
-      y.set(margin, { type: 'spring', stiffness: 300, damping: 30 })
+      animate(y, margin, { type: 'spring', stiffness: 300, damping: 30 })
     } else if (minDist === distToBottom) {
-      y.set(screenHeight - buttonSize - margin, { type: 'spring', stiffness: 300, damping: 30 })
+      animate(y, screenHeight - buttonSize - margin, { type: 'spring', stiffness: 300, damping: 30 })
     }
   }
 
