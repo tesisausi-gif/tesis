@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Building2, MapPin } from 'lucide-react'
+import { Building2, MapPin, Eye } from 'lucide-react'
 
 interface TipoInmueble {
   id_tipo_inmueble: number
@@ -37,6 +39,7 @@ interface Inmueble {
 }
 
 export default function InmueblesPage() {
+  const router = useRouter()
   const [inmuebles, setInmuebles] = useState<Inmueble[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -141,6 +144,7 @@ export default function InmueblesPage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Fecha Registro</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -173,6 +177,16 @@ export default function InmueblesPage() {
                     </TableCell>
                     <TableCell>
                       {new Date(inmueble.fecha_creacion).toLocaleDateString('es-AR')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/inmueble/${inmueble.id_inmueble}`)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
