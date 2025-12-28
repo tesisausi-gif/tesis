@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -51,6 +52,7 @@ interface Inmueble {
 }
 
 export default function ClientePropiedades() {
+  const router = useRouter()
   const [inmuebles, setInmuebles] = useState<Inmueble[]>([])
   const [tiposInmuebles, setTiposInmuebles] = useState<TipoInmueble[]>([])
   const [loading, setLoading] = useState(true)
@@ -362,7 +364,11 @@ export default function ClientePropiedades() {
       {inmuebles && inmuebles.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {inmuebles.map((inmueble) => (
-            <Card key={inmueble.id_inmueble} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={inmueble.id_inmueble}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => router.push(`/inmueble/${inmueble.id_inmueble}`)}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -398,7 +404,12 @@ export default function ClientePropiedades() {
                     {/* Menú de Acciones */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Plus, Edit, Eye, Power, CheckCircle2, XCircle, Filter } from 'lucide-react'
+import { Plus, Edit, Eye, Power, CheckCircle2, XCircle, Filter, Building2 } from 'lucide-react'
 
 interface Cliente {
   id_cliente: number
@@ -26,6 +27,7 @@ interface Cliente {
 }
 
 export default function ClientesPage() {
+  const router = useRouter()
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -34,6 +36,9 @@ export default function ClientesPage() {
   const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null)
   const [clienteActual, setClienteActual] = useState<Cliente | null>(null)
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('activos')
+  const [inmueblesDialogOpen, setInmueblesDialogOpen] = useState(false)
+  const [clienteInmuebles, setClienteInmuebles] = useState<any[]>([])
+  const [loadingInmuebles, setLoadingInmuebles] = useState(false)
 
   // Form state
   const [email, setEmail] = useState('')
@@ -243,6 +248,35 @@ export default function ClientesPage() {
     await toggleActivoCliente(cliente)
   }
 
+  const cargarInmueblesCliente = async (idCliente: number) => {
+    setLoadingInmuebles(true)
+    setInmueblesDialogOpen(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('inmuebles')
+        .select(`
+          *,
+          tipos_inmuebles(nombre)
+        `)
+        .eq('id_cliente', idCliente)
+        .order('fecha_creacion', { ascending: false })
+
+      if (error) {
+        toast.error('Error al cargar inmuebles')
+        console.error(error)
+        return
+      }
+
+      setClienteInmuebles(data || [])
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Error al cargar inmuebles')
+    } finally {
+      setLoadingInmuebles(false)
+    }
+  }
+
   // Filtrar clientes según el estado seleccionado
   const clientesFiltrados = clientes.filter((cliente) => {
     const estaActivo = Boolean(cliente.esta_activo)
@@ -404,6 +438,7 @@ export default function ClientesPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>DNI</TableHead>
                   <TableHead>Teléfono</TableHead>
+                  <TableHead>Inmuebles</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Fecha Registro</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -418,6 +453,16 @@ export default function ClientesPage() {
                     <TableCell>{cliente.correo_electronico || '-'}</TableCell>
                     <TableCell>{cliente.dni || '-'}</TableCell>
                     <TableCell>{cliente.telefono || '-'}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => cargarInmueblesCliente(cliente.id_cliente)}
+                      >
+                        <Building2 className="h-4 w-4 mr-2" />
+                        Ver
+                      </Button>
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant={cliente.esta_activo ? 'default' : 'secondary'}
@@ -520,6 +565,69 @@ export default function ClientesPage() {
                 ℹ️ Los clientes inactivos se mantienen en el sistema para preservar el historial de incidentes y propiedades
               </p>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Inmuebles del Cliente */}
+      <Dialog open={inmueblesDialogOpen} onOpenChange={setInmueblesDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Inmuebles del Cliente</DialogTitle>
+            <DialogDescription>
+              Selecciona un inmueble para ver su detalle completo
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {loadingInmuebles ? (
+              <p className="text-center text-gray-600 py-8">Cargando inmuebles...</p>
+            ) : clienteInmuebles.length === 0 ? (
+              <p className="text-center text-gray-600 py-8">
+                Este cliente no tiene inmuebles registrados
+              </p>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {clienteInmuebles.map((inmueble: any) => (
+                  <button
+                    key={inmueble.id_inmueble}
+                    onClick={() => {
+                      setInmueblesDialogOpen(false)
+                      router.push(`/inmueble/${inmueble.id_inmueble}`)
+                    }}
+                    className="w-full flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group text-left"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors flex-shrink-0">
+                      <Building2 className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900">
+                        {inmueble.tipos_inmuebles?.nombre || 'Inmueble'}
+                      </h3>
+                      <p className="text-sm text-gray-600 truncate">
+                        {[
+                          inmueble.calle,
+                          inmueble.altura,
+                          inmueble.piso ? `Piso ${inmueble.piso}` : null,
+                          inmueble.dpto ? `Dpto ${inmueble.dpto}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' ') || 'Sin dirección especificada'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {inmueble.localidad || 'Sin localidad'}, {inmueble.provincia || 'Sin provincia'}
+                      </p>
+                      <Badge
+                        variant={inmueble.esta_activo ? 'default' : 'secondary'}
+                        className={`mt-2 ${inmueble.esta_activo ? 'bg-green-500' : 'bg-gray-500'}`}
+                      >
+                        {inmueble.esta_activo ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
