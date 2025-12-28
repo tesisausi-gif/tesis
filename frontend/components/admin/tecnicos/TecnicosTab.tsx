@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -44,6 +46,7 @@ export default function TecnicosTab() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [actionsDialogOpen, setActionsDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('activos')
   const [filtroEspecialidad, setFiltroEspecialidad] = useState<string>('todas')
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState<{
@@ -51,6 +54,18 @@ export default function TecnicosTab() {
     nombre: string
   } | null>(null)
   const [tecnicoActual, setTecnicoActual] = useState<Tecnico | null>(null)
+  const [tecnicoEditando, setTecnicoEditando] = useState<Tecnico | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  // Form state
+  const [nombre, setNombre] = useState('')
+  const [apellido, setApellido] = useState('')
+  const [correo, setCorreo] = useState('')
+  const [telefono, setTelefono] = useState('')
+  const [dni, setDni] = useState('')
+  const [direccion, setDireccion] = useState('')
+  const [especialidad, setEspecialidad] = useState('')
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -105,6 +120,71 @@ export default function TecnicosTab() {
   const handleToggleActivo = async (tecnico: Tecnico) => {
     setActionsDialogOpen(false)
     await toggleActivo(tecnico)
+  }
+
+  const abrirEditar = (tecnico: Tecnico) => {
+    setActionsDialogOpen(false)
+    setTecnicoEditando(tecnico)
+    setNombre(tecnico.nombre)
+    setApellido(tecnico.apellido)
+    setCorreo(tecnico.correo_electronico)
+    setTelefono(tecnico.telefono || '')
+    setDni(tecnico.dni || '')
+    setDireccion(tecnico.direccion || '')
+    setEspecialidad(tecnico.especialidad || '')
+    setEditDialogOpen(true)
+  }
+
+  const actualizarTecnico = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!tecnicoEditando) return
+
+    setSubmitting(true)
+
+    try {
+      const { error } = await supabase
+        .from('tecnicos')
+        .update({
+          nombre,
+          apellido,
+          correo_electronico: correo,
+          telefono: telefono || null,
+          dni: dni || null,
+          direccion: direccion || null,
+          especialidad: especialidad || null,
+        })
+        .eq('id_tecnico', tecnicoEditando.id_tecnico)
+
+      if (error) {
+        toast.error('Error al actualizar técnico', {
+          description: error.message
+        })
+        return
+      }
+
+      toast.success('Técnico actualizado exitosamente')
+
+      // Limpiar formulario
+      setNombre('')
+      setApellido('')
+      setCorreo('')
+      setTelefono('')
+      setDni('')
+      setDireccion('')
+      setEspecialidad('')
+
+      // Cerrar dialog y recargar
+      setEditDialogOpen(false)
+      setTecnicoEditando(null)
+      cargarTecnicos()
+
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Error inesperado al actualizar técnico')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // Obtener especialidades únicas
@@ -274,6 +354,22 @@ export default function TecnicosTab() {
           </DialogHeader>
 
           <div className="space-y-3 py-4">
+            {/* Editar Técnico */}
+            <button
+              onClick={() => tecnicoActual && abrirEditar(tecnicoActual)}
+              className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+            >
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                <Edit className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-semibold text-gray-900">Editar Técnico</h3>
+                <p className="text-sm text-gray-600">
+                  Modificar información del técnico
+                </p>
+              </div>
+            </button>
+
             {/* Ver Calificaciones */}
             <button
               onClick={() => tecnicoActual && abrirCalificaciones(tecnicoActual)}
@@ -286,25 +382,6 @@ export default function TecnicosTab() {
                 <h3 className="font-semibold text-gray-900">Ver Calificaciones</h3>
                 <p className="text-sm text-gray-600">
                   Historial de calificaciones del técnico
-                </p>
-              </div>
-            </button>
-
-            {/* Editar Técnico */}
-            <button
-              onClick={() => {
-                setActionsDialogOpen(false)
-                toast.info('Función de edición próximamente disponible')
-              }}
-              className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
-            >
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                <Edit className="h-5 w-5 text-blue-600" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-900">Editar Técnico</h3>
-                <p className="text-sm text-gray-600">
-                  Modificar información del técnico
                 </p>
               </div>
             </button>
@@ -346,6 +423,113 @@ export default function TecnicosTab() {
               </p>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para Editar Técnico */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Editar Técnico</DialogTitle>
+            <DialogDescription>
+              Actualiza la información del técnico.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={actualizarTecnico} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-nombre">Nombre *</Label>
+                <Input
+                  id="edit-nombre"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-apellido">Apellido *</Label>
+                <Input
+                  id="edit-apellido"
+                  value={apellido}
+                  onChange={(e) => setApellido(e.target.value)}
+                  required
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-correo">Correo Electrónico *</Label>
+              <Input
+                id="edit-correo"
+                type="email"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                required
+                disabled={submitting}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-telefono">Teléfono</Label>
+                <Input
+                  id="edit-telefono"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  disabled={submitting}
+                  placeholder="+54 9 11 1234-5678"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-dni">DNI</Label>
+                <Input
+                  id="edit-dni"
+                  value={dni}
+                  onChange={(e) => setDni(e.target.value)}
+                  disabled={submitting}
+                  placeholder="12345678"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-direccion">Dirección</Label>
+              <Input
+                id="edit-direccion"
+                value={direccion}
+                onChange={(e) => setDireccion(e.target.value)}
+                disabled={submitting}
+                placeholder="Calle y número"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-especialidad">Especialidad</Label>
+              <Input
+                id="edit-especialidad"
+                value={especialidad}
+                onChange={(e) => setEspecialidad(e.target.value)}
+                disabled={submitting}
+                placeholder="Ej: Electricidad, Plomería, etc."
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1" disabled={submitting}>
+                {submitting ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </Card>

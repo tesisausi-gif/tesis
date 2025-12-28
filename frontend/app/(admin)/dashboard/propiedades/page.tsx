@@ -7,6 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
@@ -45,8 +48,22 @@ export default function InmueblesPage() {
   const [inmuebles, setInmuebles] = useState<Inmueble[]>([])
   const [loading, setLoading] = useState(true)
   const [actionsDialogOpen, setActionsDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [inmuebleActual, setInmuebleActual] = useState<Inmueble | null>(null)
+  const [inmuebleEditando, setInmuebleEditando] = useState<Inmueble | null>(null)
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('activos')
+  const [submitting, setSubmitting] = useState(false)
+
+  // Form state
+  const [provincia, setProvincia] = useState('')
+  const [localidad, setLocalidad] = useState('')
+  const [barrio, setBarrio] = useState('')
+  const [calle, setCalle] = useState('')
+  const [altura, setAltura] = useState('')
+  const [piso, setPiso] = useState('')
+  const [dpto, setDpto] = useState('')
+  const [infoAdicional, setInfoAdicional] = useState('')
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -147,6 +164,74 @@ export default function InmueblesPage() {
   const handleToggleActivo = async (inmueble: Inmueble) => {
     setActionsDialogOpen(false)
     await toggleActivoInmueble(inmueble)
+  }
+
+  const abrirEditar = (inmueble: Inmueble) => {
+    setActionsDialogOpen(false)
+    setInmuebleEditando(inmueble)
+    setProvincia(inmueble.provincia || '')
+    setLocalidad(inmueble.localidad || '')
+    setBarrio(inmueble.barrio || '')
+    setCalle(inmueble.calle || '')
+    setAltura(inmueble.altura || '')
+    setPiso(inmueble.piso || '')
+    setDpto(inmueble.dpto || '')
+    setInfoAdicional(inmueble.informacion_adicional || '')
+    setEditDialogOpen(true)
+  }
+
+  const actualizarInmueble = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!inmuebleEditando) return
+
+    setSubmitting(true)
+
+    try {
+      const { error } = await supabase
+        .from('inmuebles')
+        .update({
+          provincia: provincia || null,
+          localidad: localidad || null,
+          barrio: barrio || null,
+          calle: calle || null,
+          altura: altura || null,
+          piso: piso || null,
+          dpto: dpto || null,
+          informacion_adicional: infoAdicional || null,
+        })
+        .eq('id_inmueble', inmuebleEditando.id_inmueble)
+
+      if (error) {
+        toast.error('Error al actualizar inmueble', {
+          description: error.message
+        })
+        return
+      }
+
+      toast.success('Inmueble actualizado exitosamente')
+
+      // Limpiar formulario
+      setProvincia('')
+      setLocalidad('')
+      setBarrio('')
+      setCalle('')
+      setAltura('')
+      setPiso('')
+      setDpto('')
+      setInfoAdicional('')
+
+      // Cerrar dialog y recargar
+      setEditDialogOpen(false)
+      setInmuebleEditando(null)
+      cargarInmuebles()
+
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Error inesperado al actualizar inmueble')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // Filtrar inmuebles según el estado seleccionado
@@ -319,10 +404,7 @@ export default function InmueblesPage() {
 
             {/* Editar Inmueble */}
             <button
-              onClick={() => {
-                setActionsDialogOpen(false)
-                toast.info('Función de edición próximamente disponible')
-              }}
+              onClick={() => inmuebleActual && abrirEditar(inmuebleActual)}
               className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
             >
               <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -373,6 +455,125 @@ export default function InmueblesPage() {
               </p>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para Editar Inmueble */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Editar Inmueble</DialogTitle>
+            <DialogDescription>
+              Actualiza la información del inmueble.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={actualizarInmueble} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-provincia">Provincia</Label>
+                <Input
+                  id="edit-provincia"
+                  value={provincia}
+                  onChange={(e) => setProvincia(e.target.value)}
+                  disabled={submitting}
+                  placeholder="Buenos Aires"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-localidad">Localidad</Label>
+                <Input
+                  id="edit-localidad"
+                  value={localidad}
+                  onChange={(e) => setLocalidad(e.target.value)}
+                  disabled={submitting}
+                  placeholder="CABA"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-barrio">Barrio</Label>
+              <Input
+                id="edit-barrio"
+                value={barrio}
+                onChange={(e) => setBarrio(e.target.value)}
+                disabled={submitting}
+                placeholder="Palermo"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="edit-calle">Calle</Label>
+                <Input
+                  id="edit-calle"
+                  value={calle}
+                  onChange={(e) => setCalle(e.target.value)}
+                  disabled={submitting}
+                  placeholder="Av. Santa Fe"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-altura">Altura</Label>
+                <Input
+                  id="edit-altura"
+                  value={altura}
+                  onChange={(e) => setAltura(e.target.value)}
+                  disabled={submitting}
+                  placeholder="1234"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-piso">Piso</Label>
+                <Input
+                  id="edit-piso"
+                  value={piso}
+                  onChange={(e) => setPiso(e.target.value)}
+                  disabled={submitting}
+                  placeholder="5"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-dpto">Departamento</Label>
+                <Input
+                  id="edit-dpto"
+                  value={dpto}
+                  onChange={(e) => setDpto(e.target.value)}
+                  disabled={submitting}
+                  placeholder="A"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-info">Información Adicional</Label>
+              <Textarea
+                id="edit-info"
+                value={infoAdicional}
+                onChange={(e) => setInfoAdicional(e.target.value)}
+                disabled={submitting}
+                placeholder="Detalles adicionales del inmueble..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1" disabled={submitting}>
+                {submitting ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
 
