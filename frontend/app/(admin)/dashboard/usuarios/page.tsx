@@ -353,6 +353,32 @@ export default function UsuariosPage() {
         </Dialog>
       </div>
 
+      {/* Estadísticas */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>Total Empleados</CardDescription>
+            <CardTitle className="text-3xl">{usuarios.length}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>Empleados Activos</CardDescription>
+            <CardTitle className="text-3xl text-green-600">
+              {usuarios.filter(u => u.esta_activo).length}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>Empleados Inactivos</CardDescription>
+            <CardTitle className="text-3xl text-gray-500">
+              {usuarios.filter(u => !u.esta_activo).length}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

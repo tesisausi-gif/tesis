@@ -214,15 +214,42 @@ export default function TecnicosTab() {
   })
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <CardTitle>Técnicos Registrados</CardTitle>
-            <CardDescription>
-              Lista de todos los técnicos en el sistema
-            </CardDescription>
-          </div>
+    <div className="space-y-6">
+      {/* Estadísticas */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>Total Técnicos</CardDescription>
+            <CardTitle className="text-3xl">{tecnicos.length}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>Técnicos Activos</CardDescription>
+            <CardTitle className="text-3xl text-green-600">
+              {tecnicos.filter(t => t.esta_activo).length}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription>Técnicos Inactivos</CardDescription>
+            <CardTitle className="text-3xl text-gray-500">
+              {tecnicos.filter(t => !t.esta_activo).length}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle>Técnicos Registrados</CardTitle>
+              <CardDescription>
+                Lista de todos los técnicos en el sistema
+              </CardDescription>
+            </div>
 
           {/* Filtros */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -533,5 +560,6 @@ export default function TecnicosTab() {
         </DialogContent>
       </Dialog>
     </Card>
+    </div>
   )
 }
