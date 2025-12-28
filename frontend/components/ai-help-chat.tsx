@@ -182,19 +182,32 @@ export function AIHelpChat() {
       {!isOpen && mounted && (
         <motion.button
           drag
-          dragElastic={0.1}
+          dragElastic={0}
           dragMomentum={false}
+          dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+          dragConstraints={{
+            top: 0,
+            left: 0,
+            right: typeof window !== 'undefined' ? window.innerWidth - 48 : 0,
+            bottom: typeof window !== 'undefined' ? window.innerHeight - 48 : 0,
+          }}
           onDragEnd={handleDragEnd}
-          onClick={() => setIsOpen(true)}
+          onTap={(e, info) => {
+            // Solo abrir si no se arrastró
+            if (Math.abs(info.point.x - info.point.x) < 5) {
+              setIsOpen(true)
+            }
+          }}
           style={{
             x,
             y,
             position: 'fixed',
-            cursor: 'grab',
             touchAction: 'none',
+            WebkitTapHighlightColor: 'transparent',
+            zIndex: 9999,
           }}
-          whileTap={{ cursor: 'grabbing' }}
-          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 select-none animate-float flex items-center justify-center border-0"
+          whileDrag={{ scale: 1.1, cursor: 'grabbing' }}
+          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 select-none animate-float flex items-center justify-center border-0"
         >
           <MessageCircle className="h-5 w-5 text-white" />
         </motion.button>
