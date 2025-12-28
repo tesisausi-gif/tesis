@@ -72,12 +72,22 @@ export function AIHelpChat() {
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [hasMoved, setHasMoved] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
+
+  // Calcular posición inicial (bottom-right)
+  useEffect(() => {
+    if (position === null && typeof window !== 'undefined') {
+      setPosition({
+        x: window.innerWidth - 72, // 48px button + 24px margin
+        y: window.innerHeight - 72
+      })
+    }
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -122,9 +132,11 @@ export function AIHelpChat() {
   }
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (!position) return
     e.preventDefault()
     setIsDragging(true)
     setHasMoved(false)
+    // Guardar el offset entre el click y la posición del botón
     setDragStart({
       x: e.clientX - position.x,
       y: e.clientY - position.y
@@ -132,6 +144,7 @@ export function AIHelpChat() {
   }
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (!position) return
     e.preventDefault()
     setIsDragging(true)
     setHasMoved(false)
@@ -143,36 +156,40 @@ export function AIHelpChat() {
   }
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging) {
+    if (isDragging && position) {
       setHasMoved(true)
       const newX = e.clientX - dragStart.x
       const newY = e.clientY - dragStart.y
 
-      // Limitar posición dentro de la ventana
-      const maxX = window.innerWidth - 60
-      const maxY = window.innerHeight - 60
+      // Limitar posición dentro de la ventana (con margen para el botón de 48px)
+      const buttonSize = 48
+      const minPos = 0
+      const maxX = window.innerWidth - buttonSize
+      const maxY = window.innerHeight - buttonSize
 
       setPosition({
-        x: Math.max(-20, Math.min(newX, maxX)),
-        y: Math.max(-20, Math.min(newY, maxY))
+        x: Math.max(minPos, Math.min(newX, maxX)),
+        y: Math.max(minPos, Math.min(newY, maxY))
       })
     }
   }
 
   const handleTouchMove = (e: TouchEvent) => {
-    if (isDragging) {
+    if (isDragging && position) {
       setHasMoved(true)
       const touch = e.touches[0]
       const newX = touch.clientX - dragStart.x
       const newY = touch.clientY - dragStart.y
 
-      // Limitar posición dentro de la ventana
-      const maxX = window.innerWidth - 60
-      const maxY = window.innerHeight - 60
+      // Limitar posición dentro de la ventana (con margen para el botón de 48px)
+      const buttonSize = 48
+      const minPos = 0
+      const maxX = window.innerWidth - buttonSize
+      const maxY = window.innerHeight - buttonSize
 
       setPosition({
-        x: Math.max(-20, Math.min(newX, maxX)),
-        y: Math.max(-20, Math.min(newY, maxY))
+        x: Math.max(minPos, Math.min(newX, maxX)),
+        y: Math.max(minPos, Math.min(newY, maxY))
       })
     }
   }
@@ -210,20 +227,22 @@ export function AIHelpChat() {
   return (
     <>
       {/* Botón flotante */}
-      {!isOpen && (
+      {!isOpen && position && (
         <Button
           ref={buttonRef}
           onClick={handleButtonClick}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           style={{
-            transform: `translate(${position.x}px, ${position.y}px)`,
+            position: 'fixed',
+            left: `${position.x}px`,
+            top: `${position.y}px`,
             cursor: isDragging ? 'grabbing' : 'grab',
             touchAction: 'none',
             WebkitUserSelect: 'none',
             userSelect: 'none'
           }}
-          className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl transition-shadow duration-300 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 select-none"
+          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl transition-shadow duration-300 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 z-50 select-none"
           size="icon"
         >
           <MessageCircle className="h-5 w-5" />
