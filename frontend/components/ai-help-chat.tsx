@@ -77,12 +77,22 @@ export function AIHelpChat() {
 
   const x = useMotionValue(0)
   const y = useMotionValue(0)
+  const [dragConstraints, setDragConstraints] = useState({
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  })
 
-  // Inicializar posición una sola vez
+  // Inicializar posición y constraints
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      x.set(window.innerWidth - 80)
-      y.set(window.innerHeight - 180)
+      setDragConstraints({
+        top: 0,
+        left: 0,
+        right: window.innerWidth - 48,
+        bottom: window.innerHeight - 48,
+      })
     }
   }, [])
 
@@ -136,9 +146,18 @@ export function AIHelpChat() {
           drag
           dragElastic={0}
           dragMomentum={false}
-          style={{ x, y }}
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-24 right-4 h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 select-none animate-float flex items-center justify-center border-0 z-[9999] cursor-pointer touch-none"
+          dragConstraints={dragConstraints}
+          dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+          whileDrag={{ scale: 1.1 }}
+          onTap={() => setIsOpen(true)}
+          style={{
+            x,
+            y,
+            touchAction: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+          }}
+          className="fixed bottom-24 right-4 h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 flex items-center justify-center border-0 z-[9999] cursor-grab active:cursor-grabbing"
         >
           <MessageCircle className="h-5 w-5 text-white" />
         </motion.button>
