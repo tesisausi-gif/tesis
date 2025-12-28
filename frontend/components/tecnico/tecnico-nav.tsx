@@ -1,5 +1,6 @@
 'use client'
 
+import { memo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, ClipboardList, User, LogOut, Wrench } from 'lucide-react'
@@ -25,12 +26,12 @@ const navItems = [
   },
 ]
 
-export function TecnicoNav() {
+function TecnicoNavComponent() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
     if (error) {
       toast.error('Error al cerrar sesión')
@@ -39,7 +40,7 @@ export function TecnicoNav() {
       router.push('/login')
       router.refresh()
     }
-  }
+  }, [router, supabase])
 
   return (
     <>
@@ -79,3 +80,5 @@ export function TecnicoNav() {
     </>
   )
 }
+
+export const TecnicoNav = memo(TecnicoNavComponent)

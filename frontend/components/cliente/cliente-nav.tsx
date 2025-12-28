@@ -1,5 +1,6 @@
 'use client'
 
+import { memo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, AlertCircle, Building2, User, LogOut } from 'lucide-react'
@@ -30,12 +31,12 @@ const navItems = [
   },
 ]
 
-export function ClienteNav() {
+function ClienteNavComponent() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
     if (error) {
       toast.error('Error al cerrar sesión')
@@ -44,7 +45,7 @@ export function ClienteNav() {
       router.push('/login')
       router.refresh()
     }
-  }
+  }, [router, supabase])
 
   return (
     <>
@@ -88,3 +89,5 @@ export function ClienteNav() {
     </>
   )
 }
+
+export const ClienteNav = memo(ClienteNavComponent)
