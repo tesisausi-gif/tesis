@@ -87,6 +87,13 @@ export function AIHelpChat() {
   // Inicializar posición y constraints
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Posición inicial: esquina inferior derecha
+      const initialX = window.innerWidth - 64 // 48px button + 16px margin
+      const initialY = window.innerHeight - 160 // espacio para nav bottom
+
+      x.set(initialX)
+      y.set(initialY)
+
       setDragConstraints({
         top: 0,
         left: 0,
@@ -94,7 +101,7 @@ export function AIHelpChat() {
         bottom: window.innerHeight - 48,
       })
     }
-  }, [])
+  }, [x, y])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -153,11 +160,12 @@ export function AIHelpChat() {
           style={{
             x,
             y,
+            position: 'fixed',
             touchAction: 'none',
             WebkitUserSelect: 'none',
             userSelect: 'none',
           }}
-          className="fixed bottom-24 right-4 h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 flex items-center justify-center border-0 z-[9999] cursor-grab active:cursor-grabbing"
+          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 flex items-center justify-center border-0 z-[9999] cursor-grab active:cursor-grabbing"
         >
           <MessageCircle className="h-5 w-5 text-white" />
         </motion.button>
