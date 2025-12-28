@@ -35,30 +35,63 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Rutas protegidas que requieren autenticación
-  const protectedRoutes = ['/dashboard', '/profile', '/incidencias']
-  const isProtectedRoute = protectedRoutes.some(route =>
-    request.nextUrl.pathname.startsWith(route)
-  )
-
-  // Rutas públicas (login, register, etc.)
-  const publicRoutes = ['/login', '/register', '/']
-  const isPublicRoute = publicRoutes.some(route =>
-    request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith('/register')
-  )
-
-  // Si es una ruta protegida y no hay usuario, redirigir a login
-  if (isProtectedRoute && !user) {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/login'
-    redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
+  // Verificar rol del usuario si está autenticado
+  let userRole: string | null = null
+  if (user) {
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('rol')
+      .eq('id', user.id)
+      .single()
+    userRole = usuario?.rol || null
   }
 
-  // Si el usuario está autenticado y trata de acceder a login, redirigir al dashboard
-  if (user && request.nextUrl.pathname === '/login') {
+  const pathname = request.nextUrl.pathname
+
+  // Rutas protegidas por rol
+  const isClienteRoute = pathname.startsWith('/cliente')
+  const isTecnicoRoute = pathname.startsWith('/tecnico')
+  const isAdminRoute = pathname.startsWith('/dashboard')
+
+  // Rutas públicas
+  const publicRoutes = ['/login', '/register', '/']
+  const isPublicRoute = publicRoutes.some(route =>
+    pathname === route || pathname.startsWith('/register')
+  )
+
+  // Proteger rutas según rol
+  if (isClienteRoute || isTecnicoRoute || isAdminRoute) {
+    if (!user) {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/login'
+      redirectUrl.searchParams.set('redirectTo', pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // Verificar que el rol coincida con la ruta
+    if (isClienteRoute && userRole !== 'cliente') {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    if (isTecnicoRoute && userRole !== 'tecnico') {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    if (isAdminRoute && userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+  }
+
+  // Si el usuario está autenticado y trata de acceder a login, redirigir según rol
+  if (user && pathname === '/login') {
     const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/dashboard'
+    if (userRole === 'admin') {
+      redirectUrl.pathname = '/dashboard'
+    } else if (userRole === 'tecnico') {
+      redirectUrl.pathname = '/tecnico'
+    } else if (userRole === 'cliente') {
+      redirectUrl.pathname = '/cliente'
+    } else {
+      redirectUrl.pathname = '/dashboard'
+    }
     return NextResponse.redirect(redirectUrl)
   }
 

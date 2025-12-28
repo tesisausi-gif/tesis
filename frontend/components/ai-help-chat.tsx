@@ -88,13 +88,27 @@ export function AIHelpChat() {
     }
   }
 
-  const [mounted, setMounted] = useState(false)
-  const x = useMotionValue(getSafePosition().x)
-  const y = useMotionValue(getSafePosition().y)
+  // Estado de renderizado en cliente
+  const [isClient, setIsClient] = useState(false)
 
-  // Inicializar posición cuando se monte el componente
+  // Inicializar posición solo en el cliente
+  const getInitialX = () => {
+    if (typeof window === 'undefined') return 300
+    return Math.max(16, window.innerWidth - 48 - 16)
+  }
+
+  const getInitialY = () => {
+    if (typeof window === 'undefined') return 400
+    return Math.max(16, window.innerHeight - 48 - 16 - 100)
+  }
+
+  const x = useMotionValue(getInitialX())
+  const y = useMotionValue(getInitialY())
+
+  // Marcar como cliente cuando se monte
   useEffect(() => {
-    setMounted(true)
+    setIsClient(true)
+    // Actualizar posición al montarse
     const pos = getSafePosition()
     x.set(pos.x)
     y.set(pos.y)
@@ -176,10 +190,15 @@ export function AIHelpChat() {
     }
   }
 
+  // No renderizar en el servidor para evitar problemas de hidratación
+  if (!isClient) {
+    return null
+  }
+
   return (
     <>
       {/* Botón flotante */}
-      {!isOpen && mounted && (
+      {!isOpen && (
         <motion.button
           drag
           dragElastic={0}
