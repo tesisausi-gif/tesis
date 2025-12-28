@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { CheckCircle2, XCircle, Star, Eye, Power, Filter } from 'lucide-react'
+import { CheckCircle2, XCircle, Star, Eye, Power, Filter, Edit } from 'lucide-react'
 import TecnicoCalificacionesDialog from './TecnicoCalificacionesDialog'
 import {
   Dialog,
@@ -286,6 +286,25 @@ export default function TecnicosTab() {
                 <h3 className="font-semibold text-gray-900">Ver Calificaciones</h3>
                 <p className="text-sm text-gray-600">
                   Historial de calificaciones del técnico
+                </p>
+              </div>
+            </button>
+
+            {/* Editar Técnico */}
+            <button
+              onClick={() => {
+                setActionsDialogOpen(false)
+                toast.info('Función de edición próximamente disponible')
+              }}
+              className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+            >
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                <Edit className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-semibold text-gray-900">Editar Técnico</h3>
+                <p className="text-sm text-gray-600">
+                  Modificar información del técnico
                 </p>
               </div>
             </button>
