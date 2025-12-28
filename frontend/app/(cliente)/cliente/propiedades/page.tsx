@@ -10,25 +10,14 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Building2, MapPin, Plus, Home, Edit, Trash2, Power, MoreVertical } from 'lucide-react'
+import { Building2, MapPin, Plus, Home, Edit, Power, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 
 interface TipoInmueble {
   id_tipo_inmueble: number
@@ -69,8 +58,6 @@ export default function ClientePropiedades() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editingInmueble, setEditingInmueble] = useState<Inmueble | null>(null)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [inmuebleToDelete, setInmuebleToDelete] = useState<Inmueble | null>(null)
 
   // Location data
   const [provincias, setProvincias] = useState<Provincia[]>([])
@@ -336,36 +323,6 @@ export default function ClientePropiedades() {
     }
   }
 
-  const confirmarEliminar = (inmueble: Inmueble) => {
-    setInmuebleToDelete(inmueble)
-    setDeleteDialogOpen(true)
-  }
-
-  const eliminarInmueble = async () => {
-    if (!inmuebleToDelete) return
-
-    try {
-      const { error } = await supabase
-        .from('inmuebles')
-        .delete()
-        .eq('id_inmueble', inmuebleToDelete.id_inmueble)
-
-      if (error) {
-        toast.error('Error al eliminar inmueble', {
-          description: error.message
-        })
-        return
-      }
-
-      toast.success('Inmueble eliminado exitosamente')
-      setDeleteDialogOpen(false)
-      setInmuebleToDelete(null)
-      cargarInmuebles()
-    } catch (error) {
-      console.error('Error:', error)
-      toast.error('Error inesperado')
-    }
-  }
 
   if (loading) {
     return (
@@ -450,17 +407,12 @@ export default function ClientePropiedades() {
                           <Edit className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleEstadoInmueble(inmueble)}>
+                        <DropdownMenuItem
+                          onClick={() => toggleEstadoInmueble(inmueble)}
+                          className={inmueble.esta_activo ? 'text-orange-600' : 'text-green-600'}
+                        >
                           <Power className="mr-2 h-4 w-4" />
                           {inmueble.esta_activo ? 'Dar de Baja' : 'Activar'}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => confirmarEliminar(inmueble)}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -709,39 +661,6 @@ export default function ClientePropiedades() {
         </DialogContent>
       </Dialog>
 
-      {/* Alert Dialog para confirmar eliminación */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El inmueble será eliminado permanentemente
-              de tu cuenta.
-              {inmuebleToDelete && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-md">
-                  <p className="font-medium text-gray-900">
-                    {inmuebleToDelete.tipos_inmuebles?.nombre || 'Inmueble'}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {[inmuebleToDelete.calle, inmuebleToDelete.altura].filter(Boolean).join(' ')}
-                  </p>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse md:flex-row gap-2">
-            <AlertDialogCancel className="w-full md:w-auto">
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={eliminarInmueble}
-              className="w-full md:w-auto bg-red-600 hover:bg-red-700"
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }
