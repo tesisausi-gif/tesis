@@ -202,11 +202,15 @@ export function AIHelpChat() {
     const screenWidth = window.innerWidth
     const screenHeight = window.innerHeight
 
-    // Calcular distancias a cada borde
-    const distToLeft = position.x
-    const distToRight = screenWidth - (position.x + buttonSize)
-    const distToTop = position.y
-    const distToBottom = screenHeight - (position.y + buttonSize)
+    // Centro del botón
+    const centerX = position.x + buttonSize / 2
+    const centerY = position.y + buttonSize / 2
+
+    // Calcular distancias desde el centro del botón a cada borde
+    const distToLeft = centerX
+    const distToRight = screenWidth - centerX
+    const distToTop = centerY
+    const distToBottom = screenHeight - centerY
 
     // Encontrar el borde más cercano
     const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom)
@@ -214,16 +218,18 @@ export function AIHelpChat() {
     let newX = position.x
     let newY = position.y
 
-    // Pegar al borde más cercano
+    // Pegar al borde más cercano (solo uno)
     if (minDist === distToLeft) {
+      // Pegar a la izquierda
       newX = margin
     } else if (minDist === distToRight) {
+      // Pegar a la derecha
       newX = screenWidth - buttonSize - margin
-    }
-
-    if (minDist === distToTop) {
+    } else if (minDist === distToTop) {
+      // Pegar arriba
       newY = margin
     } else if (minDist === distToBottom) {
+      // Pegar abajo
       newY = screenHeight - buttonSize - margin
     }
 
