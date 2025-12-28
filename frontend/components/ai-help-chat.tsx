@@ -88,31 +88,17 @@ export function AIHelpChat() {
     }
   }
 
-  // Estado de renderizado en cliente
-  const [isClient, setIsClient] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
 
-  // Inicializar posición solo en el cliente
-  const getInitialX = () => {
-    if (typeof window === 'undefined') return 300
-    return Math.max(16, window.innerWidth - 48 - 16)
-  }
-
-  const getInitialY = () => {
-    if (typeof window === 'undefined') return 400
-    return Math.max(16, window.innerHeight - 48 - 16 - 100)
-  }
-
-  const x = useMotionValue(getInitialX())
-  const y = useMotionValue(getInitialY())
-
-  // Marcar como cliente cuando se monte
+  // Inicializar cuando se monte
   useEffect(() => {
-    setIsClient(true)
-    // Actualizar posición al montarse
     const pos = getSafePosition()
     x.set(pos.x)
     y.set(pos.y)
-  }, [])
+    setMounted(true)
+  }, [x, y])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -190,15 +176,10 @@ export function AIHelpChat() {
     }
   }
 
-  // No renderizar en el servidor para evitar problemas de hidratación
-  if (!isClient) {
-    return null
-  }
-
   return (
     <>
       {/* Botón flotante */}
-      {!isOpen && (
+      {!isOpen && mounted && (
         <motion.button
           drag
           dragElastic={0}
@@ -211,7 +192,7 @@ export function AIHelpChat() {
             bottom: typeof window !== 'undefined' ? window.innerHeight - 48 : 0,
           }}
           onDragEnd={handleDragEnd}
-          onClick={() => setIsOpen(true)}
+          onTap={() => setIsOpen(true)}
           style={{
             x,
             y,
