@@ -192,12 +192,7 @@ export function AIHelpChat() {
             bottom: typeof window !== 'undefined' ? window.innerHeight - 48 : 0,
           }}
           onDragEnd={handleDragEnd}
-          onTap={(e, info) => {
-            // Solo abrir si no se arrastró
-            if (Math.abs(info.point.x - info.point.x) < 5) {
-              setIsOpen(true)
-            }
-          }}
+          onClick={() => setIsOpen(true)}
           style={{
             x,
             y,
