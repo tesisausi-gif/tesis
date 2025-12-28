@@ -75,6 +75,7 @@ export function AIHelpChat() {
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  const [mounted, setMounted] = useState(false)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const [dragConstraints, setDragConstraints] = useState({
@@ -100,6 +101,9 @@ export function AIHelpChat() {
         right: window.innerWidth - 48,
         bottom: window.innerHeight - 48,
       })
+
+      // Mostrar después de establecer la posición
+      setMounted(true)
     }
   }, [x, y])
 
@@ -148,7 +152,7 @@ export function AIHelpChat() {
   return (
     <>
       {/* Botón flotante */}
-      {!isOpen && (
+      {!isOpen && mounted && (
         <motion.button
           drag
           dragElastic={0}
