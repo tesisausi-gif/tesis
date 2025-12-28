@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Plus, Edit, Eye, Power, CheckCircle2, XCircle } from 'lucide-react'
+import { Plus, Edit, Eye, Power, CheckCircle2, XCircle, Filter } from 'lucide-react'
 
 interface Cliente {
   id_cliente: number
@@ -33,6 +33,7 @@ export default function ClientesPage() {
   const [actionsDialogOpen, setActionsDialogOpen] = useState(false)
   const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null)
   const [clienteActual, setClienteActual] = useState<Cliente | null>(null)
+  const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('activos')
 
   // Form state
   const [email, setEmail] = useState('')
@@ -242,6 +243,17 @@ export default function ClientesPage() {
     await toggleActivoCliente(cliente)
   }
 
+  // Filtrar clientes según el estado seleccionado
+  const clientesFiltrados = clientes.filter((cliente) => {
+    const estaActivo = Boolean(cliente.esta_activo)
+    const cumpleEstado =
+      filtroEstado === 'todos' ||
+      (filtroEstado === 'activos' && estaActivo) ||
+      (filtroEstado === 'inactivos' && !estaActivo)
+
+    return cumpleEstado
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -349,10 +361,29 @@ export default function ClientesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Clientes Registrados</CardTitle>
-          <CardDescription>
-            Lista de todos los clientes del sistema
-          </CardDescription>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle>Clientes Registrados</CardTitle>
+              <CardDescription>
+                Lista de todos los clientes del sistema
+              </CardDescription>
+            </div>
+
+            {/* Filtro de Estado */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500 hidden sm:block" />
+              <Select value={filtroEstado} onValueChange={(value: any) => setFiltroEstado(value)}>
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos los estados</SelectItem>
+                  <SelectItem value="activos">Activos</SelectItem>
+                  <SelectItem value="inactivos">Inactivos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -360,6 +391,10 @@ export default function ClientesPage() {
           ) : clientes.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
               No hay clientes registrados
+            </p>
+          ) : clientesFiltrados.length === 0 ? (
+            <p className="text-center text-gray-600 py-4">
+              No hay clientes {filtroEstado !== 'todos' && filtroEstado}
             </p>
           ) : (
             <Table>
@@ -375,7 +410,7 @@ export default function ClientesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clientes.map((cliente) => (
+                {clientesFiltrados.map((cliente) => (
                   <TableRow key={cliente.id_cliente}>
                     <TableCell className="font-medium">
                       {cliente.nombre} {cliente.apellido}
