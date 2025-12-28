@@ -75,6 +75,7 @@ export function AIHelpChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [mounted, setMounted] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -86,6 +87,7 @@ export function AIHelpChat() {
         x: window.innerWidth - 64,
         y: window.innerHeight - 160,
       })
+      setMounted(true)
     }
   }, [])
 
@@ -213,7 +215,7 @@ export function AIHelpChat() {
   return (
     <>
       {/* Botón flotante */}
-      {!isOpen && (
+      {!isOpen && mounted && (
         <button
           ref={buttonRef}
           onMouseDown={handleMouseDown}
@@ -227,7 +229,7 @@ export function AIHelpChat() {
             userSelect: 'none',
             WebkitUserSelect: 'none',
           }}
-          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 flex items-center justify-center border-0 z-[9999] cursor-grab active:cursor-grabbing transition-shadow"
+          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 flex items-center justify-center border-0 z-[9999] cursor-grab active:cursor-grabbing transition-shadow animate-float"
         >
           <MessageCircle className="h-5 w-5 text-white" />
         </button>
