@@ -118,11 +118,12 @@ export default function TecnicosTab() {
 
   // Filtrar técnicos según los filtros seleccionados
   const tecnicosFiltrados = tecnicos.filter((tecnico) => {
-    // Filtro por estado
+    // Filtro por estado - convertir a booleano para manejar tanto números como booleanos
+    const estaActivo = Boolean(tecnico.esta_activo)
     const cumpleEstado =
       filtroEstado === 'todos' ||
-      (filtroEstado === 'activos' && tecnico.esta_activo === true) ||
-      (filtroEstado === 'inactivos' && tecnico.esta_activo === false)
+      (filtroEstado === 'activos' && estaActivo) ||
+      (filtroEstado === 'inactivos' && !estaActivo)
 
     // Filtro por especialidad
     const cumpleEspecialidad =
