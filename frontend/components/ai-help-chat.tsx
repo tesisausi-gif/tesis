@@ -73,18 +73,29 @@ export function AIHelpChat() {
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [initialPos, setInitialPos] = useState({ x: 0, y: 0 })
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
-
-  // Inicializar posición en bottom-right
+  // Calcular posición inicial solo una vez
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      x.set(window.innerWidth - 72)
-      y.set(window.innerHeight - 72)
+      setInitialPos({
+        x: window.innerWidth - 72,
+        y: window.innerHeight - 72
+      })
     }
   }, [])
+
+  const x = useMotionValue(initialPos.x)
+  const y = useMotionValue(initialPos.y)
+
+  // Actualizar cuando cambie initialPos
+  useEffect(() => {
+    if (initialPos.x !== 0 || initialPos.y !== 0) {
+      x.set(initialPos.x)
+      y.set(initialPos.y)
+    }
+  }, [initialPos.x, initialPos.y])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
