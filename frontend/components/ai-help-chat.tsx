@@ -73,29 +73,32 @@ export function AIHelpChat() {
   ])
   const [inputMessage, setInputMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [initialPos, setInitialPos] = useState({ x: 0, y: 0 })
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Calcular posición inicial solo una vez
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setInitialPos({
-        x: window.innerWidth - 72,
-        y: window.innerHeight - 72
-      })
+  // Función para obtener posición segura
+  const getSafePosition = () => {
+    if (typeof window === 'undefined') {
+      return { x: 300, y: 500 } // Valores por defecto seguros
     }
+    const buttonSize = 48
+    const margin = 16
+    return {
+      x: Math.max(margin, window.innerWidth - buttonSize - margin),
+      y: Math.max(margin, window.innerHeight - buttonSize - margin - 100) // -100 para barra de navegación móvil
+    }
+  }
+
+  const [mounted, setMounted] = useState(false)
+  const x = useMotionValue(getSafePosition().x)
+  const y = useMotionValue(getSafePosition().y)
+
+  // Inicializar posición cuando se monte el componente
+  useEffect(() => {
+    setMounted(true)
+    const pos = getSafePosition()
+    x.set(pos.x)
+    y.set(pos.y)
   }, [])
-
-  const x = useMotionValue(initialPos.x)
-  const y = useMotionValue(initialPos.y)
-
-  // Actualizar cuando cambie initialPos
-  useEffect(() => {
-    if (initialPos.x !== 0 || initialPos.y !== 0) {
-      x.set(initialPos.x)
-      y.set(initialPos.y)
-    }
-  }, [initialPos.x, initialPos.y])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -141,7 +144,7 @@ export function AIHelpChat() {
 
   const handleDragEnd = (event: any, info: PanInfo) => {
     const buttonSize = 48
-    const margin = 24
+    const margin = 16
     const screenWidth = window.innerWidth
     const screenHeight = window.innerHeight
 
@@ -169,14 +172,14 @@ export function AIHelpChat() {
     } else if (minDist === distToTop) {
       animate(y, margin, { type: 'spring', stiffness: 300, damping: 30 })
     } else if (minDist === distToBottom) {
-      animate(y, screenHeight - buttonSize - margin, { type: 'spring', stiffness: 300, damping: 30 })
+      animate(y, Math.max(margin, screenHeight - buttonSize - margin - 100), { type: 'spring', stiffness: 300, damping: 30 })
     }
   }
 
   return (
     <>
       {/* Botón flotante */}
-      {!isOpen && (
+      {!isOpen && mounted && (
         <motion.button
           drag
           dragElastic={0.1}
