@@ -75,46 +75,16 @@ export function AIHelpChat() {
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Función para obtener posición segura
-  const getSafePosition = () => {
-    if (typeof window === 'undefined') {
-      return { x: 16, y: 300 } // Posición conservadora por defecto
-    }
-    const buttonSize = 48
-    const margin = 16
-    const topNavHeight = 56 // h-14 = 3.5rem
-    const bottomNavHeight = 80 // Estimado con padding y safe area
-    const totalNavSpace = topNavHeight + bottomNavHeight + margin
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
 
-    // Calcular posición visible en todas las pantallas
-    const maxX = window.innerWidth - buttonSize - margin
-    const maxY = window.innerHeight - buttonSize - totalNavSpace
-
-    // Asegurar que siempre esté dentro del viewport
-    return {
-      x: Math.min(maxX, window.innerWidth - buttonSize - margin * 2),
-      y: Math.min(maxY, window.innerHeight - buttonSize - totalNavSpace - margin)
-    }
-  }
-
-  const [mounted, setMounted] = useState(false)
-  // Inicializar con valores seguros que funcionen en todas las pantallas
-  const x = useMotionValue(16)
-  const y = useMotionValue(300)
-
-  // Inicializar cuando se monte
+  // Inicializar posición una sola vez
   useEffect(() => {
-    const pos = getSafePosition()
-    x.set(pos.x)
-    y.set(pos.y)
-
-    // Pequeño delay para asegurar que el DOM esté listo
-    const timer = setTimeout(() => {
-      setMounted(true)
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [x, y])
+    if (typeof window !== 'undefined') {
+      x.set(window.innerWidth - 80)
+      y.set(window.innerHeight - 180)
+    }
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -158,67 +128,17 @@ export function AIHelpChat() {
     }
   }
 
-  const handleDragEnd = (event: any, info: PanInfo) => {
-    const buttonSize = 48
-    const margin = 16
-    const screenWidth = window.innerWidth
-    const screenHeight = window.innerHeight
-
-    const currentX = x.get()
-    const currentY = y.get()
-
-    // Centro del botón
-    const centerX = currentX + buttonSize / 2
-    const centerY = currentY + buttonSize / 2
-
-    // Calcular distancias desde el centro del botón a cada borde
-    const distToLeft = centerX
-    const distToRight = screenWidth - centerX
-    const distToTop = centerY
-    const distToBottom = screenHeight - centerY
-
-    // Encontrar el borde más cercano
-    const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom)
-
-    // Animar al borde más cercano
-    if (minDist === distToLeft) {
-      animate(x, margin, { type: 'spring', stiffness: 300, damping: 30 })
-    } else if (minDist === distToRight) {
-      animate(x, screenWidth - buttonSize - margin, { type: 'spring', stiffness: 300, damping: 30 })
-    } else if (minDist === distToTop) {
-      animate(y, margin, { type: 'spring', stiffness: 300, damping: 30 })
-    } else if (minDist === distToBottom) {
-      animate(y, Math.max(margin, screenHeight - buttonSize - margin - 100), { type: 'spring', stiffness: 300, damping: 30 })
-    }
-  }
-
   return (
     <>
       {/* Botón flotante */}
-      {!isOpen && mounted && (
+      {!isOpen && (
         <motion.button
           drag
           dragElastic={0}
           dragMomentum={false}
-          dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
-          dragConstraints={{
-            top: 0,
-            left: 0,
-            right: typeof window !== 'undefined' ? window.innerWidth - 48 : 0,
-            bottom: typeof window !== 'undefined' ? window.innerHeight - 48 : 0,
-          }}
-          onDragEnd={handleDragEnd}
-          onTap={() => setIsOpen(true)}
-          style={{
-            x,
-            y,
-            position: 'fixed',
-            touchAction: 'none',
-            WebkitTapHighlightColor: 'transparent',
-            zIndex: 9999,
-          }}
-          whileDrag={{ scale: 1.1, cursor: 'grabbing' }}
-          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 select-none animate-float flex items-center justify-center border-0"
+          style={{ x, y }}
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-24 right-4 h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 select-none animate-float flex items-center justify-center border-0 z-[9999] cursor-pointer touch-none"
         >
           <MessageCircle className="h-5 w-5 text-white" />
         </motion.button>
