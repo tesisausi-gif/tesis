@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Plus, Trash2, Edit } from 'lucide-react'
+import { Plus, Edit, Eye, Power, CheckCircle2, XCircle } from 'lucide-react'
 
 interface Cliente {
   id_cliente: number
@@ -30,7 +30,9 @@ export default function ClientesPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [actionsDialogOpen, setActionsDialogOpen] = useState(false)
   const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null)
+  const [clienteActual, setClienteActual] = useState<Cliente | null>(null)
 
   // Form state
   const [email, setEmail] = useState('')
@@ -201,30 +203,43 @@ export default function ClientesPage() {
     }
   }
 
-  const eliminarCliente = async (idCliente: number) => {
-    if (!confirm('¿Estás seguro de eliminar este cliente? Esto también eliminará su usuario asociado.')) return
+  const toggleActivoCliente = async (cliente: Cliente) => {
+    const nuevoEstado = !cliente.esta_activo
 
     try {
-      // Llamar al endpoint que maneja la eliminación del cliente
-      const response = await fetch(`/api/admin/delete-cliente/${idCliente}`, {
-        method: 'DELETE',
-      })
+      const { error } = await supabase
+        .from('clientes')
+        .update({ esta_activo: nuevoEstado })
+        .eq('id_cliente', cliente.id_cliente)
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        toast.error('Error al eliminar cliente', {
-          description: result.error
+      if (error) {
+        toast.error('Error al actualizar estado del cliente', {
+          description: error.message
         })
         return
       }
 
-      toast.success('Cliente eliminado exitosamente')
+      toast.success(nuevoEstado ? 'Cliente activado exitosamente' : 'Cliente desactivado exitosamente')
       cargarClientes()
     } catch (error) {
       console.error('Error:', error)
-      toast.error('Error al eliminar cliente')
+      toast.error('Error al actualizar estado del cliente')
     }
+  }
+
+  const abrirModalAcciones = (cliente: Cliente) => {
+    setClienteActual(cliente)
+    setActionsDialogOpen(true)
+  }
+
+  const abrirEdicionDesdeModal = (cliente: Cliente) => {
+    setActionsDialogOpen(false)
+    abrirEditar(cliente)
+  }
+
+  const handleToggleActivo = async (cliente: Cliente) => {
+    setActionsDialogOpen(false)
+    await toggleActivoCliente(cliente)
   }
 
   return (
@@ -369,30 +384,35 @@ export default function ClientesPage() {
                     <TableCell>{cliente.dni || '-'}</TableCell>
                     <TableCell>{cliente.telefono || '-'}</TableCell>
                     <TableCell>
-                      <Badge variant={cliente.esta_activo ? 'default' : 'secondary'}>
-                        {cliente.esta_activo ? 'Activo' : 'Inactivo'}
+                      <Badge
+                        variant={cliente.esta_activo ? 'default' : 'secondary'}
+                        className={cliente.esta_activo ? 'bg-green-500' : 'bg-gray-500'}
+                      >
+                        {cliente.esta_activo ? (
+                          <>
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Activo
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Inactivo
+                          </>
+                        )}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {new Date(cliente.fecha_creacion).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => abrirEditar(cliente)}
-                        >
-                          <Edit className="h-4 w-4 text-blue-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => eliminarCliente(cliente.id_cliente)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => abrirModalAcciones(cliente)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -401,6 +421,73 @@ export default function ClientesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Acciones */}
+      <Dialog open={actionsDialogOpen} onOpenChange={setActionsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Acciones de Cliente</DialogTitle>
+            <DialogDescription>
+              {clienteActual && `${clienteActual.nombre} ${clienteActual.apellido}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-4">
+            {/* Editar Cliente */}
+            <button
+              onClick={() => clienteActual && abrirEdicionDesdeModal(clienteActual)}
+              className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+            >
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                <Edit className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-semibold text-gray-900">Editar Cliente</h3>
+                <p className="text-sm text-gray-600">
+                  Modificar información del cliente
+                </p>
+              </div>
+            </button>
+
+            {/* Activar/Desactivar */}
+            <button
+              onClick={() => clienteActual && handleToggleActivo(clienteActual)}
+              className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all group ${
+                clienteActual?.esta_activo
+                  ? 'border-gray-200 hover:border-orange-500 hover:bg-orange-50'
+                  : 'border-gray-200 hover:border-green-500 hover:bg-green-50'
+              }`}
+            >
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center transition-colors ${
+                clienteActual?.esta_activo
+                  ? 'bg-orange-100 group-hover:bg-orange-200'
+                  : 'bg-green-100 group-hover:bg-green-200'
+              }`}>
+                <Power className={`h-5 w-5 ${
+                  clienteActual?.esta_activo ? 'text-orange-600' : 'text-green-600'
+                }`} />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-semibold text-gray-900">
+                  {clienteActual?.esta_activo ? 'Desactivar' : 'Activar'} Cliente
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {clienteActual?.esta_activo
+                    ? 'El cliente no podrá acceder al sistema ni reportar incidentes'
+                    : 'El cliente podrá acceder al sistema y reportar incidentes'}
+                </p>
+              </div>
+            </button>
+
+            {/* Nota informativa */}
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-xs text-blue-800">
+                ℹ️ Los clientes inactivos se mantienen en el sistema para preservar el historial de incidentes y propiedades
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog para Editar Cliente */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
