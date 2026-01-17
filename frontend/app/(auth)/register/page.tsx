@@ -3,6 +3,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -205,9 +207,21 @@ function RegisterPageContent() {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Registro</CardTitle>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      <Link
+        href="/"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Volver al inicio
+      </Link>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Registro</CardTitle>
         <CardDescription>
           Selecciona tu tipo de cuenta
         </CardDescription>
@@ -425,7 +439,8 @@ function RegisterPageContent() {
           </Link>
         </p>
       </CardFooter>
-    </Card>
+      </Card>
+    </motion.div>
   )
 }
 
