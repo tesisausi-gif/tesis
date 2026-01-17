@@ -151,7 +151,7 @@ export default function NuevoIncidentePage() {
           descripcion_problema: descripcion.trim(),
           categoria: categoria,
           estado_actual: 'Reportado',
-          fue_resuelto: false,
+          fue_resuelto: 0,
         })
         .select()
         .single()
