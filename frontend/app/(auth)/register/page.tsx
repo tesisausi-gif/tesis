@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AnimatedTabs, AnimatedTabContent } from '@/components/ui/animated-tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { getAuthErrorMessage } from '@/lib/error-messages'
@@ -25,6 +25,7 @@ function RegisterPageContent() {
   // Determinar tab por defecto según URL param
   const tipoParam = searchParams.get('tipo')
   const defaultTab = tipoParam === 'tecnico' ? 'tecnico' : 'cliente'
+  const [activeTab, setActiveTab] = useState(defaultTab)
 
   // Form state para Cliente
   const [clienteEmail, setClienteEmail] = useState('')
@@ -227,14 +228,17 @@ function RegisterPageContent() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="cliente">Cliente</TabsTrigger>
-            <TabsTrigger value="tecnico">Técnico</TabsTrigger>
-          </TabsList>
+        <AnimatedTabs
+          tabs={[
+            { value: 'cliente', label: 'Cliente' },
+            { value: 'tecnico', label: 'Técnico' },
+          ]}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
-          {/* TAB CLIENTE */}
-          <TabsContent value="cliente">
+        {/* TAB CLIENTE */}
+        <AnimatedTabContent value="cliente" activeTab={activeTab}>
             <form onSubmit={handleClienteRegister} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -328,10 +332,10 @@ function RegisterPageContent() {
                 {loading ? 'Registrando...' : 'Registrarse como Cliente'}
               </Button>
             </form>
-          </TabsContent>
+        </AnimatedTabContent>
 
-          {/* TAB TÉCNICO */}
-          <TabsContent value="tecnico">
+        {/* TAB TÉCNICO */}
+        <AnimatedTabContent value="tecnico" activeTab={activeTab}>
             <form onSubmit={handleTecnicoRegister} className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Tu solicitud será revisada por un administrador antes de ser aprobada.
@@ -428,8 +432,7 @@ function RegisterPageContent() {
                 {loading ? 'Enviando...' : 'Enviar Solicitud'}
               </Button>
             </form>
-          </TabsContent>
-        </Tabs>
+        </AnimatedTabContent>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
