@@ -356,6 +356,7 @@ export default function IncidentesAdminPage() {
         incidenteId={incidenteSeleccionado}
         open={modalOpen}
         onOpenChange={setModalOpen}
+        onUpdate={cargarIncidentes}
         rol="admin"
       />
     </div>
