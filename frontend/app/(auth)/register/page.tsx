@@ -15,7 +15,7 @@ import { getAuthErrorMessage } from '@/lib/error-messages'
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
-  const [especialidades, setEspecialidades] = useState<Array<{id_especialidad: number, nombre: string}>>([])
+  const [especialidades, setEspecialidades] = useState<Array<{ id_especialidad: number, nombre: string }>>([])
   const router = useRouter()
   const supabase = createClient()
 
@@ -78,6 +78,24 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
+      // Verificar si el email ya existe
+      const { data: existingUsers, error: checkError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('correo_electronico', clienteEmail)
+        .limit(1)
+
+      if (checkError) {
+        console.error('Error al verificar email:', checkError)
+        // Continuar con el registro aunque haya error en la verificación
+      } else if (existingUsers && existingUsers.length > 0) {
+        toast.error('Email ya registrado', {
+          description: 'Este correo electrónico ya está en uso. Por favor usa otro o inicia sesión.'
+        })
+        setLoading(false)
+        return
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: clienteEmail,
         password: clientePassword,
@@ -93,10 +111,17 @@ export default function RegisterPage() {
       })
 
       if (error) {
-        const errorMsg = getAuthErrorMessage(error)
-        toast.error(errorMsg.title, {
-          description: errorMsg.description
-        })
+        // Mejorar mensajes de error específicos
+        if (error.message.includes('already registered') || error.message.includes('already exists')) {
+          toast.error('Email ya registrado', {
+            description: 'Este correo electrónico ya está en uso. Por favor usa otro o inicia sesión.'
+          })
+        } else {
+          const errorMsg = getAuthErrorMessage(error)
+          toast.error(errorMsg.title, {
+            description: errorMsg.description
+          })
+        }
         return
       }
 
@@ -111,6 +136,7 @@ export default function RegisterPage() {
         }, 2000)
       }
     } catch (error) {
+      console.error('Error inesperado:', error)
       toast.error('Error inesperado')
     } finally {
       setLoading(false)

@@ -42,6 +42,23 @@ export async function POST(request: NextRequest) {
       }
     )
 
+    // Verificar si el email ya existe
+    const { data: existingUsers, error: checkError } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('correo_electronico', email)
+      .limit(1)
+
+    if (checkError) {
+      console.error('Error al verificar email:', checkError)
+      // Continuar aunque haya error en la verificación
+    } else if (existingUsers && existingUsers.length > 0) {
+      return NextResponse.json(
+        { error: 'Este correo electrónico ya está registrado en el sistema' },
+        { status: 400 }
+      )
+    }
+
     // 1. Crear usuario en Supabase Auth
     // El trigger handle_new_user() se encargará automáticamente de:
     // - Crear registro en public.usuarios
@@ -64,9 +81,23 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       console.error('Error al crear usuario en Auth:', authError)
+      // Mejorar mensaje de error para emails duplicados
+      if (authError.message.includes('already exists') || authError.message.includes('already registered')) {
+        return NextResponse.json(
+          { error: 'Este correo electrónico ya está registrado en el sistema' },
+          { status: 400 }
+        )
+      }
       return NextResponse.json(
         { error: authError.message },
         { status: 400 }
+      )
+    }
+
+    if (!authData.user) {
+      return NextResponse.json(
+        { error: 'No se pudo crear el usuario' },
+        { status: 500 }
       )
     }
 
