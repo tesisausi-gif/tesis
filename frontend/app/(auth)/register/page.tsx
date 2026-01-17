@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -13,11 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner'
 import { getAuthErrorMessage } from '@/lib/error-messages'
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const [loading, setLoading] = useState(false)
   const [especialidades, setEspecialidades] = useState<Array<{ id_especialidad: number, nombre: string }>>([])
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  // Determinar tab por defecto según URL param
+  const tipoParam = searchParams.get('tipo')
+  const defaultTab = tipoParam === 'tecnico' ? 'tecnico' : 'cliente'
 
   // Form state para Cliente
   const [clienteEmail, setClienteEmail] = useState('')
@@ -208,7 +213,7 @@ export default function RegisterPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="cliente" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="cliente">Cliente</TabsTrigger>
             <TabsTrigger value="tecnico">Técnico</TabsTrigger>
@@ -421,5 +426,13 @@ export default function RegisterPage() {
         </p>
       </CardFooter>
     </Card>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<Card className="w-full"><CardContent className="py-8 text-center">Cargando...</CardContent></Card>}>
+      <RegisterPageContent />
+    </Suspense>
   )
 }
