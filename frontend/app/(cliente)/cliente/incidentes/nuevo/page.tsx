@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, AlertCircle, Building2, MapPin, Send } from 'lucide-react'
 import { toast } from 'sonner'
-import { CategoriaIncidente, NivelPrioridad } from '@/types/enums'
+import { CategoriaIncidente } from '@/types/enums'
 
 interface TipoInmueble {
   nombre: string
@@ -31,14 +31,6 @@ interface Inmueble {
 }
 
 const categorias = Object.values(CategoriaIncidente)
-const prioridades = Object.values(NivelPrioridad)
-
-const prioridadDescripciones: Record<string, string> = {
-  [NivelPrioridad.BAJA]: 'Puede esperar, no afecta el uso normal',
-  [NivelPrioridad.MEDIA]: 'Requiere atención pronto',
-  [NivelPrioridad.ALTA]: 'Afecta significativamente el uso',
-  [NivelPrioridad.URGENTE]: 'Requiere atención inmediata',
-}
 
 export default function NuevoIncidentePage() {
   const router = useRouter()
@@ -52,7 +44,6 @@ export default function NuevoIncidentePage() {
   // Form state
   const [inmuebleSeleccionado, setInmuebleSeleccionado] = useState('')
   const [categoria, setCategoria] = useState('')
-  const [prioridad, setPrioridad] = useState('')
   const [descripcion, setDescripcion] = useState('')
 
   useEffect(() => {
@@ -139,11 +130,6 @@ export default function NuevoIncidentePage() {
       return
     }
 
-    if (!prioridad) {
-      toast.error('Selecciona un nivel de prioridad')
-      return
-    }
-
     if (!descripcion.trim()) {
       toast.error('Describe el problema')
       return
@@ -164,7 +150,6 @@ export default function NuevoIncidentePage() {
           id_cliente_reporta: idCliente,
           descripcion_problema: descripcion.trim(),
           categoria: categoria,
-          nivel_prioridad: prioridad,
           estado_actual: 'Reportado',
           fue_resuelto: false,
         })
@@ -329,34 +314,6 @@ export default function NuevoIncidentePage() {
                   {categorias.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Prioridad */}
-            <div className="space-y-2">
-              <Label htmlFor="prioridad" className="text-sm font-medium">
-                Nivel de Prioridad *
-              </Label>
-              <Select
-                value={prioridad}
-                onValueChange={setPrioridad}
-                disabled={submitting}
-              >
-                <SelectTrigger id="prioridad">
-                  <SelectValue placeholder="¿Qué tan urgente es?" />
-                </SelectTrigger>
-                <SelectContent>
-                  {prioridades.map((prio) => (
-                    <SelectItem key={prio} value={prio} className="py-3">
-                      <div>
-                        <div className="font-medium">{prio}</div>
-                        <div className="text-xs text-gray-500">
-                          {prioridadDescripciones[prio]}
-                        </div>
-                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
