@@ -104,44 +104,33 @@ interface Props {
   rol?: 'admin' | 'cliente' | 'tecnico'
 }
 
-// Estados válidos según la BD
+// Estados simplificados
 const ESTADOS_INCIDENTE = [
-  'registrado',
-  'en_evaluacion',
-  'asignado',
+  'pendiente',
   'en_proceso',
-  'pendiente_aprobacion',
-  'aprobado',
-  'en_ejecucion',
-  'finalizado',
-  'cerrado',
-  'cancelado',
+  'resuelto',
 ]
 
 const ESTADOS_LABELS: Record<string, string> = {
-  'registrado': 'Registrado',
-  'en_evaluacion': 'En Evaluación',
-  'asignado': 'Asignado',
+  'pendiente': 'Pendiente',
   'en_proceso': 'En Proceso',
-  'pendiente_aprobacion': 'Pendiente Aprobación',
-  'aprobado': 'Aprobado',
-  'en_ejecucion': 'En Ejecución',
-  'finalizado': 'Finalizado',
-  'cerrado': 'Cerrado',
-  'cancelado': 'Cancelado',
+  'resuelto': 'Resuelto',
+  // Mantener compatibilidad con estados anteriores
+  'registrado': 'Pendiente',
+  'asignado': 'En Proceso',
+  'finalizado': 'Resuelto',
+  'cerrado': 'Resuelto',
 }
 
 const ESTADO_COLORS: Record<string, string> = {
-  'registrado': 'bg-blue-100 text-blue-800',
-  'en_evaluacion': 'bg-yellow-100 text-yellow-800',
-  'asignado': 'bg-purple-100 text-purple-800',
-  'en_proceso': 'bg-orange-100 text-orange-800',
-  'pendiente_aprobacion': 'bg-amber-100 text-amber-800',
-  'aprobado': 'bg-cyan-100 text-cyan-800',
-  'en_ejecucion': 'bg-indigo-100 text-indigo-800',
+  'pendiente': 'bg-yellow-100 text-yellow-800',
+  'en_proceso': 'bg-blue-100 text-blue-800',
+  'resuelto': 'bg-green-100 text-green-800',
+  // Mantener compatibilidad con estados anteriores
+  'registrado': 'bg-yellow-100 text-yellow-800',
+  'asignado': 'bg-blue-100 text-blue-800',
   'finalizado': 'bg-green-100 text-green-800',
-  'cerrado': 'bg-gray-100 text-gray-800',
-  'cancelado': 'bg-red-100 text-red-800',
+  'cerrado': 'bg-green-100 text-green-800',
 }
 
 const PRIORIDADES = ['Baja', 'Media', 'Alta', 'Urgente']
@@ -400,11 +389,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         return
       }
 
-      // Actualizar estado del incidente a "asignado" si está en "registrado"
-      if (incidente?.estado_actual === 'registrado') {
+      // Actualizar estado del incidente a "en_proceso" si está en "pendiente" o "registrado"
+      if (incidente?.estado_actual === 'pendiente' || incidente?.estado_actual === 'registrado') {
         await supabase
           .from('incidentes')
-          .update({ estado_actual: 'asignado' })
+          .update({ estado_actual: 'en_proceso' })
           .eq('id_incidente', incidenteId)
       }
 
