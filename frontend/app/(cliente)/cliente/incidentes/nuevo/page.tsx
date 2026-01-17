@@ -150,8 +150,6 @@ export default function NuevoIncidentePage() {
           id_cliente_reporta: idCliente,
           descripcion_problema: descripcion.trim(),
           categoria: categoria,
-          estado_actual: 'Reportado',
-          fue_resuelto: 0,
         })
         .select()
         .single()
