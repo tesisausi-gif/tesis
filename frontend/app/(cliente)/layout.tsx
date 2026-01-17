@@ -7,6 +7,7 @@ import { PageTransitionProvider, PageTransition } from '@/components/ui/page-tra
 const clienteRoutes = [
   '/cliente',
   '/cliente/incidentes',
+  '/cliente/incidentes/nuevo',
   '/cliente/propiedades',
   '/cliente/perfil',
 ]
