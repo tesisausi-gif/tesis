@@ -146,7 +146,7 @@ export default function NuevoIncidentePage() {
       const { data, error } = await supabase
         .from('incidentes')
         .insert({
-          id_inmueble: parseInt(inmuebleSeleccionado),
+          id_propiedad: parseInt(inmuebleSeleccionado),
           id_cliente_reporta: idCliente,
           descripcion_problema: descripcion.trim(),
           categoria: categoria,

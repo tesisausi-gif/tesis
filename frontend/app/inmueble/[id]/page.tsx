@@ -98,7 +98,7 @@ export default function InmuebleDetallePage() {
           prioridades(nombre),
           tecnicos(nombre, apellido)
         `)
-        .eq('id_inmueble', id)
+        .eq('id_propiedad', id)
         .order('fecha_creacion', { ascending: false })
 
       if (incidentesError) {

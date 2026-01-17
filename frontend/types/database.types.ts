@@ -128,7 +128,7 @@ export interface Database {
       incidentes: {
         Row: {
           id_incidente: number
-          id_inmueble: number
+          id_propiedad: number
           id_cliente_reporta: number
           descripcion_problema: string
           categoria: string | null
@@ -143,7 +143,7 @@ export interface Database {
         }
         Insert: {
           id_incidente?: number
-          id_inmueble: number
+          id_propiedad: number
           id_cliente_reporta: number
           descripcion_problema: string
           categoria?: string | null
@@ -158,7 +158,7 @@ export interface Database {
         }
         Update: {
           id_incidente?: number
-          id_inmueble?: number
+          id_propiedad?: number
           id_cliente_reporta?: number
           descripcion_problema?: string
           categoria?: string | null
