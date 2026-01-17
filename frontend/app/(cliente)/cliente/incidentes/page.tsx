@@ -255,16 +255,9 @@ export default function ClienteIncidentes() {
               No tienes incidentes reportados
             </h3>
 
-            <p className="text-sm text-gray-600 mb-6 max-w-md">
-              ¿Tienes un problema en alguno de tus inmuebles? Reporta un incidente y te ayudaremos a resolverlo.
+            <p className="text-sm text-gray-600 max-w-md">
+              ¿Tienes un problema en alguno de tus inmuebles? Usa el botón de arriba para reportar un incidente.
             </p>
-
-            <Button asChild size="lg" className="gap-2">
-              <Link href="/cliente/incidentes/nuevo">
-                <Plus className="h-5 w-5" />
-                Reportar mi primer incidente
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       )}

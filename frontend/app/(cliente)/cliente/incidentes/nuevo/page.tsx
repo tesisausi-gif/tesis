@@ -87,7 +87,7 @@ export default function NuevoIncidentePage() {
         .from('inmuebles')
         .select('id_inmueble, calle, altura, piso, dpto, barrio, localidad, provincia, tipos_inmuebles(nombre)')
         .eq('id_cliente', usuario.id_cliente)
-        .eq('esta_activo', true)
+        .eq('esta_activo', 1)
         .order('calle')
 
       if (error) {
