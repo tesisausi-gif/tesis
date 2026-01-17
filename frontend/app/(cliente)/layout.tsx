@@ -1,20 +1,32 @@
+'use client'
+
 import { ClienteNav } from '@/components/cliente/cliente-nav'
 import { AIHelpChat } from '@/components/ai-help-chat'
+import { PageTransitionProvider, PageTransition } from '@/components/ui/page-transition'
 
-// El middleware ya maneja la autenticación y verificación de roles
-// Este layout puede ser estático para mejor rendimiento
+const clienteRoutes = [
+  '/cliente',
+  '/cliente/incidentes',
+  '/cliente/propiedades',
+  '/cliente/perfil',
+]
+
 export default function ClienteLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
-      <ClienteNav />
-      <main className="p-4">
-        {children}
-      </main>
-      <AIHelpChat />
-    </div>
+    <PageTransitionProvider routes={clienteRoutes}>
+      <div className="min-h-screen bg-gray-50 pb-16">
+        <ClienteNav />
+        <main className="p-4 overflow-hidden">
+          <PageTransition>
+            {children}
+          </PageTransition>
+        </main>
+        <AIHelpChat />
+      </div>
+    </PageTransitionProvider>
   )
 }
