@@ -18,7 +18,7 @@ export function LandingHeader() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 sm:h-9 sm:w-9">
             <Wrench className="h-4 w-4 text-white sm:h-5 sm:w-5" />
           </div>
-          <span className="text-lg font-bold text-slate-900 sm:text-xl">GestIncidentes</span>
+          <span className="text-lg font-bold text-slate-900 sm:text-xl">Gestión de Incidentes</span>
         </Link>
 
         <nav className="flex items-center gap-2 sm:gap-3">

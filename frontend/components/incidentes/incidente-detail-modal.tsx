@@ -51,6 +51,7 @@ interface TimelineEvent {
 interface IncidenteCompleto {
   id_incidente: number
   descripcion_problema: string
+  disponibilidad: string | null
   categoria: string | null
   nivel_prioridad: string | null
   estado_actual: string
@@ -106,6 +107,7 @@ interface Props {
 
 // Estados simplificados
 const ESTADOS_INCIDENTE = [
+  'Reportado',
   'pendiente',
   'en_proceso',
   'resuelto',
@@ -116,6 +118,7 @@ const ESTADOS_LABELS: Record<string, string> = {
   'en_proceso': 'En Proceso',
   'resuelto': 'Resuelto',
   // Mantener compatibilidad con estados anteriores
+  'Reportado': 'Reportado',
   'registrado': 'Pendiente',
   'asignado': 'En Proceso',
   'finalizado': 'Resuelto',
@@ -127,6 +130,7 @@ const ESTADO_COLORS: Record<string, string> = {
   'en_proceso': 'bg-blue-100 text-blue-800',
   'resuelto': 'bg-green-100 text-green-800',
   // Mantener compatibilidad con estados anteriores
+  'Reportado': 'bg-blue-100 text-blue-800',
   'registrado': 'bg-yellow-100 text-yellow-800',
   'asignado': 'bg-blue-100 text-blue-800',
   'finalizado': 'bg-green-100 text-green-800',
@@ -483,6 +487,19 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   {incidente.descripcion_problema}
                 </p>
               </div>
+
+              {/* Disponibilidad */}
+              {incidente.disponibilidad && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Disponibilidad para Contacto/Visita
+                  </h4>
+                  <p className="text-sm text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-100 italic">
+                    {incidente.disponibilidad}
+                  </p>
+                </div>
+              )}
 
               <Separator />
 
