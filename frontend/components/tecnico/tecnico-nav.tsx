@@ -3,7 +3,7 @@
 import { memo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, ClipboardList, User, LogOut, Wrench, FileText } from 'lucide-react'
+import { Home, ClipboardList, User, LogOut, Wrench, FileText, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -13,6 +13,11 @@ const navItems = [
     title: 'Inicio',
     icon: Home,
     href: '/tecnico',
+  },
+  {
+    title: 'Disponibles',
+    icon: Search,
+    href: '/tecnico/disponibles',
   },
   {
     title: 'Trabajos',
