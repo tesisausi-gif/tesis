@@ -389,11 +389,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         return
       }
 
-      // Actualizar estado del incidente a "Asignado" si está en "Reportado" o "En Evaluación"
-      if (incidente?.estado_actual === 'Reportado' || incidente?.estado_actual === 'En Evaluación') {
+      // Actualizar estado del incidente a "en_proceso" si está en "pendiente"
+      if (incidente?.estado_actual === 'pendiente') {
         await supabase
           .from('incidentes')
-          .update({ estado_actual: 'Asignado' })
+          .update({ estado_actual: 'en_proceso' })
           .eq('id_incidente', incidenteId)
       }
 
