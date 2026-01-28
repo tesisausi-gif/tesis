@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileText, Users, Building2, Wrench, Clock, AlertCircle, CheckCircle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Users, Building2, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
+import Link from 'next/link'
 
 interface Stats {
   incidentesPendientes: number
@@ -12,6 +16,35 @@ interface Stats {
   propiedades: number
   clientes: number
   tecnicos: number
+}
+
+interface IncidenteReciente {
+  id_incidente: number
+  descripcion_problema: string
+  estado_actual: string
+  fecha_registro: string
+  fecha_modificacion: string
+  clientes: {
+    nombre: string
+    apellido: string
+  } | null
+  inmuebles: {
+    calle: string | null
+    altura: string | null
+  } | null
+}
+
+interface AsignacionReciente {
+  id_asignacion: number
+  fecha_asignacion: string
+  tecnicos: {
+    nombre: string
+    apellido: string
+  } | null
+  incidentes: {
+    id_incidente: number
+    descripcion_problema: string
+  } | null
 }
 
 export default function DashboardPage() {
@@ -23,12 +56,15 @@ export default function DashboardPage() {
     clientes: 0,
     tecnicos: 0,
   })
+  const [incidentesRecientes, setIncidentesRecientes] = useState<IncidenteReciente[]>([])
+  const [asignacionesRecientes, setAsignacionesRecientes] = useState<AsignacionReciente[]>([])
   const [loading, setLoading] = useState(true)
 
   const supabase = createClient()
 
   useEffect(() => {
     cargarStats()
+    cargarActividad()
   }, [])
 
   const cargarStats = async () => {
@@ -81,6 +117,73 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const cargarActividad = async () => {
+    try {
+      // Cargar incidentes recientes (últimos 5 modificados o creados)
+      const { data: incidentes } = await supabase
+        .from('incidentes')
+        .select(`
+          id_incidente,
+          descripcion_problema,
+          estado_actual,
+          fecha_registro,
+          fecha_modificacion,
+          clientes:id_cliente_reporta (nombre, apellido),
+          inmuebles:id_propiedad (calle, altura)
+        `)
+        .order('fecha_modificacion', { ascending: false })
+        .limit(5)
+
+      if (incidentes) {
+        setIncidentesRecientes(incidentes as unknown as IncidenteReciente[])
+      }
+
+      // Cargar asignaciones recientes (últimas 5)
+      const { data: asignaciones } = await supabase
+        .from('asignaciones_tecnico')
+        .select(`
+          id_asignacion,
+          fecha_asignacion,
+          tecnicos (nombre, apellido),
+          incidentes (id_incidente, descripcion_problema)
+        `)
+        .order('fecha_asignacion', { ascending: false })
+        .limit(5)
+
+      if (asignaciones) {
+        setAsignacionesRecientes(asignaciones as unknown as AsignacionReciente[])
+      }
+    } catch (error) {
+      console.error('Error al cargar actividad:', error)
+    }
+  }
+
+  const getEstadoBadge = (estado: string) => {
+    const estilos: Record<string, string> = {
+      'pendiente': 'bg-yellow-100 text-yellow-800',
+      'registrado': 'bg-yellow-100 text-yellow-800',
+      'en_proceso': 'bg-blue-100 text-blue-800',
+      'asignado': 'bg-blue-100 text-blue-800',
+      'resuelto': 'bg-green-100 text-green-800',
+      'finalizado': 'bg-green-100 text-green-800',
+      'cerrado': 'bg-gray-100 text-gray-800',
+    }
+    const labels: Record<string, string> = {
+      'pendiente': 'Pendiente',
+      'registrado': 'Pendiente',
+      'en_proceso': 'En Proceso',
+      'asignado': 'En Proceso',
+      'resuelto': 'Resuelto',
+      'finalizado': 'Resuelto',
+      'cerrado': 'Cerrado',
+    }
+    return (
+      <Badge className={estilos[estado] || 'bg-gray-100 text-gray-800'}>
+        {labels[estado] || estado}
+      </Badge>
+    )
   }
 
   if (loading) {
@@ -192,6 +295,129 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">
               Técnicos activos
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Actividad Reciente */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Incidentes Recientes */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  Actividad Reciente
+                </CardTitle>
+                <CardDescription>
+                  Últimos incidentes actualizados
+                </CardDescription>
+              </div>
+              <Link
+                href="/dashboard/incidentes"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Ver todos <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {incidentesRecientes.length > 0 ? (
+              <div className="space-y-4">
+                {incidentesRecientes.map((incidente) => (
+                  <div
+                    key={incidente.id_incidente}
+                    className="flex items-start justify-between gap-4 pb-4 border-b last:border-0 last:pb-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">
+                          #{incidente.id_incidente}
+                        </span>
+                        {getEstadoBadge(incidente.estado_actual)}
+                      </div>
+                      <p className="text-sm text-gray-600 truncate">
+                        {incidente.descripcion_problema}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {incidente.clientes
+                          ? `${incidente.clientes.nombre} ${incidente.clientes.apellido}`
+                          : 'Sin cliente'
+                        }
+                        {incidente.inmuebles?.calle && (
+                          <> • {incidente.inmuebles.calle} {incidente.inmuebles.altura}</>
+                        )}
+                      </p>
+                    </div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">
+                      {formatDistanceToNow(new Date(incidente.fecha_modificacion), {
+                        addSuffix: true,
+                        locale: es
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No hay actividad reciente
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Asignaciones Recientes */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-green-600" />
+                  Asignaciones Recientes
+                </CardTitle>
+                <CardDescription>
+                  Últimos técnicos asignados
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {asignacionesRecientes.length > 0 ? (
+              <div className="space-y-4">
+                {asignacionesRecientes.map((asignacion) => (
+                  <div
+                    key={asignacion.id_asignacion}
+                    className="flex items-start justify-between gap-4 pb-4 border-b last:border-0 last:pb-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Wrench className="h-4 w-4 text-orange-500" />
+                        <span className="font-medium text-sm">
+                          {asignacion.tecnicos
+                            ? `${asignacion.tecnicos.nombre} ${asignacion.tecnicos.apellido}`
+                            : 'Técnico desconocido'
+                          }
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 truncate">
+                        Incidente #{asignacion.incidentes?.id_incidente}: {asignacion.incidentes?.descripcion_problema}
+                      </p>
+                    </div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">
+                      {formatDistanceToNow(new Date(asignacion.fecha_asignacion), {
+                        addSuffix: true,
+                        locale: es
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No hay asignaciones recientes
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
