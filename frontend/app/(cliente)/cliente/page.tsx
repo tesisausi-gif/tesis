@@ -28,11 +28,11 @@ export default async function ClienteDashboard() {
     .eq('id_cliente_reporta', usuario?.id_cliente)
 
   const incidentesAbiertos = incidentes?.filter(i =>
-    i.estado_actual === 'pendiente' || i.estado_actual === 'en_proceso'
+    !['Finalizado', 'Cerrado', 'Cancelado'].includes(i.estado_actual)
   ).length || 0
 
   const incidentesCerrados = incidentes?.filter(i =>
-    i.estado_actual === 'completado'
+    ['Finalizado', 'Cerrado'].includes(i.estado_actual)
   ).length || 0
 
   const totalIncidentes = incidentes?.length || 0

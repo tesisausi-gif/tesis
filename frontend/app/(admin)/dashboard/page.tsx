@@ -75,15 +75,15 @@ export default function DashboardPage() {
         .select('estado_actual')
 
       const pendientes = incidentes?.filter(i =>
-        i.estado_actual === 'pendiente' || i.estado_actual === 'registrado'
+        i.estado_actual === 'Reportado' || i.estado_actual === 'En Evaluación'
       ).length || 0
 
       const enProceso = incidentes?.filter(i =>
-        i.estado_actual === 'en_proceso' || i.estado_actual === 'asignado'
+        i.estado_actual === 'En Proceso' || i.estado_actual === 'Asignado' || i.estado_actual === 'En Ejecución' || i.estado_actual === 'Esperando Aprobación' || i.estado_actual === 'Aprobado'
       ).length || 0
 
       const resueltos = incidentes?.filter(i =>
-        i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado' || i.estado_actual === 'cerrado'
+        i.estado_actual === 'Finalizado' || i.estado_actual === 'Cerrado'
       ).length || 0
 
       // Cargar propiedades
@@ -162,26 +162,20 @@ export default function DashboardPage() {
 
   const getEstadoBadge = (estado: string) => {
     const estilos: Record<string, string> = {
-      'pendiente': 'bg-yellow-100 text-yellow-800',
-      'registrado': 'bg-yellow-100 text-yellow-800',
-      'en_proceso': 'bg-blue-100 text-blue-800',
-      'asignado': 'bg-blue-100 text-blue-800',
-      'resuelto': 'bg-green-100 text-green-800',
-      'finalizado': 'bg-green-100 text-green-800',
-      'cerrado': 'bg-gray-100 text-gray-800',
-    }
-    const labels: Record<string, string> = {
-      'pendiente': 'Pendiente',
-      'registrado': 'Pendiente',
-      'en_proceso': 'En Proceso',
-      'asignado': 'En Proceso',
-      'resuelto': 'Resuelto',
-      'finalizado': 'Resuelto',
-      'cerrado': 'Cerrado',
+      'Reportado': 'bg-blue-100 text-blue-800',
+      'En Evaluación': 'bg-yellow-100 text-yellow-800',
+      'Asignado': 'bg-purple-100 text-purple-800',
+      'En Proceso': 'bg-orange-100 text-orange-800',
+      'Esperando Aprobación': 'bg-amber-100 text-amber-800',
+      'Aprobado': 'bg-cyan-100 text-cyan-800',
+      'En Ejecución': 'bg-indigo-100 text-indigo-800',
+      'Finalizado': 'bg-green-100 text-green-800',
+      'Cerrado': 'bg-gray-100 text-gray-800',
+      'Cancelado': 'bg-red-100 text-red-800',
     }
     return (
       <Badge className={estilos[estado] || 'bg-gray-100 text-gray-800'}>
-        {labels[estado] || estado}
+        {estado}
       </Badge>
     )
   }
