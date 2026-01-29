@@ -37,11 +37,19 @@ interface Asignacion {
 }
 
 const estadoAsignacionColors: Record<string, string> = {
-  'Pendiente': 'bg-yellow-100 text-yellow-800',
-  'Aceptada': 'bg-blue-100 text-blue-800',
-  'Rechazada': 'bg-red-100 text-red-800',
-  'En Curso': 'bg-orange-100 text-orange-800',
-  'Completada': 'bg-green-100 text-green-800',
+  'pendiente': 'bg-yellow-100 text-yellow-800',
+  'aceptada': 'bg-blue-100 text-blue-800',
+  'rechazada': 'bg-red-100 text-red-800',
+  'en_curso': 'bg-orange-100 text-orange-800',
+  'completada': 'bg-green-100 text-green-800',
+}
+
+const estadoAsignacionLabels: Record<string, string> = {
+  'pendiente': 'Pendiente',
+  'aceptada': 'Aceptada',
+  'rechazada': 'Rechazada',
+  'en_curso': 'En Curso',
+  'completada': 'Completada',
 }
 
 export default function TecnicoTrabajos() {
@@ -125,9 +133,9 @@ export default function TecnicoTrabajos() {
 
   // Stats
   const totalTrabajos = asignaciones.length
-  const pendientes = asignaciones.filter(a => a.estado_asignacion === 'Pendiente').length
-  const enCurso = asignaciones.filter(a => ['Aceptada', 'En Curso'].includes(a.estado_asignacion)).length
-  const completados = asignaciones.filter(a => a.estado_asignacion === 'Completada').length
+  const pendientes = asignaciones.filter(a => a.estado_asignacion === 'pendiente').length
+  const enCurso = asignaciones.filter(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion)).length
+  const completados = asignaciones.filter(a => a.estado_asignacion === 'completada').length
 
   if (loading) {
     return (
@@ -230,7 +238,7 @@ export default function TecnicoTrabajos() {
                     </div>
                     <div className="flex flex-col gap-1 items-end flex-shrink-0">
                       <Badge className={getEstadoAsignacionColor(asignacion.estado_asignacion)}>
-                        {asignacion.estado_asignacion}
+                        {estadoAsignacionLabels[asignacion.estado_asignacion] || asignacion.estado_asignacion}
                       </Badge>
                       {incidente?.nivel_prioridad && (
                         <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>

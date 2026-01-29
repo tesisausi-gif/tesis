@@ -110,7 +110,7 @@ export default function IncidentesDisponiblesPage() {
             const incidentesConAsignacion = await supabase
                 .from('asignaciones_tecnico')
                 .select('id_incidente, estado_asignacion')
-                .in('estado_asignacion', ['Pendiente', 'Aceptada', 'En Curso'])
+                .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
 
             const idsConAsignacion = new Set(
                 incidentesConAsignacion.data?.map(a => a.id_incidente) || []
@@ -151,7 +151,7 @@ export default function IncidentesDisponiblesPage() {
                 .insert({
                     id_incidente: incidenteSeleccionado.id_incidente,
                     id_tecnico: idTecnico,
-                    estado_asignacion: 'Aceptada',
+                    estado_asignacion: 'aceptada',
                     fecha_asignacion: new Date().toISOString(),
                 })
 

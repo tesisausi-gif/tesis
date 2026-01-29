@@ -126,6 +126,14 @@ const ESTADO_COLORS: Record<string, string> = {
 
 const PRIORIDADES = ['Baja', 'Media', 'Alta', 'Urgente']
 
+const ESTADO_ASIGNACION_LABELS: Record<string, string> = {
+  'pendiente': 'Pendiente',
+  'aceptada': 'Aceptada',
+  'rechazada': 'Rechazada',
+  'en_curso': 'En Curso',
+  'completada': 'Completada',
+}
+
 const PRIORIDAD_COLORS: Record<string, string> = {
   'Baja': 'bg-green-100 text-green-800',
   'Media': 'bg-yellow-100 text-yellow-800',
@@ -371,7 +379,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         .insert({
           id_incidente: incidenteId,
           id_tecnico: parseInt(tecnicoSeleccionado),
-          estado_asignacion: 'Pendiente',
+          estado_asignacion: 'pendiente',
           observaciones: observacionesAsignacion || null,
         })
 
@@ -546,7 +554,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                             {asig.tecnicos?.especialidad || 'Sin especialidad'}
                           </p>
                         </div>
-                        <Badge variant="outline">{asig.estado_asignacion}</Badge>
+                        <Badge variant="outline">{ESTADO_ASIGNACION_LABELS[asig.estado_asignacion] || asig.estado_asignacion}</Badge>
                       </div>
                     ))}
                   </div>
@@ -735,7 +743,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                                 Asignado: {format(new Date(asig.fecha_asignacion), "dd/MM/yy HH:mm", { locale: es })}
                               </p>
                             </div>
-                            <Badge variant="outline">{asig.estado_asignacion}</Badge>
+                            <Badge variant="outline">{ESTADO_ASIGNACION_LABELS[asig.estado_asignacion] || asig.estado_asignacion}</Badge>
                           </div>
                           {asig.observaciones && (
                             <p className="text-xs text-gray-600 mt-2 bg-white p-2 rounded">
