@@ -138,6 +138,7 @@ export interface Database {
           fecha_registro: string
           fecha_cierre: string | null
           fue_resuelto: boolean
+          disponibilidad: string | null
           fecha_creacion: string
           fecha_modificacion: string
         }
@@ -153,6 +154,7 @@ export interface Database {
           fecha_registro?: string
           fecha_cierre?: string | null
           fue_resuelto?: boolean
+          disponibilidad?: string | null
           fecha_creacion?: string
           fecha_modificacion?: string
         }
@@ -168,6 +170,7 @@ export interface Database {
           fecha_registro?: string
           fecha_cierre?: string | null
           fue_resuelto?: boolean
+          disponibilidad?: string | null
           fecha_creacion?: string
           fecha_modificacion?: string
         }

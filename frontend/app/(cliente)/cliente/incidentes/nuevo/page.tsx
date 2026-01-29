@@ -45,6 +45,7 @@ export default function NuevoIncidentePage() {
   const [inmuebleSeleccionado, setInmuebleSeleccionado] = useState('')
   const [categoria, setCategoria] = useState('')
   const [descripcion, setDescripcion] = useState('')
+  const [disponibilidad, setDisponibilidad] = useState('')
 
   useEffect(() => {
     cargarDatos()
@@ -140,6 +141,11 @@ export default function NuevoIncidentePage() {
       return
     }
 
+    if (!disponibilidad.trim()) {
+      toast.error('Indica tu disponibilidad horaria')
+      return
+    }
+
     setSubmitting(true)
 
     try {
@@ -150,7 +156,8 @@ export default function NuevoIncidentePage() {
           id_cliente_reporta: idCliente,
           descripcion_problema: descripcion.trim(),
           categoria: categoria,
-          estado_actual: 'pendiente',
+          estado_actual: EstadoIncidente.REPORTADO,
+          disponibilidad: disponibilidad.trim(),
         })
         .select()
         .single()
@@ -335,6 +342,25 @@ export default function NuevoIncidentePage() {
               />
               <p className="text-xs text-gray-500">
                 Mínimo 20 caracteres. Actual: {descripcion.length}
+              </p>
+            </div>
+
+            {/* Disponibilidad */}
+            <div className="space-y-2">
+              <Label htmlFor="disponibilidad" className="text-sm font-medium">
+                Disponibilidad para Contacto/Visita *
+              </Label>
+              <Textarea
+                id="disponibilidad"
+                value={disponibilidad}
+                onChange={(e) => setDisponibilidad(e.target.value)}
+                placeholder="Indica días y horarios en los que puedes recibir llamadas o al técnico (ej: Lunes a Viernes de 09:00 a 13:00)..."
+                rows={2}
+                disabled={submitting}
+                className="resize-none"
+              />
+              <p className="text-xs text-gray-500">
+                Ej: Lunes a Viernes de 9 a 17hs.
               </p>
             </div>
 

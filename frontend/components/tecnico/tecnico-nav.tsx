@@ -3,7 +3,7 @@
 import { memo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, ClipboardList, User, LogOut, Wrench } from 'lucide-react'
+import { Home, ClipboardList, User, LogOut, Wrench, FileText, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -15,9 +15,19 @@ const navItems = [
     href: '/tecnico',
   },
   {
+    title: 'Disponibles',
+    icon: Search,
+    href: '/tecnico/disponibles',
+  },
+  {
     title: 'Trabajos',
     icon: ClipboardList,
     href: '/tecnico/trabajos',
+  },
+  {
+    title: 'Presupuestos',
+    icon: FileText,
+    href: '/tecnico/presupuestos',
   },
   {
     title: 'Perfil',
@@ -64,11 +74,10 @@ function TecnicoNavComponent() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 py-3 px-4 transition-colors ${
-                  isActive
-                    ? 'text-blue-600'
-                    : 'text-gray-600 hover:text-blue-600'
-                }`}
+                className={`flex flex-col items-center gap-1 py-3 px-4 transition-colors ${isActive
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-blue-600'
+                  }`}
               >
                 <item.icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{item.title}</span>

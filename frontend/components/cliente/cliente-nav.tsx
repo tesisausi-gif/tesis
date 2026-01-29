@@ -3,7 +3,7 @@
 import { memo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, AlertCircle, Building2, User, LogOut } from 'lucide-react'
+import { Home, AlertCircle, Building2, User, LogOut, FileText, DollarSign } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -18,6 +18,16 @@ const navItems = [
     title: 'Incidentes',
     icon: AlertCircle,
     href: '/cliente/incidentes',
+  },
+  {
+    title: 'Presupuestos',
+    icon: FileText,
+    href: '/cliente/presupuestos',
+  },
+  {
+    title: 'Pagos',
+    icon: DollarSign,
+    href: '/cliente/pagos',
   },
   {
     title: 'Inmuebles',
@@ -73,11 +83,10 @@ function ClienteNavComponent() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 py-3 px-4 transition-colors ${
-                  isActive
-                    ? 'text-blue-600'
-                    : 'text-gray-600 hover:text-blue-600'
-                }`}
+                className={`flex flex-col items-center gap-1 py-3 px-4 transition-colors ${isActive
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-blue-600'
+                  }`}
               >
                 <item.icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{item.title}</span>

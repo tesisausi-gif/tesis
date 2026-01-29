@@ -14,7 +14,7 @@ export default function Home() {
       </main>
       <footer className="border-t bg-white py-8">
         <div className="container mx-auto px-4 text-center text-sm text-slate-600">
-          <p>&copy; {new Date().getFullYear()} GestIncidentes. Todos los derechos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Gestión de Incidentes. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>

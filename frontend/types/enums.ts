@@ -54,6 +54,7 @@ export enum EstadoAsignacion {
 export enum EstadoPresupuesto {
   BORRADOR = 'Borrador',
   ENVIADO = 'Enviado',
+  APROBADO_ADMIN = 'Aprobado Admin',
   APROBADO = 'Aprobado',
   RECHAZADO = 'Rechazado',
   VENCIDO = 'Vencido',
