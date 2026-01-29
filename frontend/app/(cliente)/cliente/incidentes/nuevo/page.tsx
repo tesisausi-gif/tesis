@@ -156,7 +156,7 @@ export default function NuevoIncidentePage() {
           id_cliente_reporta: idCliente,
           descripcion_problema: descripcion.trim(),
           categoria: categoria,
-          estado_actual: EstadoIncidente.REPORTADO,
+          estado_actual: 'pendiente',
           disponibilidad: disponibilidad.trim(),
         })
         .select()

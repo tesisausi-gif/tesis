@@ -107,7 +107,6 @@ interface Props {
 
 // Estados simplificados
 const ESTADOS_INCIDENTE = [
-  'Reportado',
   'pendiente',
   'en_proceso',
   'resuelto',
@@ -117,24 +116,12 @@ const ESTADOS_LABELS: Record<string, string> = {
   'pendiente': 'Pendiente',
   'en_proceso': 'En Proceso',
   'resuelto': 'Resuelto',
-  // Mantener compatibilidad con estados anteriores
-  'Reportado': 'Reportado',
-  'registrado': 'Pendiente',
-  'asignado': 'En Proceso',
-  'finalizado': 'Resuelto',
-  'cerrado': 'Resuelto',
 }
 
 const ESTADO_COLORS: Record<string, string> = {
   'pendiente': 'bg-yellow-100 text-yellow-800',
   'en_proceso': 'bg-blue-100 text-blue-800',
   'resuelto': 'bg-green-100 text-green-800',
-  // Mantener compatibilidad con estados anteriores
-  'Reportado': 'bg-blue-100 text-blue-800',
-  'registrado': 'bg-yellow-100 text-yellow-800',
-  'asignado': 'bg-blue-100 text-blue-800',
-  'finalizado': 'bg-green-100 text-green-800',
-  'cerrado': 'bg-green-100 text-green-800',
 }
 
 const PRIORIDADES = ['Baja', 'Media', 'Alta', 'Urgente']
