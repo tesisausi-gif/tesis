@@ -50,7 +50,7 @@ export default function NuevoPresupuestoAdminPage() {
     const [costoManoObra, setCostoManoObra] = useState('')
     const [gastosAdministrativos, setGastosAdministrativos] = useState('')
     const [alternativas, setAlternativas] = useState('')
-    const [estadoPresupuesto, setEstadoPresupuesto] = useState(EstadoPresupuesto.BORRADOR)
+    const [estadoPresupuesto, setEstadoPresupuesto] = useState('borrador')
 
     useEffect(() => {
         cargarDatos()
@@ -390,15 +390,15 @@ export default function NuevoPresupuestoAdminPage() {
                             <Label htmlFor="estado">Estado del Presupuesto</Label>
                             <Select
                                 value={estadoPresupuesto}
-                                onValueChange={(value) => setEstadoPresupuesto(value as EstadoPresupuesto)}
+                                onValueChange={setEstadoPresupuesto}
                                 disabled={submitting}
                             >
                                 <SelectTrigger id="estado">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value={EstadoPresupuesto.BORRADOR}>Borrador</SelectItem>
-                                    <SelectItem value={EstadoPresupuesto.ENVIADO}>Enviado</SelectItem>
+                                    <SelectItem value="borrador">Borrador</SelectItem>
+                                    <SelectItem value="enviado">Enviado</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

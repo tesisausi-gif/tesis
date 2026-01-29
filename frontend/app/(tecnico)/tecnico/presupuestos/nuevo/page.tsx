@@ -171,7 +171,7 @@ export default function NuevoPresupuestoTecnicoPage() {
                     costo_mano_obra: parseFloat(costoManoObra),
                     gastos_administrativos: parseFloat(gastosAdministrativos) || 0,
                     costo_total: total,
-                    estado_presupuesto: EstadoPresupuesto.ENVIADO,
+                    estado_presupuesto: 'enviado',
                     alternativas_reparacion: alternativas.trim() || null,
                 })
                 .select()

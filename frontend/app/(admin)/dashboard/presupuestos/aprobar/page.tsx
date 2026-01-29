@@ -127,7 +127,7 @@ export default function AprobarPresupuestosPage() {
                 const { error } = await supabase
                     .from('presupuestos')
                     .update({
-                        estado_presupuesto: EstadoPresupuesto.APROBADO_ADMIN,
+                        estado_presupuesto: 'aprobado_admin',
                         gastos_administrativos: comisionValue,
                         costo_total: nuevoTotal,
                     })
@@ -146,7 +146,7 @@ export default function AprobarPresupuestosPage() {
                 const { error } = await supabase
                     .from('presupuestos')
                     .update({
-                        estado_presupuesto: EstadoPresupuesto.RECHAZADO,
+                        estado_presupuesto: 'rechazado',
                     })
                     .eq('id_presupuesto', presupuestoSeleccionado.id_presupuesto)
 

@@ -33,17 +33,17 @@ interface Presupuesto {
 
 const getEstadoBadgeColor = (estado: string) => {
     switch (estado) {
-        case EstadoPresupuesto.APROBADO:
+        case 'aprobado':
             return 'bg-green-100 text-green-800'
-        case EstadoPresupuesto.RECHAZADO:
+        case 'rechazado':
             return 'bg-red-100 text-red-800'
-        case EstadoPresupuesto.ENVIADO:
+        case 'enviado':
             return 'bg-blue-100 text-blue-800'
-        case EstadoPresupuesto.APROBADO_ADMIN:
+        case 'aprobado_admin':
             return 'bg-cyan-100 text-cyan-800'
-        case EstadoPresupuesto.BORRADOR:
+        case 'borrador':
             return 'bg-gray-100 text-gray-800'
-        case EstadoPresupuesto.VENCIDO:
+        case 'vencido':
             return 'bg-orange-100 text-orange-800'
         default:
             return 'bg-gray-100 text-gray-800'
@@ -52,16 +52,28 @@ const getEstadoBadgeColor = (estado: string) => {
 
 const getEstadoIcon = (estado: string) => {
     switch (estado) {
-        case EstadoPresupuesto.APROBADO:
+        case 'aprobado':
             return <CheckCircle className="h-4 w-4" />
-        case EstadoPresupuesto.RECHAZADO:
+        case 'rechazado':
             return <XCircle className="h-4 w-4" />
-        case EstadoPresupuesto.ENVIADO:
-        case EstadoPresupuesto.BORRADOR:
+        case 'enviado':
+        case 'borrador':
             return <Clock className="h-4 w-4" />
         default:
             return <FileText className="h-4 w-4" />
     }
+}
+
+const getEstadoLabel = (estado: string): string => {
+    const labels: Record<string, string> = {
+        'borrador': 'Borrador',
+        'enviado': 'Enviado',
+        'aprobado_admin': 'Aprobado Admin',
+        'aprobado': 'Aprobado',
+        'rechazado': 'Rechazado',
+        'vencido': 'Vencido',
+    }
+    return labels[estado] || estado
 }
 
 export default function PresupuestosClientePage() {
@@ -163,8 +175,8 @@ export default function PresupuestosClientePage() {
 
         try {
             const nuevoEstado = accion === 'aprobar'
-                ? EstadoPresupuesto.APROBADO
-                : EstadoPresupuesto.RECHAZADO
+                ? 'aprobado'
+                : 'rechazado'
 
             // Actualizar presupuesto
             const { error: errorPresupuesto } = await supabase
@@ -182,12 +194,12 @@ export default function PresupuestosClientePage() {
                 return
             }
 
-            // Si se aprueba, actualizar estado del incidente
+            // Si se aprueba, actualizar estado del incidente a 'en_proceso'
             if (accion === 'aprobar') {
                 const { error: errorIncidente } = await supabase
                     .from('incidentes')
                     .update({
-                        estado_actual: EstadoIncidente.APROBADO
+                        estado_actual: 'en_proceso'
                     })
                     .eq('id_incidente', presupuestoSeleccionado.id_incidente)
 
@@ -351,7 +363,7 @@ export default function PresupuestosClientePage() {
                                     </div>
 
                                     {/* Botones de Aprobación/Rechazo */}
-                                    {presupuesto.estado_presupuesto === EstadoPresupuesto.APROBADO_ADMIN && (
+                                    {presupuesto.estado_presupuesto === 'aprobado_admin' && (
                                         <div className="flex gap-2 pt-4 border-t">
                                             <Button
                                                 onClick={() => handleAprobar(presupuesto)}
@@ -373,7 +385,7 @@ export default function PresupuestosClientePage() {
                                         </div>
                                     )}
 
-                                    {presupuesto.estado_presupuesto === EstadoPresupuesto.ENVIADO && (
+                                    {presupuesto.estado_presupuesto === 'enviado' && (
                                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
                                             <p className="text-sm text-blue-800 font-medium">
                                                 ⏳ Presupuesto en revisión por administración.
@@ -381,7 +393,7 @@ export default function PresupuestosClientePage() {
                                         </div>
                                     )}
 
-                                    {presupuesto.estado_presupuesto === EstadoPresupuesto.APROBADO && (
+                                    {presupuesto.estado_presupuesto === 'aprobado' && (
                                         <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-4">
                                             <p className="text-sm text-green-800 font-medium">
                                                 ✓ Presupuesto aprobado. El trabajo puede comenzar.
@@ -389,7 +401,7 @@ export default function PresupuestosClientePage() {
                                         </div>
                                     )}
 
-                                    {presupuesto.estado_presupuesto === EstadoPresupuesto.RECHAZADO && (
+                                    {presupuesto.estado_presupuesto === 'rechazado' && (
                                         <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-4">
                                             <p className="text-sm text-red-800 font-medium">
                                                 ✗ Presupuesto rechazado.

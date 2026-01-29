@@ -44,8 +44,8 @@ export default function NuevoPagoPage() {
     // Form state
     const [presupuestoSeleccionado, setPresupuestoSeleccionado] = useState('')
     const [montoPagado, setMontoPagado] = useState('')
-    const [tipoPago, setTipoPago] = useState<TipoPago>(TipoPago.TOTAL)
-    const [metodoPago, setMetodoPago] = useState<MetodoPago>(MetodoPago.TRANSFERENCIA)
+    const [tipoPago, setTipoPago] = useState('total')
+    const [metodoPago, setMetodoPago] = useState('transferencia')
     const [numeroComprobante, setNumeroComprobante] = useState('')
     const [observaciones, setObservaciones] = useState('')
 
@@ -58,7 +58,7 @@ export default function NuevoPagoPage() {
             const presupuesto = presupuestos.find(
                 p => p.id_presupuesto === parseInt(presupuestoSeleccionado)
             )
-            if (presupuesto && tipoPago === TipoPago.TOTAL) {
+            if (presupuesto && tipoPago === 'total') {
                 const montoPendiente = calcularMontoPendiente(presupuesto.id_presupuesto, presupuesto.costo_total)
                 setMontoPagado(montoPendiente.toString())
             }
@@ -343,17 +343,17 @@ export default function NuevoPagoPage() {
                                 <Label htmlFor="tipoPago">Tipo de Pago *</Label>
                                 <Select
                                     value={tipoPago}
-                                    onValueChange={(value) => setTipoPago(value as TipoPago)}
+                                    onValueChange={setTipoPago}
                                     disabled={submitting}
                                 >
                                     <SelectTrigger id="tipoPago">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={TipoPago.TOTAL}>Total</SelectItem>
-                                        <SelectItem value={TipoPago.PARCIAL}>Parcial</SelectItem>
-                                        <SelectItem value={TipoPago.ADELANTO}>Adelanto</SelectItem>
-                                        <SelectItem value={TipoPago.REEMBOLSO}>Reembolso</SelectItem>
+                                        <SelectItem value="total">Total</SelectItem>
+                                        <SelectItem value="parcial">Parcial</SelectItem>
+                                        <SelectItem value="adelanto">Adelanto</SelectItem>
+                                        <SelectItem value="reembolso">Reembolso</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -362,17 +362,17 @@ export default function NuevoPagoPage() {
                                 <Label htmlFor="metodoPago">Método de Pago *</Label>
                                 <Select
                                     value={metodoPago}
-                                    onValueChange={(value) => setMetodoPago(value as MetodoPago)}
+                                    onValueChange={setMetodoPago}
                                     disabled={submitting}
                                 >
                                     <SelectTrigger id="metodoPago">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={MetodoPago.EFECTIVO}>Efectivo</SelectItem>
-                                        <SelectItem value={MetodoPago.TRANSFERENCIA}>Transferencia</SelectItem>
-                                        <SelectItem value={MetodoPago.TARJETA}>Tarjeta</SelectItem>
-                                        <SelectItem value={MetodoPago.CHEQUE}>Cheque</SelectItem>
+                                        <SelectItem value="efectivo">Efectivo</SelectItem>
+                                        <SelectItem value="transferencia">Transferencia</SelectItem>
+                                        <SelectItem value="tarjeta">Tarjeta</SelectItem>
+                                        <SelectItem value="cheque">Cheque</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
