@@ -36,7 +36,7 @@ import {
   Settings,
   Save,
 } from 'lucide-react'
-import { NivelPrioridad } from '@/types/enums'
+import { NivelPrioridad, CategoriaIncidente } from '@/types/enums'
 
 interface TimelineEvent {
   id: string
@@ -152,8 +152,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
   const [nuevaPrioridad, setNuevaPrioridad] = useState('')
+  const [nuevaCategoria, setNuevaCategoria] = useState('')
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState('')
   const [observacionesAsignacion, setObservacionesAsignacion] = useState('')
+
+  const CATEGORIAS = Object.values(CategoriaIncidente)
 
   const supabase = createClient()
 
@@ -341,6 +344,9 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       if (nuevaPrioridad && nuevaPrioridad !== incidente?.nivel_prioridad) {
         updates.nivel_prioridad = nuevaPrioridad
+      if (nuevaCategoria && nuevaCategoria !== incidente?.categoria) {
+        updates.categoria = nuevaCategoria === '__NONE__' ? null : nuevaCategoria
+      }
       }
 
       if (Object.keys(updates).length > 0) {
@@ -634,7 +640,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     Estado y Prioridad
                   </h4>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Estado</Label>
                       <Select value={nuevoEstado} onValueChange={setNuevoEstado}>
@@ -661,6 +667,22 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           {PRIORIDADES.map((prio) => (
                             <SelectItem key={prio} value={prio}>
                               {prio}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Categoría</Label>
+                      <Select value={nuevaCategoria} onValueChange={setNuevaCategoria}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Asignar categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__NONE__">Sin categoría</SelectItem>
+                          {CATEGORIAS.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
                             </SelectItem>
                           ))}
                         </SelectContent>

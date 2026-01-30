@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle, Eye } from 'lucide-react'
 import { toast } from 'sonner'
-import { estadoIncidenteColors, prioridadColors, EstadoIncidente, NivelPrioridad, CategoriaIncidente } from '@/types/enums'
+import { estadoIncidenteColors, prioridadColors, EstadoIncidente, NivelPrioridad } from '@/types/enums'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -47,6 +47,7 @@ export default function IncidentesDisponiblesPage() {
     const [procesando, setProcesando] = useState(false)
     const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<Incidente | null>(null)
     const [modalAceptarOpen, setModalAceptarOpen] = useState(false)
+    const [modalRechazarOpen, setModalRechazarOpen] = useState(false)
     const [modalDetalleOpen, setModalDetalleOpen] = useState(false)
     const [incidenteDetalleId, setIncidenteDetalleId] = useState<number | null>(null)
 
@@ -77,50 +78,47 @@ export default function IncidentesDisponiblesPage() {
 
             setIdTecnico(usuario.id_tecnico)
 
-            // Obtener incidentes sin asignación activa
-            const { data: incidentesData, error } = await supabase
-                .from('incidentes')
-                .select(`
-          *,
-          inmuebles (
-            calle,
-            altura,
-            piso,
-            dpto,
-            barrio,
-            localidad
-          ),
-          clientes!incidentes_id_cliente_reporta_fkey (
-            nombre,
-            apellido,
-            telefono
-          )
-        `)
-                .in('estado_actual', ['Reportado', 'En Evaluación', 'Asignado', 'En Proceso'])
-                .order('fecha_registro', { ascending: false })
+                            // Cargar asignaciones que fueron hechas al técnico y están pendientes
+                                            // id_tecnico ya cargado arriba; usarlo
+                            // Obtener asignaciones pendientes para este técnico y traer datos del incidente relacionado
+                            const { data: asignacionesData, error: asignError } = await supabase
+                                .from('asignaciones_tecnico')
+                                .select(`
+                                    id_asignacion,
+                                    estado_asignacion,
+                                    fecha_asignacion,
+                                    observaciones,
+                                    incidentes(id_incidente, descripcion_problema, categoria, nivel_prioridad, estado_actual, fecha_registro, disponibilidad, inmuebles(calle,altura,piso,dpto,barrio,localidad), clientes:id_cliente_reporta(nombre,apellido,telefono))
+                                `)
+                                .eq('id_tecnico', usuario.id_tecnico)
+                                .eq('estado_asignacion', 'pendiente')
+                                .order('fecha_asignacion', { ascending: false })
 
-            if (error) {
-                console.error('Error al cargar incidentes:', error)
-                toast.error('Error al cargar incidentes disponibles')
-                return
-            }
+                            if (asignError) {
+                                console.error('Error al cargar asignaciones:', asignError)
+                                toast.error('Error al cargar asignaciones')
+                                return
+                            }
 
+                            // Mapear asignaciones a estructura para la UI
+                            const asignacionesMapped = (asignacionesData || []).map((a: any) => {
+                                const inc = a.incidentes
+                                return {
+                                    id_asignacion: a.id_asignacion,
+                                    id_incidente: inc?.id_incidente,
+                                    descripcion_problema: inc?.descripcion_problema,
+                                    categoria: inc?.categoria || null,
+                                    nivel_prioridad: inc?.nivel_prioridad || null,
+                                    estado_actual: inc?.estado_actual || '',
+                                    fecha_registro: inc?.fecha_registro || '',
+                                    disponibilidad_cliente: inc?.disponibilidad || null,
+                                    inmuebles: inc?.inmuebles || null,
+                                    clientes: inc?.clientes || null,
+                                    observaciones_asignacion: a.observaciones || null,
+                                }
+                            })
 
-            // Filtrar incidentes que no tienen asignación activa
-            const incidentesConAsignacion = await supabase
-                .from('asignaciones_tecnico')
-                .select('id_incidente, estado_asignacion')
-                .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
-
-            const idsConAsignacion = new Set(
-                incidentesConAsignacion.data?.map(a => a.id_incidente) || []
-            )
-
-            const incidentesSinAsignacion = (incidentesData || []).filter(
-                inc => !idsConAsignacion.has(inc.id_incidente)
-            )
-
-            setIncidentes(incidentesSinAsignacion as unknown as Incidente[])
+                            setIncidentes(asignacionesMapped as unknown as Incidente[])
         } catch (error) {
             console.error('Error:', error)
             toast.error('Error inesperado')
@@ -134,6 +132,11 @@ export default function IncidentesDisponiblesPage() {
         setModalAceptarOpen(true)
     }
 
+    const handleRechazarClick = (incidente: Incidente) => {
+        setIncidenteSeleccionado(incidente)
+        setModalRechazarOpen(true)
+    }
+
     const handleVerDetalles = (idIncidente: number) => {
         setIncidenteDetalleId(idIncidente)
         setModalDetalleOpen(true)
@@ -145,35 +148,59 @@ export default function IncidentesDisponiblesPage() {
         setProcesando(true)
 
         try {
-            // Crear asignación
-            const { error: errorAsignacion } = await supabase
+            // Actualizar la asignación pendiente a 'aceptada'
+            const { error: updateError } = await supabase
                 .from('asignaciones_tecnico')
-                .insert({
-                    id_incidente: incidenteSeleccionado.id_incidente,
-                    id_tecnico: idTecnico,
-                    estado_asignacion: 'aceptada',
-                    fecha_asignacion: new Date().toISOString(),
-                })
+                .update({ estado_asignacion: 'aceptada', fecha_aceptacion: new Date().toISOString() })
+                .eq('id_asignacion', (incidenteSeleccionado as any).id_asignacion)
 
-            if (errorAsignacion) {
-                console.error('Error al crear asignación:', errorAsignacion)
-                toast.error('Error al aceptar el trabajo')
+            if (updateError) {
+                console.error('Error al aceptar asignación:', updateError)
+                toast.error('Error al aceptar la asignación')
                 return
             }
 
-            // Actualizar estado del incidente si es necesario
-            if (incidenteSeleccionado.estado_actual !== 'Asignado') {
-                await supabase
-                    .from('incidentes')
-                    .update({ estado_actual: EstadoIncidente.ASIGNADO })
-                    .eq('id_incidente', incidenteSeleccionado.id_incidente)
+            // Actualizar estado del incidente a 'Asignado'
+            await supabase
+                .from('incidentes')
+                .update({ estado_actual: EstadoIncidente.ASIGNADO })
+                .eq('id_incidente', incidenteSeleccionado.id_incidente)
+
+            toast.success('Asignación aceptada')
+            await cargarIncidentesDisponibles()
+        } catch (error) {
+            console.error('Error:', error)
+            toast.error('Error inesperado')
+        } finally {
+            setProcesando(false)
+            setModalAceptarOpen(false)
+            setIncidenteSeleccionado(null)
+        }
+    }
+
+    const confirmarRechazo = async () => {
+        if (!incidenteSeleccionado) return
+
+        setProcesando(true)
+        try {
+            const { error: updateError } = await supabase
+                .from('asignaciones_tecnico')
+                .update({ estado_asignacion: 'rechazada', fecha_rechazo: new Date().toISOString() })
+                .eq('id_asignacion', (incidenteSeleccionado as any).id_asignacion)
+
+            if (updateError) {
+                console.error('Error al rechazar asignación:', updateError)
+                toast.error('Error al rechazar la asignación')
+                return
             }
 
-            toast.success('Trabajo aceptado exitosamente', {
-                description: 'El incidente ahora aparece en "Mis Trabajos"'
-            })
+            // Opcional: dejar el incidente en estado 'Reportado' o similar
+            await supabase
+                .from('incidentes')
+                .update({ estado_actual: EstadoIncidente.REPORTADO })
+                .eq('id_incidente', incidenteSeleccionado.id_incidente)
 
-            // Recargar lista
+            toast.success('Asignación rechazada')
             await cargarIncidentesDisponibles()
         } catch (error) {
             console.error('Error:', error)
@@ -222,7 +249,7 @@ export default function IncidentesDisponiblesPage() {
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Cargando incidentes disponibles...</p>
+                    <p className="text-muted-foreground">Cargando asignaciones...</p>
                 </div>
             </div>
         )
@@ -237,9 +264,9 @@ export default function IncidentesDisponiblesPage() {
         >
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Incidentes Disponibles</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Asignación</h1>
                 <p className="text-gray-600 text-sm mt-1">
-                    Acepta trabajos nuevos sin técnico asignado
+                    Revisa las asignaciones que te hizo la administración y apróbalas o recházalas
                 </p>
             </div>
 
@@ -251,7 +278,7 @@ export default function IncidentesDisponiblesPage() {
                             <div className="flex items-center gap-2">
                                 <Search className="h-5 w-5 text-blue-600" />
                                 <span className="text-sm font-medium text-gray-700">
-                                    {incidentes.length} {incidentes.length === 1 ? 'incidente disponible' : 'incidentes disponibles'}
+                                    {incidentes.length} {incidentes.length === 1 ? 'asignación pendiente' : 'asignaciones pendientes'}
                                 </span>
                             </div>
                             <Badge className="bg-blue-600 text-white">
@@ -341,14 +368,24 @@ export default function IncidentesDisponiblesPage() {
                                         <Eye className="h-4 w-4 mr-2" />
                                         Ver Detalles
                                     </Button>
-                                    <Button
-                                        className="flex-1 bg-green-600 hover:bg-green-700"
-                                        onClick={() => handleAceptarClick(incidente)}
-                                        disabled={procesando}
-                                    >
-                                        <CheckCircle className="h-4 w-4 mr-2" />
-                                        Aceptar Trabajo
-                                    </Button>
+                                    <div className="flex-1 flex gap-2">
+                                        <Button
+                                            className="flex-1 bg-green-600 hover:bg-green-700"
+                                            onClick={() => handleAceptarClick(incidente)}
+                                            disabled={procesando}
+                                        >
+                                            <CheckCircle className="h-4 w-4 mr-2" />
+                                            Aprobar
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="flex-1"
+                                            onClick={() => handleRechazarClick(incidente)}
+                                            disabled={procesando}
+                                        >
+                                            Rechazar
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -362,12 +399,12 @@ export default function IncidentesDisponiblesPage() {
                             <Search className="h-12 w-12 text-slate-500" />
                         </div>
 
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                            No hay incidentes disponibles
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            No hay asignaciones pendientes
                         </h3>
 
                         <p className="text-sm text-gray-600 max-w-md">
-                            Todos los incidentes activos ya tienen técnicos asignados. Vuelve más tarde para ver nuevos trabajos.
+                            No tienes asignaciones nuevas para aprobar o rechazar.
                         </p>
                     </CardContent>
                 </Card>
@@ -377,17 +414,17 @@ export default function IncidentesDisponiblesPage() {
             <AlertDialog open={modalAceptarOpen} onOpenChange={setModalAceptarOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Aceptar este trabajo?</AlertDialogTitle>
+                        <AlertDialogTitle>¿Aprobar asignación?</AlertDialogTitle>
                         <AlertDialogDescription>
                             {incidenteSeleccionado && (
                                 <>
-                                    Estás por aceptar el incidente #{incidenteSeleccionado.id_incidente}.
+                                    Estás por aprobar la asignación para el incidente #{incidenteSeleccionado.id_incidente}.
                                     <br /><br />
                                     <strong>Ubicación:</strong> {getDireccion(incidenteSeleccionado.inmuebles)}
                                     <br />
                                     <strong>Categoría:</strong> {incidenteSeleccionado.categoria || 'No especificada'}
                                     <br /><br />
-                                    El trabajo aparecerá en tu lista de "Mis Trabajos".
+                                    El incidente quedará asignado a tu usuario.
                                 </>
                             )}
                         </AlertDialogDescription>
@@ -399,7 +436,34 @@ export default function IncidentesDisponiblesPage() {
                             disabled={procesando}
                             className="bg-green-600 hover:bg-green-700"
                         >
-                            {procesando ? 'Procesando...' : 'Aceptar Trabajo'}
+                            {procesando ? 'Procesando...' : 'Aprobar'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={modalRechazarOpen} onOpenChange={setModalRechazarOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Rechazar asignación?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {incidenteSeleccionado && (
+                                <>
+                                    Estás por rechazar la asignación para el incidente #{incidenteSeleccionado.id_incidente}.
+                                    <br /><br />
+                                    Si rechazas, la administración será notificada y podrá reasignar el incidente.
+                                </>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={procesando}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmarRechazo}
+                            disabled={procesando}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {procesando ? 'Procesando...' : 'Rechazar'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

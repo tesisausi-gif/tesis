@@ -15,7 +15,7 @@ const navItems = [
     href: '/tecnico',
   },
   {
-    title: 'Disponibles',
+    title: 'Asignación',
     icon: Search,
     href: '/tecnico/disponibles',
   },

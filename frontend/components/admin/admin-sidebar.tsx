@@ -66,6 +66,11 @@ const menuItems = [
     href: '/dashboard/presupuestos',
   },
   {
+    title: 'Asignaciones',
+    icon: Star,
+    href: '/dashboard/asignaciones',
+  },
+  {
     title: 'Pagos',
     icon: FileCheck,
     href: '/dashboard/pagos',

@@ -12,7 +12,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, AlertCircle, Building2, MapPin, Send } from 'lucide-react'
 import { toast } from 'sonner'
-import { CategoriaIncidente } from '@/types/enums'
 
 interface TipoInmueble {
   nombre: string
@@ -30,7 +29,7 @@ interface Inmueble {
   tipos_inmuebles: TipoInmueble | TipoInmueble[] | null
 }
 
-const categorias = Object.values(CategoriaIncidente)
+// categoria será asignada por administración
 
 export default function NuevoIncidentePage() {
   const router = useRouter()
@@ -43,7 +42,6 @@ export default function NuevoIncidentePage() {
 
   // Form state
   const [inmuebleSeleccionado, setInmuebleSeleccionado] = useState('')
-  const [categoria, setCategoria] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [disponibilidad, setDisponibilidad] = useState('')
 
@@ -126,10 +124,7 @@ export default function NuevoIncidentePage() {
       return
     }
 
-    if (!categoria) {
-      toast.error('Selecciona una categoría')
-      return
-    }
+    // categoría será asignada por administración, no es requerida al reportar
 
     if (!descripcion.trim()) {
       toast.error('Describe el problema')
@@ -151,11 +146,11 @@ export default function NuevoIncidentePage() {
     try {
       const { data, error } = await supabase
         .from('incidentes')
-        .insert({
+          .insert({
           id_propiedad: parseInt(inmuebleSeleccionado),
           id_cliente_reporta: idCliente,
           descripcion_problema: descripcion.trim(),
-          categoria: categoria,
+          categoria: null,
           estado_actual: 'pendiente',
           disponibilidad: disponibilidad.trim(),
         })
@@ -303,28 +298,7 @@ export default function NuevoIncidentePage() {
               </Select>
             </div>
 
-            {/* Categoría */}
-            <div className="space-y-2">
-              <Label htmlFor="categoria" className="text-sm font-medium">
-                Categoría *
-              </Label>
-              <Select
-                value={categoria}
-                onValueChange={setCategoria}
-                disabled={submitting}
-              >
-                <SelectTrigger id="categoria">
-                  <SelectValue placeholder="¿Qué tipo de problema es?" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categorias.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Categoría: asignada por administración */}
 
             {/* Descripción */}
             <div className="space-y-2">
