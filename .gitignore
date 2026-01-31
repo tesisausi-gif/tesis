@@ -42,6 +42,9 @@ next-env.d.ts
 *.sw?
 .claude/
 .gemini/
+.cursor/
+.agent/
+.agents/
 
 # Frontend specific (if nested)
 frontend/.next/
