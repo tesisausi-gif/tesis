@@ -53,11 +53,28 @@ export async function updateSession(request: NextRequest) {
   const isTecnicoRoute = pathname.startsWith('/tecnico')
   const isAdminRoute = pathname.startsWith('/dashboard')
 
+  // Rutas compartidas (requieren autenticación, múltiples roles permitidos)
+  const isInmuebleRoute = pathname.startsWith('/inmueble')
+
   // Rutas públicas
   const publicRoutes = ['/login', '/register', '/']
   const isPublicRoute = publicRoutes.some(route =>
     pathname === route || pathname.startsWith('/register')
   )
+
+  // Proteger rutas compartidas (requieren login, cualquier rol autorizado)
+  if (isInmuebleRoute) {
+    if (!user) {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/login'
+      redirectUrl.searchParams.set('redirectTo', pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+    // Solo cliente y admin pueden ver detalles de inmuebles
+    if (userRole !== 'cliente' && userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+  }
 
   // Proteger rutas según rol
   if (isClienteRoute || isTecnicoRoute || isAdminRoute) {
