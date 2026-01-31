@@ -66,7 +66,7 @@ export async function getInmuebles(supabase: SupabaseClient) {
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
-  return data as Inmueble[]
+  return (data as unknown) as Inmueble[]
 }
 
 /**
@@ -84,7 +84,7 @@ export async function getInmueblesByCliente(
     .order('calle')
 
   if (error) throw error
-  return data as Inmueble[]
+  return (data as unknown) as Inmueble[]
 }
 
 /**
@@ -104,7 +104,7 @@ export async function getInmuebleById(
     .single()
 
   if (error) throw error
-  return data as Inmueble
+  return (data as unknown) as Inmueble
 }
 
 /**
@@ -117,7 +117,7 @@ export async function getTiposInmuebles(supabase: SupabaseClient) {
     .order('nombre')
 
   if (error) throw error
-  return data as TipoInmueble[]
+  return (data as unknown) as TipoInmueble[]
 }
 
 /**

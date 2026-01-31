@@ -93,7 +93,7 @@ export async function getAsignaciones(supabase: SupabaseClient) {
     .order('fecha_asignacion', { ascending: false })
 
   if (error) throw error
-  return data as Asignacion[]
+  return (data as unknown) as Asignacion[]
 }
 
 /**
@@ -111,7 +111,7 @@ export async function getAsignacionesPendientes(
     .order('fecha_asignacion', { ascending: false })
 
   if (error) throw error
-  return data as Asignacion[]
+  return (data as unknown) as Asignacion[]
 }
 
 /**
@@ -129,7 +129,7 @@ export async function getAsignacionesActivas(
     .order('fecha_asignacion', { ascending: false })
 
   if (error) throw error
-  return data as Asignacion[]
+  return (data as unknown) as Asignacion[]
 }
 
 /**

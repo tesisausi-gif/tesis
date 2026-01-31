@@ -86,7 +86,7 @@ export async function getIncidentes(supabase: SupabaseClient) {
     .order('fecha_registro', { ascending: false })
 
   if (error) throw error
-  return data as Incidente[]
+  return (data as unknown) as Incidente[]
 }
 
 /**
@@ -103,7 +103,7 @@ export async function getIncidentesByCliente(
     .order('fecha_registro', { ascending: false })
 
   if (error) throw error
-  return data as Incidente[]
+  return (data as unknown) as Incidente[]
 }
 
 /**
@@ -157,7 +157,7 @@ export async function getIncidenteById(
     .single()
 
   if (error) throw error
-  return data as IncidenteConDetalles
+  return (data as unknown) as IncidenteConDetalles
 }
 
 /**

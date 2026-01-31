@@ -73,7 +73,7 @@ export async function getUsuarios(supabase: SupabaseClient) {
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
-  return data as Usuario[]
+  return (data as unknown) as Usuario[]
 }
 
 /**
@@ -86,7 +86,7 @@ export async function getClientes(supabase: SupabaseClient) {
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
-  return data as Cliente[]
+  return (data as unknown) as Cliente[]
 }
 
 /**
@@ -99,7 +99,7 @@ export async function getTecnicos(supabase: SupabaseClient) {
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
-  return data as Tecnico[]
+  return (data as unknown) as Tecnico[]
 }
 
 /**
@@ -130,7 +130,7 @@ export async function getClienteById(
     .single()
 
   if (error) throw error
-  return data as Cliente
+  return (data as unknown) as Cliente
 }
 
 /**
@@ -147,7 +147,7 @@ export async function getTecnicoById(
     .single()
 
   if (error) throw error
-  return data as Tecnico
+  return (data as unknown) as Tecnico
 }
 
 /**
