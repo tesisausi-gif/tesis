@@ -7,11 +7,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle } from 'lucide-react'
+import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle, Wrench } from 'lucide-react'
 import { estadoIncidenteColors, prioridadColors, EstadoIncidente, NivelPrioridad, CategoriaIncidente } from '@/shared/types'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
+import { ModalAsignarTecnico } from '@/components/admin/modal-asignar-tecnico'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
 
 interface IncidentesAdminContentProps {
@@ -27,6 +29,8 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   const [busqueda, setBusqueda] = useState('')
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [modalAsignarOpen, setModalAsignarOpen] = useState(false)
+  const [incidenteParaAsignar, setIncidenteParaAsignar] = useState<{id: number, categoria: string | null} | null>(null)
 
   const incidentesFiltrados = incidentes.filter((incidente) => {
     if (filtroEstado !== 'todos' && incidente.estado_actual !== filtroEstado) {
@@ -65,6 +69,11 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     setModalOpen(true)
   }
 
+  const abrirModalAsignar = (id: number, categoria: string | null) => {
+    setIncidenteParaAsignar({ id, categoria })
+    setModalAsignarOpen(true)
+  }
+
   // Stats
   const totalIncidentes = incidentes.length
   const pendientes = incidentes.filter(i => i.estado_actual === EstadoIncidente.REPORTADO).length
@@ -72,6 +81,92 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     [EstadoIncidente.EN_EVALUACION, EstadoIncidente.ASIGNADO, EstadoIncidente.EN_PROCESO, EstadoIncidente.EN_EJECUCION].includes(i.estado_actual as EstadoIncidente)
   ).length
   const resueltos = incidentes.filter(i => i.fue_resuelto).length
+
+  const renderTablaIncidentes = (incidentesAMostrar: IncidenteConCliente[]) => {
+    if (incidentesAMostrar.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500">No hay incidentes en este estado</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">ID</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Dirección</TableHead>
+              <TableHead>Categoría</TableHead>
+              <TableHead>Prioridad</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead className="w-[150px]">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {incidentesAMostrar.map((incidente) => (
+              <TableRow
+                key={incidente.id_incidente}
+                className="hover:bg-gray-50"
+              >
+                <TableCell className="font-medium">
+                  #{incidente.id_incidente}
+                </TableCell>
+                <TableCell>
+                  {incidente.clientes
+                    ? `${incidente.clientes.nombre} ${incidente.clientes.apellido}`
+                    : '-'}
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate">
+                  {incidente.inmuebles
+                    ? `${incidente.inmuebles.calle} ${incidente.inmuebles.altura}, ${incidente.inmuebles.localidad}`
+                    : '-'}
+                </TableCell>
+                <TableCell>
+                  {incidente.categoria || '-'}
+                </TableCell>
+                <TableCell>
+                  {incidente.nivel_prioridad && (
+                    <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
+                      {incidente.nivel_prioridad}
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-sm text-gray-600">
+                  {format(new Date(incidente.fecha_registro), 'dd/MM/yy', { locale: es })}
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    {incidente.estado_actual === 'pendiente' && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => abrirModalAsignar(incidente.id_incidente, incidente.categoria)}
+                        className="gap-1"
+                      >
+                        <Wrench className="h-4 w-4" />
+                        Asignar
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => abrirModal(incidente.id_incidente)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -179,105 +274,88 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
         </CardContent>
       </Card>
 
-      {/* Tabla de Incidentes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Incidentes ({incidentesFiltrados.length})</CardTitle>
-          <CardDescription>
-            Click en un incidente para ver los detalles completos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {incidentesFiltrados.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[80px]">ID</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Dirección</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Prioridad</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead className="w-[80px]">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {incidentesFiltrados.map((incidente) => (
-                    <TableRow
-                      key={incidente.id_incidente}
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => abrirModal(incidente.id_incidente)}
-                    >
-                      <TableCell className="font-medium">
-                        #{incidente.id_incidente}
-                      </TableCell>
-                      <TableCell>
-                        {incidente.clientes
-                          ? `${incidente.clientes.nombre} ${incidente.clientes.apellido}`
-                          : '-'}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {incidente.inmuebles
-                          ? `${incidente.inmuebles.calle} ${incidente.inmuebles.altura}, ${incidente.inmuebles.localidad}`
-                          : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {incidente.categoria || '-'}
-                      </TableCell>
-                      <TableCell>
-                        {incidente.nivel_prioridad && (
-                          <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
-                            {incidente.nivel_prioridad}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getEstadoColor(incidente.estado_actual)}>
-                          {incidente.estado_actual}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {format(new Date(incidente.fecha_registro), 'dd/MM/yy', { locale: es })}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            abrirModal(incidente.id_incidente)
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No se encontraron incidentes</p>
-              {(filtroEstado !== 'todos' || filtroCategoria !== 'todos' || busqueda) && (
-                <Button
-                  variant="link"
-                  onClick={() => {
-                    setFiltroEstado('todos')
-                    setFiltroCategoria('todos')
-                    setBusqueda('')
-                  }}
-                >
-                  Limpiar filtros
-                </Button>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Tabla de Incidentes por Estado */}
+      <div className="space-y-4">
+        <Tabs defaultValue="pendiente" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pendiente" className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              Pendientes
+              <Badge variant="secondary" className="ml-2">
+                {incidentes.filter(i => i.estado_actual === 'pendiente').length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="en_proceso" className="flex items-center gap-2">
+              <Wrench className="h-4 w-4" />
+              En Proceso
+              <Badge variant="secondary" className="ml-2">
+                {incidentes.filter(i => i.estado_actual === 'en_proceso').length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="resuelto" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Resueltos
+              <Badge variant="secondary" className="ml-2">
+                {incidentes.filter(i => i.estado_actual === 'resuelto').length}
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab: Pendientes */}
+          <TabsContent value="pendiente">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-yellow-600" />
+                  Incidentes Pendientes
+                </CardTitle>
+                <CardDescription>
+                  Incidentes sin técnico asignado. Selecciona uno para asignar.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderTablaIncidentes(incidentes.filter(i => i.estado_actual === 'pendiente'))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: En Proceso */}
+          <TabsContent value="en_proceso">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wrench className="h-5 w-5 text-blue-600" />
+                  Incidentes en Proceso
+                </CardTitle>
+                <CardDescription>
+                  Incidentes con técnico asignado y en ejecución.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderTablaIncidentes(incidentes.filter(i => i.estado_actual === 'en_proceso'))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Resueltos */}
+          <TabsContent value="resuelto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Incidentes Resueltos
+                </CardTitle>
+                <CardDescription>
+                  Incidentes completados y cerrados.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderTablaIncidentes(incidentes.filter(i => i.estado_actual === 'resuelto'))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* Modal de Detalle */}
       <IncidenteDetailModal
@@ -286,6 +364,20 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
         onOpenChange={setModalOpen}
         rol="admin"
       />
+
+      {/* Modal de Asignación de Técnico */}
+      {incidenteParaAsignar && (
+        <ModalAsignarTecnico
+          open={modalAsignarOpen}
+          onOpenChange={setModalAsignarOpen}
+          idIncidente={incidenteParaAsignar.id}
+          categoriaIncidente={incidenteParaAsignar.categoria}
+          onAsignarExito={() => {
+            // Refresh the page to reload data
+            window.location.reload()
+          }}
+        />
+      )}
     </div>
   )
 }
