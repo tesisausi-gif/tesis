@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/shared/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { DollarSign, CreditCard, Calendar, FileText, Receipt } from 'lucide-react'
 import { toast } from 'sonner'
-import { TipoPago, MetodoPago } from '@/types/enums'
+import { TipoPago, MetodoPago } from '@/shared/types/enums'
 
 interface Pago {
     id_pago: number

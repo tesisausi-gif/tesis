@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/shared/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { FileText, DollarSign, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { toast } from 'sonner'
-import { EstadoPresupuesto } from '@/types/enums'
+import { EstadoPresupuesto } from '@/shared/types/enums'
 
 interface Presupuesto {
     id_presupuesto: number

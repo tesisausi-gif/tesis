@@ -26,7 +26,7 @@ import {
   SidebarMenuItem,
   SidebarFooter,
 } from '@/components/ui/sidebar'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/shared/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 const menuItems = [

@@ -1,49 +1,17 @@
 /**
- * Servicio de Asignaciones
- * Centraliza todas las queries relacionadas con asignaciones de técnicos
+ * Repository de Asignaciones
+ * Queries puras a Supabase para asignaciones de técnicos
  */
 
 import { SupabaseClient } from '@supabase/supabase-js'
+import type {
+  Asignacion,
+  AsignacionTecnico,
+  CreateAsignacionDTO,
+} from './asignaciones.types'
 
-// Tipos
-export interface Asignacion {
-  id_asignacion: number
-  id_incidente: number
-  id_tecnico: number
-  estado_asignacion: string
-  fecha_asignacion: string
-  fecha_aceptacion?: string | null
-  fecha_rechazo?: string | null
-  observaciones?: string | null
-  incidentes?: {
-    id_incidente: number
-    descripcion_problema: string
-    categoria: string | null
-    nivel_prioridad: string | null
-    estado_actual: string
-    disponibilidad: string | null
-    inmuebles?: {
-      calle: string | null
-      altura: string | null
-      piso: string | null
-      dpto: string | null
-      barrio: string | null
-      localidad: string | null
-    } | null
-    clientes?: {
-      nombre: string
-      apellido: string
-      telefono: string | null
-    } | null
-  } | null
-  tecnicos?: {
-    nombre: string
-    apellido: string
-  } | null
-}
-
-// Select base
-const ASIGNACION_SELECT = `
+// Select con incidente y técnico
+const ASIGNACION_CON_DETALLES_SELECT = `
   id_asignacion,
   id_incidente,
   id_tecnico,
@@ -51,11 +19,8 @@ const ASIGNACION_SELECT = `
   fecha_asignacion,
   fecha_aceptacion,
   fecha_rechazo,
-  observaciones
-`
-
-const ASIGNACION_CON_INCIDENTE_SELECT = `
-  ${ASIGNACION_SELECT},
+  fecha_visita_programada,
+  observaciones,
   incidentes (
     id_incidente,
     descripcion_problema,
@@ -84,86 +49,109 @@ const ASIGNACION_CON_INCIDENTE_SELECT = `
 `
 
 /**
- * Obtener todas las asignaciones (admin)
+ * Obtener todas las asignaciones (para admin)
  */
-export async function getAsignaciones(supabase: SupabaseClient) {
+export async function findAll(
+  supabase: SupabaseClient
+): Promise<Asignacion[]> {
   const { data, error } = await supabase
     .from('asignaciones_tecnico')
-    .select(ASIGNACION_CON_INCIDENTE_SELECT)
+    .select(ASIGNACION_CON_DETALLES_SELECT)
     .order('fecha_asignacion', { ascending: false })
 
   if (error) throw error
-  return (data as unknown) as Asignacion[]
+  return data as unknown as Asignacion[]
 }
 
 /**
  * Obtener asignaciones pendientes de un técnico
  */
-export async function getAsignacionesPendientes(
+export async function findPendientesByTecnico(
   supabase: SupabaseClient,
   idTecnico: number
-) {
+): Promise<Asignacion[]> {
   const { data, error } = await supabase
     .from('asignaciones_tecnico')
-    .select(ASIGNACION_CON_INCIDENTE_SELECT)
+    .select(ASIGNACION_CON_DETALLES_SELECT)
     .eq('id_tecnico', idTecnico)
     .eq('estado_asignacion', 'pendiente')
     .order('fecha_asignacion', { ascending: false })
 
   if (error) throw error
-  return (data as unknown) as Asignacion[]
+  return data as unknown as Asignacion[]
 }
 
 /**
  * Obtener asignaciones activas de un técnico (aceptadas o en curso)
  */
-export async function getAsignacionesActivas(
+export async function findActivasByTecnico(
   supabase: SupabaseClient,
   idTecnico: number
-) {
+): Promise<AsignacionTecnico[]> {
   const { data, error } = await supabase
     .from('asignaciones_tecnico')
-    .select(ASIGNACION_CON_INCIDENTE_SELECT)
+    .select(`
+      id_asignacion,
+      id_incidente,
+      id_tecnico,
+      estado_asignacion,
+      fecha_asignacion,
+      fecha_visita_programada,
+      observaciones,
+      incidentes (
+        id_incidente,
+        descripcion_problema,
+        categoria,
+        nivel_prioridad,
+        estado_actual,
+        inmuebles (
+          calle,
+          altura,
+          piso,
+          dpto,
+          barrio,
+          localidad
+        )
+      )
+    `)
     .eq('id_tecnico', idTecnico)
-    .in('estado_asignacion', ['aceptada', 'en_curso'])
+    .in('estado_asignacion', ['aceptada', 'en_curso', 'completada'])
     .order('fecha_asignacion', { ascending: false })
 
   if (error) throw error
-  return (data as unknown) as Asignacion[]
+  return data as unknown as AsignacionTecnico[]
 }
 
 /**
- * Crear una nueva asignación (admin)
+ * Crear una nueva asignación
  */
-export async function createAsignacion(
+export async function create(
   supabase: SupabaseClient,
-  data: {
-    id_incidente: number
-    id_tecnico: number
-    observaciones?: string
-  }
-) {
-  const { data: asignacion, error } = await supabase
+  dto: CreateAsignacionDTO
+): Promise<{ id_asignacion: number }> {
+  const { data, error } = await supabase
     .from('asignaciones_tecnico')
     .insert({
-      ...data,
+      id_incidente: dto.id_incidente,
+      id_tecnico: dto.id_tecnico,
+      observaciones: dto.observaciones || null,
       estado_asignacion: 'pendiente',
       fecha_asignacion: new Date().toISOString(),
     })
-    .select()
+    .select('id_asignacion')
     .single()
 
   if (error) throw error
-  return asignacion
+  return data
 }
 
 /**
- * Aceptar una asignación (técnico)
+ * Aceptar una asignación
  */
-export async function aceptarAsignacion(
+export async function aceptar(
   supabase: SupabaseClient,
   idAsignacion: number
-) {
+): Promise<void> {
   const { error } = await supabase
     .from('asignaciones_tecnico')
     .update({
@@ -176,12 +164,12 @@ export async function aceptarAsignacion(
 }
 
 /**
- * Rechazar una asignación (técnico)
+ * Rechazar una asignación
  */
-export async function rechazarAsignacion(
+export async function rechazar(
   supabase: SupabaseClient,
   idAsignacion: number
-) {
+): Promise<void> {
   const { error } = await supabase
     .from('asignaciones_tecnico')
     .update({
@@ -196,12 +184,12 @@ export async function rechazarAsignacion(
 /**
  * Actualizar estado de asignación
  */
-export async function updateAsignacionEstado(
+export async function updateEstado(
   supabase: SupabaseClient,
   idAsignacion: number,
   estado: string
-) {
-  const updates: Record<string, any> = { estado_asignacion: estado }
+): Promise<void> {
+  const updates: Record<string, unknown> = { estado_asignacion: estado }
 
   if (estado === 'aceptada') {
     updates.fecha_aceptacion = new Date().toISOString()
@@ -215,4 +203,21 @@ export async function updateAsignacionEstado(
     .eq('id_asignacion', idAsignacion)
 
   if (error) throw error
+}
+
+/**
+ * Obtener id_incidente de una asignación
+ */
+export async function findIncidenteIdByAsignacion(
+  supabase: SupabaseClient,
+  idAsignacion: number
+): Promise<number> {
+  const { data, error } = await supabase
+    .from('asignaciones_tecnico')
+    .select('id_incidente')
+    .eq('id_asignacion', idAsignacion)
+    .single()
+
+  if (error) throw error
+  return data.id_incidente
 }

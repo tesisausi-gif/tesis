@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/shared/lib/supabase/client'
 import {
   Dialog,
   DialogContent,
@@ -36,7 +36,7 @@ import {
   Settings,
   Save,
 } from 'lucide-react'
-import { NivelPrioridad, CategoriaIncidente } from '@/types/enums'
+import { NivelPrioridad, CategoriaIncidente } from '@/shared/types/enums'
 
 interface TimelineEvent {
   id: string

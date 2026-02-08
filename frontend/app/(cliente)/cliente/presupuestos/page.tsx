@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/shared/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { FileText, DollarSign, Calendar, CheckCircle, XCircle, Clock, ArrowLeft, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { toast } from 'sonner'
-import { EstadoPresupuesto, EstadoIncidente } from '@/types/enums'
+import { EstadoPresupuesto, EstadoIncidente } from '@/shared/types/enums'
 
 interface Presupuesto {
     id_presupuesto: number
