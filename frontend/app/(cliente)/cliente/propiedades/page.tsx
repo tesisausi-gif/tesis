@@ -19,5 +19,5 @@ export default async function ClientePropiedadesPage() {
     getTiposInmuebles(),
   ])
 
-  return <PropiedadesContent inmuebles={inmuebles} tiposInmuebles={tiposInmuebles} />
+  return <PropiedadesContent inmuebles={inmuebles} tiposInmuebles={tiposInmuebles} idCliente={user.id_cliente} />
 }

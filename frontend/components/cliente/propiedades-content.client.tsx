@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { createInmueble, updateInmueble, toggleInmuebleActivo } from '@/features/inmuebles/inmuebles.actions'
+import { createClient } from '@/shared/lib/supabase/client'
 import type { Inmueble, TipoInmueble } from '@/features/inmuebles/inmuebles.types'
 
 interface Provincia {
@@ -34,10 +34,12 @@ interface Localidad {
 interface PropiedadesContentProps {
   inmuebles: Inmueble[]
   tiposInmuebles: TipoInmueble[]
+  idCliente: number
 }
 
-export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles }: PropiedadesContentProps) {
+export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles, idCliente }: PropiedadesContentProps) {
   const router = useRouter()
+  const supabase = createClient()
   const [inmuebles, setInmuebles] = useState(initialInmuebles)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -161,28 +163,37 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
         id_tipo_inmueble: parseInt(tipoInmueble),
         provincia,
         localidad,
-        barrio: barrio || undefined,
+        barrio: barrio || null,
         calle,
         altura,
-        piso: piso || undefined,
-        dpto: dpto || undefined,
-        informacion_adicional: infoAdicional || undefined,
+        piso: piso || null,
+        dpto: dpto || null,
+        informacion_adicional: infoAdicional || null,
       }
 
       if (editingInmueble) {
-        const result = await updateInmueble(editingInmueble.id_inmueble, inmuebleData)
+        const { error } = await supabase
+          .from('inmuebles')
+          .update(inmuebleData)
+          .eq('id_inmueble', editingInmueble.id_inmueble)
 
-        if (!result.success) {
-          toast.error('Error al actualizar inmueble', { description: result.error })
+        if (error) {
+          toast.error('Error al actualizar inmueble', { description: error.message })
           return
         }
 
         toast.success('Inmueble actualizado exitosamente')
       } else {
-        const result = await createInmueble(inmuebleData)
+        const { error } = await supabase
+          .from('inmuebles')
+          .insert({
+            ...inmuebleData,
+            id_cliente: idCliente,
+            esta_activo: true,
+          })
 
-        if (!result.success) {
-          toast.error('Error al registrar inmueble', { description: result.error })
+        if (error) {
+          toast.error('Error al registrar inmueble', { description: error.message })
           return
         }
 
@@ -203,9 +214,13 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
   const handleToggleEstado = async (inmueble: Inmueble) => {
     try {
       const nuevoEstado = !inmueble.esta_activo
-      const result = await toggleInmuebleActivo(inmueble.id_inmueble, nuevoEstado)
 
-      if (!result.success) {
+      const { error } = await supabase
+        .from('inmuebles')
+        .update({ esta_activo: nuevoEstado })
+        .eq('id_inmueble', inmueble.id_inmueble)
+
+      if (error) {
         toast.error('Error al cambiar estado del inmueble')
         return
       }
