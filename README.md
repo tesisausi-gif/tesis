@@ -2,204 +2,249 @@
 
 Sistema web para la gestión de incidentes en propiedades inmobiliarias.
 
-## Stack Tecnológico
+---
 
-- **Frontend**: Next.js 15 (App Router)
-- **UI**: shadcn/ui + Tailwind CSS
-- **Backend/Base de datos**: Supabase (PostgreSQL)
-- **Autenticación**: Supabase Auth
-- **Deploy**: Vercel
+## ¿Qué es Frontend y qué es Backend?
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                                                                        │
+│  FRONTEND                           BACKEND                            │
+│  (lo que ve el usuario)             (lo que NO ve el usuario)          │
+│                                                                        │
+│  ┌──────────────────┐               ┌──────────────────┐               │
+│  │                  │               │                  │               │
+│  │     BROWSER      │               │     VERCEL       │               │
+│  │                  │               │    (servidor)    │               │
+│  │  - Botones       │               │                  │               │
+│  │  - Formularios   │               │  - Ejecuta       │               │
+│  │  - Tablas        │               │    page.tsx      │               │
+│  │  - Lo visual     │               │  - Consulta DB   │               │
+│  │                  │               │  - Arma el HTML  │               │
+│  └──────────────────┘               └──────────────────┘               │
+│                                                                        │
+│                                     ┌──────────────────┐               │
+│                                     │                  │               │
+│                                     │    SUPABASE      │               │
+│                                     │  (base de datos) │               │
+│                                     │                  │               │
+│                                     │  - Guarda datos  │               │
+│                                     │  - PostgreSQL    │               │
+│                                     │  - Valida acceso │               │
+│                                     └──────────────────┘               │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+**En resumen:**
+- **Frontend** = Lo que el usuario ve y toca (browser)
+- **Backend** = Vercel (servidor) + Supabase (base de datos)
 
 ---
 
-## Arquitectura de la Aplicación
+## ¿Cómo se comunican? (LEER datos)
 
-### Las 3 partes del sistema
-
-```
-┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│   BROWSER   │ ──── │   VERCEL    │ ──── │  SUPABASE   │
-│  (Usuario)  │      │  (Servidor) │      │    (BD)     │
-└─────────────┘      └─────────────┘      └─────────────┘
-```
-
-- **Browser**: Lo que ve el usuario (Chrome, Safari, etc.)
-- **Vercel**: Donde corre tu código Next.js
-- **Supabase**: La base de datos PostgreSQL en la nube
-
----
-
-### ¿Cómo funciona Next.js?
-
-Next.js convierte carpetas en URLs automáticamente:
+Cuando el usuario quiere **VER** sus incidentes:
 
 ```
-app/
-├── login/
-│   └── page.tsx              →  tuapp.com/login
-│
-├── cliente/
-│   ├── incidentes/
-│   │   └── page.tsx          →  tuapp.com/cliente/incidentes
-│   └── propiedades/
-│       └── page.tsx          →  tuapp.com/cliente/propiedades
-│
-└── tecnico/
-    └── trabajos/
-        └── page.tsx          →  tuapp.com/tecnico/trabajos
+┌──────────┐         ┌──────────┐         ┌──────────┐
+│  BROWSER │         │  VERCEL  │         │ SUPABASE │
+│(frontend)│         │ (backend)│         │   (BD)   │
+└────┬─────┘         └────┬─────┘         └────┬─────┘
+     │                    │                    │
+     │  1. Usuario entra  │                    │
+     │     a la URL       │                    │
+     │ ─────────────────► │                    │
+     │                    │                    │
+     │                    │  2. Vercel ejecuta │
+     │                    │     page.tsx que   │
+     │                    │     llama al       │
+     │                    │     service.ts     │
+     │                    │                    │
+     │                    │  3. Service hace   │
+     │                    │     SELECT a la BD │
+     │                    │ ─────────────────► │
+     │                    │                    │
+     │                    │  4. Supabase       │
+     │                    │     devuelve datos │
+     │                    │ ◄───────────────── │
+     │                    │                    │
+     │  5. Vercel arma    │                    │
+     │     el HTML y lo   │                    │
+     │     envía          │                    │
+     │ ◄───────────────── │                    │
+     │                    │                    │
+     │  6. Usuario ve     │                    │
+     │     sus incidentes │                    │
+     │                    │                    │
 ```
 
-**No hay endpoints manuales.** Next.js genera todo automáticamente.
+**Código involucrado:**
 
----
-
-### Flujo de datos
-
-#### Para VER datos (cargar una página):
-
-```
-1. Usuario entra a /cliente/incidentes
-
-2. VERCEL ejecuta page.tsx:
-   └── Llama a getIncidentesByCurrentUser() del service
-       └── El service consulta Supabase
-           └── Supabase devuelve los datos
-
-3. VERCEL arma el HTML con los datos
-
-4. El usuario ve la página con sus incidentes
-```
-
-#### Para CREAR/EDITAR datos (enviar formulario):
-
-```
-1. Usuario llena formulario y hace click en "Guardar"
-
-2. BROWSER ejecuta el código del componente:
-   └── Hace supabase.from('tabla').insert({...})
-       └── Supabase guarda el dato (RLS valida permisos)
-
-3. Usuario ve mensaje de éxito
-```
-
----
-
-### Estructura de archivos
-
-```
-frontend/
-├── app/                      # Páginas (cada carpeta = una URL)
-│   ├── (auth)/login/
-│   ├── (cliente)/cliente/
-│   ├── (tecnico)/tecnico/
-│   └── (admin)/dashboard/
-│
-├── components/               # Componentes de UI
-│   ├── ui/                   # Botones, inputs, etc. (shadcn)
-│   ├── cliente/              # Componentes del cliente
-│   ├── tecnico/              # Componentes del técnico
-│   └── admin/                # Componentes del admin
-│
-├── features/                 # Lógica por dominio
-│   ├── incidentes/
-│   │   ├── incidentes.types.ts    # Tipos de datos
-│   │   └── incidentes.service.ts  # Funciones para consultar
-│   ├── asignaciones/
-│   ├── inmuebles/
-│   └── usuarios/
-│
-└── shared/                   # Código compartido
-    ├── lib/supabase/         # Conexión a Supabase
-    ├── types/                # Tipos globales
-    └── utils/                # Funciones auxiliares
-```
-
----
-
-### ¿Qué hace cada archivo en features/?
-
-```
-features/incidentes/
-├── incidentes.types.ts      → Define la forma de los datos
-└── incidentes.service.ts    → Funciones para leer de Supabase
-```
-
-**types.ts** - Define cómo se ven los datos:
 ```typescript
-export interface Incidente {
-  id_incidente: number
-  descripcion_problema: string
-  estado_actual: string
-  // ...
+// 1. page.tsx (corre en VERCEL)
+export default async function Page() {
+  const incidentes = await getIncidentesByCurrentUser()  // llama al service
+  return <TablaIncidentes datos={incidentes} />
 }
-```
 
-**service.ts** - Funciones para consultar datos (corren en el servidor):
-```typescript
+// 2. service.ts (corre en VERCEL)
 export async function getIncidentesByCurrentUser() {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('incidentes')
-    .select('*')
+  const { data } = await supabase.from('incidentes').select('*')  // consulta BD
   return data
 }
 ```
 
 ---
 
-### ¿Cómo se conecta todo?
+## ¿Cómo se comunican? (ESCRIBIR datos)
+
+Cuando el usuario quiere **CREAR** un incidente:
 
 ```
-page.tsx (la página)
-    │
-    │ importa y llama
-    ▼
-service.ts (funciones de consulta)
-    │
-    │ usa los tipos de
-    ▼
-types.ts (definición de datos)
-    │
-    │ consulta a
-    ▼
-Supabase (base de datos)
+┌──────────┐                              ┌──────────┐
+│  BROWSER │                              │ SUPABASE │
+│(frontend)│                              │   (BD)   │
+└────┬─────┘                              └────┬─────┘
+     │                                         │
+     │  1. Usuario llena formulario            │
+     │     y hace click en "Guardar"           │
+     │                                         │
+     │  2. Browser ejecuta código              │
+     │     que hace INSERT directo             │
+     │ ──────────────────────────────────────► │
+     │                                         │
+     │                                         │  3. Supabase:
+     │                                         │     - Valida permisos (RLS)
+     │                                         │     - Guarda el dato
+     │                                         │
+     │  4. Supabase confirma                   │
+     │     "Guardado OK"                       │
+     │ ◄────────────────────────────────────── │
+     │                                         │
+     │  5. Usuario ve mensaje                  │
+     │     "Incidente creado"                  │
+     │                                         │
 ```
 
-Ejemplo real:
+**¿Por qué va directo a Supabase sin pasar por Vercel?**
+
+Porque es más simple y Supabase ya tiene seguridad (RLS).
+
+**Código involucrado:**
 
 ```typescript
-// app/(cliente)/cliente/incidentes/page.tsx
+// componente.tsx (corre en BROWSER)
+const handleSubmit = async () => {
+  const supabase = createClient()
 
-import { getIncidentesByCurrentUser } from '@/features/incidentes'
+  await supabase
+    .from('incidentes')
+    .insert({
+      descripcion: 'Se rompió el caño',
+      id_cliente: 123
+    })
 
-export default async function Page() {
-  const incidentes = await getIncidentesByCurrentUser()
-  return <IncidentesContent incidentes={incidentes} />
+  toast.success('Incidente creado')
 }
 ```
 
 ---
 
-### Seguridad
+## Resumen: ¿Quién habla con la base de datos?
 
-La seguridad está en **Supabase RLS** (Row Level Security):
+| Acción | ¿Quién lo hace? | ¿Por qué? |
+|--------|-----------------|-----------|
+| **LEER** (ver lista) | Vercel (backend) | Arma el HTML antes de enviarlo |
+| **ESCRIBIR** (crear/editar) | Browser (frontend) | Es más simple, RLS valida |
+
+---
+
+## Estructura del proyecto
 
 ```
-Usuario intenta ver incidentes de OTRO cliente
+frontend/
+│
+├── app/                         # PÁGINAS (cada carpeta = una URL)
+│   ├── cliente/incidentes/
+│   │   └── page.tsx             # → tuapp.com/cliente/incidentes
+│   └── tecnico/trabajos/
+│       └── page.tsx             # → tuapp.com/tecnico/trabajos
+│
+├── components/                  # COMPONENTES VISUALES
+│   ├── ui/                      # Botones, inputs (shadcn)
+│   └── cliente/                 # Componentes del cliente
+│       └── incidentes-content.tsx  # Tabla, formularios, etc.
+│
+├── features/                    # LÓGICA DE NEGOCIO
+│   └── incidentes/
+│       ├── incidentes.types.ts     # Define forma de los datos
+│       └── incidentes.service.ts   # Funciones para LEER de BD
+│
+└── shared/
+    └── lib/supabase/            # CONEXIÓN A BASE DE DATOS
+        ├── client.ts            # Para usar desde BROWSER
+        └── server.ts            # Para usar desde VERCEL
+```
+
+---
+
+## ¿Qué hace cada archivo?
+
+### page.tsx (la página)
+- Define qué se muestra en una URL
+- Corre en **Vercel** (backend)
+- Llama al service para obtener datos
+
+### service.ts (funciones de consulta)
+- Funciones para LEER datos de Supabase
+- Corre en **Vercel** (backend)
+- Ejemplo: `getIncidentesByCurrentUser()`
+
+### types.ts (tipos de datos)
+- Define la forma de los datos
+- No corre, solo describe
+- Ejemplo: `interface Incidente { id, descripcion, ... }`
+
+### component.tsx (componentes visuales)
+- Lo que el usuario ve: tablas, botones, formularios
+- Corre en **Browser** (frontend)
+- Para ESCRIBIR, llama directo a Supabase
+
+---
+
+## Seguridad
+
+La base de datos tiene reglas (RLS) que validan cada operación:
+
+```
+Usuario intenta ver datos de OTRO usuario
                     │
                     ▼
-            ┌───────────────┐
-            │   SUPABASE    │
-            │   verifica:   │
-            │ "¿Es tu dato?"│
-            └───────┬───────┘
+             ┌─────────────┐
+             │  SUPABASE   │
+             │  pregunta:  │
+             │ "¿Es tu     │
+             │   dato?"    │
+             └──────┬──────┘
                     │
         ┌───────────┴───────────┐
         ▼                       ▼
-    SÍ: datos               NO: array vacío
+   SÍ: devuelve            NO: error 403
+       los datos               acceso denegado
 ```
 
-No importa si el código está en el browser. Supabase **siempre valida** antes de devolver datos.
+---
+
+## Stack Tecnológico
+
+| Parte | Tecnología |
+|-------|------------|
+| Frontend (visual) | Next.js + React + Tailwind |
+| Backend (servidor) | Next.js en Vercel |
+| Base de datos | Supabase (PostgreSQL) |
+| Autenticación | Supabase Auth |
 
 ---
 
@@ -212,37 +257,16 @@ cp .env.example .env.local   # Configurar credenciales
 npm run dev                   # http://localhost:3000
 ```
 
-## Scripts
-
-```bash
-npm run dev       # Desarrollo
-npm run build     # Producción
-npm run lint      # Linter
-```
-
 ---
 
 ## Roles del sistema
 
-| Rol | Acceso |
-|-----|--------|
-| **admin** | Dashboard completo, gestión total |
-| **cliente** | Sus incidentes y propiedades |
-| **tecnico** | Trabajos asignados |
+| Rol | Qué puede hacer |
+|-----|-----------------|
+| **admin** | Todo: ver, crear, editar, eliminar |
+| **cliente** | Ver y crear SUS incidentes |
+| **tecnico** | Ver y gestionar trabajos asignados |
 
 ---
-
-## Tablas principales
-
-- `usuarios` - Usuarios del sistema
-- `clientes` - Datos de clientes
-- `tecnicos` - Datos de técnicos
-- `inmuebles` - Propiedades
-- `incidentes` - Reportes de problemas
-- `asignaciones_tecnico` - Trabajos asignados
-
----
-
-## Contacto
 
 Proyecto de tesis - 2024-2025
