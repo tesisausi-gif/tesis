@@ -5,19 +5,11 @@
  *
  * Estructura:
  * - incidentes.types.ts: Tipos del dominio
- * - incidentes.repository.ts: Queries a Supabase
- * - incidentes.service.ts: Lógica para Server Components
- * - incidentes.actions.ts: Server Actions para mutaciones
+ * - incidentes.service.ts: Queries para Server Components
  */
 
 // Types
 export * from './incidentes.types'
 
-// Repository (usar como IncidenteRepository.findAll, etc)
-export * as IncidenteRepository from './incidentes.repository'
-
-// Service (funciones de alto nivel)
+// Service (queries para Server Components)
 export * from './incidentes.service'
-
-// Actions (Server Actions)
-export * from './incidentes.actions'

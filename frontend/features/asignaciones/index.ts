@@ -5,19 +5,15 @@
  *
  * Estructura:
  * - asignaciones.types.ts: Tipos del dominio
- * - asignaciones.repository.ts: Queries a Supabase
- * - asignaciones.service.ts: Lógica para Server Components
+ * - asignaciones.service.ts: Queries para Server Components
  * - asignaciones.actions.ts: Server Actions para mutaciones
  */
 
 // Types
 export * from './asignaciones.types'
 
-// Repository (usar como AsignacionRepository.findAll, etc)
-export * as AsignacionRepository from './asignaciones.repository'
-
-// Service (funciones de alto nivel)
+// Service (queries para Server Components)
 export * from './asignaciones.service'
 
-// Actions (Server Actions)
+// Actions (Server Actions para mutaciones)
 export * from './asignaciones.actions'

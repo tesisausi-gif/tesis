@@ -1,46 +1,102 @@
 /**
  * Servicio de Incidentes
- * Orquesta repositories + auth para Server Components
+ * Queries para Server Components
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
-import * as IncidenteRepository from './incidentes.repository'
 import { requireClienteId } from '@/features/auth'
-import type {
-  Incidente,
-  IncidenteConCliente,
-  IncidenteConDetalles,
-} from './incidentes.types'
+import type { Incidente, IncidenteConCliente, IncidenteConDetalles } from './incidentes.types'
 
-// Re-exportar tipos para compatibilidad
-export type { Incidente, IncidenteConCliente, IncidenteConDetalles }
+// Select base para incidentes
+const INCIDENTE_SELECT = `
+  id_incidente,
+  descripcion_problema,
+  categoria,
+  nivel_prioridad,
+  estado_actual,
+  fecha_registro,
+  fecha_cierre,
+  fue_resuelto,
+  disponibilidad,
+  id_propiedad,
+  id_cliente_reporta,
+  inmuebles (
+    calle,
+    altura,
+    piso,
+    dpto,
+    barrio,
+    localidad
+  )
+`
 
 /**
  * Obtener todos los incidentes (admin)
- * Para usar en Server Components
  */
 export async function getIncidentesForAdmin(): Promise<IncidenteConCliente[]> {
   const supabase = await createClient()
-  return IncidenteRepository.findAll(supabase)
+
+  const { data, error } = await supabase
+    .from('incidentes')
+    .select(`
+      ${INCIDENTE_SELECT},
+      clientes:id_cliente_reporta (
+        nombre,
+        apellido,
+        telefono
+      )
+    `)
+    .order('fecha_registro', { ascending: false })
+
+  if (error) throw error
+  return data as unknown as IncidenteConCliente[]
 }
 
 /**
  * Obtener incidentes del cliente actual
- * Para usar en Server Components
  */
 export async function getIncidentesByCurrentUser(): Promise<Incidente[]> {
   const supabase = await createClient()
   const idCliente = await requireClienteId()
-  return IncidenteRepository.findByCliente(supabase, idCliente)
+
+  const { data, error } = await supabase
+    .from('incidentes')
+    .select(INCIDENTE_SELECT)
+    .eq('id_cliente_reporta', idCliente)
+    .order('fecha_registro', { ascending: false })
+
+  if (error) throw error
+  return data as unknown as Incidente[]
 }
 
 /**
- * Obtener incidente por ID
- * Para usar en Server Components
+ * Obtener incidente por ID con todos los detalles
  */
-export async function getIncidenteById(
-  idIncidente: number
-): Promise<IncidenteConDetalles> {
+export async function getIncidenteById(idIncidente: number): Promise<IncidenteConDetalles> {
   const supabase = await createClient()
-  return IncidenteRepository.findById(supabase, idIncidente)
+
+  const { data, error } = await supabase
+    .from('incidentes')
+    .select(`
+      ${INCIDENTE_SELECT},
+      clientes:id_cliente_reporta (
+        nombre,
+        apellido,
+        telefono
+      ),
+      asignaciones_tecnico (
+        id_asignacion,
+        estado_asignacion,
+        fecha_asignacion,
+        tecnicos (
+          nombre,
+          apellido
+        )
+      )
+    `)
+    .eq('id_incidente', idIncidente)
+    .single()
+
+  if (error) throw error
+  return data as unknown as IncidenteConDetalles
 }

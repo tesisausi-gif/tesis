@@ -1,65 +1,114 @@
 /**
  * Servicio de Inmuebles
- * Orquesta repositories + auth para Server Components
+ * Queries para Server Components
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
-import * as InmuebleRepository from './inmuebles.repository'
 import { requireClienteId } from '@/features/auth'
-import type {
-  Inmueble,
-  InmuebleConCliente,
-  TipoInmueble,
-} from './inmuebles.types'
+import type { Inmueble, InmuebleConCliente, TipoInmueble } from './inmuebles.types'
 
-// Re-exportar tipos para compatibilidad
-export type { Inmueble, InmuebleConCliente, TipoInmueble }
+// Select base
+const INMUEBLE_SELECT = `
+  id_inmueble,
+  id_cliente,
+  id_tipo_inmueble,
+  calle,
+  altura,
+  piso,
+  dpto,
+  barrio,
+  localidad,
+  provincia,
+  informacion_adicional,
+  esta_activo,
+  fecha_creacion,
+  tipos_inmuebles (nombre)
+`
 
 /**
  * Obtener todos los inmuebles (admin)
- * Para usar en Server Components
  */
 export async function getInmueblesForAdmin(): Promise<InmuebleConCliente[]> {
   const supabase = await createClient()
-  return InmuebleRepository.findAll(supabase)
+
+  const { data, error } = await supabase
+    .from('inmuebles')
+    .select(`
+      ${INMUEBLE_SELECT},
+      clientes (nombre, apellido, correo_electronico)
+    `)
+    .order('fecha_creacion', { ascending: false })
+
+  if (error) throw error
+  return data as unknown as InmuebleConCliente[]
 }
 
 /**
  * Obtener inmuebles del cliente actual
- * Para usar en Server Components
  */
 export async function getInmueblesByCurrentUser(): Promise<Inmueble[]> {
   const supabase = await createClient()
   const idCliente = await requireClienteId()
-  return InmuebleRepository.findByCliente(supabase, idCliente)
+
+  const { data, error } = await supabase
+    .from('inmuebles')
+    .select(INMUEBLE_SELECT)
+    .eq('id_cliente', idCliente)
+    .order('calle')
+
+  if (error) throw error
+  return data as unknown as Inmueble[]
 }
 
 /**
  * Obtener inmuebles activos del cliente actual
- * Para usar en Server Components
  */
 export async function getInmueblesActivosByCurrentUser(): Promise<Inmueble[]> {
   const supabase = await createClient()
   const idCliente = await requireClienteId()
-  return InmuebleRepository.findActivosByCliente(supabase, idCliente)
+
+  const { data, error } = await supabase
+    .from('inmuebles')
+    .select(INMUEBLE_SELECT)
+    .eq('id_cliente', idCliente)
+    .eq('esta_activo', true)
+    .order('calle')
+
+  if (error) throw error
+  return data as unknown as Inmueble[]
 }
 
 /**
  * Obtener inmueble por ID
- * Para usar en Server Components
  */
-export async function getInmuebleById(
-  idInmueble: number
-): Promise<InmuebleConCliente> {
+export async function getInmuebleById(idInmueble: number): Promise<InmuebleConCliente> {
   const supabase = await createClient()
-  return InmuebleRepository.findById(supabase, idInmueble)
+
+  const { data, error } = await supabase
+    .from('inmuebles')
+    .select(`
+      ${INMUEBLE_SELECT},
+      clientes (nombre, apellido, correo_electronico)
+    `)
+    .eq('id_inmueble', idInmueble)
+    .single()
+
+  if (error) throw error
+  return data as unknown as InmuebleConCliente
 }
 
 /**
  * Obtener tipos de inmuebles
- * Para usar en Server Components
  */
 export async function getTiposInmuebles(): Promise<TipoInmueble[]> {
   const supabase = await createClient()
-  return InmuebleRepository.findTipos(supabase)
+
+  const { data, error } = await supabase
+    .from('tipos_inmuebles')
+    .select('id_tipo_inmueble, nombre')
+    .eq('esta_activo', true)
+    .order('nombre')
+
+  if (error) throw error
+  return data as TipoInmueble[]
 }

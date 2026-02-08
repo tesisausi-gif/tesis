@@ -7,7 +7,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/shared/lib/supabase/server'
-import * as InmuebleRepository from './inmuebles.repository'
 import { requireClienteId } from '@/features/auth'
 import type { CreateInmuebleDTO, UpdateInmuebleDTO } from './inmuebles.types'
 import type { ActionResult } from '@/shared/types'
@@ -22,10 +21,25 @@ export async function createInmueble(
     const supabase = await createClient()
     const idCliente = await requireClienteId()
 
-    const result = await InmuebleRepository.create(supabase, {
-      ...data,
-      id_cliente: idCliente,
-    })
+    const { data: result, error } = await supabase
+      .from('inmuebles')
+      .insert({
+        id_cliente: idCliente,
+        id_tipo_inmueble: data.id_tipo_inmueble,
+        provincia: data.provincia || null,
+        localidad: data.localidad || null,
+        barrio: data.barrio || null,
+        calle: data.calle || null,
+        altura: data.altura || null,
+        piso: data.piso || null,
+        dpto: data.dpto || null,
+        informacion_adicional: data.informacion_adicional || null,
+        esta_activo: true,
+      })
+      .select('id_inmueble')
+      .single()
+
+    if (error) throw error
 
     revalidatePath('/cliente/propiedades')
 
@@ -50,10 +64,14 @@ export async function updateInmueble(
     const supabase = await createClient()
     await requireClienteId()
 
-    await InmuebleRepository.update(supabase, idInmueble, updates)
+    const { error } = await supabase
+      .from('inmuebles')
+      .update(updates)
+      .eq('id_inmueble', idInmueble)
+
+    if (error) throw error
 
     revalidatePath('/cliente/propiedades')
-    revalidatePath(`/inmueble/${idInmueble}`)
 
     return { success: true }
   } catch (error) {
@@ -76,7 +94,12 @@ export async function toggleInmuebleActivo(
     const supabase = await createClient()
     await requireClienteId()
 
-    await InmuebleRepository.updateActivo(supabase, idInmueble, activo)
+    const { error } = await supabase
+      .from('inmuebles')
+      .update({ esta_activo: activo })
+      .eq('id_inmueble', idInmueble)
+
+    if (error) throw error
 
     revalidatePath('/cliente/propiedades')
 

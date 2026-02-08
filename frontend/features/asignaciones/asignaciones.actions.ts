@@ -2,13 +2,11 @@
 
 /**
  * Server Actions para Asignaciones
- * Mutaciones desde Client Components
+ * Mutaciones que requieren lógica de negocio (multi-tabla)
  */
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/shared/lib/supabase/server'
-import * as AsignacionRepository from './asignaciones.repository'
-import * as IncidenteRepository from '@/features/incidentes/incidentes.repository'
 import { requireTecnicoId, requireAdmin } from '@/features/auth'
 import { EstadoIncidente } from '@/shared/types'
 import type { CreateAsignacionDTO } from './asignaciones.types'
@@ -24,7 +22,19 @@ export async function createAsignacion(
     const supabase = await createClient()
     await requireAdmin()
 
-    const result = await AsignacionRepository.create(supabase, data)
+    const { data: result, error } = await supabase
+      .from('asignaciones_tecnico')
+      .insert({
+        id_incidente: data.id_incidente,
+        id_tecnico: data.id_tecnico,
+        observaciones: data.observaciones || null,
+        estado_asignacion: 'pendiente',
+        fecha_asignacion: new Date().toISOString(),
+      })
+      .select('id_asignacion')
+      .single()
+
+    if (error) throw error
 
     revalidatePath('/dashboard/asignaciones')
     revalidatePath('/dashboard/incidentes')
@@ -42,6 +52,7 @@ export async function createAsignacion(
 
 /**
  * Aceptar una asignación (técnico)
+ * Actualiza asignación + estado del incidente
  */
 export async function aceptarAsignacion(
   idAsignacion: number
@@ -50,19 +61,33 @@ export async function aceptarAsignacion(
     const supabase = await createClient()
     await requireTecnicoId()
 
-    // Aceptar la asignación
-    await AsignacionRepository.aceptar(supabase, idAsignacion)
+    // 1. Aceptar la asignación
+    const { error: errorAsignacion } = await supabase
+      .from('asignaciones_tecnico')
+      .update({
+        estado_asignacion: 'aceptada',
+        fecha_aceptacion: new Date().toISOString(),
+      })
+      .eq('id_asignacion', idAsignacion)
 
-    // Obtener el id_incidente y actualizar su estado
-    const idIncidente = await AsignacionRepository.findIncidenteIdByAsignacion(
-      supabase,
-      idAsignacion
-    )
-    await IncidenteRepository.updateEstado(
-      supabase,
-      idIncidente,
-      EstadoIncidente.ASIGNADO
-    )
+    if (errorAsignacion) throw errorAsignacion
+
+    // 2. Obtener id_incidente
+    const { data: asignacion, error: errorGet } = await supabase
+      .from('asignaciones_tecnico')
+      .select('id_incidente')
+      .eq('id_asignacion', idAsignacion)
+      .single()
+
+    if (errorGet) throw errorGet
+
+    // 3. Actualizar estado del incidente
+    const { error: errorIncidente } = await supabase
+      .from('incidentes')
+      .update({ estado_actual: EstadoIncidente.ASIGNADO })
+      .eq('id_incidente', asignacion.id_incidente)
+
+    if (errorIncidente) throw errorIncidente
 
     revalidatePath('/tecnico/disponibles')
     revalidatePath('/tecnico/trabajos')
@@ -81,6 +106,7 @@ export async function aceptarAsignacion(
 
 /**
  * Rechazar una asignación (técnico)
+ * Actualiza asignación + vuelve incidente a reportado
  */
 export async function rechazarAsignacion(
   idAsignacion: number
@@ -89,19 +115,33 @@ export async function rechazarAsignacion(
     const supabase = await createClient()
     await requireTecnicoId()
 
-    // Rechazar la asignación
-    await AsignacionRepository.rechazar(supabase, idAsignacion)
+    // 1. Rechazar la asignación
+    const { error: errorAsignacion } = await supabase
+      .from('asignaciones_tecnico')
+      .update({
+        estado_asignacion: 'rechazada',
+        fecha_rechazo: new Date().toISOString(),
+      })
+      .eq('id_asignacion', idAsignacion)
 
-    // Obtener el id_incidente y volver a estado reportado
-    const idIncidente = await AsignacionRepository.findIncidenteIdByAsignacion(
-      supabase,
-      idAsignacion
-    )
-    await IncidenteRepository.updateEstado(
-      supabase,
-      idIncidente,
-      EstadoIncidente.REPORTADO
-    )
+    if (errorAsignacion) throw errorAsignacion
+
+    // 2. Obtener id_incidente
+    const { data: asignacion, error: errorGet } = await supabase
+      .from('asignaciones_tecnico')
+      .select('id_incidente')
+      .eq('id_asignacion', idAsignacion)
+      .single()
+
+    if (errorGet) throw errorGet
+
+    // 3. Volver incidente a reportado
+    const { error: errorIncidente } = await supabase
+      .from('incidentes')
+      .update({ estado_actual: EstadoIncidente.REPORTADO })
+      .eq('id_incidente', asignacion.id_incidente)
+
+    if (errorIncidente) throw errorIncidente
 
     revalidatePath('/tecnico/disponibles')
     revalidatePath('/dashboard/incidentes')
@@ -110,32 +150,6 @@ export async function rechazarAsignacion(
     return { success: true }
   } catch (error) {
     console.error('Error al rechazar asignación:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    }
-  }
-}
-
-/**
- * Actualizar estado de asignación (admin/técnico)
- */
-export async function updateAsignacionEstado(
-  idAsignacion: number,
-  estado: string
-): Promise<ActionResult> {
-  try {
-    const supabase = await createClient()
-
-    await AsignacionRepository.updateEstado(supabase, idAsignacion, estado)
-
-    revalidatePath('/tecnico/trabajos')
-    revalidatePath('/tecnico/disponibles')
-    revalidatePath('/dashboard/asignaciones')
-
-    return { success: true }
-  } catch (error) {
-    console.error('Error al actualizar estado:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido',

@@ -5,15 +5,11 @@
  *
  * Estructura:
  * - usuarios.types.ts: Tipos del dominio
- * - usuarios.repository.ts: Queries a Supabase
- * - usuarios.service.ts: Lógica para Server Components
+ * - usuarios.service.ts: Queries para Server Components
  */
 
 // Types
 export * from './usuarios.types'
 
-// Repository (usar como UsuarioRepository.findAll, etc)
-export * as UsuarioRepository from './usuarios.repository'
-
-// Service (funciones de alto nivel)
+// Service (queries para Server Components)
 export * from './usuarios.service'
