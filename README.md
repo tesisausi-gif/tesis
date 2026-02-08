@@ -1,154 +1,248 @@
 # Sistema de Gestión de Incidentes - ISBA
 
-Sistema web completo para la gestión de incidentes en propiedades inmobiliarias, desarrollado con Next.js 15 y Supabase.
-
-## Características Principales
-
-### Para Administradores/Gestores ISBA
-- Dashboard administrativo completo
-- Gestión de incidentes, propiedades y clientes
-- Asignación de técnicos
-- Aprobación de presupuestos
-- Gestión de pagos
-- Sistema de calificaciones
-
-### Para Técnicos
-- Vista mobile-first optimizada
-- Visualización de incidentes asignados
-- Carga de inspecciones y presupuestos
-- Actualización de estado de trabajos
-- Gestión de documentos (fotos, comprobantes)
+Sistema web para la gestión de incidentes en propiedades inmobiliarias.
 
 ## Stack Tecnológico
 
 - **Frontend**: Next.js 15 (App Router)
-- **UI Components**: shadcn/ui
-- **Estilos**: Tailwind CSS
-- **Backend/Database**: Supabase
+- **UI**: shadcn/ui + Tailwind CSS
+- **Backend/Base de datos**: Supabase (PostgreSQL)
 - **Autenticación**: Supabase Auth
-- **Lenguaje**: TypeScript
-- **Gestión de Estado**: React Hooks
+- **Deploy**: Vercel
 
-## Estructura del Proyecto
+---
+
+## Arquitectura de la Aplicación
+
+### Las 3 partes del sistema
+
+```
+┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+│   BROWSER   │ ──── │   VERCEL    │ ──── │  SUPABASE   │
+│  (Usuario)  │      │  (Servidor) │      │    (BD)     │
+└─────────────┘      └─────────────┘      └─────────────┘
+```
+
+- **Browser**: Lo que ve el usuario (Chrome, Safari, etc.)
+- **Vercel**: Donde corre tu código Next.js
+- **Supabase**: La base de datos PostgreSQL en la nube
+
+---
+
+### ¿Cómo funciona Next.js?
+
+Next.js convierte carpetas en URLs automáticamente:
+
+```
+app/
+├── login/
+│   └── page.tsx              →  tuapp.com/login
+│
+├── cliente/
+│   ├── incidentes/
+│   │   └── page.tsx          →  tuapp.com/cliente/incidentes
+│   └── propiedades/
+│       └── page.tsx          →  tuapp.com/cliente/propiedades
+│
+└── tecnico/
+    └── trabajos/
+        └── page.tsx          →  tuapp.com/tecnico/trabajos
+```
+
+**No hay endpoints manuales.** Next.js genera todo automáticamente.
+
+---
+
+### Flujo de datos
+
+#### Para VER datos (cargar una página):
+
+```
+1. Usuario entra a /cliente/incidentes
+
+2. VERCEL ejecuta page.tsx:
+   └── Llama a getIncidentesByCurrentUser() del service
+       └── El service consulta Supabase
+           └── Supabase devuelve los datos
+
+3. VERCEL arma el HTML con los datos
+
+4. El usuario ve la página con sus incidentes
+```
+
+#### Para CREAR/EDITAR datos (enviar formulario):
+
+```
+1. Usuario llena formulario y hace click en "Guardar"
+
+2. BROWSER ejecuta el código del componente:
+   └── Hace supabase.from('tabla').insert({...})
+       └── Supabase guarda el dato (RLS valida permisos)
+
+3. Usuario ve mensaje de éxito
+```
+
+---
+
+### Estructura de archivos
 
 ```
 frontend/
-├── app/
-│   ├── (auth)/          # Páginas de autenticación
-│   │   └── login/
-│   ├── (admin)/         # Dashboard administrativo
-│   │   └── dashboard/
-│   └── (tecnico)/       # Vista mobile para técnicos
-│       └── mis-incidentes/
-├── components/
-│   ├── admin/           # Componentes del admin
-│   ├── tecnico/         # Componentes para técnicos
-│   ├── shared/          # Componentes compartidos
-│   └── ui/              # Componentes de shadcn/ui
-├── lib/
-│   └── supabase/        # Configuración de Supabase
-├── types/
-│   ├── database.types.ts  # Tipos de la BD
-│   └── enums.ts          # Enumeraciones del sistema
-└── middleware.ts        # Middleware de autenticación
+├── app/                      # Páginas (cada carpeta = una URL)
+│   ├── (auth)/login/
+│   ├── (cliente)/cliente/
+│   ├── (tecnico)/tecnico/
+│   └── (admin)/dashboard/
+│
+├── components/               # Componentes de UI
+│   ├── ui/                   # Botones, inputs, etc. (shadcn)
+│   ├── cliente/              # Componentes del cliente
+│   ├── tecnico/              # Componentes del técnico
+│   └── admin/                # Componentes del admin
+│
+├── features/                 # Lógica por dominio
+│   ├── incidentes/
+│   │   ├── incidentes.types.ts    # Tipos de datos
+│   │   └── incidentes.service.ts  # Funciones para consultar
+│   ├── asignaciones/
+│   ├── inmuebles/
+│   └── usuarios/
+│
+└── shared/                   # Código compartido
+    ├── lib/supabase/         # Conexión a Supabase
+    ├── types/                # Tipos globales
+    └── utils/                # Funciones auxiliares
 ```
+
+---
+
+### ¿Qué hace cada archivo en features/?
+
+```
+features/incidentes/
+├── incidentes.types.ts      → Define la forma de los datos
+└── incidentes.service.ts    → Funciones para leer de Supabase
+```
+
+**types.ts** - Define cómo se ven los datos:
+```typescript
+export interface Incidente {
+  id_incidente: number
+  descripcion_problema: string
+  estado_actual: string
+  // ...
+}
+```
+
+**service.ts** - Funciones para consultar datos (corren en el servidor):
+```typescript
+export async function getIncidentesByCurrentUser() {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('incidentes')
+    .select('*')
+  return data
+}
+```
+
+---
+
+### ¿Cómo se conecta todo?
+
+```
+page.tsx (la página)
+    │
+    │ importa y llama
+    ▼
+service.ts (funciones de consulta)
+    │
+    │ usa los tipos de
+    ▼
+types.ts (definición de datos)
+    │
+    │ consulta a
+    ▼
+Supabase (base de datos)
+```
+
+Ejemplo real:
+
+```typescript
+// app/(cliente)/cliente/incidentes/page.tsx
+
+import { getIncidentesByCurrentUser } from '@/features/incidentes'
+
+export default async function Page() {
+  const incidentes = await getIncidentesByCurrentUser()
+  return <IncidentesContent incidentes={incidentes} />
+}
+```
+
+---
+
+### Seguridad
+
+La seguridad está en **Supabase RLS** (Row Level Security):
+
+```
+Usuario intenta ver incidentes de OTRO cliente
+                    │
+                    ▼
+            ┌───────────────┐
+            │   SUPABASE    │
+            │   verifica:   │
+            │ "¿Es tu dato?"│
+            └───────┬───────┘
+                    │
+        ┌───────────┴───────────┐
+        ▼                       ▼
+    SÍ: datos               NO: array vacío
+```
+
+No importa si el código está en el browser. Supabase **siempre valida** antes de devolver datos.
+
+---
 
 ## Instalación
 
-1. Clonar el repositorio:
 ```bash
-cd sist_gestion_incidentes/frontend
-```
-
-2. Instalar dependencias:
-```bash
+cd frontend
 npm install
+cp .env.example .env.local   # Configurar credenciales
+npm run dev                   # http://localhost:3000
 ```
 
-3. Configurar variables de entorno:
-Copia `.env.example` a `.env.local` y completa las credenciales de Supabase:
-```bash
-cp .env.example .env.local
-```
-
-4. Iniciar el servidor de desarrollo:
-```bash
-npm run dev
-```
-
-La aplicación estará disponible en `http://localhost:3000`
-
-## Configuración de Supabase
-
-### Base de Datos
-
-El proyecto utiliza las siguientes tablas principales:
-
-- **clientes**: Información de clientes (propietarios/inquilinos)
-- **propiedades**: Inmuebles gestionados
-- **incidentes**: Reportes de incidentes
-- **tecnicos**: Técnicos externos
-- **asignaciones_tecnico**: Asignaciones de trabajos
-- **inspecciones**: Inspecciones técnicas realizadas
-- **presupuestos**: Presupuestos generados
-- **pagos**: Registro de pagos
-- **conformidades**: Conformidades firmadas
-- **calificaciones**: Calificaciones de técnicos
-- **documentos**: Archivos adjuntos
-
-Ver documentación completa en `/documentacion/esquema_supabase.md`
-
-### Autenticación
-
-El sistema utiliza Supabase Auth con los siguientes roles:
-
-- **admin**: Administrador con acceso completo
-- **gestor**: Gestor de incidentes
-- **tecnico**: Técnico externo
-- **cliente**: Cliente (propietario/inquilino)
-
-## Flujo de Trabajo del Sistema
-
-1. **Reporte de Incidente**: Cliente o gestor reporta un incidente en una propiedad
-2. **Evaluación**: Gestor evalúa y asigna prioridad
-3. **Asignación**: Se asigna un técnico especializado
-4. **Inspección**: Técnico realiza inspección y determina alcance
-5. **Presupuesto**: Técnico/Gestor genera presupuesto
-6. **Aprobación**: Cliente/Propietario aprueba presupuesto
-7. **Ejecución**: Técnico ejecuta el trabajo
-8. **Conformidad**: Cliente firma conformidad de trabajo
-9. **Pago**: Registro de pagos al técnico
-10. **Calificación**: Cliente califica el servicio
-
-## Scripts Disponibles
+## Scripts
 
 ```bash
-npm run dev       # Inicia servidor de desarrollo
-npm run build     # Construye para producción
-npm run start     # Inicia servidor de producción
-npm run lint      # Ejecuta linter
+npm run dev       # Desarrollo
+npm run build     # Producción
+npm run lint      # Linter
 ```
 
-## Próximas Funcionalidades
+---
 
-- [ ] Sistema de notificaciones en tiempo real
-- [ ] Chat entre técnicos y gestores
-- [ ] Generación de reportes PDF
-- [ ] Dashboard de métricas y KPIs
-- [ ] App móvil nativa para técnicos
-- [ ] Sistema de geolocalización
-- [ ] Integración con WhatsApp
+## Roles del sistema
 
-## Contribuir
+| Rol | Acceso |
+|-----|--------|
+| **admin** | Dashboard completo, gestión total |
+| **cliente** | Sus incidentes y propiedades |
+| **tecnico** | Trabajos asignados |
 
-Este es un proyecto de tesis. Para contribuir o reportar problemas, contacta al equipo de desarrollo.
+---
 
-## Licencia
+## Tablas principales
 
-Proyecto académico - Universidad [Nombre Universidad]
+- `usuarios` - Usuarios del sistema
+- `clientes` - Datos de clientes
+- `tecnicos` - Datos de técnicos
+- `inmuebles` - Propiedades
+- `incidentes` - Reportes de problemas
+- `asignaciones_tecnico` - Trabajos asignados
+
+---
 
 ## Contacto
 
-Desarrollado por: [Tu Nombre]
-Email: [tu@email.com]
-Año: 2024-2025
+Proyecto de tesis - 2024-2025
