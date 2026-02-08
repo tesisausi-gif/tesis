@@ -1,27 +1,25 @@
 /**
  * Features - Módulos de dominio
  *
- * Cada feature contiene:
- * - types: Tipos del dominio
- * - repository: Queries a Supabase
- * - service: Lógica para Server Components
- * - actions: Server Actions para mutaciones (si aplica)
+ * Cada feature contiene SOLO 2 archivos:
+ * - types.ts: Tipos del dominio (interfaces, DTOs)
+ * - service.ts: Queries para Server Components (SOLO LECTURA)
  *
- * Estructura por feature:
+ * Las ESCRITURAS (insert, update, delete) se hacen directo
+ * desde los componentes cliente usando Supabase client.
+ *
+ * Estructura:
  * features/
+ * ├── auth/           # Autenticación (getCurrentUser, requireAdmin)
  * ├── incidentes/     # Incidentes reportados
  * ├── asignaciones/   # Asignaciones de técnicos
  * ├── inmuebles/      # Propiedades de clientes
- * ├── usuarios/       # Usuarios, clientes y técnicos
- * └── auth/           # Autenticación y autorización
+ * └── usuarios/       # Usuarios, clientes y técnicos
  *
- * USO: Importar directamente desde cada feature
- *
+ * USO:
  * import { getCurrentUser, requireAdmin } from '@/features/auth'
  * import { getIncidentesForAdmin, Incidente } from '@/features/incidentes'
  * import { getAsignacionesPendientes } from '@/features/asignaciones'
- * import { getInmueblesByCurrentUser } from '@/features/inmuebles'
- * import { getClientes, getTecnicos } from '@/features/usuarios'
  */
 
 // No re-exportamos todo para evitar colisiones de nombres

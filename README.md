@@ -161,31 +161,76 @@ const handleSubmit = async () => {
 
 ---
 
-## Estructura del proyecto
+## Arquitectura Feature-Based
+
+Organizamos el código por **features** (funcionalidades), no por tipo de archivo.
+
+```
+frontend/features/
+│
+├── auth/                        # Autenticación
+│   ├── index.ts                 # Re-exporta todo
+│   ├── auth.types.ts            # Tipos: Usuario, CurrentUser
+│   └── auth.service.ts          # getCurrentUser, requireAdmin
+│
+├── incidentes/                  # Incidentes
+│   ├── index.ts
+│   ├── incidentes.types.ts      # Tipos: Incidente, CreateIncidenteDTO
+│   └── incidentes.service.ts    # getIncidentesByCurrentUser, etc.
+│
+├── asignaciones/                # Asignaciones de técnicos
+│   ├── index.ts
+│   ├── asignaciones.types.ts
+│   └── asignaciones.service.ts
+│
+├── inmuebles/                   # Propiedades
+│   ├── index.ts
+│   ├── inmuebles.types.ts
+│   └── inmuebles.service.ts
+│
+└── usuarios/                    # Usuarios, clientes, técnicos
+    ├── index.ts
+    ├── usuarios.types.ts
+    └── usuarios.service.ts
+```
+
+### ¿Por qué esta estructura?
+
+| Antes (por tipo) | Ahora (por feature) |
+|------------------|---------------------|
+| Archivos relacionados dispersos | Todo junto en una carpeta |
+| Difícil encontrar código | Fácil: busca la feature |
+| Cambios tocan muchas carpetas | Cambios en una sola carpeta |
+
+---
+
+## Estructura completa del proyecto
 
 ```
 frontend/
 │
 ├── app/                         # PÁGINAS (cada carpeta = una URL)
-│   ├── cliente/incidentes/
-│   │   └── page.tsx             # → tuapp.com/cliente/incidentes
-│   └── tecnico/trabajos/
-│       └── page.tsx             # → tuapp.com/tecnico/trabajos
+│   ├── (cliente)/cliente/       # Rutas del cliente
+│   │   ├── incidentes/page.tsx  # → tuapp.com/cliente/incidentes
+│   │   └── propiedades/page.tsx # → tuapp.com/cliente/propiedades
+│   ├── (tecnico)/tecnico/       # Rutas del técnico
+│   │   ├── trabajos/page.tsx    # → tuapp.com/tecnico/trabajos
+│   │   └── disponibles/page.tsx # → tuapp.com/tecnico/disponibles
+│   └── (admin)/dashboard/       # Rutas del admin
 │
 ├── components/                  # COMPONENTES VISUALES
 │   ├── ui/                      # Botones, inputs (shadcn)
-│   └── cliente/                 # Componentes del cliente
-│       └── incidentes-content.tsx  # Tabla, formularios, etc.
+│   ├── cliente/                 # Componentes del cliente
+│   │   └── incidentes-content.client.tsx
+│   └── tecnico/                 # Componentes del técnico
 │
-├── features/                    # LÓGICA DE NEGOCIO
-│   └── incidentes/
-│       ├── incidentes.types.ts     # Define forma de los datos
-│       └── incidentes.service.ts   # Funciones para LEER de BD
+├── features/                    # LÓGICA DE NEGOCIO (ver arriba)
 │
-└── shared/
-    └── lib/supabase/            # CONEXIÓN A BASE DE DATOS
-        ├── client.ts            # Para usar desde BROWSER
-        └── server.ts            # Para usar desde VERCEL
+└── shared/                      # CÓDIGO COMPARTIDO
+    ├── lib/supabase/            # Conexión a base de datos
+    │   ├── client.ts            # Para usar desde BROWSER
+    │   └── server.ts            # Para usar desde VERCEL
+    └── types/                   # Tipos compartidos
 ```
 
 ---
@@ -266,6 +311,126 @@ npm run dev                   # http://localhost:3000
 | **admin** | Todo: ver, crear, editar, eliminar |
 | **cliente** | Ver y crear SUS incidentes |
 | **tecnico** | Ver y gestionar trabajos asignados |
+
+---
+
+## Guía de Trabajo Colaborativo
+
+### Regla de oro: 2 archivos por feature
+
+Cada feature tiene SOLO 2 archivos:
+
+```
+features/nombreFeature/
+├── nombreFeature.types.ts     # Tipos e interfaces
+└── nombreFeature.service.ts   # Funciones de LECTURA
+```
+
+**Las ESCRITURAS van directo en los componentes** (no en services).
+
+---
+
+### Cómo agregar una nueva feature
+
+**Ejemplo: Agregar feature "contratos"**
+
+1. Crear la carpeta:
+```bash
+mkdir frontend/features/contratos
+```
+
+2. Crear `contratos.types.ts`:
+```typescript
+// frontend/features/contratos/contratos.types.ts
+
+export interface Contrato {
+  id_contrato: number
+  id_cliente: number
+  fecha_inicio: string
+  fecha_fin: string
+}
+
+export interface CreateContratoDTO {
+  id_cliente: number
+  fecha_inicio: string
+  fecha_fin: string
+}
+```
+
+3. Crear `contratos.service.ts`:
+```typescript
+// frontend/features/contratos/contratos.service.ts
+
+import { createClient } from '@/shared/lib/supabase/server'
+import type { Contrato } from './contratos.types'
+
+export async function getContratosByCliente(idCliente: number): Promise<Contrato[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('contratos')
+    .select('*')
+    .eq('id_cliente', idCliente)
+
+  if (error) throw error
+  return data
+}
+```
+
+4. Crear `index.ts`:
+```typescript
+// frontend/features/contratos/index.ts
+
+export * from './contratos.types'
+export * from './contratos.service'
+```
+
+5. Usar en una página:
+```typescript
+// app/(cliente)/cliente/contratos/page.tsx
+
+import { getContratosByCliente } from '@/features/contratos'
+
+export default async function ContratosPage() {
+  const contratos = await getContratosByCliente(123)
+  return <ContratosContent contratos={contratos} />
+}
+```
+
+---
+
+### Convenciones de nombres
+
+| Tipo de archivo | Nombre | Ejemplo |
+|-----------------|--------|---------|
+| Types | `feature.types.ts` | `incidentes.types.ts` |
+| Service | `feature.service.ts` | `incidentes.service.ts` |
+| Index | `index.ts` | `index.ts` |
+| Componente Server | `nombre.tsx` | `incidente-card.tsx` |
+| Componente Client | `nombre.client.tsx` | `incidentes-content.client.tsx` |
+| Página | `page.tsx` | `page.tsx` |
+
+---
+
+### Checklist antes de hacer PR
+
+- [ ] Los types están en `feature.types.ts`
+- [ ] Las queries de lectura están en `feature.service.ts`
+- [ ] Las escrituras van directo desde el componente
+- [ ] El componente con interactividad tiene `.client.tsx`
+- [ ] El `index.ts` re-exporta types y service
+- [ ] `npm run build` pasa sin errores
+
+---
+
+### Errores comunes
+
+| Error | Solución |
+|-------|----------|
+| "use client" en service | Los services son para SERVER, no usan "use client" |
+| Fetch en useEffect | Usar service en page.tsx, pasar datos como props |
+| Import desde ruta larga | Usar `@/features/nombreFeature` |
+| Crear archivos innecesarios | Solo types.ts y service.ts por feature |
 
 ---
 
