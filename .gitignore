@@ -49,3 +49,6 @@ next-env.d.ts
 # Frontend specific (if nested)
 frontend/.next/
 frontend/node_modules/
+
+# Supabase
+supabase/.temp/

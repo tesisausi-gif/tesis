@@ -1,34 +1,12 @@
 /**
  * Servicio de Usuarios
  * Queries para Server Components
+ *
+ * NOTA: Para getCurrentUser() usar @/features/auth
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
-import type { UsuarioActual } from '@/features/auth'
 import type { Usuario, Cliente, Tecnico, TecnicoActivo } from './usuarios.types'
-
-/**
- * Obtener usuario actual autenticado con datos del perfil
- */
-export async function getCurrentUser(): Promise<UsuarioActual | null> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: usuario, error } = await supabase
-    .from('usuarios')
-    .select('id, nombre, apellido, rol, id_cliente, id_tecnico, esta_activo, fecha_creacion')
-    .eq('id', user.id)
-    .single()
-
-  if (error) throw error
-
-  return {
-    ...usuario,
-    email: user.email || '',
-  }
-}
 
 /**
  * Obtener todos los usuarios (admin)
