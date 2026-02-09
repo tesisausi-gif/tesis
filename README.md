@@ -225,58 +225,203 @@ frontend/features/
 
 ---
 
+## Carpeta `app/` - Las páginas
+
+Cada carpeta dentro de `app/` es una **URL** del sitio. Next.js usa el nombre de las carpetas para armar las rutas.
+
+```
+app/
+│
+├── (auth)/                          # Páginas públicas (sin login)
+│   ├── login/page.tsx               # → /login
+│   └── register/page.tsx            # → /register
+│
+├── (cliente)/                       # Todo lo del cliente
+│   ├── layout.tsx                   # Navegación del cliente (se repite en todas las páginas)
+│   └── cliente/
+│       ├── page.tsx                 # → /cliente (inicio)
+│       ├── incidentes/
+│       │   ├── page.tsx             # → /cliente/incidentes
+│       │   ├── nuevo/page.tsx       # → /cliente/incidentes/nuevo
+│       │   └── loading.tsx          # Skeleton mientras carga
+│       ├── propiedades/page.tsx     # → /cliente/propiedades
+│       ├── presupuestos/page.tsx    # → /cliente/presupuestos
+│       ├── pagos/page.tsx           # → /cliente/pagos
+│       └── perfil/page.tsx          # → /cliente/perfil
+│
+├── (tecnico)/                       # Todo lo del técnico
+│   ├── layout.tsx                   # Navegación del técnico
+│   └── tecnico/
+│       ├── page.tsx                 # → /tecnico (inicio)
+│       ├── trabajos/page.tsx        # → /tecnico/trabajos
+│       ├── disponibles/page.tsx     # → /tecnico/disponibles
+│       ├── presupuestos/
+│       │   ├── page.tsx             # → /tecnico/presupuestos
+│       │   └── nuevo/page.tsx       # → /tecnico/presupuestos/nuevo
+│       └── perfil/page.tsx          # → /tecnico/perfil
+│
+├── (admin)/                         # Todo lo del admin
+│   ├── layout.tsx                   # Sidebar del admin
+│   └── dashboard/
+│       ├── page.tsx                 # → /dashboard (inicio)
+│       ├── incidentes/page.tsx      # → /dashboard/incidentes
+│       ├── asignaciones/page.tsx    # → /dashboard/asignaciones
+│       ├── clientes/page.tsx        # → /dashboard/clientes
+│       ├── tecnicos/page.tsx        # → /dashboard/tecnicos
+│       ├── propiedades/page.tsx     # → /dashboard/propiedades
+│       ├── usuarios/page.tsx        # → /dashboard/usuarios
+│       ├── presupuestos/page.tsx    # → /dashboard/presupuestos
+│       └── pagos/page.tsx           # → /dashboard/pagos
+│
+├── api/                             # Endpoints del backend (no son páginas)
+│   └── admin/                       # APIs solo para admin
+│
+├── layout.tsx                       # Layout raíz (aplica a TODO el sitio)
+└── page.tsx                         # → / (landing page)
+```
+
+### Archivos especiales de Next.js
+
+| Archivo | Qué hace |
+|---------|----------|
+| `page.tsx` | Define la página de esa URL. Corre en **Vercel** (backend) |
+| `layout.tsx` | Envuelve las páginas hijas (navbar, sidebar). Se comparte entre páginas del mismo grupo |
+| `loading.tsx` | Se muestra mientras la página carga (skeleton animado) |
+
+### ¿Qué son los paréntesis? `(cliente)`, `(admin)`, etc.
+
+Son **grupos de rutas**. Sirven para agrupar páginas que comparten un layout, pero **no aparecen en la URL**.
+
+```
+(cliente)/cliente/incidentes/page.tsx  →  /cliente/incidentes
+^^^^^^^^ esto NO aparece en la URL
+```
+
+Cada grupo tiene su propio `layout.tsx` que pone la navegación correcta (navbar de cliente, sidebar de admin, etc.).
+
+---
+
+## Carpeta `components/` - Lo visual
+
+Los componentes son las piezas visuales que se usan dentro de las páginas.
+
+```
+components/
+│
+├── ui/                              # Componentes genéricos (shadcn/ui)
+│   ├── button.tsx                   # Botón reutilizable
+│   ├── card.tsx                     # Tarjeta
+│   ├── dialog.tsx                   # Modal/popup
+│   ├── input.tsx                    # Campo de texto
+│   ├── table.tsx                    # Tabla
+│   ├── select.tsx                   # Dropdown
+│   ├── sidebar.tsx                  # Sidebar del admin
+│   └── ...                          # Otros componentes base
+│
+├── cliente/                         # Componentes del cliente
+│   ├── cliente-nav.tsx              # Barra de navegación del cliente
+│   ├── incidentes-content.client.tsx    # Contenido de la página de incidentes
+│   └── propiedades-content.client.tsx   # Contenido de la página de propiedades
+│
+├── tecnico/                         # Componentes del técnico
+│   ├── tecnico-nav.tsx              # Barra de navegación del técnico
+│   ├── trabajos-content.client.tsx      # Contenido de la página de trabajos
+│   └── disponibles-content.client.tsx   # Contenido de la página de disponibles
+│
+├── admin/                           # Componentes del admin
+│   ├── admin-sidebar.tsx            # Sidebar de navegación
+│   ├── incidentes-content.client.tsx    # Contenido de incidentes para admin
+│   └── tecnicos/                    # Sub-componentes de gestión de técnicos
+│
+├── incidentes/                      # Componentes compartidos de incidentes
+│   └── incidente-detail-modal.tsx   # Modal de detalle (lo usan cliente y admin)
+│
+├── landing/                         # Componentes de la landing page
+│   ├── hero-section.tsx
+│   ├── features-section.tsx
+│   └── cta-section.tsx
+│
+└── ai-help-chat.tsx                 # Chat de ayuda con IA
+```
+
+### ¿Qué diferencia hay entre `componente.tsx` y `componente.client.tsx`?
+
+| Tipo | Dónde corre | Para qué |
+|------|-------------|----------|
+| `nombre.tsx` | Vercel (servidor) | Solo muestra datos, sin interactividad |
+| `nombre.client.tsx` | Browser (usuario) | Tiene botones, formularios, clicks, estados |
+
+Si el componente necesita `useState`, `onClick`, formularios o cualquier interacción del usuario, **debe ser `.client.tsx`**.
+
+---
+
+## Cómo se conecta todo: app → components → features
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  1. PÁGINA (app/)              Corre en VERCEL                  │
+│     page.tsx                                                    │
+│     - Verifica permisos                                         │
+│     - Llama al service para obtener datos                       │
+│     - Pasa los datos al componente                              │
+│                                                                 │
+│         │ usa                              │ usa                │
+│         ▼                                  ▼                    │
+│                                                                 │
+│  2. FEATURE (features/)        3. COMPONENTE (components/)      │
+│     service.ts                    content.client.tsx             │
+│     - Lee datos de la BD          - Muestra los datos           │
+│     - Corre en VERCEL             - Maneja interacción          │
+│                                   - Escribe directo a BD        │
+│                                   - Corre en BROWSER            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Ejemplo real: página de incidentes del cliente**
+
+```typescript
+// 1. PÁGINA: app/(cliente)/cliente/incidentes/page.tsx
+//    Corre en Vercel. Obtiene datos y los pasa al componente.
+
+import { getCurrentUser } from '@/features/auth/auth.service'
+import { getIncidentesByCurrentUser } from '@/features/incidentes/incidentes.service'
+import { IncidentesContent } from '@/components/cliente/incidentes-content.client'
+
+export default async function ClienteIncidentesPage() {
+  const user = await getCurrentUser()          // ← usa feature auth
+  const incidentes = await getIncidentesByCurrentUser()  // ← usa feature incidentes
+  return <IncidentesContent incidentes={incidentes} />   // ← pasa datos al componente
+}
+
+// 2. FEATURE: features/incidentes/incidentes.service.ts
+//    Lee datos de Supabase (corre en Vercel)
+
+// 3. COMPONENTE: components/cliente/incidentes-content.client.tsx
+//    Recibe los datos y los muestra (corre en Browser)
+//    Si el usuario crea un incidente, escribe directo a Supabase
+```
+
+---
+
 ## Estructura completa del proyecto
 
 ```
 frontend/
 │
 ├── app/                         # PÁGINAS (cada carpeta = una URL)
-│   ├── (cliente)/cliente/       # Rutas del cliente
-│   │   ├── incidentes/page.tsx  # → tuapp.com/cliente/incidentes
-│   │   └── propiedades/page.tsx # → tuapp.com/cliente/propiedades
-│   ├── (tecnico)/tecnico/       # Rutas del técnico
-│   │   ├── trabajos/page.tsx    # → tuapp.com/tecnico/trabajos
-│   │   └── disponibles/page.tsx # → tuapp.com/tecnico/disponibles
-│   └── (admin)/dashboard/       # Rutas del admin
 │
-├── components/                  # COMPONENTES VISUALES
-│   ├── ui/                      # Botones, inputs (shadcn)
-│   ├── cliente/                 # Componentes del cliente
-│   │   └── incidentes-content.client.tsx
-│   └── tecnico/                 # Componentes del técnico
+├── components/                  # COMPONENTES VISUALES (lo que el usuario ve)
 │
-├── features/                    # LÓGICA DE NEGOCIO (ver arriba)
+├── features/                    # LÓGICA DE NEGOCIO (types + services)
 │
 └── shared/                      # CÓDIGO COMPARTIDO
     ├── lib/supabase/            # Conexión a base de datos
-    │   ├── client.ts            # Para usar desde BROWSER
-    │   └── server.ts            # Para usar desde VERCEL
-    └── types/                   # Tipos compartidos
+    │   ├── client.ts            # Para usar desde BROWSER (escrituras)
+    │   └── server.ts            # Para usar desde VERCEL (lecturas)
+    └── types/                   # Tipos compartidos entre features
 ```
-
----
-
-## ¿Qué hace cada archivo?
-
-### page.tsx (la página)
-- Define qué se muestra en una URL
-- Corre en **Vercel** (backend)
-- Llama al service para obtener datos
-
-### service.ts (funciones de consulta)
-- Funciones para LEER datos de Supabase
-- Corre en **Vercel** (backend)
-- Ejemplo: `getIncidentesByCurrentUser()`
-
-### types.ts (tipos de datos)
-- Define la forma de los datos
-- No corre, solo describe
-- Ejemplo: `interface Incidente { id, descripcion, ... }`
-
-### component.tsx (componentes visuales)
-- Lo que el usuario ve: tablas, botones, formularios
-- Corre en **Browser** (frontend)
-- Para ESCRIBIR, llama directo a Supabase
 
 ---
 
