@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/features/auth'
-import { getAsignacionesPendientes } from '@/features/asignaciones'
+import { getCurrentUser } from '@/features/auth/auth.service'
+import { getAsignacionesPendientes } from '@/features/asignaciones/asignaciones.service'
 import { DisponiblesContent } from '@/components/tecnico/disponibles-content.client'
 
 export default async function TecnicoDisponiblesPage() {

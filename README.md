@@ -4,6 +4,26 @@ Sistema web para la gestión de incidentes en propiedades inmobiliarias.
 
 ---
 
+## Cómo desarrollar una nueva feature
+
+Para agregar cualquier feature nueva al proyecto, usar la skill `/feature-dev`. Esta skill lanza 3 agentes especializados que garantizan consistencia:
+
+| Paso | Agente | Qué hace |
+|------|--------|----------|
+| 1 | **code-explorer** | Analiza el codebase existente: arquitectura, patrones, convenciones y dependencias |
+| 2 | **code-architect** | Diseña el blueprint de implementación: archivos a crear/modificar, componentes, flujo de datos |
+| 3 | **code-reviewer** | Revisa el código generado buscando bugs, vulnerabilidades y que siga las convenciones del proyecto |
+
+**Uso:** simplemente escribir `/feature-dev` seguido de la descripción de lo que se quiere agregar.
+
+```
+/feature-dev agregar módulo de contratos para clientes
+```
+
+Esto asegura que cada feature nueva siga la misma estructura (types y service) y los mismos patrones que el resto del proyecto.
+
+---
+
 ## ¿Qué es Frontend y qué es Backend?
 
 ```
@@ -83,12 +103,16 @@ Cuando el usuario quiere **VER** sus incidentes:
 
 ```typescript
 // 1. page.tsx (corre en VERCEL)
+import { getIncidentesByCurrentUser } from '@/features/incidentes/incidentes.service'
+
 export default async function Page() {
   const incidentes = await getIncidentesByCurrentUser()  // llama al service
   return <TablaIncidentes datos={incidentes} />
 }
 
-// 2. service.ts (corre en VERCEL)
+// 2. incidentes.service.ts (corre en VERCEL)
+import { createClient } from '@/shared/lib/supabase/server'
+
 export async function getIncidentesByCurrentUser() {
   const supabase = await createClient()
   const { data } = await supabase.from('incidentes').select('*')  // consulta BD
@@ -135,7 +159,9 @@ Porque es más simple y Supabase ya tiene seguridad (RLS).
 **Código involucrado:**
 
 ```typescript
-// componente.tsx (corre en BROWSER)
+// componente.client.tsx (corre en BROWSER)
+import { createClient } from '@/shared/lib/supabase/client'  // OJO: client, NO server
+
 const handleSubmit = async () => {
   const supabase = createClient()
 
@@ -169,27 +195,22 @@ Organizamos el código por **features** (funcionalidades), no por tipo de archiv
 frontend/features/
 │
 ├── auth/                        # Autenticación
-│   ├── index.ts                 # Re-exporta todo
-│   ├── auth.types.ts            # Tipos: Usuario, CurrentUser
+│   ├── auth.types.ts            # Tipos: UsuarioActual
 │   └── auth.service.ts          # getCurrentUser, requireAdmin
 │
 ├── incidentes/                  # Incidentes
-│   ├── index.ts
 │   ├── incidentes.types.ts      # Tipos: Incidente, CreateIncidenteDTO
 │   └── incidentes.service.ts    # getIncidentesByCurrentUser, etc.
 │
 ├── asignaciones/                # Asignaciones de técnicos
-│   ├── index.ts
 │   ├── asignaciones.types.ts
 │   └── asignaciones.service.ts
 │
 ├── inmuebles/                   # Propiedades
-│   ├── index.ts
 │   ├── inmuebles.types.ts
 │   └── inmuebles.service.ts
 │
 └── usuarios/                    # Usuarios, clientes, técnicos
-    ├── index.ts
     ├── usuarios.types.ts
     └── usuarios.service.ts
 ```
@@ -318,15 +339,15 @@ npm run dev                   # http://localhost:3000
 
 ### Regla de oro: 2 archivos por feature
 
-Cada feature tiene SOLO 2 archivos:
+Cada feature tiene SOLO 2 archivos, nada más:
 
 ```
 features/nombreFeature/
 ├── nombreFeature.types.ts     # Tipos e interfaces
-└── nombreFeature.service.ts   # Funciones de LECTURA
+└── nombreFeature.service.ts   # Funciones de LECTURA (corren en Vercel)
 ```
 
-**Las ESCRITURAS van directo en los componentes** (no en services).
+**Las ESCRITURAS (insert, update, delete) van directo en los componentes `.client.tsx`**, no en los services.
 
 ---
 
@@ -377,19 +398,12 @@ export async function getContratosByCliente(idCliente: number): Promise<Contrato
 }
 ```
 
-4. Crear `index.ts`:
-```typescript
-// frontend/features/contratos/index.ts
-
-export * from './contratos.types'
-export * from './contratos.service'
-```
-
-5. Usar en una página:
+4. Usar en una página:
 ```typescript
 // app/(cliente)/cliente/contratos/page.tsx
 
-import { getContratosByCliente } from '@/features/contratos'
+import { getContratosByCliente } from '@/features/contratos/contratos.service'
+import type { Contrato } from '@/features/contratos/contratos.types'
 
 export default async function ContratosPage() {
   const contratos = await getContratosByCliente(123)
@@ -405,10 +419,25 @@ export default async function ContratosPage() {
 |-----------------|--------|---------|
 | Types | `feature.types.ts` | `incidentes.types.ts` |
 | Service | `feature.service.ts` | `incidentes.service.ts` |
-| Index | `index.ts` | `index.ts` |
 | Componente Server | `nombre.tsx` | `incidente-card.tsx` |
 | Componente Client | `nombre.client.tsx` | `incidentes-content.client.tsx` |
 | Página | `page.tsx` | `page.tsx` |
+
+### Cómo importar
+
+```typescript
+// Tipos: desde feature.types.ts
+import type { Incidente } from '@/features/incidentes/incidentes.types'
+
+// Funciones: desde feature.service.ts
+import { getIncidentesByCurrentUser } from '@/features/incidentes/incidentes.service'
+
+// Supabase para LEER (en services / page.tsx):
+import { createClient } from '@/shared/lib/supabase/server'
+
+// Supabase para ESCRIBIR (en componentes .client.tsx):
+import { createClient } from '@/shared/lib/supabase/client'
+```
 
 ---
 
@@ -416,9 +445,9 @@ export default async function ContratosPage() {
 
 - [ ] Los types están en `feature.types.ts`
 - [ ] Las queries de lectura están en `feature.service.ts`
-- [ ] Las escrituras van directo desde el componente
+- [ ] Las escrituras van directo desde el componente `.client.tsx`
 - [ ] El componente con interactividad tiene `.client.tsx`
-- [ ] El `index.ts` re-exporta types y service
+- [ ] Los imports apuntan al archivo exacto (ej: `@/features/auth/auth.service`)
 - [ ] `npm run build` pasa sin errores
 
 ---
@@ -429,8 +458,8 @@ export default async function ContratosPage() {
 |-------|----------|
 | "use client" en service | Los services son para SERVER, no usan "use client" |
 | Fetch en useEffect | Usar service en page.tsx, pasar datos como props |
-| Import desde ruta larga | Usar `@/features/nombreFeature` |
-| Crear archivos innecesarios | Solo types.ts y service.ts por feature |
+| Importar supabase/server en componente client | Usar `@/shared/lib/supabase/client` en `.client.tsx` |
+| Crear archivos innecesarios | Solo `types.ts` y `service.ts` por feature, nada más |
 
 ---
 

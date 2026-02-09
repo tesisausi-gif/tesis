@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/features/auth'
-import { getAsignacionesActivas } from '@/features/asignaciones'
+import { getCurrentUser } from '@/features/auth/auth.service'
+import { getAsignacionesActivas } from '@/features/asignaciones/asignaciones.service'
 import { TrabajosContent } from '@/components/tecnico/trabajos-content.client'
 
 export default async function TecnicoTrabajosPage() {

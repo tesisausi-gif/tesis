@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
-import { requireClienteId } from '@/features/auth'
+import { requireClienteId } from '@/features/auth/auth.service'
 import type { Inmueble, InmuebleConCliente, TipoInmueble } from './inmuebles.types'
 
 // Select base

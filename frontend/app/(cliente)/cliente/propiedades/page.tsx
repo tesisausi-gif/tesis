@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/features/auth'
-import { getInmueblesByCurrentUser, getTiposInmuebles } from '@/features/inmuebles'
+import { getCurrentUser } from '@/features/auth/auth.service'
+import { getInmueblesByCurrentUser, getTiposInmuebles } from '@/features/inmuebles/inmuebles.service'
 import { PropiedadesContent } from '@/components/cliente/propiedades-content.client'
 
 export default async function ClientePropiedadesPage() {

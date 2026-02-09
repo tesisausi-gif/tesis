@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
-import { requireTecnicoId } from '@/features/auth'
+import { requireTecnicoId } from '@/features/auth/auth.service'
 import type { Asignacion, AsignacionTecnico } from './asignaciones.types'
 
 // Select con incidente y detalles

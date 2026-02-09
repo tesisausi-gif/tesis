@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/features/auth'
-import { getIncidentesByCurrentUser } from '@/features/incidentes'
+import { getCurrentUser } from '@/features/auth/auth.service'
+import { getIncidentesByCurrentUser } from '@/features/incidentes/incidentes.service'
 import { IncidentesContent } from '@/components/cliente/incidentes-content.client'
 
 export default async function ClienteIncidentesPage() {

@@ -4,7 +4,7 @@
  */
 
 import type { TecnicoActivo } from '@/shared/types'
-import type { UsuarioActual } from '@/features/auth'
+import type { UsuarioActual } from '@/features/auth/auth.types'
 
 // Re-exportar tipos
 export type { TecnicoActivo }
