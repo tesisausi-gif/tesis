@@ -18,8 +18,6 @@ Esta carpeta contiene toda la documentación del proyecto de tesis.
 - **[sincronizacion_usuarios.md](./sincronizacion_usuarios.md)** - Sistema de sincronización automática auth.users ↔ usuarios
 - **[vistas_por_rol.md](./vistas_por_rol.md)** - Sistema de vistas separadas por rol (admin, cliente, técnico)
 - **[PROXIMOS_PASOS.md](./PROXIMOS_PASOS.md)** - Roadmap de desarrollo por fases
-- **[pasos_inmediatos_triggers.md](./pasos_inmediatos_triggers.md)** - Pasos pendientes críticos (triggers)
-- **[solucion_error_500.md](./solucion_error_500.md)** - Guía de solución para error 500 en registro
 
 ## 🗂️ Estructura del Proyecto
 
@@ -29,14 +27,12 @@ Esta carpeta contiene toda la documentación del proyecto de tesis.
 ├── der.md                       # Diagrama ER
 ├── diagramaDominio.md          # Diagrama de dominio
 ├── esquema_supabase.md         # Esquema de BD
+├── diagrama_arquitectura.md    # Arquitectura del sistema
 ├── guia_scripts_sql.md         # Guía SQL
 ├── manejo_errores.md           # Manejo de errores
 ├── sincronizacion_usuarios.md  # Sistema auto-sync usuarios
 ├── vistas_por_rol.md           # Vistas separadas por rol
-├── PROXIMOS_PASOS.md           # Roadmap general
-├── pasos_inmediatos_triggers.md # Pasos pendientes
-├── solucio_error_500.md        # Solución errores
-└── diagrama_arquitectura.md    # Arquitectura
+└── PROXIMOS_PASOS.md           # Roadmap general
 
 /scripts/
 ├── 01_setup_database.sql       # Script: tabla usuarios
@@ -81,4 +77,3 @@ Al agregar nueva documentación:
 - **Proyecto Supabase**: https://app.supabase.com/project/yaggvkaerloxjjmfxnys
 - **Repositorio GitHub**: https://github.com/tesisausi-gif/tesis.git
 - **README Principal**: [../README.md](../README.md)
-- **README Frontend**: [../frontend/README.md](../frontend/README.md)
