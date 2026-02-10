@@ -293,3 +293,73 @@ export async function marcarPresupuestoVencido(idPresupuesto: number): Promise<A
     return { success: false, error: 'Error inesperado al marcar presupuesto como vencido' }
   }
 }
+
+/**
+ * Aprobar presupuesto como cliente (cambiar de aprobado_admin a aprobado)
+ */
+export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    // Verificar que el presupuesto esté en estado aprobado_admin
+    const presupuesto = await getPresupuesto(idPresupuesto)
+    if (!presupuesto) {
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    if (presupuesto.estado_presupuesto !== EstadoPresupuesto.APROBADO_ADMIN) {
+      return { success: false, error: 'El presupuesto no está listo para aprobación del cliente' }
+    }
+
+    const { error } = await supabase
+      .from('presupuestos')
+      .update({
+        estado_presupuesto: EstadoPresupuesto.APROBADO,
+        fecha_aprobacion: new Date().toISOString(),
+        fecha_actualizacion: new Date().toISOString(),
+      })
+      .eq('id_presupuesto', idPresupuesto)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al aprobar presupuesto' }
+  }
+}
+
+/**
+ * Rechazar presupuesto como cliente (cambiar a rechazado)
+ */
+export async function rechazarPresupuestoCliente(
+  idPresupuesto: number,
+  razonRechazo?: string
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    // Verificar que el presupuesto esté en estado aprobado_admin
+    const presupuesto = await getPresupuesto(idPresupuesto)
+    if (!presupuesto) {
+      return { success: false, error: 'Presupuesto no encontrado' }
+    }
+
+    if (presupuesto.estado_presupuesto !== EstadoPresupuesto.APROBADO_ADMIN) {
+      return { success: false, error: 'El presupuesto no puede ser rechazado en este estado' }
+    }
+
+    const { error } = await supabase
+      .from('presupuestos')
+      .update({
+        estado_presupuesto: EstadoPresupuesto.RECHAZADO,
+        fecha_rechazo: new Date().toISOString(),
+        razon_rechazo: razonRechazo || 'Rechazado por cliente',
+        fecha_actualizacion: new Date().toISOString(),
+      })
+      .eq('id_presupuesto', idPresupuesto)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al rechazar presupuesto' }
+  }
+}

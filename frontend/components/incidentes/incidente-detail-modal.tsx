@@ -37,6 +37,10 @@ import {
   Save,
 } from 'lucide-react'
 import { NivelPrioridad, CategoriaIncidente } from '@/shared/types/enums'
+import { InspeccionesList } from './inspecciones-list'
+import { CalificacionTecnico } from '@/components/cliente/calificacion-tecnico'
+import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
+import { EstadoIncidente } from '@/shared/types/enums'
 
 interface TimelineEvent {
   id: string
@@ -148,6 +152,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([])
+  const [inspecciones, setInspecciones] = useState<any[]>([])
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -219,6 +224,16 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         .order('fecha_asignacion', { ascending: false })
 
       setAsignaciones((asignacionesData as unknown as Asignacion[]) || [])
+
+      // Cargar inspecciones si el rol es técnico
+      if (rol === 'tecnico') {
+        try {
+          const inspeccionesData = await getInspeccionesDelIncidente(incidenteId)
+          setInspecciones(inspeccionesData)
+        } catch (error) {
+          console.error('Error al cargar inspecciones:', error)
+        }
+      }
 
       // Construir timeline
       await construirTimeline(incidenteData, asignacionesData || [])
@@ -458,9 +473,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           </div>
         ) : incidente ? (
           <Tabs defaultValue="detalles" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="detalles">Detalles</TabsTrigger>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              {rol === 'tecnico' && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
+              {rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
               {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
             </TabsList>
 
@@ -777,6 +794,47 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </div>
                   </>
                 )}
+              </TabsContent>
+            )}
+
+            {/* Tab Inspecciones (para técnicos) */}
+            {rol === 'tecnico' && incidente && (
+              <TabsContent value="inspecciones" className="mt-4">
+                <InspeccionesList
+                  incidenteId={incidente.id_incidente}
+                  idTecnico={asignaciones[0]?.id_tecnico || 0}
+                  inspecciones={inspecciones}
+                  onInspeccionCreated={() => {
+                    // Recargar inspecciones
+                    cargarIncidente()
+                  }}
+                  onInspeccionDeleted={() => {
+                    // Recargar inspecciones
+                    cargarIncidente()
+                  }}
+                />
+              </TabsContent>
+            )}
+
+            {/* Tab Calificación (para clientes cuando está resuelto) */}
+            {rol === 'cliente' && incidente && incidente.estado_actual === EstadoIncidente.RESUELTO && asignaciones.length > 0 && (
+              <TabsContent value="calificacion" className="mt-4">
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Califica al técnico que resolvió tu incidente
+                  </p>
+                  {asignaciones.map((asignacion) => (
+                    <CalificacionTecnico
+                      key={asignacion.id_asignacion}
+                      incidenteId={incidente.id_incidente}
+                      idTecnico={asignacion.id_tecnico}
+                      nombreTecnico={`${asignacion.tecnicos?.nombre} ${asignacion.tecnicos?.apellido}`}
+                      onCalificacionCreated={() => {
+                        toast.success('¡Gracias por tu calificación!')
+                      }}
+                    />
+                  ))}
+                </div>
               </TabsContent>
             )}
           </Tabs>
