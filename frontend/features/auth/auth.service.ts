@@ -1,3 +1,5 @@
+'use server'
+
 /**
  * Servicio de Autenticación
  * Centraliza la lógica de autenticación para Server Components

@@ -9,11 +9,11 @@ import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle, Eye } from 'lucide-react'
 import { toast } from 'sonner'
-import { prioridadColors, NivelPrioridad, EstadoIncidente } from '@/shared/types'
+import { prioridadColors, NivelPrioridad } from '@/shared/types'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { createClient } from '@/shared/lib/supabase/client'
+import { aceptarAsignacion, rechazarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import type { Asignacion } from '@/features/asignaciones/asignaciones.types'
 
 interface DisponiblesContentProps {
@@ -22,7 +22,6 @@ interface DisponiblesContentProps {
 
 export function DisponiblesContent({ asignaciones: initialAsignaciones }: DisponiblesContentProps) {
   const router = useRouter()
-  const supabase = createClient()
   const [asignaciones] = useState(initialAsignaciones)
   const [procesando, setProcesando] = useState(false)
   const [asignacionSeleccionada, setAsignacionSeleccionada] = useState<Asignacion | null>(null)
@@ -52,28 +51,13 @@ export function DisponiblesContent({ asignaciones: initialAsignaciones }: Dispon
     setProcesando(true)
 
     try {
-      // 1. Aceptar la asignación
-      const { error: errorAsignacion } = await supabase
-        .from('asignaciones_tecnico')
-        .update({
-          estado_asignacion: 'aceptada',
-          fecha_aceptacion: new Date().toISOString(),
-        })
-        .eq('id_asignacion', asignacionSeleccionada.id_asignacion)
+      const result = await aceptarAsignacion(
+        asignacionSeleccionada.id_asignacion,
+        asignacionSeleccionada.id_incidente
+      )
 
-      if (errorAsignacion) {
-        toast.error('Error al aceptar la asignación', { description: errorAsignacion.message })
-        return
-      }
-
-      // 2. Actualizar estado del incidente
-      const { error: errorIncidente } = await supabase
-        .from('incidentes')
-        .update({ estado_actual: EstadoIncidente.ASIGNADO })
-        .eq('id_incidente', asignacionSeleccionada.id_incidente)
-
-      if (errorIncidente) {
-        toast.error('Error al actualizar el incidente', { description: errorIncidente.message })
+      if (!result.success) {
+        toast.error('Error al aceptar la asignación', { description: result.error })
         return
       }
 
@@ -94,28 +78,13 @@ export function DisponiblesContent({ asignaciones: initialAsignaciones }: Dispon
 
     setProcesando(true)
     try {
-      // 1. Rechazar la asignación
-      const { error: errorAsignacion } = await supabase
-        .from('asignaciones_tecnico')
-        .update({
-          estado_asignacion: 'rechazada',
-          fecha_rechazo: new Date().toISOString(),
-        })
-        .eq('id_asignacion', asignacionSeleccionada.id_asignacion)
+      const result = await rechazarAsignacion(
+        asignacionSeleccionada.id_asignacion,
+        asignacionSeleccionada.id_incidente
+      )
 
-      if (errorAsignacion) {
-        toast.error('Error al rechazar la asignación', { description: errorAsignacion.message })
-        return
-      }
-
-      // 2. Volver incidente a reportado
-      const { error: errorIncidente } = await supabase
-        .from('incidentes')
-        .update({ estado_actual: EstadoIncidente.REPORTADO })
-        .eq('id_incidente', asignacionSeleccionada.id_incidente)
-
-      if (errorIncidente) {
-        toast.error('Error al actualizar el incidente', { description: errorIncidente.message })
+      if (!result.success) {
+        toast.error('Error al rechazar la asignación', { description: result.error })
         return
       }
 

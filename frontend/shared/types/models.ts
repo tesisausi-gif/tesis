@@ -68,8 +68,6 @@ export interface TipoInmueble {
 /**
  * Resultado genérico de Server Actions
  */
-export interface ActionResult<T = unknown> {
-  success: boolean
-  error?: string
-  data?: T
-}
+export type ActionResult<T = void> =
+  | { success: true; data: T }
+  | { success: false; error: string }

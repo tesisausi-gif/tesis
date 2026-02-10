@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/shared/lib/supabase/client'
+import {
+  getClientesAdmin,
+  crearEmpleado,
+  actualizarCliente as actualizarClienteService,
+  toggleActivoCliente,
+  getInmueblesDeCliente,
+} from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,7 +29,6 @@ interface Cliente {
   telefono: string | null
   esta_activo: boolean
   fecha_creacion: string
-  fecha_modificacion: string
 }
 
 export default function ClientesPage() {
@@ -49,37 +54,16 @@ export default function ClientesPage() {
   const [telefono, setTelefono] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const supabase = createClient()
-
   useEffect(() => {
     cargarClientes()
   }, [])
 
   const cargarClientes = async () => {
     try {
-      console.log('🔍 Cargando clientes...')
-
-      // Usar el endpoint de API que tiene acceso service role
-      const response = await fetch('/api/admin/get-clientes', {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      })
-      const result = await response.json()
-
-      console.log('📊 Resultado API clientes:', result)
-
-      if (!response.ok) {
-        console.error('❌ Error al cargar clientes:', result.error)
-        toast.error(`Error al cargar clientes: ${result.error}`)
-        return
-      }
-
-      console.log(`✅ Clientes cargados: ${result.data?.length || 0}`)
-      setClientes(result.data || [])
+      const data = await getClientesAdmin()
+      setClientes(data as Cliente[])
     } catch (error) {
-      console.error('❌ Error catch:', error)
+      console.error('Error al cargar clientes:', error)
       toast.error('Error al cargar clientes')
     } finally {
       setLoading(false)
@@ -102,27 +86,17 @@ export default function ClientesPage() {
     setSubmitting(true)
 
     try {
-      // Crear usuario con rol cliente usando el endpoint de la API
-      // El trigger automáticamente creará el registro en la tabla clientes
-      const response = await fetch('/api/admin/create-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          nombre,
-          apellido,
-          rol: 'cliente',
-          dni,
-          telefono,
-        }),
+      const result = await crearEmpleado({
+        email,
+        password,
+        nombre,
+        apellido,
+        rol: 'cliente',
+        dni,
+        telefono,
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
+      if (!result.success) {
         toast.error('Error al crear cliente', {
           description: result.error
         })
@@ -169,20 +143,17 @@ export default function ClientesPage() {
     setSubmitting(true)
 
     try {
-      const { error } = await supabase
-        .from('clientes')
-        .update({
-          nombre,
-          apellido,
-          dni: dni || null,
-          telefono: telefono || null,
-          correo_electronico: email || null,
-        })
-        .eq('id_cliente', clienteEditando.id_cliente)
+      const result = await actualizarClienteService(clienteEditando.id_cliente, {
+        nombre,
+        apellido,
+        dni: dni || null,
+        telefono: telefono || null,
+        correo_electronico: email || null,
+      })
 
-      if (error) {
+      if (!result.success) {
         toast.error('Error al actualizar cliente', {
-          description: error.message
+          description: result.error
         })
         return
       }
@@ -209,18 +180,15 @@ export default function ClientesPage() {
     }
   }
 
-  const toggleActivoCliente = async (cliente: Cliente) => {
+  const handleToggleActivoCliente = async (cliente: Cliente) => {
     const nuevoEstado = !cliente.esta_activo
 
     try {
-      const { error } = await supabase
-        .from('clientes')
-        .update({ esta_activo: nuevoEstado })
-        .eq('id_cliente', cliente.id_cliente)
+      const result = await toggleActivoCliente(cliente.id_cliente, nuevoEstado)
 
-      if (error) {
+      if (!result.success) {
         toast.error('Error al actualizar estado del cliente', {
-          description: error.message
+          description: result.error
         })
         return
       }
@@ -245,7 +213,7 @@ export default function ClientesPage() {
 
   const handleToggleActivo = async (cliente: Cliente) => {
     setActionsDialogOpen(false)
-    await toggleActivoCliente(cliente)
+    await handleToggleActivoCliente(cliente)
   }
 
   const cargarInmueblesCliente = async (idCliente: number) => {
@@ -253,22 +221,8 @@ export default function ClientesPage() {
     setInmueblesDialogOpen(true)
 
     try {
-      const { data, error } = await supabase
-        .from('inmuebles')
-        .select(`
-          *,
-          tipos_inmuebles(nombre)
-        `)
-        .eq('id_cliente', idCliente)
-        .order('fecha_creacion', { ascending: false })
-
-      if (error) {
-        toast.error('Error al cargar inmuebles')
-        console.error(error)
-        return
-      }
-
-      setClienteInmuebles(data || [])
+      const data = await getInmueblesDeCliente(idCliente)
+      setClienteInmuebles(data)
     } catch (error) {
       console.error('Error:', error)
       toast.error('Error al cargar inmuebles')

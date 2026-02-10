@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/shared/lib/supabase/client'
+import {
+  getSolicitudesRegistro,
+  rechazarSolicitud as rechazarSolicitudService,
+  aprobarSolicitudTecnico,
+} from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -41,28 +45,17 @@ export default function SolicitudesTab() {
   const [procesando, setProcesando] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState<'todas' | 'pendiente' | 'aprobada' | 'rechazada'>('todas')
 
-  const supabase = createClient()
-
   useEffect(() => {
     cargarSolicitudes()
   }, [])
 
   const cargarSolicitudes = async () => {
     try {
-      const { data, error } = await supabase
-        .from('solicitudes_registro')
-        .select('*')
-        .order('fecha_solicitud', { ascending: false })
-
-      if (error) {
-        console.error('Error al cargar solicitudes:', error)
-        toast.error('Error al cargar solicitudes')
-        return
-      }
-
-      setSolicitudes(data || [])
+      const data = await getSolicitudesRegistro()
+      setSolicitudes(data as Solicitud[])
     } catch (error) {
       console.error('Error:', error)
+      toast.error('Error al cargar solicitudes')
     } finally {
       setLoading(false)
     }
@@ -83,20 +76,12 @@ export default function SolicitudesTab() {
     setProcesando(true)
 
     try {
-      const response = await fetch('/api/admin/approve-technician', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          solicitudId: selectedSolicitud.id_solicitud,
-          password: password,
-        }),
-      })
+      const result = await aprobarSolicitudTecnico(
+        selectedSolicitud.id_solicitud,
+        password
+      )
 
-      const result = await response.json()
-
-      if (!response.ok) {
+      if (!result.success) {
         toast.error('Error al aprobar solicitud', {
           description: result.error
         })
@@ -124,15 +109,9 @@ export default function SolicitudesTab() {
     if (!confirm('¿Estás seguro de rechazar esta solicitud?')) return
 
     try {
-      const { error } = await supabase
-        .from('solicitudes_registro')
-        .update({
-          estado_solicitud: 'rechazada',
-          fecha_aprobacion: new Date().toISOString()
-        })
-        .eq('id_solicitud', id)
+      const result = await rechazarSolicitudService(id)
 
-      if (error) {
+      if (!result.success) {
         toast.error('Error al rechazar solicitud')
         return
       }

@@ -1,11 +1,14 @@
+'use server'
+
 /**
  * Servicio de Inmuebles
- * Queries para Server Components
+ * Lecturas y escrituras para Server Components y Server Actions
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireClienteId } from '@/features/auth/auth.service'
 import type { Inmueble, InmuebleConCliente, TipoInmueble } from './inmuebles.types'
+import type { ActionResult } from '@/shared/types'
 
 // Select base
 const INMUEBLE_SELECT = `
@@ -111,4 +114,84 @@ export async function getTiposInmuebles(): Promise<TipoInmueble[]> {
 
   if (error) throw error
   return data as TipoInmueble[]
+}
+
+// --- Escrituras ---
+
+export async function crearInmueble(inmuebleData: {
+  id_tipo_inmueble: number
+  provincia: string
+  localidad: string
+  barrio: string | null
+  calle: string
+  altura: string
+  piso: string | null
+  dpto: string | null
+  informacion_adicional: string | null
+}): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+    const idCliente = await requireClienteId()
+
+    const { error } = await supabase
+      .from('inmuebles')
+      .insert({
+        ...inmuebleData,
+        id_cliente: idCliente,
+        esta_activo: true,
+      })
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al crear inmueble' }
+  }
+}
+
+export async function actualizarInmueble(
+  idInmueble: number,
+  inmuebleData: {
+    id_tipo_inmueble: number
+    provincia: string
+    localidad: string
+    barrio: string | null
+    calle: string
+    altura: string
+    piso: string | null
+    dpto: string | null
+    informacion_adicional: string | null
+  }
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('inmuebles')
+      .update(inmuebleData)
+      .eq('id_inmueble', idInmueble)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al actualizar inmueble' }
+  }
+}
+
+export async function toggleEstadoInmueble(
+  idInmueble: number,
+  nuevoEstado: boolean
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('inmuebles')
+      .update({ esta_activo: nuevoEstado })
+      .eq('id_inmueble', idInmueble)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al cambiar estado' }
+  }
 }

@@ -1,11 +1,14 @@
+'use server'
+
 /**
  * Servicio de Incidentes
- * Queries para Server Components
+ * Lecturas y escrituras para Server Components y Server Actions
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireClienteId } from '@/features/auth/auth.service'
 import type { Incidente, IncidenteConCliente, IncidenteConDetalles } from './incidentes.types'
+import type { ActionResult } from '@/shared/types'
 
 // Select base para incidentes
 const INCIDENTE_SELECT = `
@@ -99,4 +102,29 @@ export async function getIncidenteById(idIncidente: number): Promise<IncidenteCo
 
   if (error) throw error
   return data as unknown as IncidenteConDetalles
+}
+
+// --- Escrituras ---
+
+export async function actualizarIncidente(
+  idIncidente: number,
+  updates: {
+    estado_actual?: string
+    nivel_prioridad?: string
+    categoria?: string | null
+  }
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('incidentes')
+      .update(updates)
+      .eq('id_incidente', idIncidente)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al actualizar incidente' }
+  }
 }

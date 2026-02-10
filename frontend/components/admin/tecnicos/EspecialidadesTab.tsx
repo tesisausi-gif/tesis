@@ -1,7 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/shared/lib/supabase/client'
+import {
+  getEspecialidades,
+  crearEspecialidad,
+  actualizarEspecialidad,
+  toggleActivaEspecialidad,
+} from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -37,24 +42,18 @@ export default function EspecialidadesTab() {
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
 
-  const supabase = createClient()
-
   useEffect(() => {
     fetchEspecialidades()
   }, [])
 
   const fetchEspecialidades = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('especialidades')
-      .select('*')
-      .order('nombre')
-
-    if (error) {
+    try {
+      const data = await getEspecialidades()
+      setEspecialidades(data as Especialidad[])
+    } catch (error) {
       toast.error('Error al cargar especialidades')
       console.error(error)
-    } else {
-      setEspecialidades(data || [])
     }
     setLoading(false)
   }
@@ -68,17 +67,13 @@ export default function EspecialidadesTab() {
     }
 
     if (editingEspecialidad) {
-      const { error } = await supabase
-        .from('especialidades')
-        .update({
-          nombre: nombre.trim(),
-          descripcion: descripcion.trim() || null
-        })
-        .eq('id_especialidad', editingEspecialidad.id_especialidad)
+      const result = await actualizarEspecialidad(editingEspecialidad.id_especialidad, {
+        nombre: nombre.trim(),
+        descripcion: descripcion.trim() || null
+      })
 
-      if (error) {
+      if (!result.success) {
         toast.error('Error al actualizar especialidad')
-        console.error(error)
       } else {
         toast.success('Especialidad actualizada')
         setDialogOpen(false)
@@ -86,20 +81,13 @@ export default function EspecialidadesTab() {
         fetchEspecialidades()
       }
     } else {
-      const { error } = await supabase
-        .from('especialidades')
-        .insert({
-          nombre: nombre.trim(),
-          descripcion: descripcion.trim() || null
-        })
+      const result = await crearEspecialidad({
+        nombre: nombre.trim(),
+        descripcion: descripcion.trim() || null
+      })
 
-      if (error) {
-        if (error.code === '23505') {
-          toast.error('Ya existe una especialidad con ese nombre')
-        } else {
-          toast.error('Error al crear especialidad')
-        }
-        console.error(error)
+      if (!result.success) {
+        toast.error(result.error)
       } else {
         toast.success('Especialidad creada')
         setDialogOpen(false)
@@ -110,14 +98,10 @@ export default function EspecialidadesTab() {
   }
 
   const handleToggleActiva = async (especialidad: Especialidad) => {
-    const { error } = await supabase
-      .from('especialidades')
-      .update({ esta_activa: !especialidad.esta_activa })
-      .eq('id_especialidad', especialidad.id_especialidad)
+    const result = await toggleActivaEspecialidad(especialidad.id_especialidad, !especialidad.esta_activa)
 
-    if (error) {
+    if (!result.success) {
       toast.error('Error al actualizar estado')
-      console.error(error)
     } else {
       toast.success(especialidad.esta_activa ? 'Especialidad desactivada' : 'Especialidad activada')
       fetchEspecialidades()

@@ -1,11 +1,14 @@
+'use server'
+
 /**
  * Servicio de Asignaciones
- * Queries para Server Components
+ * Lecturas y escrituras para Server Components y Server Actions
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireTecnicoId } from '@/features/auth/auth.service'
 import type { Asignacion, AsignacionTecnico } from './asignaciones.types'
+import type { ActionResult } from '@/shared/types'
 
 // Select con incidente y detalles
 const ASIGNACION_SELECT = `
@@ -117,4 +120,96 @@ export async function getAsignacionesActivas(): Promise<AsignacionTecnico[]> {
 
   if (error) throw error
   return data as unknown as AsignacionTecnico[]
+}
+
+// --- Escrituras ---
+
+export async function aceptarAsignacion(
+  idAsignacion: number,
+  idIncidente: number
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    const { error: errorAsignacion } = await supabase
+      .from('asignaciones_tecnico')
+      .update({
+        estado_asignacion: 'aceptada',
+        fecha_aceptacion: new Date().toISOString(),
+      })
+      .eq('id_asignacion', idAsignacion)
+
+    if (errorAsignacion) return { success: false, error: errorAsignacion.message }
+
+    const { error: errorIncidente } = await supabase
+      .from('incidentes')
+      .update({ estado_actual: 'asignado' })
+      .eq('id_incidente', idIncidente)
+
+    if (errorIncidente) return { success: false, error: errorIncidente.message }
+
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al aceptar asignación' }
+  }
+}
+
+export async function rechazarAsignacion(
+  idAsignacion: number,
+  idIncidente: number
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    const { error: errorAsignacion } = await supabase
+      .from('asignaciones_tecnico')
+      .update({
+        estado_asignacion: 'rechazada',
+        fecha_rechazo: new Date().toISOString(),
+      })
+      .eq('id_asignacion', idAsignacion)
+
+    if (errorAsignacion) return { success: false, error: errorAsignacion.message }
+
+    const { error: errorIncidente } = await supabase
+      .from('incidentes')
+      .update({ estado_actual: 'reportado' })
+      .eq('id_incidente', idIncidente)
+
+    if (errorIncidente) return { success: false, error: errorIncidente.message }
+
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al rechazar asignación' }
+  }
+}
+
+export async function crearAsignacion(data: {
+  id_incidente: number
+  id_tecnico: number
+  observaciones: string | null
+}): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('asignaciones_tecnico')
+      .insert({
+        ...data,
+        estado_asignacion: 'pendiente',
+      })
+
+    if (error) return { success: false, error: error.message }
+
+    // Actualizar estado del incidente a "en_proceso" si está en "pendiente"
+    await supabase
+      .from('incidentes')
+      .update({ estado_actual: 'en_proceso' })
+      .eq('id_incidente', data.id_incidente)
+      .eq('estado_actual', 'pendiente')
+
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al crear asignación' }
+  }
 }

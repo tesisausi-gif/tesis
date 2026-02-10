@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
+import { crearSolicitudRegistro, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -48,17 +49,12 @@ function RegisterPageContent() {
   // Cargar especialidades al montar el componente
   useEffect(() => {
     const fetchEspecialidades = async () => {
-      const { data, error } = await supabase
-        .from('especialidades')
-        .select('id_especialidad, nombre')
-        .eq('esta_activa', true)
-        .order('nombre')
-
-      if (error) {
+      try {
+        const data = await getEspecialidadesActivas()
+        setEspecialidades(data)
+      } catch (error) {
         console.error('Error al cargar especialidades:', error)
         toast.error('Error al cargar especialidades')
-      } else {
-        setEspecialidades(data || [])
       }
     }
 
@@ -162,23 +158,19 @@ function RegisterPageContent() {
     setLoading(true)
 
     try {
-      const { error } = await supabase
-        .from('solicitudes_registro')
-        .insert({
-          nombre: tecnicoNombre,
-          apellido: tecnicoApellido,
-          email: tecnicoEmail,
-          telefono: tecnicoTelefono,
-          dni: tecnicoDNI,
-          especialidad: tecnicoEspecialidad,
-          direccion: tecnicoDireccion,
-          estado_solicitud: 'pendiente'
-        })
+      const result = await crearSolicitudRegistro({
+        nombre: tecnicoNombre,
+        apellido: tecnicoApellido,
+        email: tecnicoEmail,
+        telefono: tecnicoTelefono || null,
+        dni: tecnicoDNI || null,
+        especialidad: tecnicoEspecialidad || null,
+        direccion: tecnicoDireccion || null,
+      })
 
-      if (error) {
-        const errorMsg = getAuthErrorMessage(error)
-        toast.error(errorMsg.title, {
-          description: errorMsg.description
+      if (!result.success) {
+        toast.error('Error al enviar solicitud', {
+          description: result.error
         })
         return
       }

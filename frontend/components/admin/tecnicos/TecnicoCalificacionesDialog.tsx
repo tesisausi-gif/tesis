@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/shared/lib/supabase/client'
+import { getCalificacionesTecnico } from '@/features/usuarios/usuarios.service'
 import {
   Dialog,
   DialogContent,
@@ -42,7 +42,6 @@ export default function TecnicoCalificacionesDialog({
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([])
   const [loading, setLoading] = useState(false)
   const [promedioCalificacion, setPromedioCalificacion] = useState<number | null>(null)
-  const supabase = createClient()
 
   useEffect(() => {
     if (open && idTecnico) {
@@ -52,25 +51,8 @@ export default function TecnicoCalificacionesDialog({
 
   const cargarCalificaciones = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('calificaciones')
-      .select(`
-        *,
-        incidentes:id_incidente (
-          descripcion_problema
-        )
-      `)
-      .eq('id_tecnico', idTecnico)
-      .order('fecha_calificacion', { ascending: false })
-
-    if (error) {
-      toast.error('Error al cargar calificaciones')
-      console.error(error)
-    } else {
-      const formattedData = (data || []).map((cal: any) => ({
-        ...cal,
-        incidente_descripcion: cal.incidentes?.descripcion_problema,
-      }))
+    try {
+      const formattedData = await getCalificacionesTecnico(idTecnico) as Calificacion[]
       setCalificaciones(formattedData)
 
       // Calcular promedio
@@ -80,6 +62,9 @@ export default function TecnicoCalificacionesDialog({
       } else {
         setPromedioCalificacion(null)
       }
+    } catch (error) {
+      toast.error('Error al cargar calificaciones')
+      console.error(error)
     }
     setLoading(false)
   }

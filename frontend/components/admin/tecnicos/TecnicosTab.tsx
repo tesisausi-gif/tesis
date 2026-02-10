@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/shared/lib/supabase/client'
+import { getTecnicos, toggleActivoTecnico, actualizarTecnico as actualizarTecnicoService } from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -66,37 +66,27 @@ export default function TecnicosTab() {
   const [direccion, setDireccion] = useState('')
   const [especialidad, setEspecialidad] = useState('')
 
-  const supabase = createClient()
-
   useEffect(() => {
     cargarTecnicos()
   }, [])
 
   const cargarTecnicos = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('tecnicos')
-      .select('*')
-      .order('fecha_creacion', { ascending: false })
-
-    if (error) {
+    try {
+      const data = await getTecnicos()
+      setTecnicos(data as Tecnico[])
+    } catch (error) {
       toast.error('Error al cargar técnicos')
       console.error(error)
-    } else {
-      setTecnicos(data || [])
     }
     setLoading(false)
   }
 
   const toggleActivo = async (tecnico: Tecnico) => {
-    const { error } = await supabase
-      .from('tecnicos')
-      .update({ esta_activo: !tecnico.esta_activo })
-      .eq('id_tecnico', tecnico.id_tecnico)
+    const result = await toggleActivoTecnico(tecnico.id_tecnico, !tecnico.esta_activo)
 
-    if (error) {
+    if (!result.success) {
       toast.error('Error al actualizar estado')
-      console.error(error)
     } else {
       toast.success(tecnico.esta_activo ? 'Técnico desactivado' : 'Técnico activado')
       cargarTecnicos()
@@ -143,22 +133,19 @@ export default function TecnicosTab() {
     setSubmitting(true)
 
     try {
-      const { error } = await supabase
-        .from('tecnicos')
-        .update({
-          nombre,
-          apellido,
-          correo_electronico: correo,
-          telefono: telefono || null,
-          dni: dni || null,
-          direccion: direccion || null,
-          especialidad: especialidad || null,
-        })
-        .eq('id_tecnico', tecnicoEditando.id_tecnico)
+      const result = await actualizarTecnicoService(tecnicoEditando.id_tecnico, {
+        nombre,
+        apellido,
+        correo_electronico: correo,
+        telefono: telefono || null,
+        dni: dni || null,
+        direccion: direccion || null,
+        especialidad: especialidad || null,
+      })
 
-      if (error) {
+      if (!result.success) {
         toast.error('Error al actualizar técnico', {
-          description: error.message
+          description: result.error
         })
         return
       }

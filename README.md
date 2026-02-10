@@ -127,52 +127,66 @@ export async function getIncidentesByCurrentUser() {
 Cuando el usuario quiere **CREAR** un incidente:
 
 ```
-┌──────────┐                              ┌──────────┐
-│  BROWSER │                              │ SUPABASE │
-│(frontend)│                              │   (BD)   │
-└────┬─────┘                              └────┬─────┘
-     │                                         │
-     │  1. Usuario llena formulario            │
-     │     y hace click en "Guardar"           │
-     │                                         │
-     │  2. Browser ejecuta código              │
-     │     que hace INSERT directo             │
-     │ ──────────────────────────────────────► │
-     │                                         │
-     │                                         │  3. Supabase:
-     │                                         │     - Valida permisos (RLS)
-     │                                         │     - Guarda el dato
-     │                                         │
-     │  4. Supabase confirma                   │
-     │     "Guardado OK"                       │
-     │ ◄────────────────────────────────────── │
-     │                                         │
-     │  5. Usuario ve mensaje                  │
-     │     "Incidente creado"                  │
-     │                                         │
+┌──────────┐         ┌──────────┐         ┌──────────┐
+│  BROWSER │         │  VERCEL  │         │ SUPABASE │
+│(frontend)│         │ (backend)│         │   (BD)   │
+└────┬─────┘         └────┬─────┘         └────┬─────┘
+     │                    │                    │
+     │  1. Usuario llena  │                    │
+     │     formulario y   │                    │
+     │     click "Guardar"│                    │
+     │                    │                    │
+     │  2. Llama Server   │                    │
+     │     Action del     │                    │
+     │     service        │                    │
+     │ ─────────────────► │                    │
+     │                    │                    │
+     │                    │  3. Service hace   │
+     │                    │     INSERT a la BD │
+     │                    │ ─────────────────► │
+     │                    │                    │
+     │                    │  4. Supabase       │
+     │                    │     confirma       │
+     │                    │ ◄───────────────── │
+     │                    │                    │
+     │  5. Resultado:     │                    │
+     │     success/error  │                    │
+     │ ◄───────────────── │                    │
+     │                    │                    │
+     │  6. Usuario ve     │                    │
+     │     "Incidente     │                    │
+     │      creado"       │                    │
+     │                    │                    │
 ```
 
-**¿Por qué va directo a Supabase sin pasar por Vercel?**
+**¿Cómo funciona?**
 
-Porque es más simple y Supabase ya tiene seguridad (RLS).
+Usamos **Server Actions** (`'use server'`). Las funciones del service se ejecutan en Vercel (backend) pero se pueden llamar directamente desde componentes del browser.
 
 **Código involucrado:**
 
 ```typescript
-// componente.client.tsx (corre en BROWSER)
-import { createClient } from '@/shared/lib/supabase/client'  // OJO: client, NO server
+// 1. service.ts (corre en VERCEL gracias a 'use server')
+import { createClient } from '@/shared/lib/supabase/server'
+import type { ActionResult } from '@/shared/types'
+
+export async function crearInmueble(data: {...}): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { error } = await supabase.from('inmuebles').insert(data)
+  if (error) return { success: false, error: error.message }
+  return { success: true, data: undefined }
+}
+
+// 2. componente.client.tsx (corre en BROWSER, llama al server action)
+import { crearInmueble } from '@/features/inmuebles/inmuebles.service'
 
 const handleSubmit = async () => {
-  const supabase = createClient()
-
-  await supabase
-    .from('incidentes')
-    .insert({
-      descripcion: 'Se rompió el caño',
-      id_cliente: 123
-    })
-
-  toast.success('Incidente creado')
+  const result = await crearInmueble(inmuebleData)  // se ejecuta en Vercel
+  if (!result.success) {
+    toast.error(result.error)
+    return
+  }
+  toast.success('Inmueble creado')
 }
 ```
 
@@ -180,10 +194,10 @@ const handleSubmit = async () => {
 
 ## Resumen: ¿Quién habla con la base de datos?
 
-| Acción | ¿Quién lo hace? | ¿Por qué? |
-|--------|-----------------|-----------|
-| **LEER** (ver lista) | Vercel (backend) | Arma el HTML antes de enviarlo |
-| **ESCRIBIR** (crear/editar) | Browser (frontend) | Es más simple, RLS valida |
+| Acción | ¿Quién lo hace? | ¿Cómo? |
+|--------|-----------------|--------|
+| **LEER** (ver lista) | Vercel (backend) | `page.tsx` llama `service.ts` |
+| **ESCRIBIR** (crear/editar) | Vercel (backend) | Componente llama Server Action del `service.ts` |
 
 ---
 
@@ -272,9 +286,6 @@ app/
 │       ├── usuarios/page.tsx        # → /dashboard/usuarios
 │       ├── presupuestos/page.tsx    # → /dashboard/presupuestos
 │       └── pagos/page.tsx           # → /dashboard/pagos
-│
-├── api/                             # Endpoints del backend (no son páginas)
-│   └── admin/                       # APIs solo para admin
 │
 ├── layout.tsx                       # Layout raíz (aplica a TODO el sitio)
 └── page.tsx                         # → / (landing page)
@@ -372,9 +383,9 @@ Si el componente necesita `useState`, `onClick`, formularios o cualquier interac
 │  2. FEATURE (features/)        3. COMPONENTE (components/)      │
 │     service.ts                    content.client.tsx             │
 │     - Lee datos de la BD          - Muestra los datos           │
-│     - Corre en VERCEL             - Maneja interacción          │
-│                                   - Escribe directo a BD        │
-│                                   - Corre en BROWSER            │
+│     - Escribe datos a la BD       - Maneja interacción          │
+│     - Corre en VERCEL             - Llama Server Actions        │
+│       ('use server')              - Corre en BROWSER            │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -400,7 +411,7 @@ export default async function ClienteIncidentesPage() {
 
 // 3. COMPONENTE: components/cliente/incidentes-content.client.tsx
 //    Recibe los datos y los muestra (corre en Browser)
-//    Si el usuario crea un incidente, escribe directo a Supabase
+//    Si el usuario crea un incidente, llama un Server Action del service
 ```
 
 ---
@@ -418,8 +429,9 @@ frontend/
 │
 └── shared/                      # CÓDIGO COMPARTIDO
     ├── lib/supabase/            # Conexión a base de datos
-    │   ├── client.ts            # Para usar desde BROWSER (escrituras)
-    │   └── server.ts            # Para usar desde VERCEL (lecturas)
+    │   ├── server.ts            # Para services (lecturas y escrituras)
+    │   ├── admin.ts             # Para operaciones admin (bypass RLS)
+    │   └── client.ts            # Solo para auth (login/register) y real-time
     └── types/                   # Tipos compartidos entre features
 ```
 
@@ -489,10 +501,10 @@ Cada feature tiene SOLO 2 archivos, nada más:
 ```
 features/nombreFeature/
 ├── nombreFeature.types.ts     # Tipos e interfaces
-└── nombreFeature.service.ts   # Funciones de LECTURA (corren en Vercel)
+└── nombreFeature.service.ts   # Funciones de LECTURA y ESCRITURA ('use server')
 ```
 
-**Las ESCRITURAS (insert, update, delete) van directo en los componentes `.client.tsx`**, no en los services.
+**Todas las operaciones con la BD** (lecturas y escrituras) van en los services. Los componentes `.client.tsx` llaman a las funciones del service como **Server Actions**.
 
 ---
 
@@ -526,9 +538,13 @@ export interface CreateContratoDTO {
 3. Crear `contratos.service.ts`:
 ```typescript
 // frontend/features/contratos/contratos.service.ts
+'use server'
 
 import { createClient } from '@/shared/lib/supabase/server'
 import type { Contrato } from './contratos.types'
+import type { ActionResult } from '@/shared/types'
+
+// --- Lecturas ---
 
 export async function getContratosByCliente(idCliente: number): Promise<Contrato[]> {
   const supabase = await createClient()
@@ -540,6 +556,19 @@ export async function getContratosByCliente(idCliente: number): Promise<Contrato
 
   if (error) throw error
   return data
+}
+
+// --- Escrituras ---
+
+export async function crearContrato(data: CreateContratoDTO): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase.from('contratos').insert(data)
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al crear contrato' }
+  }
 }
 ```
 
@@ -574,13 +603,17 @@ export default async function ContratosPage() {
 // Tipos: desde feature.types.ts
 import type { Incidente } from '@/features/incidentes/incidentes.types'
 
-// Funciones: desde feature.service.ts
+// Funciones (lectura y escritura): desde feature.service.ts
 import { getIncidentesByCurrentUser } from '@/features/incidentes/incidentes.service'
+import { crearInmueble } from '@/features/inmuebles/inmuebles.service'
 
-// Supabase para LEER (en services / page.tsx):
+// Supabase para services (lecturas y escrituras):
 import { createClient } from '@/shared/lib/supabase/server'
 
-// Supabase para ESCRIBIR (en componentes .client.tsx):
+// Supabase admin (operaciones que bypasean RLS, solo en services):
+import { createAdminClient } from '@/shared/lib/supabase/admin'
+
+// Supabase client (SOLO para auth y real-time, NO para leer/escribir datos):
 import { createClient } from '@/shared/lib/supabase/client'
 ```
 
@@ -589,8 +622,9 @@ import { createClient } from '@/shared/lib/supabase/client'
 ### Checklist antes de hacer PR
 
 - [ ] Los types están en `feature.types.ts`
-- [ ] Las queries de lectura están en `feature.service.ts`
-- [ ] Las escrituras van directo desde el componente `.client.tsx`
+- [ ] Las lecturas Y escrituras están en `feature.service.ts` (con `'use server'`)
+- [ ] Las escrituras retornan `ActionResult`
+- [ ] El componente `.client.tsx` llama Server Actions del service (no usa `supabase/client` para datos)
 - [ ] El componente con interactividad tiene `.client.tsx`
 - [ ] Los imports apuntan al archivo exacto (ej: `@/features/auth/auth.service`)
 - [ ] `npm run build` pasa sin errores
@@ -601,10 +635,12 @@ import { createClient } from '@/shared/lib/supabase/client'
 
 | Error | Solución |
 |-------|----------|
-| "use client" en service | Los services son para SERVER, no usan "use client" |
+| "use client" en service | Los services usan `'use server'`, NUNCA "use client" |
 | Fetch en useEffect | Usar service en page.tsx, pasar datos como props |
-| Importar supabase/server en componente client | Usar `@/shared/lib/supabase/client` en `.client.tsx` |
+| Escribir a BD desde componente | Crear una función en el service y llamarla como Server Action |
+| Importar supabase/client para datos | Usar funciones del service en vez de acceso directo. `supabase/client` solo para auth y real-time |
 | Crear archivos innecesarios | Solo `types.ts` y `service.ts` por feature, nada más |
+| Falta `'use server'` en service | Debe ser la primera línea del archivo service |
 
 ---
 

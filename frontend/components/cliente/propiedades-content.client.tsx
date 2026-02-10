@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { createClient } from '@/shared/lib/supabase/client'
+import { crearInmueble, actualizarInmueble, toggleEstadoInmueble } from '@/features/inmuebles/inmuebles.service'
 import type { Inmueble, TipoInmueble } from '@/features/inmuebles/inmuebles.types'
 
 interface Provincia {
@@ -39,7 +39,6 @@ interface PropiedadesContentProps {
 
 export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles, idCliente }: PropiedadesContentProps) {
   const router = useRouter()
-  const supabase = createClient()
   const [inmuebles, setInmuebles] = useState(initialInmuebles)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -172,28 +171,19 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
       }
 
       if (editingInmueble) {
-        const { error } = await supabase
-          .from('inmuebles')
-          .update(inmuebleData)
-          .eq('id_inmueble', editingInmueble.id_inmueble)
+        const result = await actualizarInmueble(editingInmueble.id_inmueble, inmuebleData)
 
-        if (error) {
-          toast.error('Error al actualizar inmueble', { description: error.message })
+        if (!result.success) {
+          toast.error('Error al actualizar inmueble', { description: result.error })
           return
         }
 
         toast.success('Inmueble actualizado exitosamente')
       } else {
-        const { error } = await supabase
-          .from('inmuebles')
-          .insert({
-            ...inmuebleData,
-            id_cliente: idCliente,
-            esta_activo: true,
-          })
+        const result = await crearInmueble(inmuebleData)
 
-        if (error) {
-          toast.error('Error al registrar inmueble', { description: error.message })
+        if (!result.success) {
+          toast.error('Error al registrar inmueble', { description: result.error })
           return
         }
 
@@ -214,13 +204,9 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
   const handleToggleEstado = async (inmueble: Inmueble) => {
     try {
       const nuevoEstado = !inmueble.esta_activo
+      const result = await toggleEstadoInmueble(inmueble.id_inmueble, nuevoEstado)
 
-      const { error } = await supabase
-        .from('inmuebles')
-        .update({ esta_activo: nuevoEstado })
-        .eq('id_inmueble', inmueble.id_inmueble)
-
-      if (error) {
+      if (!result.success) {
         toast.error('Error al cambiar estado del inmueble')
         return
       }

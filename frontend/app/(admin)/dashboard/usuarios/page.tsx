@@ -1,7 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/shared/lib/supabase/client'
+import {
+  getEmpleados,
+  crearEmpleado,
+  eliminarUsuario as eliminarUsuarioService,
+  actualizarEmpleado,
+  toggleActivoEmpleado,
+} from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -41,29 +47,17 @@ export default function UsuariosPage() {
   const [rol, setRol] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
 
-  const supabase = createClient()
-
   useEffect(() => {
     cargarUsuarios()
   }, [])
 
   const cargarUsuarios = async () => {
     try {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('*')
-        .in('rol', ['admin', 'gestor'])
-        .order('fecha_creacion', { ascending: false })
-
-      if (error) {
-        console.error('Error al cargar usuarios:', error)
-        toast.error('Error al cargar empleados')
-        return
-      }
-
-      setUsuarios(data || [])
+      const data = await getEmpleados()
+      setUsuarios(data as Usuario[])
     } catch (error) {
       console.error('Error:', error)
+      toast.error('Error al cargar empleados')
     } finally {
       setLoading(false)
     }
@@ -85,24 +79,15 @@ export default function UsuariosPage() {
     setSubmitting(true)
 
     try {
-      // Crear usuario usando el endpoint de la API
-      const response = await fetch('/api/admin/create-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          nombre,
-          apellido,
-          rol,
-        }),
+      const result = await crearEmpleado({
+        email,
+        password,
+        nombre,
+        apellido,
+        rol,
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
+      if (!result.success) {
         toast.error('Error al crear usuario', {
           description: result.error
         })
@@ -134,11 +119,9 @@ export default function UsuariosPage() {
     if (!confirm('¿Estás seguro de eliminar este usuario?')) return
 
     try {
-      const response = await fetch(`/api/admin/delete-user/${id}`, {
-        method: 'DELETE',
-      })
+      const result = await eliminarUsuarioService(id)
 
-      if (!response.ok) {
+      if (!result.success) {
         toast.error('Error al eliminar usuario')
         return
       }
@@ -183,18 +166,15 @@ export default function UsuariosPage() {
     setSubmitting(true)
 
     try {
-      const { error } = await supabase
-        .from('usuarios')
-        .update({
-          nombre,
-          apellido,
-          rol,
-        })
-        .eq('id', usuarioEditando.id)
+      const result = await actualizarEmpleado(usuarioEditando.id, {
+        nombre,
+        apellido,
+        rol,
+      })
 
-      if (error) {
+      if (!result.success) {
         toast.error('Error al actualizar empleado', {
-          description: error.message
+          description: result.error
         })
         return
       }
@@ -223,14 +203,10 @@ export default function UsuariosPage() {
     const nuevoEstado = !usuario.esta_activo
 
     try {
-      const { error } = await supabase
-        .from('usuarios')
-        .update({ esta_activo: nuevoEstado })
-        .eq('id', usuario.id)
+      const result = await toggleActivoEmpleado(usuario.id, nuevoEstado)
 
-      if (error) {
+      if (!result.success) {
         toast.error('Error al actualizar estado del empleado')
-        console.error(error)
         return
       }
 
