@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Plus, Trash2, Wrench } from 'lucide-react'
+import { Plus, Trash2, Wrench, Eye } from 'lucide-react'
 import { crearInspeccion, eliminarInspeccion } from '@/features/inspecciones/inspecciones.service'
 import type { InspeccionConDetalle } from '@/features/inspecciones/inspecciones.types'
 
