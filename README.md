@@ -90,18 +90,35 @@ El usuario entra a una URL → Vercel ejecuta `page.tsx` → llama al `service.t
 
 ```
   BROWSER                    VERCEL                     SUPABASE
+  (computadora               (servidor                  (servidor
+   del usuario)               en la nube)                en la nube)
      │                          │                          │
      │  1. Entra a la URL       │                          │
      │ ────────────────────►    │                          │
      │                          │  2. page.tsx llama       │
      │                          │     service.ts           │
-     │                          │  3. SELECT a la BD       │
+     │                          │  3. El SDK de Supabase   │
+     │                          │     hace un fetch()      │
+     │                          │     HTTP a la API REST   │
+     │                          │     de Supabase          │
      │                          │ ────────────────────►    │
+     │                          │                          │  Supabase recibe
+     │                          │                          │  el pedido HTTP y
+     │                          │                          │  ejecuta el SELECT
+     │                          │                          │  en PostgreSQL
      │                          │  4. Datos                │
      │                          │ ◄────────────────────    │
      │  5. HTML con los datos   │                          │
      │ ◄────────────────────    │                          │
 ```
+
+**¿Cómo llegan las queries a la base de datos?** Nuestro código nunca habla directo con PostgreSQL. Cuando escribimos `.from('tecnicos').select('nombre').eq('esta_activo', true)`, el SDK de Supabase (librería instalada con npm) traduce eso a una llamada HTTP:
+
+```
+GET https://tu-proyecto.supabase.co/rest/v1/tecnicos?select=nombre&esta_activo=eq.true
+```
+
+`.from().select().eq()` **arma** el pedido, y el `await` **lo envía**. Supabase recibe esa request HTTP, ejecuta el SQL real contra PostgreSQL, y devuelve los resultados como JSON.
 
 ```typescript
 // page.tsx (corre en Vercel)
