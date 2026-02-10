@@ -367,31 +367,51 @@ Si el componente necesita `useState`, `onClick`, formularios o cualquier interac
 
 ---
 
-## Cómo se conecta todo: app → components → features
+## Cómo se conecta todo
+
+El proyecto tiene 5 carpetas principales. Cada una tiene un rol específico:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│  1. PÁGINA (app/)              Corre en VERCEL                  │
-│     page.tsx                                                    │
-│     - Verifica permisos                                         │
-│     - Llama al service para obtener datos                       │
-│     - Pasa los datos al componente                              │
-│                                                                 │
-│         │ usa                              │ usa                │
-│         ▼                                  ▼                    │
-│                                                                 │
-│  2. FEATURE (features/)        3. COMPONENTE (components/)      │
-│     service.ts                    content.client.tsx             │
-│     - Lee datos de la BD          - Muestra los datos           │
-│     - Escribe datos a la BD       - Maneja interacción          │
-│     - Corre en VERCEL             - Llama Server Actions        │
-│       ('use server')              - Corre en BROWSER            │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+frontend/
+│
+├── app/            # PÁGINAS — cada carpeta es una URL (/cliente, /dashboard, etc.)
+├── components/     # VISUAL — lo que el usuario ve (tablas, modals, formularios)
+├── features/       # DATOS — lee y escribe a la base de datos ('use server')
+├── hooks/          # HOOKS — lógica reutilizable de React (ej: detectar si es mobile)
+└── shared/         # COMPARTIDO — tipos, utilidades y conexión a Supabase
 ```
 
-**Ejemplo real: página de incidentes del cliente**
+### ¿Quién llama a quién?
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  app/page.tsx                                                           │
+│  (la página)                                                            │
+│       │                                                                 │
+│       │ 1. Llama al service          2. Pasa datos al componente        │
+│       │    para obtener datos            como props                     │
+│       ▼                                  ▼                              │
+│                                                                         │
+│  features/service.ts              components/content.client.tsx          │
+│  (corre en VERCEL)                (corre en BROWSER)                    │
+│       │                                  │                              │
+│       │ Lee/escribe                      │ 3. Cuando el usuario         │
+│       │ a la BD                          │    hace click/submit,        │
+│       ▼                                  │    llama Server Actions      │
+│                                          │    del service               │
+│  shared/lib/supabase/                    │                              │
+│  (conexión a la BD)                      └──────► features/service.ts   │
+│                                                   (se ejecuta en VERCEL)│
+│                                                                         │
+│  shared/types/  ←── tipos usados por todos (features, components, app)  │
+│  shared/utils/  ←── funciones auxiliares usadas por todos               │
+│  hooks/         ←── hooks de React usados por components                │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Ejemplo real: página de incidentes del cliente
 
 ```typescript
 // 1. PÁGINA: app/(cliente)/cliente/incidentes/page.tsx
@@ -408,12 +428,14 @@ export default async function ClienteIncidentesPage() {
 }
 
 // 2. FEATURE: features/incidentes/incidentes.service.ts
-//    Lee datos de Supabase (corre en Vercel)
+//    Lee y escribe datos a Supabase (corre en Vercel, tiene 'use server')
 
 // 3. COMPONENTE: components/cliente/incidentes-content.client.tsx
 //    Recibe los datos y los muestra (corre en Browser)
 //    Si el usuario crea un incidente, llama un Server Action del service
 ```
+
+En resumen: **app/ orquesta**, **features/ accede a la BD**, **components/ muestra e interactúa**, **shared/ provee herramientas comunes**, **hooks/ provee lógica de React reutilizable**.
 
 ---
 
@@ -422,18 +444,31 @@ export default async function ClienteIncidentesPage() {
 ```
 frontend/
 │
-├── app/                         # PÁGINAS (cada carpeta = una URL)
+├── app/                         # PÁGINAS — cada carpeta = una URL
 │
-├── components/                  # COMPONENTES VISUALES (lo que el usuario ve)
+├── components/                  # COMPONENTES VISUALES — lo que el usuario ve
+│   └── ui/                      # Componentes base de shadcn/ui (botones, modals, etc.)
 │
-├── features/                    # LÓGICA DE NEGOCIO (types + services)
+├── features/                    # LÓGICA DE NEGOCIO — types + services ('use server')
 │
-└── shared/                      # CÓDIGO COMPARTIDO
+├── hooks/                       # HOOKS DE REACT
+│   └── use-mobile.ts            # Detecta si el usuario está en celular
+│
+└── shared/                      # CÓDIGO COMPARTIDO por todo el proyecto
     ├── lib/supabase/            # Conexión a base de datos
     │   ├── server.ts            # Para services (lecturas y escrituras)
     │   ├── admin.ts             # Para operaciones admin (bypass RLS)
-    │   └── client.ts            # Solo para auth (login/register) y real-time
-    └── types/                   # Tipos compartidos entre features
+    │   ├── client.ts            # Solo para auth (login/register) y real-time
+    │   └── middleware.ts        # Refresca la sesión en cada request
+    ├── types/                   # Tipos TypeScript compartidos
+    │   ├── models.ts            # ActionResult, tipos del dominio
+    │   ├── enums.ts             # Enumeraciones (estados, roles, etc.)
+    │   └── database.types.ts    # Tipos auto-generados de Supabase
+    └── utils/                   # Funciones auxiliares
+        ├── cn.ts                # Merge de clases CSS (Tailwind)
+        ├── colors.ts            # Colores por estado/prioridad
+        ├── address.ts           # Formateo de direcciones
+        └── error-messages.ts    # Mensajes de error reutilizables
 ```
 
 ---
