@@ -17,20 +17,27 @@ Toda funcionalidad se organiza en `features/{nombre}/` con exactamente 2 archivo
 - Los `page.tsx` llaman a funciones de service para datos iniciales (SSR)
 - NO crear rutas API (`app/api/`), todo va por services
 
-### 2. Gestion de Tareas por Sesion (OBLIGATORIO)
+### 2. Gestion de Tareas via Azure DevOps (OBLIGATORIO)
+
+Las tareas del proyecto se gestionan en Azure DevOps:
+- **Organizacion:** https://dev.azure.com/fauspieroni
+- **Proyecto:** Tesis
 
 **Al INICIO de cada sesion:**
-- Leer `documentacion/TAREAS_PENDIENTES.md` para entender el estado actual del proyecto
+- Consultar los work items activos en Azure DevOps para entender el estado actual
 
 **Al FINAL de cada sesion (antes del ultimo commit):**
-- Actualizar `documentacion/TAREAS_PENDIENTES.md` reflejando:
-  - Bugs corregidos (marcar con [x])
-  - Funcionalidades implementadas (actualizar tablas de estado)
-  - Nuevos bugs descubiertos
-  - Cambios en porcentajes de avance
-  - Entrada en el Historial de Cambios con fecha y resumen
+- Actualizar work items en Azure DevOps reflejando:
+  - Bugs corregidos (cerrar el Bug correspondiente)
+  - Features completadas (mover a Done/Closed)
+  - Nuevos bugs descubiertos (crear nuevo Bug)
+  - Progreso parcial (agregar comentario al work item)
+
+**Estructura en Azure DevOps:**
+- **Epics** = Fases del roadmap (Fase 1: Bugs, Fase 2: Services, etc.)
+- **Features** = Tareas concretas vinculadas a su Epic
+- **Bugs** = Bugs detectados con severidad y pasos de reproduccion
 
 ### 3. Documentacion de Referencia
 
 - `documentacion/ANALISIS_FLUJOS.md` — Arquitectura, modelo de datos, roles, flujos por rol
-- `documentacion/TAREAS_PENDIENTES.md` — Bugs, estado de implementacion, flujos faltantes, roadmap
