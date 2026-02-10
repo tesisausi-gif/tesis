@@ -111,6 +111,7 @@ export default async function Page() {
 }
 
 // 2. incidentes.service.ts (corre en VERCEL)
+'use server'
 import { createClient } from '@/shared/lib/supabase/server'
 
 export async function getIncidentesByCurrentUser() {
@@ -541,7 +542,7 @@ export interface CreateContratoDTO {
 'use server'
 
 import { createClient } from '@/shared/lib/supabase/server'
-import type { Contrato } from './contratos.types'
+import type { Contrato, CreateContratoDTO } from './contratos.types'
 import type { ActionResult } from '@/shared/types'
 
 // --- Lecturas ---
