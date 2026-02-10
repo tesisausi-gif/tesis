@@ -4,9 +4,6 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { createClient } from '@/shared/lib/supabase/client'
-import { actualizarIncidente } from '@/features/incidentes/incidentes.service'
-import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
-import { getTecnicosActivos } from '@/features/usuarios/usuarios.service'
 import {
   Dialog,
   DialogContent,
@@ -159,7 +156,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState('')
   const [observacionesAsignacion, setObservacionesAsignacion] = useState('')
 
-  const CATEGORIAS = Object.values(CategoriaIncidente)
+  const CATEGORIAS = Object.values(CategoriaIncidente) as string[]
 
   const supabase = createClient()
 
@@ -173,11 +170,14 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   }, [open, incidenteId])
 
   const cargarTecnicos = async () => {
-    try {
-      const data = await getTecnicosActivos()
-      setTecnicos(data.map(t => ({ ...t, esta_activo: true })))
-    } catch (error) {
-      console.error('Error al cargar técnicos:', error)
+    const { data, error } = await supabase
+      .from('tecnicos')
+      .select('id_tecnico, nombre, apellido, especialidad, esta_activo')
+      .eq('esta_activo', 1)
+      .order('nombre')
+
+    if (!error && data) {
+      setTecnicos(data)
     }
   }
 
@@ -344,16 +344,19 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       if (nuevaPrioridad && nuevaPrioridad !== incidente?.nivel_prioridad) {
         updates.nivel_prioridad = nuevaPrioridad
-      }
       if (nuevaCategoria && nuevaCategoria !== incidente?.categoria) {
         updates.categoria = nuevaCategoria === '__NONE__' ? null : nuevaCategoria
       }
+      }
 
       if (Object.keys(updates).length > 0) {
-        const result = await actualizarIncidente(incidenteId, updates)
+        const { error } = await supabase
+          .from('incidentes')
+          .update(updates)
+          .eq('id_incidente', incidenteId)
 
-        if (!result.success) {
-          toast.error('Error al actualizar incidente', { description: result.error })
+        if (error) {
+          toast.error('Error al actualizar incidente', { description: error.message })
           return
         }
 
@@ -377,15 +380,26 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
     setSaving(true)
     try {
-      const result = await crearAsignacion({
-        id_incidente: incidenteId,
-        id_tecnico: parseInt(tecnicoSeleccionado),
-        observaciones: observacionesAsignacion || null,
-      })
+      const { error } = await supabase
+        .from('asignaciones_tecnico')
+        .insert({
+          id_incidente: incidenteId,
+          id_tecnico: parseInt(tecnicoSeleccionado),
+          estado_asignacion: 'pendiente',
+          observaciones: observacionesAsignacion || null,
+        })
 
-      if (!result.success) {
-        toast.error('Error al asignar técnico', { description: result.error })
+      if (error) {
+        toast.error('Error al asignar técnico', { description: error.message })
         return
+      }
+
+      // Actualizar estado del incidente a "en_proceso" si está en "pendiente"
+      if (incidente?.estado_actual === 'pendiente') {
+        await supabase
+          .from('incidentes')
+          .update({ estado_actual: 'en_proceso' })
+          .eq('id_incidente', incidenteId)
       }
 
       toast.success('Técnico asignado exitosamente')

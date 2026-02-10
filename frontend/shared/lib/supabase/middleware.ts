@@ -92,7 +92,7 @@ export async function updateSession(request: NextRequest) {
     if (isTecnicoRoute && userRole !== 'tecnico') {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    if (isAdminRoute && userRole !== 'admin') {
+    if (isAdminRoute && userRole !== 'admin' && userRole !== 'gestor') {
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }

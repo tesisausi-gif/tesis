@@ -36,9 +36,9 @@ export function IncidentesContent({ incidentes }: IncidentesContentProps) {
   // Stats
   const totalIncidentes = incidentes.length
   const pendientes = incidentes.filter(i =>
-    ![EstadoIncidente.CERRADO, EstadoIncidente.CANCELADO, EstadoIncidente.FINALIZADO].includes(i.estado_actual as EstadoIncidente)
+    i.estado_actual !== EstadoIncidente.RESUELTO
   ).length
-  const resueltos = incidentes.filter(i => i.fue_resuelto).length
+  const resueltos = incidentes.filter(i => i.estado_actual === EstadoIncidente.RESUELTO).length
 
   return (
     <div className="space-y-4 px-4 py-6">

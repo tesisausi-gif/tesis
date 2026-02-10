@@ -141,9 +141,11 @@ export async function aceptarAsignacion(
 
     if (errorAsignacion) return { success: false, error: errorAsignacion.message }
 
+    // El incidente ya debería estar en 'en_proceso' cuando se crea la asignación
+    // No es necesario cambiar el estado aquí, pero si se requiere, usar 'en_proceso'
     const { error: errorIncidente } = await supabase
       .from('incidentes')
-      .update({ estado_actual: 'asignado' })
+      .update({ estado_actual: 'en_proceso' })
       .eq('id_incidente', idIncidente)
 
     if (errorIncidente) return { success: false, error: errorIncidente.message }
@@ -171,9 +173,10 @@ export async function rechazarAsignacion(
 
     if (errorAsignacion) return { success: false, error: errorAsignacion.message }
 
+    // Al rechazar, volver a 'pendiente' para que pueda ser reasignado
     const { error: errorIncidente } = await supabase
       .from('incidentes')
-      .update({ estado_actual: 'reportado' })
+      .update({ estado_actual: 'pendiente' })
       .eq('id_incidente', idIncidente)
 
     if (errorIncidente) return { success: false, error: errorIncidente.message }

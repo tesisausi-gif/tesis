@@ -99,3 +99,11 @@ export async function requireAdmin(): Promise<UsuarioActual> {
   }
   return user
 }
+
+/**
+ * Obtiene el id del admin/gestor o lanza error si no existe
+ */
+export async function requireAdminOrGestorId(): Promise<number> {
+  const user = await requireAdmin()
+  return parseInt(user.id, 10)
+}

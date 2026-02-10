@@ -1,0 +1,3886 @@
+[
+  {
+    "id": 115,
+    "title": "Conformidades - flujo completo de firma",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 115,
+      "rev": 3,
+      "fields": {
+        "System.AreaPath": "Tesis\\Services",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 5 - Cierre del Ciclo",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:26:46.21Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:38:36.46Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Conformidades - flujo completo de firma",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:26:46.21Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Implementar todo el modulo de conformidades: service + types + UI + RLS. La tabla conformidades existe pero no tiene service, UI ni RLS. El cliente firma conformidad para cerrar el incidente. Estimacion: 3 dias.",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "<ul><li>features/conformidades/service.ts y types.ts creados </li><li>Cliente puede firmar conformidad desde su portal </li><li>Al firmar: incidente pasa a resuelto </li><li>Admin puede ver conformidades firmadas </li><li>RLS policy implementada </li> </ul>",
+        "System.Tags": "conformidades",
+        "System.Parent": 102
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/102",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/112",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/114",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/115"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/115/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/115/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/115/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/115"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/115"
+    }
+  },
+  {
+    "id": 112,
+    "title": "Cliente aprueba/rechaza presupuesto",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 112,
+      "rev": 3,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 4 - Flujos Criticos",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:26:34.733Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:38:36.147Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Cliente aprueba/rechaza presupuesto",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:26:34.733Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Implementar UI y service para que el cliente pueda aprobar o rechazar presupuestos desde /cliente/presupuestos. Sin esto el flujo del incidente no puede avanzar despues de la etapa de presupuesto. Estimacion: 2 dias.",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "<ul><li>Cliente ve lista de presupuestos pendientes de aprobacion </li><li>Boton Aprobar y Rechazar en cada presupuesto </li><li>Al aprobar: estado cambia a aprobado, incidente avanza </li><li>Al rechazar: estado cambia a rechazado con motivo </li><li>Notificacion visual de exito/error </li> </ul>",
+        "System.Tags": "cliente; presupuestos; UI",
+        "System.Parent": 101
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/108",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/115",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/101",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/112"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/112/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/112/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/112/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/112"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/112"
+    }
+  },
+  {
+    "id": 110,
+    "title": "Crear inspecciones.service.ts + inspecciones.types.ts",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 110,
+      "rev": 3,
+      "fields": {
+        "System.AreaPath": "Tesis\\Services",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 3 - Services Faltantes",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:26:12.663Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:38:35.83Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Crear inspecciones.service.ts + inspecciones.types.ts",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:26:12.663Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Crear features/inspecciones/service.ts y types.ts. Actualmente solo existe lectura en el modal de detalle (acceso directo). Necesita CRUD completo para que el tecnico registre inspecciones. Estimacion: 2 dias.",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "<ul><li>Archivo features/inspecciones/service.ts con use server </li><li>Archivo features/inspecciones/types.ts con interfaces </li><li>Funciones: listarInspecciones, crearInspeccion, obtenerInspeccionPorId </li><li>Todas retornan ActionResult para escritura </li> </ul>",
+        "System.Tags": "inspecciones; service",
+        "System.Parent": 100
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/100",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/113",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/110"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/110/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/110/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/110/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/110"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/110"
+    }
+  },
+  {
+    "id": 108,
+    "title": "Crear presupuestos.service.ts + presupuestos.types.ts",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 108,
+      "rev": 3,
+      "fields": {
+        "System.AreaPath": "Tesis\\Services",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 3 - Services Faltantes",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:25:51.46Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:38:35.52Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Crear presupuestos.service.ts + presupuestos.types.ts",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:25:51.46Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Crear features/presupuestos/service.ts y types.ts. Migrar accesos directos a Supabase desde paginas de presupuestos. CRUD completo + manejo de estados (borrador, enviado, aprobado_admin, aprobado, rechazado, vencido). Estimacion: 3 dias.",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "<ul><li>Archivo features/presupuestos/service.ts con use server </li><li>Archivo features/presupuestos/types.ts con interfaces </li><li>Funciones: listarPresupuestos, crearPresupuesto, aprobarPresupuestoAdmin, aprobarPresupuestoCliente, rechazarPresupuesto </li><li>Todas retornan ActionResult </li><li>Migradas todas las paginas que usaban supabase/client directo </li> </ul>",
+        "System.Tags": "presupuestos; service",
+        "System.Parent": 100
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/112",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/100",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/108"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/108/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/108/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/108/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/108"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/108"
+    }
+  },
+  {
+    "id": 107,
+    "title": "Fix middleware para permitir rol gestor",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 107,
+      "rev": 3,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 2 - Bugs Criticos",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:25:40.48Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:38:35.197Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Fix middleware para permitir rol gestor",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:25:40.48Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Cambiar condicion en middleware.ts lineas 95-96: agregar gestor a los roles permitidos para rutas /dashboard/*. Archivo: middleware.ts",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "<ul><li>Usuarios con rol gestor pueden acceder a /dashboard/* </li><li>La condicion en middleware acepta admin Y gestor </li><li>Test: login como gestor y navegar a /dashboard </li> </ul>",
+        "System.Tags": "bug; middleware",
+        "System.Parent": 99
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/99",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Related",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/96",
+          "attributes": {
+            "isLocked": false,
+            "name": "Related"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/107"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/107/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/107/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/107/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/107"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/107"
+    }
+  },
+  {
+    "id": 104,
+    "title": "Fix estados invalidos en asignaciones.service.ts",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 104,
+      "rev": 3,
+      "fields": {
+        "System.AreaPath": "Tesis\\Services",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 2 - Bugs Criticos",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:25:02.23Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:38:34.89Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Fix estados invalidos en asignaciones.service.ts",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:25:02.23Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "aceptarAsignacion NO debe cambiar estado incidente (ya esta en en_proceso). rechazarAsignacion debe cambiar a pendiente si no quedan asignaciones activas. Archivo: features/asignaciones/service.ts",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "<ul><li>aceptarAsignacion() NO cambia estado del incidente </li><li>rechazarAsignacion() cambia a pendiente SOLO si no quedan asignaciones activas </li><li>No se producen errores CHECK constraint en runtime </li><li>Tests: aceptar asignacion con incidente en en_proceso, rechazar ultima asignacion </li> </ul>",
+        "System.Tags": "asignaciones; bug",
+        "System.Parent": 99
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html",
+        "Microsoft.VSTS.Common.AcceptanceCriteria": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/99",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Related",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/95",
+          "attributes": {
+            "isLocked": false,
+            "name": "Related"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/104"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/104/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/104/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/104/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/104"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/104"
+    }
+  },
+  {
+    "id": 94,
+    "title": "Seguridad",
+    "type": "User Story",
+    "state": "New",
+    "details": {
+      "id": 94,
+      "rev": 3,
+      "fields": {
+        "System.AreaPath": "Tesis\\Database",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "User Story",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2025-12-27T04:39:45.973Z",
+        "System.CreatedBy": {
+          "displayName": "giuliano Vigetti",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/7f48434f-e237-441e-bc31-3c840a5a93f5",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.MzJlYzQyYWQtMmMwYy03ZDMzLWJhYjgtYmQyZmY1YmExMDJh"
+            }
+          },
+          "id": "7f48434f-e237-441e-bc31-3c840a5a93f5",
+          "uniqueName": "orligiu@hotmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.MzJlYzQyYWQtMmMwYy03ZDMzLWJhYjgtYmQyZmY1YmExMDJh",
+          "descriptor": "msa.MzJlYzQyYWQtMmMwYy03ZDMzLWJhYjgtYmQyZmY1YmExMDJh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:07.01Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Seguridad",
+        "Microsoft.VSTS.Common.StateChangeDate": "2025-12-27T04:39:45.973Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column": "To Do",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column.Done": false,
+        "System.Description": "<b>Estado actual:</b><br><br>La arquitectura actual NO usa API routes - todas las operaciones van via Server Actions (use server) que se ejecutan en el servidor. Las llamadas entre cliente y servidor usan el protocolo interno de Next.js (RSC payload) sobre HTTPS, no hay endpoints REST expuestos.<br><br><b>Seguridad implementada:</b><br>- RLS (Row Level Security) en la mayoria de tablas de Supabase<br>- Middleware que protege rutas por rol<br>- Supabase Auth con JWT<br>- Service role key solo en server-side<br><br><b>PENDIENTE:</b><br>- RLS faltantes en: inspecciones, conformidades, calificaciones, documentos, avances_reparacion (ver Feature #117)<br>- Validacion de inputs en Server Actions",
+        "System.Tags": "RLS; seguridad",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/94"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/94/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/94/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/94/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/94"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/User%20Story"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/94"
+    }
+  },
+  {
+    "id": 93,
+    "title": "Gesti\u00f3n de T\u00e9cnicos",
+    "type": "User Story",
+    "state": "New",
+    "details": {
+      "id": 93,
+      "rev": 5,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "User Story",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2025-12-27T01:48:46.187Z",
+        "System.CreatedBy": {
+          "displayName": "giuliano Vigetti",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/7f48434f-e237-441e-bc31-3c840a5a93f5",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.MzJlYzQyYWQtMmMwYy03ZDMzLWJhYjgtYmQyZmY1YmExMDJh"
+            }
+          },
+          "id": "7f48434f-e237-441e-bc31-3c840a5a93f5",
+          "uniqueName": "orligiu@hotmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.MzJlYzQyYWQtMmMwYy03ZDMzLWJhYjgtYmQyZmY1YmExMDJh",
+          "descriptor": "msa.MzJlYzQyYWQtMmMwYy03ZDMzLWJhYjgtYmQyZmY1YmExMDJh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:06.673Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Gesti\u00f3n de T\u00e9cnicos",
+        "Microsoft.VSTS.Common.StateChangeDate": "2025-12-27T01:48:46.187Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column": "To Do",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column.Done": false,
+        "System.Description": "<b>Estado actual de implementacion:</b><br><br><b>IMPLEMENTADO:</b><br>- Carga de especialidades CRUD completo (OK)<br>- Tecnicos seleccionan especialidad al registrarse (OK)<br>- Registro va a solicitudes_registro, no a tecnicos directamente (OK)<br>- Solicitudes aparecen en pestana Solicitudes para admin (OK)<br>- Aprobacion/rechazo de solicitudes (OK)<br>- Tecnico ve sus asignaciones y trabajos activos (OK)<br>- Badge realtime para nuevas asignaciones (OK)<br><br><b>PENDIENTE:</b><br>- Notificacion al tecnico de aprobacion/rechazo (ver Feature #121)<br>- Login provisorio con cambio obligatorio en primer inicio<br>- Integracion Google Maps (iframe con ubicacion del inmueble)<br>- Tecnico registra inspecciones (ver Feature #113)<br>- Tecnico reporta avances (ver Feature #114)",
+        "System.Tags": "gestion; tecnicos",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/93"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/93/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/93/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/93/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/93"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/User%20Story"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/93"
+    }
+  },
+  {
+    "id": 92,
+    "title": "Gestion de Clientes",
+    "type": "User Story",
+    "state": "New",
+    "details": {
+      "id": 92,
+      "rev": 8,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "User Story",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2025-12-27T01:36:31.24Z",
+        "System.CreatedBy": {
+          "displayName": "giuliano Vigetti",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/7f48434f-e237-441e-bc31-3c840a5a93f5",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.MzJlYzQyYWQtMmMwYy03ZDMzLWJhYjgtYmQyZmY1YmExMDJh"
+            }
+          },
+          "id": "7f48434f-e237-441e-bc31-3c840a5a93f5",
+          "uniqueName": "orligiu@hotmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.MzJlYzQyYWQtMmMwYy03ZDMzLWJhYjgtYmQyZmY1YmExMDJh",
+          "descriptor": "msa.MzJlYzQyYWQtMmMwYy03ZDMzLWJhYjgtYmQyZmY1YmExMDJh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:06.34Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Gestion de Clientes",
+        "Microsoft.VSTS.Common.StateChangeDate": "2025-12-27T01:36:31.24Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column": "To Do",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column.Done": false,
+        "System.Description": "<b>Estado actual de implementacion:</b><br><br><b>IMPLEMENTADO:</b><br>- Clientes pueden asociarse a inmuebles y cargar datos (OK)<br>- Clientes pueden ver resumen de perfil (OK)<br>- Filtrar y buscar en lista de clientes (OK)<br>- Clientes pueden cargar incidentes (funciona pero falta migrar a service)<br>- Paginacion en listas (OK)<br><br><b>PENDIENTE:</b><br>- Recuperar contrasena (ver Feature #118)<br>- Modificar datos propios del cliente<br>- Calendario de seguimiento<br>- Validacion de email con codigo<br>- Vista 100% mobile (ver Task #85)<br><br><b>Features relacionadas:</b> #118 (recuperar contrasena), #111 (crear incidente via service), #85 (mobile)",
+        "System.Tags": "clientes; gestion",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/92"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/92/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/92/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/92/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/92"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/User%20Story"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/92"
+    }
+  },
+  {
+    "id": 91,
+    "title": "Agente IA",
+    "type": "User Story",
+    "state": "New",
+    "details": {
+      "id": 91,
+      "rev": 3,
+      "fields": {
+        "System.AreaPath": "Tesis\\Infraestructura",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "User Story",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2025-12-22T01:44:19.1Z",
+        "System.CreatedBy": {
+          "displayName": "Ramiro Zarate",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/0fc77be1-42e3-417c-94dc-6f3426e1581d",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.ZmNmM2JmN2YtYWNkYy03MmJkLTlhZmQtZjQ4NWUzNTgwYjlh"
+            }
+          },
+          "id": "0fc77be1-42e3-417c-94dc-6f3426e1581d",
+          "uniqueName": "ramaazarate@outlook.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.ZmNmM2JmN2YtYWNkYy03MmJkLTlhZmQtZjQ4NWUzNTgwYjlh",
+          "descriptor": "msa.ZmNmM2JmN2YtYWNkYy03MmJkLTlhZmQtZjQ4NWUzNTgwYjlh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:05.993Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Agente IA",
+        "Microsoft.VSTS.Common.StateChangeDate": "2025-12-22T01:44:19.1Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column": "To Do",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column.Done": false,
+        "System.Description": "<div>Agente que se conecta por medio de N8N a las bases de datos y que pueda recibir y responder preguntas en lenguaje natural. Deseable que genere gr\u00e1ficos y que sea accesible desde webhook o desde el wp del admin </div>",
+        "System.Tags": "agente; IA; N8N",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/91"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/91/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/91/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/91/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/91"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/User%20Story"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/91"
+    }
+  },
+  {
+    "id": 90,
+    "title": "Automatizaci\u00f3n de entradas",
+    "type": "User Story",
+    "state": "New",
+    "details": {
+      "id": 90,
+      "rev": 5,
+      "fields": {
+        "System.AreaPath": "Tesis\\Infraestructura",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "User Story",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2025-12-22T01:39:21.533Z",
+        "System.CreatedBy": {
+          "displayName": "Ramiro Zarate",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/0fc77be1-42e3-417c-94dc-6f3426e1581d",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.ZmNmM2JmN2YtYWNkYy03MmJkLTlhZmQtZjQ4NWUzNTgwYjlh"
+            }
+          },
+          "id": "0fc77be1-42e3-417c-94dc-6f3426e1581d",
+          "uniqueName": "ramaazarate@outlook.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.ZmNmM2JmN2YtYWNkYy03MmJkLTlhZmQtZjQ4NWUzNTgwYjlh",
+          "descriptor": "msa.ZmNmM2JmN2YtYWNkYy03MmJkLTlhZmQtZjQ4NWUzNTgwYjlh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:05.647Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Automatizaci\u00f3n de entradas",
+        "Microsoft.VSTS.Common.StateChangeDate": "2025-12-22T01:39:21.533Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column": "To Do",
+        "WEF_0A36991FDEFB4EEE8FA36474FF60661D_Kanban.Column.Done": false,
+        "System.Description": "<div>Para contar con un flujo constante de cargas de incidentes dentro del sistema, se opta por contar con una carga autom\u00e1tica de las mismas, utilizando N8N, para que el registro no quede estancado al depender \u00fanicamente del \u00e1rea t\u00e9cnica. Estas entradas deben ser registradas desde los distintos &quot;portales&quot; que son utilizados para anunciarlas (formularios, wpp, email). </div>",
+        "System.Tags": "automatizacion; N8N",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/90"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/90/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/90/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/90/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/90"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/User%20Story"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/90"
+    }
+  },
+  {
+    "id": 86,
+    "title": "embeber sitio web en aplicacion mobile",
+    "type": "Task",
+    "state": "New",
+    "details": {
+      "id": 86,
+      "rev": 4,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Task",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.AssignedTo": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CreatedDate": "2025-12-19T03:24:10.533Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:05.313Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "embeber sitio web en aplicacion mobile",
+        "Microsoft.VSTS.Common.StateChangeDate": "2025-12-19T03:24:10.533Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "System.Description": "Embeber el sitio web (portal cliente) dentro de una aplicacion mobile nativa (WebView). Requiere que las vistas esten adaptadas a mobile primero (ver #85).",
+        "System.Tags": "app-nativa; mobile",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/85",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/86"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/86/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/86/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/86/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/86"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Task"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/86"
+    }
+  },
+  {
+    "id": 85,
+    "title": "acomodar vistas de clientes 100% mobile",
+    "type": "Task",
+    "state": "New",
+    "details": {
+      "id": 85,
+      "rev": 4,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Task",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.AssignedTo": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CreatedDate": "2025-12-19T03:23:48.02Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:04.997Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "acomodar vistas de clientes 100% mobile",
+        "Microsoft.VSTS.Common.StateChangeDate": "2025-12-19T03:23:48.02Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "System.Description": "Adaptar todas las vistas del portal de clientes para que sean 100% responsive/mobile. Incluye: lista de incidentes, detalle de incidente, perfil, inmuebles, presupuestos.",
+        "System.Tags": "mobile; responsive",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/86",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/85"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/85/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/85/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/85/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/85"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Task"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/85"
+    }
+  },
+  {
+    "id": 124,
+    "title": "Exportar reportes PDF/Excel",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 124,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:27:25.9Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:04.65Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Exportar reportes PDF/Excel",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:27:25.9Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Exportar listados de incidentes y pagos en formato PDF y Excel. Estimacion: 2 dias.",
+        "System.Tags": "export; reportes",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/124"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/124/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/124/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/124/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/124"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/124"
+    }
+  },
+  {
+    "id": 123,
+    "title": "Dashboard metricas - graficos y estadisticas",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 123,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:27:22.52Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:04.317Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Dashboard metricas - graficos y estadisticas",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:27:22.52Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Graficos de incidentes, tiempos promedio de resolucion, ranking de tecnicos, metricas por periodo. Estimacion: 2 dias.",
+        "System.Tags": "dashboard; metricas",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/123"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/123/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/123/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/123/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/123"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/123"
+    }
+  },
+  {
+    "id": 122,
+    "title": "Realtime en dashboard admin",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 122,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:27:18.613Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:03.977Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Realtime en dashboard admin",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:27:18.613Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Agregar live updates en el dashboard de admin usando Supabase Realtime. Actualmente solo el tecnico tiene badge realtime para asignaciones. Estimacion: 2 dias.",
+        "System.Tags": "admin; realtime",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/122"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/122/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/122/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/122/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/122"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/122"
+    }
+  },
+  {
+    "id": 121,
+    "title": "Notificaciones - email/push al cambiar estado",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 121,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Infraestructura",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:27:16.23Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:03.647Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Notificaciones - email/push al cambiar estado",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:27:16.23Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Sistema de notificaciones por email y/o push cuando cambia el estado de un incidente, se asigna un tecnico, o se requiere accion del cliente. Estimacion: 3 dias.",
+        "System.Tags": "email; notificaciones",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/121"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/121/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/121/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/121/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/121"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/121"
+    }
+  },
+  {
+    "id": 120,
+    "title": "Documentos y fotos - subir archivos a incidentes/inmuebles",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 120,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Services",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:27:10.813Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:03.313Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Documentos y fotos - subir archivos a incidentes/inmuebles",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:27:10.813Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Implementar subida de fotos y documentos vinculados a incidentes, inmuebles y trabajos. Usar Supabase Storage. La tabla documentos existe pero no se usa. Estimacion: 4 dias.",
+        "System.Tags": "documentos; storage",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/120"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/120/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/120/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/120/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/120"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/120"
+    }
+  },
+  {
+    "id": 119,
+    "title": "Pagina de configuracion admin",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 119,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:27:09.603Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:02.957Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Pagina de configuracion admin",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:27:09.603Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Crear pagina /dashboard/configuracion que actualmente da 404. Configuracion general del sistema para admin/gestor. Estimacion: 1 dia.",
+        "System.Tags": "admin; configuracion",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/119"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/119/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/119/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/119/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/119"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/119"
+    }
+  },
+  {
+    "id": 118,
+    "title": "Recuperar contrasena - forgot password + email reset",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 118,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:27:08.547Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:02.603Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Recuperar contrasena - forgot password + email reset",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:27:08.547Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Implementar pagina /forgot-password con envio de email de reset via Supabase Auth. Estimacion: 2 dias.",
+        "System.Tags": "auth; password-reset",
+        "System.Parent": 103
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/118"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/118/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/118/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/118/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/118"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/118"
+    }
+  },
+  {
+    "id": 103,
+    "title": "Fase 5: Mejoras UX y Funcionalidad Extra",
+    "type": "Epic",
+    "state": "New",
+    "details": {
+      "id": 103,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 6 - Mejoras UX",
+        "System.WorkItemType": "Epic",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:24:44.73Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:02.263Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Fase 5: Mejoras UX y Funcionalidad Extra",
+        "System.BoardColumn": "New",
+        "System.BoardColumnDone": false,
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:24:44.73Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column": "New",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column.Done": false,
+        "System.Description": "Mejoras que no bloquean pero mejoran UX: Documentos/Fotos (4 dias), Recuperar contrasena (2 dias), Notificaciones (3 dias), Dashboard configuracion (1 dia). Estimacion total: 10+ dias.",
+        "System.Tags": "fase-5"
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/121",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/120",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/86",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/118",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/92",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/119",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/94",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/93",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/91",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/90",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/85",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/124",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/123",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/122",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/103"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Epic"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/103"
+    }
+  },
+  {
+    "id": 117,
+    "title": "RLS policies faltantes",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 117,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Database",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 5 - Cierre del Ciclo",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:26:54.783Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:01.897Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "RLS policies faltantes",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:26:54.783Z",
+        "Microsoft.VSTS.Common.Priority": 3,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Agregar Row Level Security policies para tablas que no las tienen: inspecciones, conformidades, calificaciones, documentos, avances_reparacion. Estimacion: 1 dia.",
+        "System.Tags": "RLS; seguridad",
+        "System.Parent": 102
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/102",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/117"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/117/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/117/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/117/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/117"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/117"
+    }
+  },
+  {
+    "id": 116,
+    "title": "Calificaciones - cliente califica tecnico post-resolucion",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 116,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 5 - Cierre del Ciclo",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:26:52.1Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:01.563Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Calificaciones - cliente califica tecnico post-resolucion",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:26:52.1Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Actualmente solo existe lectura de calificaciones. Implementar escritura: UI para que el cliente califique al tecnico despues de resolver el incidente. Service para crear calificacion. Estimacion: 2 dias.",
+        "System.Tags": "calificaciones; cliente",
+        "System.Parent": 102
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/102",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/116"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/116/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/116/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/116/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/116"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/116"
+    }
+  },
+  {
+    "id": 102,
+    "title": "Fase 4: Cierre del Ciclo de Vida",
+    "type": "Epic",
+    "state": "New",
+    "details": {
+      "id": 102,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 5 - Cierre del Ciclo",
+        "System.WorkItemType": "Epic",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:24:43.113Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:37:00.79Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Fase 4: Cierre del Ciclo de Vida",
+        "System.BoardColumn": "New",
+        "System.BoardColumnDone": false,
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:24:43.113Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column": "New",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column.Done": false,
+        "System.Description": "Cerrar el ciclo completo del incidente: Conformidades service + UI (3 dias), Calificaciones escritura (2 dias), RLS policies faltantes (1 dia). Estimacion total: 6 dias.",
+        "System.Tags": "fase-4"
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/115",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/116",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/117",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/102"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/102/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/102/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/102/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/102"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Epic"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/102"
+    }
+  },
+  {
+    "id": 114,
+    "title": "Avances de reparacion (service + UI)",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 114,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Services",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 4 - Flujos Criticos",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:26:37.797Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:49.64Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Avances de reparacion (service + UI)",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:26:37.797Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Crear service + types + UI para que el tecnico reporte progreso de reparacion. La tabla avances_reparacion existe en la DB pero no se usa. Incluye: crear avance, listar avances por incidente, visualizar en timeline. Estimacion: 2 dias.",
+        "System.Tags": "avances; reparacion",
+        "System.Parent": 101
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/101",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/115",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/114"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/114/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/114/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/114/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/114"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/114"
+    }
+  },
+  {
+    "id": 113,
+    "title": "UI para tecnico registre inspecciones",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 113,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 4 - Flujos Criticos",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:26:36.923Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:49.28Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "UI para tecnico registre inspecciones",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:26:36.923Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Crear interfaz para que el tecnico pueda registrar inspecciones vinculadas a un incidente. Incluye formulario de creacion, listado de inspecciones del tecnico, y visualizacion en el timeline del incidente. Depende de inspecciones.service.ts. Estimacion: 3 dias.",
+        "System.Tags": "inspecciones; tecnico; UI",
+        "System.Parent": 101
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/101",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/110",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/113"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/113/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/113/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/113/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/113"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/113"
+    }
+  },
+  {
+    "id": 101,
+    "title": "Fase 3: Flujos Criticos",
+    "type": "Epic",
+    "state": "New",
+    "details": {
+      "id": 101,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 4 - Flujos Criticos",
+        "System.WorkItemType": "Epic",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:24:42.2Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:48.573Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Fase 3: Flujos Criticos",
+        "System.BoardColumn": "New",
+        "System.BoardColumnDone": false,
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:24:42.2Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column": "New",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column.Done": false,
+        "System.Description": "Implementar flujos criticos para completar el ciclo de vida: Cliente aprueba/rechaza presupuesto (2 dias), Tecnico registra inspeccion UI (3 dias), Avances de reparacion service + UI (2 dias). Estimacion total: 7 dias.",
+        "System.Tags": "fase-3"
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/112",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/113",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/114",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/101"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/101/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/101/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/101/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/101"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Epic"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/101"
+    }
+  },
+  {
+    "id": 111,
+    "title": "Mover crearIncidente a incidentes.service.ts",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 111,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Services",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 3 - Services Faltantes",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:26:14.227Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:45.737Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Mover crearIncidente a incidentes.service.ts",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:26:14.227Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Mover logica de creacion de incidentes desde /cliente/incidentes/nuevo (que usa client.ts directo) a una funcion crearIncidente() en features/incidentes/service.ts. Estimacion: 1 dia.",
+        "System.Tags": "incidentes; service",
+        "System.Parent": 100
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/100",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/111"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/111/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/111/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/111/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/111"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/111"
+    }
+  },
+  {
+    "id": 109,
+    "title": "Crear pagos.service.ts + pagos.types.ts",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 109,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Services",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 3 - Services Faltantes",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:26:10.603Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:44.953Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Crear pagos.service.ts + pagos.types.ts",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:26:10.603Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Crear features/pagos/service.ts y types.ts. Migrar accesos directos desde paginas de pagos. Funciones: listarPagos, registrarPago, obtenerPagosPorIncidente. Estimacion: 2 dias.",
+        "System.Tags": "pagos; service",
+        "System.Parent": 100
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/100",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Predecessor"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/109"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/109/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/109/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/109/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/109"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/109"
+    }
+  },
+  {
+    "id": 100,
+    "title": "Fase 2: Services Faltantes",
+    "type": "Epic",
+    "state": "New",
+    "details": {
+      "id": 100,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 3 - Services Faltantes",
+        "System.WorkItemType": "Epic",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:24:41.107Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:44.257Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Fase 2: Services Faltantes",
+        "System.BoardColumn": "New",
+        "System.BoardColumnDone": false,
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:24:41.107Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column": "New",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column.Done": false,
+        "System.Description": "Crear service layers faltantes para modulos que acceden directamente a Supabase: presupuestos.service + types (3 dias), pagos.service + types (2 dias), inspecciones.service + types (2 dias), crearIncidente en incidentes.service (1 dia). Estimacion total: 8-10 dias.",
+        "System.Tags": "fase-2"
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/108",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/110",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/111",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/109",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/100"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/100/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/100/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/100/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/100"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Epic"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/100"
+    }
+  },
+  {
+    "id": 106,
+    "title": "Regenerar database.types.ts",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 106,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Database",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 2 - Bugs Criticos",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:25:03.293Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:41.673Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Regenerar database.types.ts",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:25:03.293Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Ejecutar npx supabase gen types typescript para regenerar tipos. Verificar que incluya todas las tablas y refleje CHECK constraints actuales.",
+        "System.Tags": "bug; types",
+        "System.Parent": 99
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Related",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/98",
+          "attributes": {
+            "isLocked": false,
+            "name": "Related"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/110",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/109",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/108",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/99",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/106"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106"
+    }
+  },
+  {
+    "id": 105,
+    "title": "Sincronizar enums con DB",
+    "type": "Feature",
+    "state": "New",
+    "details": {
+      "id": 105,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 2 - Bugs Criticos",
+        "System.WorkItemType": "Feature",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:25:02.91Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:41.353Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Sincronizar enums con DB",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:25:02.91Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column": "New",
+        "WEF_98FCCCBE6AB34303934A27CC8E5E34A7_Kanban.Column.Done": false,
+        "System.Description": "Reescribir shared/types/enums.ts para que EstadoIncidente use los 3 valores lowercase de la DB (pendiente, en_proceso, resuelto). Actualizar color maps.",
+        "System.Tags": "bug; enums",
+        "System.Parent": 99
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/110",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/108",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Reverse",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/99",
+          "attributes": {
+            "isLocked": false,
+            "name": "Parent"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/109",
+          "attributes": {
+            "isLocked": false,
+            "comment": "Debe completarse antes",
+            "name": "Successor"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Related",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/97",
+          "attributes": {
+            "isLocked": false,
+            "name": "Related"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/105"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Feature"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105"
+    }
+  },
+  {
+    "id": 99,
+    "title": "Fase 1: Correccion de Bugs Criticos",
+    "type": "Epic",
+    "state": "New",
+    "details": {
+      "id": 99,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 2 - Bugs Criticos",
+        "System.WorkItemType": "Epic",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:24:39.077Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:40.257Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "Fase 1: Correccion de Bugs Criticos",
+        "System.BoardColumn": "New",
+        "System.BoardColumnDone": false,
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:24:39.077Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column": "New",
+        "WEF_F601C4E8154B4A6A9BEAB67068F5015E_Kanban.Column.Done": false,
+        "System.Description": "Corregir los 4 bugs criticos detectados en el analisis: estados invalidos en asignaciones, middleware bloqueando gestor, enums desincronizados con DB, y database.types.ts desactualizado. Estimacion: 2-3 dias.",
+        "System.Tags": "fase-1"
+      },
+      "multilineFieldsFormat": {
+        "System.Description": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/104",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/107",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        },
+        {
+          "rel": "System.LinkTypes.Hierarchy-Forward",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105",
+          "attributes": {
+            "isLocked": false,
+            "name": "Child"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/99"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/99/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/99/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/99/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/99"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Epic"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/99"
+    }
+  },
+  {
+    "id": 98,
+    "title": "BUG: database.types.ts desactualizado",
+    "type": "Bug",
+    "state": "New",
+    "details": {
+      "id": 98,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Database",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 2 - Bugs Criticos",
+        "System.WorkItemType": "Bug",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:24:19.643Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:39.94Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "BUG: database.types.ts desactualizado",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:24:19.643Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.Severity": "2 - High",
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "Microsoft.VSTS.TCM.ReproSteps": "Problema: Incluye tipo_cliente en clientes (columna eliminada). No incluye tablas: usuarios, solicitudes_registro, especialidades, avances_reparacion. No refleja los CHECK constraints simplificados. Fix: Regenerar con npx supabase gen types typescript",
+        "System.Tags": "bug; types"
+      },
+      "multilineFieldsFormat": {
+        "Microsoft.VSTS.TCM.ReproSteps": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Related",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/106",
+          "attributes": {
+            "isLocked": false,
+            "name": "Related"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/98"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/98/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/98/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/98/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/98"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Bug"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/98"
+    }
+  },
+  {
+    "id": 97,
+    "title": "BUG: Enums desincronizados con CHECK constraints de DB",
+    "type": "Bug",
+    "state": "New",
+    "details": {
+      "id": 97,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 2 - Bugs Criticos",
+        "System.WorkItemType": "Bug",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:24:16.727Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:39.583Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "BUG: Enums desincronizados con CHECK constraints de DB",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:24:16.727Z",
+        "Microsoft.VSTS.Common.Priority": 2,
+        "Microsoft.VSTS.Common.Severity": "2 - High",
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "Microsoft.VSTS.TCM.ReproSteps": "Ubicacion: shared/types/enums.ts. Problema: EstadoIncidente tiene 10 valores PascalCase pero la DB solo permite 3 valores lowercase (pendiente, en_proceso, resuelto). Los color maps no sirven con los estados reales. Fix: Reescribir enums para que coincidan con los CHECK constraints de la DB.",
+        "System.Tags": "bug; enums; types"
+      },
+      "multilineFieldsFormat": {
+        "Microsoft.VSTS.TCM.ReproSteps": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Related",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/105",
+          "attributes": {
+            "isLocked": false,
+            "name": "Related"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/97"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/97/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/97/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/97/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/97"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Bug"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/97"
+    }
+  },
+  {
+    "id": 96,
+    "title": "BUG: Middleware bloquea rol gestor",
+    "type": "Bug",
+    "state": "New",
+    "details": {
+      "id": 96,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Frontend",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 2 - Bugs Criticos",
+        "System.WorkItemType": "Bug",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:24:07.69Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:39.263Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "BUG: Middleware bloquea rol gestor",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:24:07.69Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.Severity": "2 - High",
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "Microsoft.VSTS.TCM.ReproSteps": "Ubicacion: middleware.ts lineas 95-96. Problema: El middleware solo permite rol admin para /dashboard/* pero isAdmin() y requireAdmin() aceptan gestor tambien. Fix: Cambiar condicion a userRole !== admin &amp;&amp; userRole !== gestor",
+        "System.Tags": "bug; middleware"
+      },
+      "multilineFieldsFormat": {
+        "Microsoft.VSTS.TCM.ReproSteps": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Related",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/107",
+          "attributes": {
+            "isLocked": false,
+            "name": "Related"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/96"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/96/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/96/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/96/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/96"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Bug"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/96"
+    }
+  },
+  {
+    "id": 95,
+    "title": "BUG: Estados invalidos en asignaciones.service.ts",
+    "type": "Bug",
+    "state": "New",
+    "details": {
+      "id": 95,
+      "rev": 2,
+      "fields": {
+        "System.AreaPath": "Tesis\\Services",
+        "System.TeamProject": "Tesis",
+        "System.IterationPath": "Tesis\\Sprint 2 - Bugs Criticos",
+        "System.WorkItemType": "Bug",
+        "System.State": "New",
+        "System.Reason": "New",
+        "System.CreatedDate": "2026-02-10T03:23:44.883Z",
+        "System.CreatedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.ChangedDate": "2026-02-10T03:36:38.92Z",
+        "System.ChangedBy": {
+          "displayName": "faustino pieroni",
+          "url": "https://spsprodsbr2.vssps.visualstudio.com/A01fd6f72-61d8-44b0-963b-2c3eb16dea52/_apis/Identities/4c1afe96-3450-6bf6-809c-8914563e055a",
+          "_links": {
+            "avatar": {
+              "href": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+            }
+          },
+          "id": "4c1afe96-3450-6bf6-809c-8914563e055a",
+          "uniqueName": "fauspieroni@gmail.com",
+          "imageUrl": "https://dev.azure.com/fauspieroni/_apis/GraphProfile/MemberAvatars/msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh",
+          "descriptor": "msa.NGMxYWZlOTYtMzQ1MC03YmY2LTgwOWMtODkxNDU2M2UwNTVh"
+        },
+        "System.CommentCount": 0,
+        "System.Title": "BUG: Estados invalidos en asignaciones.service.ts",
+        "Microsoft.VSTS.Common.StateChangeDate": "2026-02-10T03:23:44.883Z",
+        "Microsoft.VSTS.Common.Priority": 1,
+        "Microsoft.VSTS.Common.Severity": "1 - Critical",
+        "Microsoft.VSTS.Common.ValueArea": "Business",
+        "Microsoft.VSTS.TCM.ReproSteps": "<b>Ubicacion:</b> asignaciones.service.ts<br><br><b>Problema:</b><br>- aceptarAsignacion() escribe &quot;asignado&quot; en incidentes.estado_actual<br>- rechazarAsignacion() escribe &quot;reportado&quot; en incidentes.estado_actual<br>- La DB solo permite: pendiente, en_proceso, resuelto<br>- Causa error PostgreSQL CHECK constraint violation en runtime<br><br><b>Fix:</b><br>- aceptarAsignacion: NO cambiar estado incidente (ya esta en en_proceso)<br>- rechazarAsignacion: cambiar a pendiente si no quedan asignaciones activas",
+        "System.Tags": "asignaciones; bug; critico"
+      },
+      "multilineFieldsFormat": {
+        "Microsoft.VSTS.TCM.ReproSteps": "html"
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Related",
+          "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/104",
+          "attributes": {
+            "isLocked": false,
+            "name": "Related"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/95"
+        },
+        "workItemUpdates": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/95/updates"
+        },
+        "workItemRevisions": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/95/revisions"
+        },
+        "workItemComments": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/95/comments"
+        },
+        "html": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_workitems/edit/95"
+        },
+        "workItemType": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItemTypes/Bug"
+        },
+        "fields": {
+          "href": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/fields"
+        }
+      },
+      "url": "https://dev.azure.com/fauspieroni/cea9747c-f83c-4766-8070-4adbb2dde3f5/_apis/wit/workItems/95"
+    }
+  }
+]

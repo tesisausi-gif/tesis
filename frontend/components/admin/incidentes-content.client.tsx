@@ -76,11 +76,11 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
 
   // Stats
   const totalIncidentes = incidentes.length
-  const pendientes = incidentes.filter(i => i.estado_actual === EstadoIncidente.REPORTADO).length
+  const pendientes = incidentes.filter(i => i.estado_actual === EstadoIncidente.PENDIENTE).length
   const enProceso = incidentes.filter(i =>
-    [EstadoIncidente.EN_EVALUACION, EstadoIncidente.ASIGNADO, EstadoIncidente.EN_PROCESO, EstadoIncidente.EN_EJECUCION].includes(i.estado_actual as EstadoIncidente)
+    i.estado_actual === EstadoIncidente.EN_PROCESO
   ).length
-  const resueltos = incidentes.filter(i => i.fue_resuelto).length
+  const resueltos = incidentes.filter(i => i.estado_actual === EstadoIncidente.RESUELTO).length
 
   const renderTablaIncidentes = (incidentesAMostrar: IncidenteConCliente[]) => {
     if (incidentesAMostrar.length === 0) {
