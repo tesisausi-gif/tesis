@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { createClient } from '@/shared/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,36 +12,13 @@ import { Label } from '@/components/ui/label'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { FileText, DollarSign, CheckCircle, XCircle, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
-import { EstadoPresupuesto } from '@/shared/types/enums'
+import { getPresupuestosForAdmin, aprobarPresupuesto, rechazarPresupuesto } from '@/features/presupuestos/presupuestos.service'
+import type { PresupuestoConDetalle } from '@/features/presupuestos/presupuestos.types'
 
-interface Presupuesto {
-    id_presupuesto: number
-    id_incidente: number
-    id_inspeccion: number | null
-    descripcion_detallada: string
-    costo_materiales: number
-    costo_mano_obra: number
-    gastos_administrativos: number
-    costo_total: number
-    estado_presupuesto: string
-    fecha_creacion: string
-    incidentes?: {
-        id_incidente: number
-        descripcion_problema: string
-        categoria: string | null
-    }
-    inspecciones?: {
-        id_tecnico: number
-        tecnicos?: {
-            nombre: string
-            apellido: string
-        }
-    }
-}
+interface Presupuesto extends PresupuestoConDetalle {}
 
 export default function AprobarPresupuestosPage() {
     const router = useRouter()
-    const supabase = createClient()
 
     const [loading, setLoading] = useState(true)
     const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([])
@@ -57,43 +33,20 @@ export default function AprobarPresupuestosPage() {
 
     const cargarPresupuestos = async () => {
         try {
-            const { data, error } = await supabase
-                .from('presupuestos')
-                .select(`
-          *,
-          incidentes (
-            id_incidente,
-            descripcion_problema,
-            categoria
-          ),
-          inspecciones (
-            id_tecnico,
-            tecnicos (
-              nombre,
-              apellido
-            )
-          )
-        `)
-                .eq('estado_presupuesto', EstadoPresupuesto.ENVIADO)
-                .order('fecha_creacion', { ascending: false })
-
-            if (error) {
-                console.error('Error al cargar presupuestos:', error)
-                toast.error('Error al cargar presupuestos')
-                return
-            }
-
-            setPresupuestos(data as unknown as Presupuesto[] || [])
+            const data = await getPresupuestosForAdmin()
+            // Filtrar solo los que están en estado ENVIADO
+            const presupuestosEnviados = data.filter(p => p.estado_presupuesto === 'enviado')
+            setPresupuestos(presupuestosEnviados as Presupuesto[])
 
             // Inicializar comisiones en 0
             const comisionesIniciales: Record<number, string> = {}
-            data?.forEach(p => {
-                comisionesIniciales[p.id_presupuesto] = p.gastos_administrativos.toString()
+            presupuestosEnviados?.forEach(p => {
+                comisionesIniciales[p.id_presupuesto] = p.gastos_administrativos?.toString() || '0'
             })
             setComision(comisionesIniciales)
         } catch (error) {
             console.error('Error:', error)
-            toast.error('Error inesperado')
+            toast.error('Error al cargar presupuestos')
         } finally {
             setLoading(false)
         }
@@ -121,21 +74,12 @@ export default function AprobarPresupuestosPage() {
 
         try {
             if (accion === 'aprobar') {
-                const comisionValue = parseFloat(comision[presupuestoSeleccionado.id_presupuesto] || '0')
-                const nuevoTotal = calcularTotal(presupuestoSeleccionado)
-
-                const { error } = await supabase
-                    .from('presupuestos')
-                    .update({
-                        estado_presupuesto: 'aprobado_admin',
-                        gastos_administrativos: comisionValue,
-                        costo_total: nuevoTotal,
+                const result = await aprobarPresupuesto(presupuestoSeleccionado.id_presupuesto)
+                
+                if (!result.success) {
+                    toast.error('Error', {
+                        description: result.error
                     })
-                    .eq('id_presupuesto', presupuestoSeleccionado.id_presupuesto)
-
-                if (error) {
-                    console.error('Error al aprobar presupuesto:', error)
-                    toast.error('Error al aprobar presupuesto')
                     return
                 }
 
@@ -143,16 +87,12 @@ export default function AprobarPresupuestosPage() {
                     description: 'Enviado al cliente para aprobación final'
                 })
             } else {
-                const { error } = await supabase
-                    .from('presupuestos')
-                    .update({
-                        estado_presupuesto: 'rechazado',
+                const result = await rechazarPresupuesto(presupuestoSeleccionado.id_presupuesto)
+                
+                if (!result.success) {
+                    toast.error('Error', {
+                        description: result.error
                     })
-                    .eq('id_presupuesto', presupuestoSeleccionado.id_presupuesto)
-
-                if (error) {
-                    console.error('Error al rechazar presupuesto:', error)
-                    toast.error('Error al rechazar presupuesto')
                     return
                 }
 
