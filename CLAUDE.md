@@ -38,6 +38,29 @@ Las tareas del proyecto se gestionan en Azure DevOps:
 - **Features** = Tareas concretas vinculadas a su Epic
 - **Bugs** = Bugs detectados con severidad y pasos de reproduccion
 
-### 3. Documentacion de Referencia
+### 3. Metodologia de Desarrollo (OBLIGATORIO)
+
+**Antes de implementar cualquier feature o cambio significativo:**
+1. Usar el agente `code-explorer` para analizar el codigo existente relacionado
+2. Usar el agente `code-architect` para diseñar la solucion antes de escribir codigo
+3. Seguir los patrones existentes en features ya implementadas (ej: `usuarios/`, `incidentes/`)
+
+**Durante la implementacion:**
+- Usar el skill `feature-dev` para desarrollo guiado de features nuevas
+- Usar el skill `next-best-practices` al crear componentes, pages o routes de Next.js
+- Usar el skill `supabase-postgres-best-practices` al escribir queries o modificar schema
+- Usar el skill `frontend-design` para UI de calidad cuando se creen componentes visuales
+
+**Despues de implementar:**
+- Usar el agente `code-reviewer` para revisar el codigo escrito
+- Usar el agente `code-simplifier` para simplificar si quedo complejo
+- Verificar que no se rompio nada existente
+
+**Reglas de calidad:**
+- NO escribir codigo sin antes leer y entender el codigo existente del modulo
+- NO inventar patrones nuevos — copiar de features ya implementadas
+- Ante la duda, usar `EnterPlanMode` para planificar antes de ejecutar
+
+### 4. Documentacion de Referencia
 
 - `documentacion/ANALISIS_FLUJOS.md` — Arquitectura, modelo de datos, roles, flujos por rol
