@@ -104,6 +104,78 @@ export async function getIncidenteById(idIncidente: number): Promise<IncidenteCo
   return data as unknown as IncidenteConDetalles
 }
 
+/**
+ * Obtener incidente completo para el modal de detalle
+ */
+export async function getIncidenteCompleto(idIncidente: number) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('incidentes')
+    .select(`
+      *,
+      inmuebles:id_propiedad (
+        calle, altura, piso, dpto, barrio, localidad, provincia,
+        tipos_inmuebles (nombre)
+      ),
+      clientes:id_cliente_reporta (
+        nombre, apellido, correo_electronico, telefono
+      )
+    `)
+    .eq('id_incidente', idIncidente)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Obtener asignaciones de un incidente con datos del técnico
+ */
+export async function getAsignacionesDelIncidente(idIncidente: number) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('asignaciones_tecnico')
+    .select('*, tecnicos(nombre, apellido, especialidad)')
+    .eq('id_incidente', idIncidente)
+    .order('fecha_asignacion', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+/**
+ * Obtener datos de timeline (inspecciones, presupuestos, pagos) de un incidente
+ */
+export async function getTimelineData(idIncidente: number) {
+  const supabase = await createClient()
+
+  const [inspecciones, presupuestos, pagos] = await Promise.all([
+    supabase
+      .from('inspecciones')
+      .select('*, tecnicos(nombre, apellido)')
+      .eq('id_incidente', idIncidente)
+      .order('fecha_inspeccion', { ascending: true }),
+    supabase
+      .from('presupuestos')
+      .select('*')
+      .eq('id_incidente', idIncidente)
+      .order('fecha_creacion', { ascending: true }),
+    supabase
+      .from('pagos')
+      .select('*')
+      .eq('id_incidente', idIncidente)
+      .order('fecha_pago', { ascending: true }),
+  ])
+
+  return {
+    inspecciones: inspecciones.data || [],
+    presupuestos: presupuestos.data || [],
+    pagos: pagos.data || [],
+  }
+}
+
 // --- Escrituras ---
 
 export async function actualizarIncidente(

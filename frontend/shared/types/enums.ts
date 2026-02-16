@@ -45,26 +45,26 @@ export enum EstadoAsignacion {
 }
 
 export enum EstadoPresupuesto {
-  BORRADOR = 'Borrador',
-  ENVIADO = 'Enviado',
-  APROBADO_ADMIN = 'Aprobado Admin',
-  APROBADO = 'Aprobado',
-  RECHAZADO = 'Rechazado',
-  VENCIDO = 'Vencido',
+  BORRADOR = 'borrador',
+  ENVIADO = 'enviado',
+  APROBADO_ADMIN = 'aprobado_admin',
+  APROBADO = 'aprobado',
+  RECHAZADO = 'rechazado',
+  VENCIDO = 'vencido',
 }
 
 export enum TipoPago {
-  ADELANTO = 'Adelanto',
-  PARCIAL = 'Parcial',
-  TOTAL = 'Total',
-  REEMBOLSO = 'Reembolso',
+  ADELANTO = 'adelanto',
+  PARCIAL = 'parcial',
+  TOTAL = 'total',
+  REEMBOLSO = 'reembolso',
 }
 
 export enum MetodoPago {
-  EFECTIVO = 'Efectivo',
-  TRANSFERENCIA = 'Transferencia',
-  TARJETA = 'Tarjeta',
-  CHEQUE = 'Cheque',
+  EFECTIVO = 'efectivo',
+  TRANSFERENCIA = 'transferencia',
+  TARJETA = 'tarjeta',
+  CHEQUE = 'cheque',
 }
 
 export enum TipoDocumento {

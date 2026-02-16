@@ -8,7 +8,8 @@
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireAdminOrGestorId, requireTecnicoId } from '@/features/auth/auth.service'
 import type { ActionResult } from '@/shared/types'
-import { EstadoPresupuesto, Presupuesto, PresupuestoConDetalle } from './presupuestos.types'
+import { EstadoPresupuesto } from '@/shared/types/enums'
+import type { Presupuesto, PresupuestoConDetalle } from './presupuestos.types'
 
 const PRESUPUESTO_SELECT = `
   id_presupuesto,
@@ -94,11 +95,32 @@ export async function getPresupuestosDelCliente(idCliente: number): Promise<Pres
   const { data, error } = await supabase
     .from('presupuestos')
     .select(`
-      ${PRESUPUESTO_SELECT}
+      id_presupuesto,
+      id_incidente,
+      id_tecnico,
+      descripcion_trabajo,
+      costo_total,
+      detalles_trabajo,
+      estado_presupuesto,
+      fecha_creacion,
+      fecha_vencimiento,
+      fecha_aprobacion,
+      fecha_rechazo,
+      razon_rechazo,
+      fecha_actualizacion,
+      incidentes!inner (
+        id_incidente,
+        descripcion_problema,
+        categoria,
+        id_cliente_reporta
+      ),
+      tecnicos (
+        nombre,
+        apellido
+      )
     `)
-
     .eq('incidentes.id_cliente_reporta', idCliente)
-    .order('presupuestos.fecha_creacion', { ascending: false })
+    .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
   return data as unknown as PresupuestoConDetalle[]

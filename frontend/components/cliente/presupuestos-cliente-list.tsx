@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { Check, X, Eye, Calendar, DollarSign, FileText } from 'lucide-react'
 import { aprobarPresupuestoCliente, rechazarPresupuestoCliente } from '@/features/presupuestos/presupuestos.service'
-import { EstadoPresupuesto } from '@/features/presupuestos/presupuestos.types'
+import { EstadoPresupuesto } from '@/shared/types/enums'
 
 interface Presupuesto {
   id_presupuesto: number

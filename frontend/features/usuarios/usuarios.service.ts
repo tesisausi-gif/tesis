@@ -123,6 +123,22 @@ export async function getTecnicosActivos(): Promise<TecnicoActivo[]> {
 }
 
 /**
+ * Obtener técnicos activos con calificación y trabajos (para modal de asignación)
+ */
+export async function getTecnicosParaAsignacion(): Promise<Tecnico[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('tecnicos')
+    .select('*')
+    .eq('esta_activo', true)
+    .order('calificacion_promedio', { ascending: false })
+
+  if (error) throw error
+  return data as Tecnico[]
+}
+
+/**
  * Obtener técnico por ID
  */
 export async function getTecnicoById(idTecnico: number): Promise<Tecnico> {

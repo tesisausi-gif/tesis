@@ -2,19 +2,7 @@
  * Tipos y interfaces para el módulo de Pagos
  */
 
-export enum TipoPago {
-  ADELANTO = 'adelanto',
-  PARCIAL = 'parcial',
-  TOTAL = 'total',
-  REEMBOLSO = 'reembolso',
-}
-
-export enum MetodoPago {
-  EFECTIVO = 'efectivo',
-  TRANSFERENCIA = 'transferencia',
-  TARJETA = 'tarjeta',
-  CHEQUE = 'cheque',
-}
+import { TipoPago, MetodoPago } from '@/shared/types/enums'
 
 export interface PagoBase {
   id_pago?: number

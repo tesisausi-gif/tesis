@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { createClient } from '@/shared/lib/supabase/client'
 import {
   Dialog,
   DialogContent,
@@ -30,17 +29,24 @@ import {
   Clock,
   ClipboardList,
   DollarSign,
-  Star,
   Building2,
   UserPlus,
   Settings,
   Save,
 } from 'lucide-react'
-import { NivelPrioridad, CategoriaIncidente } from '@/shared/types/enums'
+import { CategoriaIncidente, EstadoIncidente } from '@/shared/types/enums'
 import { InspeccionesList } from './inspecciones-list'
 import { CalificacionTecnico } from '@/components/cliente/calificacion-tecnico'
 import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
-import { EstadoIncidente } from '@/shared/types/enums'
+import {
+  getIncidenteCompleto,
+  getAsignacionesDelIncidente,
+  getTimelineData,
+  actualizarIncidente,
+} from '@/features/incidentes/incidentes.service'
+import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
+import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
+import type { Tecnico } from '@/features/usuarios/usuarios.types'
 
 interface TimelineEvent {
   id: string
@@ -78,14 +84,6 @@ interface IncidenteCompleto {
     correo_electronico: string | null
     telefono: string | null
   } | null
-}
-
-interface Tecnico {
-  id_tecnico: number
-  nombre: string
-  apellido: string
-  especialidad: string | null
-  esta_activo: boolean | number
 }
 
 interface Asignacion {
@@ -163,8 +161,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
   const CATEGORIAS = Object.values(CategoriaIncidente) as string[]
 
-  const supabase = createClient()
-
   useEffect(() => {
     if (open && incidenteId) {
       cargarIncidente()
@@ -175,14 +171,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   }, [open, incidenteId])
 
   const cargarTecnicos = async () => {
-    const { data, error } = await supabase
-      .from('tecnicos')
-      .select('id_tecnico, nombre, apellido, especialidad, esta_activo')
-      .eq('esta_activo', 1)
-      .order('nombre')
-
-    if (!error && data) {
+    try {
+      const data = await getTecnicosParaAsignacion()
       setTecnicos(data)
+    } catch (error) {
+      console.error('Error cargando técnicos:', error)
     }
   }
 
@@ -192,38 +185,15 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     setLoading(true)
     try {
       // Cargar incidente con relaciones
-      const { data: incidenteData, error: incidenteError } = await supabase
-        .from('incidentes')
-        .select(`
-          *,
-          inmuebles:id_propiedad (
-            calle, altura, piso, dpto, barrio, localidad, provincia,
-            tipos_inmuebles (nombre)
-          ),
-          clientes:id_cliente_reporta (
-            nombre, apellido, correo_electronico, telefono
-          )
-        `)
-        .eq('id_incidente', incidenteId)
-        .single()
-
-      if (incidenteError) {
-        console.error('Error al cargar incidente:', incidenteError)
-        return
-      }
+      const incidenteData = await getIncidenteCompleto(incidenteId)
 
       setIncidente(incidenteData as unknown as IncidenteCompleto)
       setNuevoEstado(incidenteData.estado_actual || '')
       setNuevaPrioridad(incidenteData.nivel_prioridad || '')
 
       // Cargar asignaciones
-      const { data: asignacionesData } = await supabase
-        .from('asignaciones_tecnico')
-        .select('*, tecnicos(nombre, apellido, especialidad)')
-        .eq('id_incidente', incidenteId)
-        .order('fecha_asignacion', { ascending: false })
-
-      setAsignaciones((asignacionesData as unknown as Asignacion[]) || [])
+      const asignacionesData = await getAsignacionesDelIncidente(incidenteId)
+      setAsignaciones(asignacionesData as unknown as Asignacion[])
 
       // Cargar inspecciones si el rol es técnico
       if (rol === 'tecnico') {
@@ -236,7 +206,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       }
 
       // Construir timeline
-      await construirTimeline(incidenteData, asignacionesData || [])
+      await construirTimeline(incidenteData, asignacionesData)
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -271,12 +241,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       })
     })
 
-    // Cargar inspecciones
-    const { data: inspecciones } = await supabase
-      .from('inspecciones')
-      .select('*, tecnicos(nombre, apellido)')
-      .eq('id_incidente', incidenteId)
-      .order('fecha_inspeccion', { ascending: true })
+    // Cargar inspecciones, presupuestos y pagos para timeline
+    const { inspecciones, presupuestos, pagos } = await getTimelineData(incidenteData.id_incidente)
 
     inspecciones?.forEach((insp: any) => {
       timelineEvents.push({
@@ -290,13 +256,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       })
     })
 
-    // Cargar presupuestos
-    const { data: presupuestos } = await supabase
-      .from('presupuestos')
-      .select('*')
-      .eq('id_incidente', incidenteId)
-      .order('fecha_creacion', { ascending: true })
-
     presupuestos?.forEach((pres: any) => {
       timelineEvents.push({
         id: `pres-${pres.id_presupuesto}`,
@@ -308,13 +267,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         color: 'bg-cyan-500',
       })
     })
-
-    // Cargar pagos
-    const { data: pagos } = await supabase
-      .from('pagos')
-      .select('*')
-      .eq('id_incidente', incidenteId)
-      .order('fecha_pago', { ascending: true })
 
     pagos?.forEach((pago: any) => {
       timelineEvents.push({
@@ -351,7 +303,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
     setSaving(true)
     try {
-      const updates: any = {}
+      const updates: Record<string, string | null> = {}
 
       if (nuevoEstado && nuevoEstado !== incidente?.estado_actual) {
         updates.estado_actual = nuevoEstado
@@ -359,19 +311,17 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       if (nuevaPrioridad && nuevaPrioridad !== incidente?.nivel_prioridad) {
         updates.nivel_prioridad = nuevaPrioridad
+      }
+
       if (nuevaCategoria && nuevaCategoria !== incidente?.categoria) {
         updates.categoria = nuevaCategoria === '__NONE__' ? null : nuevaCategoria
       }
-      }
 
       if (Object.keys(updates).length > 0) {
-        const { error } = await supabase
-          .from('incidentes')
-          .update(updates)
-          .eq('id_incidente', incidenteId)
+        const result = await actualizarIncidente(incidenteId, updates)
 
-        if (error) {
-          toast.error('Error al actualizar incidente', { description: error.message })
+        if (!result.success) {
+          toast.error('Error al actualizar incidente', { description: result.error })
           return
         }
 
@@ -395,26 +345,15 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
     setSaving(true)
     try {
-      const { error } = await supabase
-        .from('asignaciones_tecnico')
-        .insert({
-          id_incidente: incidenteId,
-          id_tecnico: parseInt(tecnicoSeleccionado),
-          estado_asignacion: 'pendiente',
-          observaciones: observacionesAsignacion || null,
-        })
+      const result = await crearAsignacion({
+        id_incidente: incidenteId,
+        id_tecnico: parseInt(tecnicoSeleccionado),
+        observaciones: observacionesAsignacion || null,
+      })
 
-      if (error) {
-        toast.error('Error al asignar técnico', { description: error.message })
+      if (!result.success) {
+        toast.error('Error al asignar técnico', { description: result.error })
         return
-      }
-
-      // Actualizar estado del incidente a "en_proceso" si está en "pendiente"
-      if (incidente?.estado_actual === 'pendiente') {
-        await supabase
-          .from('incidentes')
-          .update({ estado_actual: 'en_proceso' })
-          .eq('id_incidente', incidenteId)
       }
 
       toast.success('Técnico asignado exitosamente')
@@ -805,11 +744,9 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   idTecnico={asignaciones[0]?.id_tecnico || 0}
                   inspecciones={inspecciones}
                   onInspeccionCreated={() => {
-                    // Recargar inspecciones
                     cargarIncidente()
                   }}
                   onInspeccionDeleted={() => {
-                    // Recargar inspecciones
                     cargarIncidente()
                   }}
                 />

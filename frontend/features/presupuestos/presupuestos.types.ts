@@ -2,14 +2,7 @@
  * Tipos y interfaces para el módulo de Presupuestos
  */
 
-export enum EstadoPresupuesto {
-  BORRADOR = 'borrador',
-  ENVIADO = 'enviado',
-  APROBADO_ADMIN = 'aprobado_admin',
-  APROBADO = 'aprobado',
-  RECHAZADO = 'rechazado',
-  VENCIDO = 'vencido',
-}
+import { EstadoPresupuesto } from '@/shared/types/enums'
 
 export interface PresupuestoBase {
   id_presupuesto?: number

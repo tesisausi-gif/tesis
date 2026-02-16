@@ -9,7 +9,7 @@ import { createClient } from '@/shared/lib/supabase/server'
 import { requireAdminOrGestorId } from '@/features/auth/auth.service'
 import type { ActionResult } from '@/shared/types'
 import type { Pago, PagoConDetalle } from './pagos.types'
-import { TipoPago, MetodoPago } from './pagos.types'
+import { TipoPago, MetodoPago } from '@/shared/types/enums'
 
 const PAGO_SELECT = `
   id_pago,
