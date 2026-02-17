@@ -34,22 +34,20 @@ interface Inmueble {
 
 interface Incidente {
   id_incidente: number
-  titulo: string
-  descripcion: string
-  id_estado_incidente: number
-  id_prioridad: number
-  fecha_creacion: string
-  fecha_modificacion: string
-  estados_incidentes?: {
-    nombre: string
-  }
-  prioridades?: {
-    nombre: string
-  }
-  tecnicos?: {
-    nombre: string
-    apellido: string
-  }
+  descripcion_problema: string
+  estado_actual: string
+  nivel_prioridad: string | null
+  categoria: string | null
+  fecha_registro: string
+  fecha_cierre: string | null
+  fue_resuelto: boolean | number
+  asignaciones_tecnico?: Array<{
+    estado_asignacion: string
+    tecnicos: {
+      nombre: string
+      apellido: string
+    } | null
+  }>
 }
 
 export default function InmuebleDetallePage() {
@@ -93,13 +91,21 @@ export default function InmuebleDetallePage() {
       const { data: incidentesData, error: incidentesError } = await supabase
         .from('incidentes')
         .select(`
-          *,
-          estados_incidentes(nombre),
-          prioridades(nombre),
-          tecnicos(nombre, apellido)
+          id_incidente,
+          descripcion_problema,
+          estado_actual,
+          nivel_prioridad,
+          categoria,
+          fecha_registro,
+          fecha_cierre,
+          fue_resuelto,
+          asignaciones_tecnico(
+            estado_asignacion,
+            tecnicos(nombre, apellido)
+          )
         `)
         .eq('id_propiedad', id)
-        .order('fecha_creacion', { ascending: false })
+        .order('fecha_registro', { ascending: false })
 
       if (incidentesError) {
         console.error('Error al cargar incidentes:', incidentesError)
@@ -107,7 +113,7 @@ export default function InmuebleDetallePage() {
         return
       }
 
-      setIncidentes(incidentesData || [])
+      setIncidentes((incidentesData ?? []) as unknown as Incidente[])
     } catch (error) {
       console.error('Error:', error)
       toast.error('Error al cargar los datos')
@@ -127,31 +133,40 @@ export default function InmuebleDetallePage() {
     return partes.join(' ')
   }
 
-  const getEstadoColor = (estadoNombre?: string) => {
-    switch (estadoNombre?.toLowerCase()) {
+  const getEstadoColor = (estado?: string | null) => {
+    switch (estado) {
       case 'pendiente':
-        return 'bg-yellow-500'
-      case 'en progreso':
-        return 'bg-blue-500'
+        return 'bg-yellow-100 text-yellow-800'
+      case 'en_proceso':
+        return 'bg-blue-100 text-blue-800'
       case 'resuelto':
-        return 'bg-green-500'
-      case 'cancelado':
-        return 'bg-gray-500'
+        return 'bg-green-100 text-green-800'
       default:
-        return 'bg-gray-500'
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const getPrioridadColor = (prioridadNombre?: string) => {
-    switch (prioridadNombre?.toLowerCase()) {
-      case 'alta':
-        return 'bg-red-500'
-      case 'media':
-        return 'bg-orange-500'
-      case 'baja':
-        return 'bg-green-500'
+  const getEstadoLabel = (estado?: string | null) => {
+    switch (estado) {
+      case 'pendiente': return 'Pendiente'
+      case 'en_proceso': return 'En Proceso'
+      case 'resuelto': return 'Resuelto'
+      default: return estado || 'Sin estado'
+    }
+  }
+
+  const getPrioridadColor = (prioridad?: string | null) => {
+    switch (prioridad) {
+      case 'Urgente':
+        return 'bg-red-100 text-red-800'
+      case 'Alta':
+        return 'bg-orange-100 text-orange-800'
+      case 'Media':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'Baja':
+        return 'bg-green-100 text-green-800'
       default:
-        return 'bg-gray-500'
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -314,37 +329,46 @@ export default function InmuebleDetallePage() {
               <p className="text-center text-gray-600 py-8">No hay incidentes registrados para este inmueble</p>
             ) : (
               <div className="space-y-3">
-                {incidentes.map((incidente) => (
-                  <div
-                    key={incidente.id_incidente}
-                    className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold">{incidente.titulo}</h4>
-                      <div className="flex gap-2">
-                        <Badge className={getEstadoColor(incidente.estados_incidentes?.nombre)}>
-                          {incidente.estados_incidentes?.nombre || 'Sin estado'}
-                        </Badge>
-                        <Badge className={getPrioridadColor(incidente.prioridades?.nombre)}>
-                          {incidente.prioridades?.nombre || 'Sin prioridad'}
-                        </Badge>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">{incidente.descripcion}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(incidente.fecha_creacion).toLocaleDateString()}
-                      </div>
-                      {incidente.tecnicos && (
-                        <div className="flex items-center gap-1">
-                          <Wrench className="h-3 w-3" />
-                          {incidente.tecnicos.nombre} {incidente.tecnicos.apellido}
+                {incidentes.map((incidente) => {
+                  const tecnicoAsignado = incidente.asignaciones_tecnico?.find(
+                    (a) => a.estado_asignacion === 'aceptada' || a.estado_asignacion === 'en_curso' || a.estado_asignacion === 'completada'
+                  )?.tecnicos
+                  return (
+                    <div
+                      key={incidente.id_incidente}
+                      className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-semibold text-sm">
+                          #{incidente.id_incidente} — {incidente.categoria || 'Sin categoría'}
+                        </h4>
+                        <div className="flex gap-2 flex-shrink-0 ml-2">
+                          <Badge className={getEstadoColor(incidente.estado_actual)}>
+                            {getEstadoLabel(incidente.estado_actual)}
+                          </Badge>
+                          {incidente.nivel_prioridad && (
+                            <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
+                              {incidente.nivel_prioridad}
+                            </Badge>
+                          )}
                         </div>
-                      )}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{incidente.descripcion_problema}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(incidente.fecha_registro).toLocaleDateString('es-AR')}
+                        </div>
+                        {tecnicoAsignado && (
+                          <div className="flex items-center gap-1">
+                            <Wrench className="h-3 w-3" />
+                            {tecnicoAsignado.nombre} {tecnicoAsignado.apellido}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>
