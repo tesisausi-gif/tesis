@@ -180,7 +180,8 @@ export async function getTimelineData(idIncidente: number) {
  * Obtener estadísticas para el dashboard admin
  */
 export async function getDashboardStats() {
-  const supabase = await createClient()
+  const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+  const supabase = createAdminClient()
 
   const [incidentes, propiedades, clientes, tecnicos] = await Promise.all([
     supabase.from('incidentes').select('estado_actual'),
@@ -205,7 +206,8 @@ export async function getDashboardStats() {
  * Obtener actividad reciente para el dashboard admin
  */
 export async function getDashboardActividad() {
-  const supabase = await createClient()
+  const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+  const supabase = createAdminClient()
 
   const [incidentes, asignaciones] = await Promise.all([
     supabase

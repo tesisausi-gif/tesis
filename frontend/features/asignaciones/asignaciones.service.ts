@@ -210,7 +210,8 @@ export async function crearAsignacion(data: {
   observaciones: string | null
 }): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
+    const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+    const supabase = createAdminClient()
 
     const { error } = await supabase
       .from('asignaciones_tecnico')
