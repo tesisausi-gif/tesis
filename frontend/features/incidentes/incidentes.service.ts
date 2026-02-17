@@ -185,9 +185,9 @@ export async function getDashboardStats() {
 
   const [incidentes, propiedades, clientes, tecnicos] = await Promise.all([
     supabase.from('incidentes').select('estado_actual'),
-    supabase.from('inmuebles').select('*', { count: 'exact', head: true }),
-    supabase.from('clientes').select('*', { count: 'exact', head: true }),
-    supabase.from('tecnicos').select('*', { count: 'exact', head: true }),
+    supabase.from('inmuebles').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
+    supabase.from('clientes').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
+    supabase.from('tecnicos').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
   ])
 
   const incidentesData = incidentes.data || []
