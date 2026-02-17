@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { estadoIncidenteColors, prioridadColors, EstadoIncidente, NivelPrioridad, CategoriaIncidente } from '@/shared/types/enums'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { ModalAsignarTecnico } from '@/components/admin/modal-asignar-tecnico'
+import { getIncidentesForAdmin } from '@/features/incidentes/incidentes.service'
 
 interface Incidente {
   id_incidente: number
@@ -50,11 +51,14 @@ export default function IncidentesAdminPage() {
   const [modalAsignarOpen, setModalAsignarOpen] = useState(false)
   const [incidenteParaAsignar, setIncidenteParaAsignar] = useState<{id: number, categoria: string | null} | null>(null)
 
+  useEffect(() => {
+    cargarIncidentes()
+  }, [])
+
   const cargarIncidentes = async () => {
     try {
-      // TODO: Aquí debería importar getIncidentesForAdmin() del service
-      // Por ahora usa supabase directamente pero necesita refactoring
-      setIncidentes([])
+      const data = await getIncidentesForAdmin()
+      setIncidentes(data as unknown as Incidente[])
     } catch (error) {
       console.error('Error:', error)
       toast.error('Error al cargar incidentes')

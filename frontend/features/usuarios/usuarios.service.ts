@@ -100,7 +100,7 @@ export async function getTecnicos(): Promise<Tecnico[]> {
   const { data, error } = await supabase
     .from('tecnicos')
     .select('*')
-    .order('fecha_creacion', { ascending: false })
+    .order('id_tecnico', { ascending: false })
 
   if (error) throw error
   return data as Tecnico[]
@@ -222,6 +222,53 @@ export async function getCalificacionesTecnico(idTecnico: number): Promise<any[]
     ...cal,
     incidente_descripcion: cal.incidentes?.descripcion_problema,
   }))
+}
+
+/**
+ * Estadísticas del dashboard (admin) — usa adminClient para bypass RLS
+ */
+export async function getDashboardStats(): Promise<{
+  clientesActivos: number
+  tecnicosActivos: number
+}> {
+  const supabase = createAdminClient()
+
+  const [
+    { count: clientesActivos },
+    { count: tecnicosActivos },
+  ] = await Promise.all([
+    supabase.from('clientes').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
+    supabase.from('tecnicos').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
+  ])
+
+  return {
+    clientesActivos: clientesActivos ?? 0,
+    tecnicosActivos: tecnicosActivos ?? 0,
+  }
+}
+
+/**
+ * Obtener técnicos activos con detalle para modal de asignación
+ */
+export async function getTecnicosParaAsignacion(): Promise<{
+  id_tecnico: number
+  nombre: string
+  apellido: string
+  especialidad: string | null
+  calificacion_promedio: number | null
+  cantidad_trabajos_realizados: number
+  esta_activo: boolean
+}[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('tecnicos')
+    .select('id_tecnico, nombre, apellido, especialidad, calificacion_promedio, cantidad_trabajos_realizados, esta_activo')
+    .eq('esta_activo', true)
+    .order('calificacion_promedio', { ascending: false })
+
+  if (error) throw error
+  return data || []
 }
 
 // --- Escrituras: Técnicos ---

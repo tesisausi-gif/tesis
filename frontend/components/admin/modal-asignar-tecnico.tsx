@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/shared/lib/supabase/client'
+import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
+import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -29,10 +30,10 @@ interface Tecnico {
   id_tecnico: number
   nombre: string
   apellido: string
-  especialidad: string
-  calificacion_promedio: number
+  especialidad: string | null
+  calificacion_promedio: number | null
   cantidad_trabajos_realizados: number
-  esta_activo: number
+  esta_activo: boolean
 }
 
 interface ModalAsignarTecnicoProps {
@@ -50,7 +51,6 @@ export function ModalAsignarTecnico({
   categoriaIncidente,
   onAsignarExito,
 }: ModalAsignarTecnicoProps) {
-  const supabase = createClient()
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [cargando, setCargando] = useState(false)
   const [asignando, setAsignando] = useState(false)
@@ -64,14 +64,8 @@ export function ModalAsignarTecnico({
     const cargarTecnicos = async () => {
       setCargando(true)
       try {
-        const { data, error } = await supabase
-          .from('tecnicos')
-          .select('id_tecnico, nombre, apellido, especialidad, calificacion_promedio, cantidad_trabajos_realizados, esta_activo')
-          .eq('esta_activo', 1)
-          .order('calificacion_promedio', { ascending: false })
-
-        if (error) throw error
-        setTecnicos(data || [])
+        const data = await getTecnicosParaAsignacion()
+        setTecnicos(data as unknown as Tecnico[])
       } catch (error) {
         console.error('Error cargando técnicos:', error)
         toast.error('Error al cargar técnicos')
@@ -86,11 +80,12 @@ export function ModalAsignarTecnico({
   // Filtrar técnicos por búsqueda y especialidad
   const tecnicosFiltrados = tecnicos.filter((t) => {
     const matchNombre = `${t.nombre} ${t.apellido}`.toLowerCase().includes(busqueda.toLowerCase())
-    const matchEspecialidad = t.especialidad.toLowerCase().includes(busqueda.toLowerCase())
+    const especialidad = t.especialidad?.toLowerCase() ?? ''
+    const matchEspecialidad = especialidad.includes(busqueda.toLowerCase())
 
     // Si hay categoría, filtrar por especialidad compatible
     if (categoriaIncidente) {
-      const especialidadMatch = t.especialidad.toLowerCase().includes(categoriaIncidente.toLowerCase())
+      const especialidadMatch = especialidad.includes(categoriaIncidente.toLowerCase())
       return (matchNombre || matchEspecialidad) && especialidadMatch
     }
 
@@ -118,27 +113,16 @@ export function ModalAsignarTecnico({
 
     setAsignando(true)
     try {
-      // Crear asignación
-      const { error: assignError } = await supabase
-        .from('asignaciones_tecnico')
-        .insert([
-          {
-            id_incidente: idIncidente,
-            id_tecnico: tecnicoSeleccionado.id_tecnico,
-            fecha_asignacion: new Date().toISOString(),
-            estado_asignacion: 'PENDIENTE',
-          },
-        ])
+      const result = await crearAsignacion({
+        id_incidente: idIncidente,
+        id_tecnico: tecnicoSeleccionado.id_tecnico,
+        observaciones: null,
+      })
 
-      if (assignError) throw assignError
-
-      // Actualizar estado del incidente a en_proceso
-      const { error: updateError } = await supabase
-        .from('incidentes')
-        .update({ estado_actual: 'en_proceso' })
-        .eq('id_incidente', idIncidente)
-
-      if (updateError) throw updateError
+      if (!result.success) {
+        toast.error('Error al asignar técnico', { description: result.error })
+        return
+      }
 
       toast.success(`Técnico ${tecnicoSeleccionado.nombre} asignado exitosamente`)
       onAsignarExito()

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Users, Building2, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
+import { getDashboardStats } from '@/features/usuarios/usuarios.service'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
@@ -23,7 +24,6 @@ interface IncidenteReciente {
   descripcion_problema: string
   estado_actual: string
   fecha_registro: string
-  fecha_modificacion: string
   clientes: {
     nombre: string
     apellido: string
@@ -86,31 +86,22 @@ export default function DashboardPage() {
         i.estado_actual === 'resuelto'
       ).length || 0
 
-      // Cargar propiedades
+      // Cargar propiedades (inmuebles activos via browser client — RLS permite acceso a admin)
       const { count: propiedadesCount } = await supabase
         .from('inmuebles')
         .select('*', { count: 'exact', head: true })
-        .eq('esta_activo', 1)
+        .eq('esta_activo', true)
 
-      // Cargar clientes
-      const { count: clientesCount } = await supabase
-        .from('clientes')
-        .select('*', { count: 'exact', head: true })
-        .eq('esta_activo', 1)
-
-      // Cargar técnicos
-      const { count: tecnicosCount } = await supabase
-        .from('tecnicos')
-        .select('*', { count: 'exact', head: true })
-        .eq('esta_activo', 1)
+      // Cargar clientes y técnicos via server action (bypasa RLS)
+      const { clientesActivos, tecnicosActivos } = await getDashboardStats()
 
       setStats({
         incidentesPendientes: pendientes,
         incidentesEnProceso: enProceso,
         incidentesResueltos: resueltos,
         propiedades: propiedadesCount || 0,
-        clientes: clientesCount || 0,
-        tecnicos: tecnicosCount || 0,
+        clientes: clientesActivos,
+        tecnicos: tecnicosActivos,
       })
     } catch (error) {
       console.error('Error al cargar stats:', error)
@@ -121,7 +112,7 @@ export default function DashboardPage() {
 
   const cargarActividad = async () => {
     try {
-      // Cargar incidentes recientes (últimos 5 modificados o creados)
+      // Cargar incidentes recientes (últimos 5 por fecha de registro)
       const { data: incidentes } = await supabase
         .from('incidentes')
         .select(`
@@ -129,11 +120,10 @@ export default function DashboardPage() {
           descripcion_problema,
           estado_actual,
           fecha_registro,
-          fecha_modificacion,
           clientes:id_cliente_reporta (nombre, apellido),
           inmuebles:id_propiedad (calle, altura)
         `)
-        .order('fecha_modificacion', { ascending: false })
+        .order('fecha_registro', { ascending: false })
         .limit(5)
 
       if (incidentes) {
@@ -343,7 +333,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="text-xs text-muted-foreground whitespace-nowrap">
-                      {formatDistanceToNow(new Date(incidente.fecha_modificacion), {
+                      {formatDistanceToNow(new Date(incidente.fecha_registro), {
                         addSuffix: true,
                         locale: es
                       })}
