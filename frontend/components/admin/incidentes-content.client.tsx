@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle, Wrench } from 'lucide-react'
-import { estadoIncidenteColors, prioridadColors, EstadoIncidente, NivelPrioridad, CategoriaIncidente } from '@/shared/types'
+import { estadoIncidenteColors, estadoIncidenteLabels, prioridadColors, EstadoIncidente, NivelPrioridad, CategoriaIncidente } from '@/shared/types'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { ModalAsignarTecnico } from '@/components/admin/modal-asignar-tecnico'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
@@ -129,10 +129,12 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                   {incidente.categoria || '-'}
                 </TableCell>
                 <TableCell>
-                  {incidente.nivel_prioridad && (
+                  {incidente.nivel_prioridad ? (
                     <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
                       {incidente.nivel_prioridad}
                     </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-gray-400">Sin asignar</Badge>
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
@@ -254,7 +256,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               <SelectContent>
                 <SelectItem value="todos">Todos los estados</SelectItem>
                 {estados.map((estado) => (
-                  <SelectItem key={estado} value={estado}>{estado}</SelectItem>
+                  <SelectItem key={estado} value={estado}>{estadoIncidenteLabels[estado as EstadoIncidente] || estado}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -282,21 +284,21 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               <AlertCircle className="h-4 w-4" />
               Pendientes
               <Badge variant="secondary" className="ml-2">
-                {incidentes.filter(i => i.estado_actual === 'pendiente').length}
+                {incidentesFiltrados.filter(i => i.estado_actual === 'pendiente').length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="en_proceso" className="flex items-center gap-2">
               <Wrench className="h-4 w-4" />
               En Proceso
               <Badge variant="secondary" className="ml-2">
-                {incidentes.filter(i => i.estado_actual === 'en_proceso').length}
+                {incidentesFiltrados.filter(i => i.estado_actual === 'en_proceso').length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="resuelto" className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />
               Resueltos
               <Badge variant="secondary" className="ml-2">
-                {incidentes.filter(i => i.estado_actual === 'resuelto').length}
+                {incidentesFiltrados.filter(i => i.estado_actual === 'resuelto').length}
               </Badge>
             </TabsTrigger>
           </TabsList>
@@ -314,7 +316,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {renderTablaIncidentes(incidentes.filter(i => i.estado_actual === 'pendiente'))}
+                {renderTablaIncidentes(incidentesFiltrados.filter(i => i.estado_actual === 'pendiente'))}
               </CardContent>
             </Card>
           </TabsContent>
@@ -332,7 +334,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {renderTablaIncidentes(incidentes.filter(i => i.estado_actual === 'en_proceso'))}
+                {renderTablaIncidentes(incidentesFiltrados.filter(i => i.estado_actual === 'en_proceso'))}
               </CardContent>
             </Card>
           </TabsContent>
@@ -350,7 +352,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {renderTablaIncidentes(incidentes.filter(i => i.estado_actual === 'resuelto'))}
+                {renderTablaIncidentes(incidentesFiltrados.filter(i => i.estado_actual === 'resuelto'))}
               </CardContent>
             </Card>
           </TabsContent>

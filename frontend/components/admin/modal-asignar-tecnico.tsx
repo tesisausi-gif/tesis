@@ -68,19 +68,24 @@ export function ModalAsignarTecnico({
     cargarTecnicos()
   }, [open])
 
-  // Filtrar técnicos por búsqueda y especialidad
-  const tecnicosFiltrados = tecnicos.filter((t) => {
-    const matchNombre = `${t.nombre} ${t.apellido}`.toLowerCase().includes(busqueda.toLowerCase())
-    const matchEspecialidad = (t.especialidad || '').toLowerCase().includes(busqueda.toLowerCase())
-
-    // Si hay categoría, filtrar por especialidad compatible
-    if (categoriaIncidente) {
-      const especialidadMatch = (t.especialidad || '').toLowerCase().includes(categoriaIncidente.toLowerCase())
-      return (matchNombre || matchEspecialidad) && especialidadMatch
-    }
-
-    return matchNombre || matchEspecialidad
-  })
+  // Filtrar técnicos por búsqueda (sin filtrar por categoría para no ocultar técnicos)
+  const tecnicosFiltrados = tecnicos
+    .filter((t) => {
+      if (!busqueda) return true
+      const matchNombre = `${t.nombre} ${t.apellido}`.toLowerCase().includes(busqueda.toLowerCase())
+      const matchEspecialidad = (t.especialidad || '').toLowerCase().includes(busqueda.toLowerCase())
+      return matchNombre || matchEspecialidad
+    })
+    .sort((a, b) => {
+      // Priorizar técnicos con especialidad compatible con la categoría
+      if (categoriaIncidente) {
+        const aMatch = (a.especialidad || '').toLowerCase().includes(categoriaIncidente.toLowerCase()) ? 1 : 0
+        const bMatch = (b.especialidad || '').toLowerCase().includes(categoriaIncidente.toLowerCase()) ? 1 : 0
+        if (aMatch !== bMatch) return bMatch - aMatch
+      }
+      // Luego por calificación
+      return (b.calificacion_promedio ?? 0) - (a.calificacion_promedio ?? 0)
+    })
 
   // Renderizar calificación en estrellas
   const renderStars = (rating: number) => {

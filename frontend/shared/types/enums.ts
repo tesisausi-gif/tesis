@@ -90,6 +90,13 @@ export enum UserRole {
   CLIENTE = 'cliente',
 }
 
+// Mapeo de labels para estados de incidentes
+export const estadoIncidenteLabels: Record<EstadoIncidente, string> = {
+  [EstadoIncidente.PENDIENTE]: 'Pendiente',
+  [EstadoIncidente.EN_PROCESO]: 'En Proceso',
+  [EstadoIncidente.RESUELTO]: 'Resuelto',
+}
+
 // Mapeo de colores para estados de incidentes
 export const estadoIncidenteColors: Record<EstadoIncidente, string> = {
   [EstadoIncidente.PENDIENTE]: 'bg-blue-100 text-blue-800',

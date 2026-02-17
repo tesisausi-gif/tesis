@@ -176,6 +176,95 @@ export async function getTimelineData(idIncidente: number) {
   }
 }
 
+/**
+ * Obtener estadísticas para el dashboard admin
+ */
+export async function getDashboardStats() {
+  const supabase = await createClient()
+
+  const [incidentes, propiedades, clientes, tecnicos] = await Promise.all([
+    supabase.from('incidentes').select('estado_actual'),
+    supabase.from('inmuebles').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
+    supabase.from('clientes').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
+    supabase.from('tecnicos').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
+  ])
+
+  const incidentesData = incidentes.data || []
+
+  return {
+    incidentesPendientes: incidentesData.filter(i => i.estado_actual === 'pendiente').length,
+    incidentesEnProceso: incidentesData.filter(i => i.estado_actual === 'en_proceso').length,
+    incidentesResueltos: incidentesData.filter(i => i.estado_actual === 'resuelto').length,
+    propiedades: propiedades.count || 0,
+    clientes: clientes.count || 0,
+    tecnicos: tecnicos.count || 0,
+  }
+}
+
+/**
+ * Obtener actividad reciente para el dashboard admin
+ */
+export async function getDashboardActividad() {
+  const supabase = await createClient()
+
+  const [incidentes, asignaciones] = await Promise.all([
+    supabase
+      .from('incidentes')
+      .select(`
+        id_incidente,
+        descripcion_problema,
+        estado_actual,
+        fecha_registro,
+        clientes:id_cliente_reporta (nombre, apellido),
+        inmuebles:id_propiedad (calle, altura)
+      `)
+      .order('fecha_registro', { ascending: false })
+      .limit(5),
+    supabase
+      .from('asignaciones_tecnico')
+      .select(`
+        id_asignacion,
+        fecha_asignacion,
+        fecha_creacion,
+        tecnicos (nombre, apellido),
+        incidentes (id_incidente, descripcion_problema)
+      `)
+      .order('fecha_creacion', { ascending: false })
+      .limit(5),
+  ])
+
+  return {
+    incidentesRecientes: incidentes.data || [],
+    asignacionesRecientes: asignaciones.data || [],
+  }
+}
+
+/**
+ * Obtener incidentes de un inmueble específico
+ */
+export async function getIncidentesByInmueble(idInmueble: number) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('incidentes')
+    .select(`
+      id_incidente,
+      descripcion_problema,
+      estado_actual,
+      nivel_prioridad,
+      categoria,
+      fecha_registro,
+      asignaciones_tecnico (
+        tecnicos (nombre, apellido)
+      )
+    `)
+    .eq('id_propiedad', idInmueble)
+    .order('fecha_registro', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
 // --- Escrituras ---
 
 export async function actualizarIncidente(
