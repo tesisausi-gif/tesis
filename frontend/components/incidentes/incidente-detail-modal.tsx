@@ -230,14 +230,49 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
     // Asignaciones
     asignacionesData?.forEach((asig: any) => {
+      const tecnicoNombre = `${asig.tecnicos?.nombre || ''} ${asig.tecnicos?.apellido || ''}`.trim()
+
+      let titulo: string
+      let color: string
+
+      switch (asig.estado_asignacion) {
+        case 'pendiente':
+          titulo = 'Asignación Pendiente de Aprobación'
+          color = 'bg-yellow-500'
+          break
+        case 'aceptada':
+          titulo = 'Técnico Asignado'
+          color = 'bg-purple-500'
+          break
+        case 'rechazada':
+          titulo = 'Asignación Rechazada'
+          color = 'bg-red-500'
+          break
+        case 'en_curso':
+          titulo = 'Trabajo en Curso'
+          color = 'bg-blue-500'
+          break
+        case 'completada':
+          titulo = 'Trabajo Completado'
+          color = 'bg-green-500'
+          break
+        default:
+          titulo = 'Asignación de Técnico'
+          color = 'bg-purple-500'
+      }
+
+      const descripcion = asig.observaciones
+        ? `${tecnicoNombre} — ${asig.observaciones}`
+        : tecnicoNombre
+
       timelineEvents.push({
         id: `asig-${asig.id_asignacion}`,
         tipo: 'asignacion',
-        titulo: `Técnico Asignado`,
-        descripcion: `${asig.tecnicos?.nombre} ${asig.tecnicos?.apellido} - Estado: ${asig.estado_asignacion}`,
+        titulo,
+        descripcion,
         fecha: asig.fecha_asignacion,
         icono: <Wrench className="h-4 w-4" />,
-        color: 'bg-purple-500',
+        color,
       })
     })
 

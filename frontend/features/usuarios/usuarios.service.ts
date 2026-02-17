@@ -100,7 +100,7 @@ export async function getTecnicos(): Promise<Tecnico[]> {
   const { data, error } = await supabase
     .from('tecnicos')
     .select('*')
-    .order('fecha_creacion', { ascending: false })
+    .order('id_tecnico', { ascending: false })
 
   if (error) throw error
   return data as Tecnico[]
