@@ -3,10 +3,9 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { MapPin, Calendar, Eye, ClipboardList, Clock } from 'lucide-react'
+import { MapPin, Calendar, ClipboardList, Clock } from 'lucide-react'
 import { prioridadColors, NivelPrioridad } from '@/shared/types'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
@@ -160,26 +159,20 @@ export function TrabajosContent({ asignaciones }: TrabajosContentProps) {
                     </p>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yy', { locale: es })}
+                  <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yy', { locale: es })}
+                    </span>
+                    {asignacion.fecha_visita_programada && (
+                      <span className="flex items-center gap-1 text-blue-600">
+                        <Clock className="h-3 w-3" />
+                        Visita: {format(new Date(asignacion.fecha_visita_programada), 'dd/MM HH:mm', { locale: es })}
                       </span>
-                      {asignacion.fecha_visita_programada && (
-                        <span className="flex items-center gap-1 text-blue-600">
-                          <Clock className="h-3 w-3" />
-                          Visita: {format(new Date(asignacion.fecha_visita_programada), 'dd/MM HH:mm', { locale: es })}
-                        </span>
-                      )}
-                      {incidente?.categoria && (
-                        <span>{incidente.categoria}</span>
-                      )}
-                    </div>
-                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver
-                    </Button>
+                    )}
+                    {incidente?.categoria && (
+                      <span>{incidente.categoria}</span>
+                    )}
                   </div>
                 </CardContent>
               </Card>

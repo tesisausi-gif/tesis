@@ -1,12 +1,13 @@
 'use client'
 
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, ClipboardList, User, LogOut, Wrench, FileText, Search } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { getCountAsignacionesPendientes } from '@/features/asignaciones/asignaciones.service'
 
 const navItems = [
   {
@@ -18,6 +19,7 @@ const navItems = [
     title: 'Asignación',
     icon: Search,
     href: '/tecnico/disponibles',
+    badgeKey: 'pendientes',
   },
   {
     title: 'Trabajos',
@@ -40,6 +42,13 @@ function TecnicoNavComponent() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const [pendientesCount, setPendientesCount] = useState(0)
+
+  useEffect(() => {
+    getCountAsignacionesPendientes()
+      .then(setPendientesCount)
+      .catch(() => {})
+  }, [pathname])
 
   const handleLogout = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
@@ -70,16 +79,24 @@ function TecnicoNavComponent() {
         <div className="flex justify-around">
           {navItems.map((item) => {
             const isActive = pathname === item.href
+            const badgeCount = item.badgeKey === 'pendientes' ? pendientesCount : 0
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 py-3 px-4 transition-colors ${isActive
+                className={`relative flex flex-col items-center gap-1 py-3 px-4 transition-colors ${isActive
                   ? 'text-blue-600'
                   : 'text-gray-600 hover:text-blue-600'
                   }`}
               >
-                <item.icon className="h-5 w-5" />
+                <div className="relative">
+                  <item.icon className="h-5 w-5" />
+                  {badgeCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {badgeCount > 9 ? '9+' : badgeCount}
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs font-medium">{item.title}</span>
               </Link>
             )

@@ -450,7 +450,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="detalles">Detalles</TabsTrigger>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
-              {rol === 'tecnico' && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
+              {rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
               {rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
               {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
             </TabsList>
@@ -771,8 +771,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
               </TabsContent>
             )}
 
-            {/* Tab Inspecciones (para técnicos) */}
-            {rol === 'tecnico' && incidente && (
+            {/* Tab Inspecciones (para técnicos con asignación confirmada) */}
+            {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
               <TabsContent value="inspecciones" className="mt-4">
                 <InspeccionesList
                   incidenteId={incidente.id_incidente}

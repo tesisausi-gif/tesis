@@ -388,6 +388,31 @@ export async function crearSolicitudRegistro(data: {
   }
 }
 
+/**
+ * Actualizar perfil propio del técnico (telefono, direccion)
+ */
+export async function actualizarPerfilTecnico(
+  idTecnico: number,
+  data: {
+    telefono: string | null
+    direccion: string | null
+  }
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('tecnicos')
+      .update(data)
+      .eq('id_tecnico', idTecnico)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al actualizar perfil' }
+  }
+}
+
 // --- Escrituras: Especialidades ---
 
 export async function crearEspecialidad(data: {

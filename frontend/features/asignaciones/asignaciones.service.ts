@@ -82,6 +82,23 @@ export async function getAsignacionesPendientes(): Promise<Asignacion[]> {
 }
 
 /**
+ * Obtener cantidad de asignaciones pendientes del técnico actual
+ */
+export async function getCountAsignacionesPendientes(): Promise<number> {
+  const supabase = await createClient()
+  const idTecnico = await requireTecnicoId()
+
+  const { count, error } = await supabase
+    .from('asignaciones_tecnico')
+    .select('id_asignacion', { count: 'exact', head: true })
+    .eq('id_tecnico', idTecnico)
+    .eq('estado_asignacion', 'pendiente')
+
+  if (error) return 0
+  return count || 0
+}
+
+/**
  * Obtener asignaciones activas del técnico actual (aceptadas, en_curso, completadas)
  */
 export async function getAsignacionesActivas(): Promise<AsignacionTecnico[]> {
