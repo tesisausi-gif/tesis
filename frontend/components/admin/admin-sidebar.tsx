@@ -92,9 +92,15 @@ export function AdminSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-lg font-bold px-4 py-4">
-            Sistema ISBA
-          </SidebarGroupLabel>
+          <div className="px-4 py-6 flex items-center gap-3">
+            <div className="bg-primary rounded-lg h-8 w-8 flex items-center justify-center text-primary-foreground">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm leading-none">Sistema ISBA</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1 font-medium">Panel Administrativo</p>
+            </div>
+          </div>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (

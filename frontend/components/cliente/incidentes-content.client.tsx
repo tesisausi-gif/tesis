@@ -8,8 +8,13 @@ import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Plus, AlertCircle, Eye, Clock } from 'lucide-react'
-import { estadoIncidenteColors, prioridadColors, EstadoIncidente, NivelPrioridad } from '@/shared/types'
+import {
+  getEstadoIncidenteColor,
+  getEstadoIncidenteLabel,
+  getPrioridadColor,
+} from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
+import { EstadoIncidente, NivelPrioridad } from '@/shared/types/enums'
 import type { Incidente } from '@/features/incidentes/incidentes.types'
 
 interface IncidentesContentProps {
@@ -20,13 +25,7 @@ export function IncidentesContent({ incidentes }: IncidentesContentProps) {
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
 
-  const getEstadoBadgeColor = (estado: string) => {
-    return estadoIncidenteColors[estado as EstadoIncidente] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getPrioridadBadgeColor = (prioridad: string) => {
-    return prioridadColors[prioridad as NivelPrioridad] || 'bg-gray-100 text-gray-800'
-  }
+  // Helpers locales eliminados
 
   const abrirModal = (id: number) => {
     setIncidenteSeleccionado(id)
@@ -125,11 +124,11 @@ export function IncidentesContent({ incidentes }: IncidentesContentProps) {
                       </CardDescription>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge className={getEstadoBadgeColor(incidente.estado_actual)}>
-                        {incidente.estado_actual}
+                      <Badge variant="outline" className={getEstadoIncidenteColor(incidente.estado_actual)}>
+                        {getEstadoIncidenteLabel(incidente.estado_actual)}
                       </Badge>
                       {incidente.nivel_prioridad && (
-                        <Badge className={getPrioridadBadgeColor(incidente.nivel_prioridad)}>
+                        <Badge variant="outline" className={getPrioridadColor(incidente.nivel_prioridad)}>
                           {incidente.nivel_prioridad}
                         </Badge>
                       )}

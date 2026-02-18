@@ -10,6 +10,10 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { Check, X, Eye, Calendar, DollarSign, FileText } from 'lucide-react'
+import {
+  getEstadoPresupuestoColor,
+  getEstadoPresupuestoLabel,
+} from '@/shared/utils/colors'
 import { aprobarPresupuestoCliente, rechazarPresupuestoCliente } from '@/features/presupuestos/presupuestos.service'
 import { EstadoPresupuesto } from '@/shared/types/enums'
 
@@ -38,14 +42,7 @@ interface PresupuestosClienteProps {
   onPresupuestoActualizado?: () => void
 }
 
-const estadoColors: Record<string, string> = {
-  borrador: 'bg-gray-100 text-gray-800',
-  enviado: 'bg-blue-100 text-blue-800',
-  aprobado_admin: 'bg-yellow-100 text-yellow-800',
-  aprobado: 'bg-green-100 text-green-800',
-  rechazado: 'bg-red-100 text-red-800',
-  vencido: 'bg-orange-100 text-orange-800',
-}
+// Mapeos locales eliminados, se usan centralizados en colors.ts
 
 export function PresupuestosClienteList({
   presupuestos,
@@ -126,7 +123,7 @@ export function PresupuestosClienteList({
           <div className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-amber-600" />
             <h3 className="font-semibold text-lg">Pendientes de Aprobación</h3>
-            <Badge className="bg-amber-100 text-amber-800">{presupuestosActivos.length}</Badge>
+            <Badge variant="outline" className="border-amber-200 bg-amber-100 text-amber-800">{presupuestosActivos.length}</Badge>
           </div>
 
           {presupuestosActivos.map((presupuesto, index) => (
@@ -268,8 +265,8 @@ export function PresupuestosClienteList({
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">Presupuesto #{presupuesto.id_presupuesto}</p>
-                      <Badge className={estadoColors[presupuesto.estado_presupuesto]}>
-                        {presupuesto.estado_presupuesto}
+                      <Badge variant="outline" className={getEstadoPresupuestoColor(presupuesto.estado_presupuesto)}>
+                        {getEstadoPresupuestoLabel(presupuesto.estado_presupuesto)}
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600">

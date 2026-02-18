@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle, Wrench } from 'lucide-react'
-import { estadoIncidenteColors, estadoIncidenteLabels, prioridadColors, EstadoIncidente, NivelPrioridad, CategoriaIncidente } from '@/shared/types'
+import { EstadoIncidente, CategoriaIncidente } from '@/shared/types'
+import { getEstadoIncidenteColor, getEstadoIncidenteLabel, getPrioridadColor } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { ModalAsignarTecnico } from '@/components/admin/modal-asignar-tecnico'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
@@ -55,14 +56,6 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
 
     return true
   })
-
-  const getEstadoColor = (estado: string) => {
-    return estadoIncidenteColors[estado as EstadoIncidente] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getPrioridadColor = (prioridad: string) => {
-    return prioridadColors[prioridad as NivelPrioridad] || 'bg-gray-100 text-gray-800'
-  }
 
   const abrirModal = (id: number) => {
     setIncidenteSeleccionado(id)
@@ -130,7 +123,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 </TableCell>
                 <TableCell>
                   {incidente.nivel_prioridad ? (
-                    <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
+                    <Badge variant="outline" className={getPrioridadColor(incidente.nivel_prioridad)}>
                       {incidente.nivel_prioridad}
                     </Badge>
                   ) : (
@@ -256,7 +249,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               <SelectContent>
                 <SelectItem value="todos">Todos los estados</SelectItem>
                 {estados.map((estado) => (
-                  <SelectItem key={estado} value={estado}>{estadoIncidenteLabels[estado as EstadoIncidente] || estado}</SelectItem>
+                  <SelectItem key={estado} value={estado}>{getEstadoIncidenteLabel(estado)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

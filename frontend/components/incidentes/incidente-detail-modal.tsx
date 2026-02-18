@@ -35,6 +35,13 @@ import {
   Save,
 } from 'lucide-react'
 import { CategoriaIncidente, EstadoIncidente } from '@/shared/types/enums'
+import {
+  getEstadoIncidenteColor,
+  getEstadoIncidenteLabel,
+  getPrioridadColor,
+  ESTADO_ASIGNACION_LABELS,
+  ESTADO_INCIDENTE_LABELS,
+} from '@/shared/utils/colors'
 import { InspeccionesList } from './inspecciones-list'
 import { CalificacionTecnico } from '@/components/cliente/calificacion-tecnico'
 import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
@@ -107,41 +114,8 @@ interface Props {
   rol?: 'admin' | 'cliente' | 'tecnico'
 }
 
-// Estados simplificados
-const ESTADOS_INCIDENTE = [
-  'pendiente',
-  'en_proceso',
-  'resuelto',
-]
-
-const ESTADOS_LABELS: Record<string, string> = {
-  'pendiente': 'Pendiente',
-  'en_proceso': 'En Proceso',
-  'resuelto': 'Resuelto',
-}
-
-const ESTADO_COLORS: Record<string, string> = {
-  'pendiente': 'bg-yellow-100 text-yellow-800',
-  'en_proceso': 'bg-blue-100 text-blue-800',
-  'resuelto': 'bg-green-100 text-green-800',
-}
-
+// Constantes centralizadas
 const PRIORIDADES = ['Baja', 'Media', 'Alta', 'Urgente']
-
-const ESTADO_ASIGNACION_LABELS: Record<string, string> = {
-  'pendiente': 'Pendiente',
-  'aceptada': 'Aceptada',
-  'rechazada': 'Rechazada',
-  'en_curso': 'En Curso',
-  'completada': 'Completada',
-}
-
-const PRIORIDAD_COLORS: Record<string, string> = {
-  'Baja': 'bg-green-100 text-green-800',
-  'Media': 'bg-yellow-100 text-yellow-800',
-  'Alta': 'bg-orange-100 text-orange-800',
-  'Urgente': 'bg-red-100 text-red-800',
-}
 
 export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin' }: Props) {
   const [loading, setLoading] = useState(true)
@@ -414,17 +388,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     return ubicacion ? `${partes}, ${ubicacion}` : partes
   }
 
-  const getEstadoColor = (estado: string) => {
-    return ESTADO_COLORS[estado] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getPrioridadColor = (prioridad: string) => {
-    return PRIORIDAD_COLORS[prioridad] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getEstadoLabel = (estado: string) => {
-    return ESTADOS_LABELS[estado] || estado
-  }
+// Helpers locales eliminados, se usan los de @/shared/utils/colors
 
   if (!incidenteId) return null
 
@@ -459,11 +423,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             <TabsContent value="detalles" className="space-y-4 mt-4">
               {/* Estado y Prioridad */}
               <div className="flex flex-wrap gap-2">
-                <Badge className={getEstadoColor(incidente.estado_actual)}>
-                  {getEstadoLabel(incidente.estado_actual)}
+                <Badge variant="outline" className={getEstadoIncidenteColor(incidente.estado_actual)}>
+                  {getEstadoIncidenteLabel(incidente.estado_actual)}
                 </Badge>
                 {incidente.nivel_prioridad && (
-                  <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
+                  <Badge variant="outline" className={getPrioridadColor(incidente.nivel_prioridad)}>
                     Prioridad: {incidente.nivel_prioridad}
                   </Badge>
                 )}
@@ -639,9 +603,9 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           <SelectValue placeholder="Seleccionar estado" />
                         </SelectTrigger>
                         <SelectContent>
-                          {ESTADOS_INCIDENTE.map((estado) => (
+                          {Object.keys(ESTADO_INCIDENTE_LABELS).map((estado) => (
                             <SelectItem key={estado} value={estado}>
-                              {ESTADOS_LABELS[estado] || estado}
+                              {getEstadoIncidenteLabel(estado)}
                             </SelectItem>
                           ))}
                         </SelectContent>

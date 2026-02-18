@@ -6,41 +6,26 @@ import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { MapPin, Calendar, ClipboardList, Clock } from 'lucide-react'
-import { prioridadColors, NivelPrioridad } from '@/shared/types'
+import {
+  getEstadoAsignacionColor,
+  getEstadoAsignacionLabel,
+  getPrioridadColor,
+} from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
+import { NivelPrioridad } from '@/shared/types/enums'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
 
 interface TrabajosContentProps {
   asignaciones: AsignacionTecnico[]
 }
 
-const estadoAsignacionColors: Record<string, string> = {
-  'pendiente': 'bg-yellow-100 text-yellow-800',
-  'aceptada': 'bg-blue-100 text-blue-800',
-  'rechazada': 'bg-red-100 text-red-800',
-  'en_curso': 'bg-orange-100 text-orange-800',
-  'completada': 'bg-green-100 text-green-800',
-}
-
-const estadoAsignacionLabels: Record<string, string> = {
-  'pendiente': 'Pendiente',
-  'aceptada': 'Aceptada',
-  'rechazada': 'Rechazada',
-  'en_curso': 'En Curso',
-  'completada': 'Completada',
-}
+// Mapeos locales eliminados, se usan centralizados en colors.ts
 
 export function TrabajosContent({ asignaciones }: TrabajosContentProps) {
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
 
-  const getEstadoAsignacionColor = (estado: string) => {
-    return estadoAsignacionColors[estado] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getPrioridadColor = (prioridad: string) => {
-    return prioridadColors[prioridad as NivelPrioridad] || 'bg-gray-100 text-gray-800'
-  }
+  // Helpers locales eliminados
 
   const abrirModal = (id: number) => {
     setIncidenteSeleccionado(id)
@@ -141,11 +126,11 @@ export function TrabajosContent({ asignaciones }: TrabajosContentProps) {
                       )}
                     </div>
                     <div className="flex flex-col gap-1 items-end flex-shrink-0">
-                      <Badge className={getEstadoAsignacionColor(asignacion.estado_asignacion)}>
-                        {estadoAsignacionLabels[asignacion.estado_asignacion] || asignacion.estado_asignacion}
+                      <Badge variant="outline" className={getEstadoAsignacionColor(asignacion.estado_asignacion)}>
+                        {getEstadoAsignacionLabel(asignacion.estado_asignacion)}
                       </Badge>
                       {incidente?.nivel_prioridad && (
-                        <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
+                        <Badge variant="outline" className={getPrioridadColor(incidente.nivel_prioridad)}>
                           {incidente.nivel_prioridad}
                         </Badge>
                       )}
