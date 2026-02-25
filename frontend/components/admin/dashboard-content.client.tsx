@@ -1,11 +1,15 @@
 'use client'
 
+import { useEffect, useState, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Users, Building2, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight } from 'lucide-react'
+import { Users, Building2, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight, Wifi, WifiOff } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
+import { toast } from 'sonner'
+import { createClient } from '@/shared/lib/supabase/client'
+import { getDashboardStats, getDashboardActividad } from '@/features/incidentes/incidentes.service'
 
 interface Stats {
   incidentesPendientes: number
@@ -69,14 +73,86 @@ const getEstadoBadge = (estado: string) => {
   )
 }
 
-export function DashboardContent({ stats, incidentesRecientes, asignacionesRecientes }: DashboardContentProps) {
+export function DashboardContent({ stats: initialStats, incidentesRecientes: initialIncidentes, asignacionesRecientes: initialAsignaciones }: DashboardContentProps) {
+  const [stats, setStats] = useState<Stats>(initialStats)
+  const [incidentesRecientes, setIncidentesRecientes] = useState<IncidenteReciente[]>(initialIncidentes)
+  const [asignacionesRecientes, setAsignacionesRecientes] = useState<AsignacionReciente[]>(initialAsignaciones)
+  const [conectado, setConectado] = useState(false)
+  const refreshingRef = useRef(false)
+
+  const refrescarDatos = async () => {
+    if (refreshingRef.current) return
+    refreshingRef.current = true
+    try {
+      const [nuevosStats, nuevaActividad] = await Promise.all([
+        getDashboardStats(),
+        getDashboardActividad(),
+      ])
+      setStats(nuevosStats)
+      setIncidentesRecientes(nuevaActividad.incidentesRecientes as unknown as IncidenteReciente[])
+      setAsignacionesRecientes(nuevaActividad.asignacionesRecientes as unknown as AsignacionReciente[])
+    } catch {
+      // silencioso: no interrumpir la UX si falla el refresh
+    } finally {
+      refreshingRef.current = false
+    }
+  }
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    // Canal único para todas las suscripciones del dashboard
+    const canal = supabase
+      .channel('dashboard-admin')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'incidentes' },
+        (payload) => {
+          toast.info('Nuevo incidente reportado', {
+            description: `Incidente #${payload.new.id_incidente} ingresado al sistema`,
+            duration: 5000,
+          })
+          refrescarDatos()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'incidentes' },
+        () => {
+          refrescarDatos()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'asignaciones_tecnico' },
+        () => {
+          refrescarDatos()
+        }
+      )
+      .subscribe((status) => {
+        setConectado(status === 'SUBSCRIBED')
+      })
+
+    return () => {
+      supabase.removeChannel(canal)
+    }
+  }, [])
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
-          Bienvenido al sistema de gestión de incidentes
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Bienvenido al sistema de gestión de incidentes
+          </p>
+        </div>
+        <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-full border ${conectado ? 'text-green-700 border-green-200 bg-green-50' : 'text-gray-400 border-gray-200 bg-gray-50'}`}>
+          {conectado
+            ? <><Wifi className="h-3 w-3" /> En vivo</>
+            : <><WifiOff className="h-3 w-3" /> Conectando...</>
+          }
+        </div>
       </div>
 
       {/* Stats Cards - Primera fila: Incidentes */}
