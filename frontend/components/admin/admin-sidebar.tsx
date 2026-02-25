@@ -15,6 +15,7 @@ import {
   LogOut,
   UserCog,
   BarChart2,
+  Download,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -80,6 +81,11 @@ const menuItems = [
     title: 'Métricas',
     icon: BarChart2,
     href: '/dashboard/metricas',
+  },
+  {
+    title: 'Exportar',
+    icon: Download,
+    href: '/dashboard/exportar',
   },
 ]
 
