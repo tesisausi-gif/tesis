@@ -83,13 +83,13 @@ function ClienteNavComponent() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 py-3 px-4 transition-colors ${isActive
+                className={`flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1 transition-colors ${isActive
                   ? 'text-blue-600'
                   : 'text-gray-600 hover:text-blue-600'
                   }`}
               >
-                <item.icon className="h-5 w-5" />
-                <span className="text-xs font-medium">{item.title}</span>
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <span className="text-[10px] font-medium truncate w-full text-center leading-tight">{item.title}</span>
               </Link>
             )
           })}
