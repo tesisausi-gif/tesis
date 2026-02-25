@@ -12,7 +12,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle, Wrench } from 'lucide-react'
 import { EstadoIncidente, CategoriaIncidente } from '@/shared/types'
-import { getEstadoIncidenteColor, getEstadoIncidenteLabel, getPrioridadColor } from '@/shared/utils/colors'
+import { getEstadoIncidenteLabel, getPrioridadColor } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { ModalAsignarTecnico } from '@/components/admin/modal-asignar-tecnico'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
@@ -123,7 +123,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 </TableCell>
                 <TableCell>
                   {incidente.nivel_prioridad ? (
-                    <Badge variant="outline" className={getPrioridadColor(incidente.nivel_prioridad)}>
+                    <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
                       {incidente.nivel_prioridad}
                     </Badge>
                   ) : (
