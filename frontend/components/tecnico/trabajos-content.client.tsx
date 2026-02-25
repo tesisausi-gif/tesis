@@ -144,6 +144,17 @@ export function TrabajosContent({ asignaciones }: TrabajosContentProps) {
                     </p>
                   )}
 
+                  {incidente?.clientes && (
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <span>
+                        Cliente: {incidente.clientes.nombre} {incidente.clientes.apellido}
+                      </span>
+                      {incidente.clientes.telefono && (
+                        <span>• Tel: {incidente.clientes.telefono}</span>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />

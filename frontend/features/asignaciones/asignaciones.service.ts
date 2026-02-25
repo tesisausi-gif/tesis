@@ -128,6 +128,11 @@ export async function getAsignacionesActivas(): Promise<AsignacionTecnico[]> {
           dpto,
           barrio,
           localidad
+        ),
+        clientes:id_cliente_reporta (
+          nombre,
+          apellido,
+          telefono
         )
       )
     `)

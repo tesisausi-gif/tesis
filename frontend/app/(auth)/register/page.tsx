@@ -64,7 +64,7 @@ function RegisterPageContent() {
   const handleClienteRegister = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!clienteTelefono || !clienteDNI) {
+    if (!clienteDNI) {
       toast.error('Por favor completa todos los campos obligatorios')
       return
     }
@@ -269,13 +269,12 @@ function RegisterPageContent() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cliente-telefono">Teléfono *</Label>
+                  <Label htmlFor="cliente-telefono">Teléfono</Label>
                   <Input
                     id="cliente-telefono"
                     type="tel"
                     value={clienteTelefono}
                     onChange={(e) => setClienteTelefono(e.target.value)}
-                    required
                     disabled={loading}
                     placeholder="+54 9 11 1234-5678"
                   />

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { User, Mail, Phone, Hash, Settings, X, Save } from 'lucide-react'
+import { User, Mail, Phone, Hash, Settings, X, Save, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Cliente {
@@ -36,6 +36,12 @@ export default function ClientePerfil() {
   const [apellido, setApellido] = useState('')
   const [dni, setDni] = useState('')
   const [telefono, setTelefono] = useState('')
+
+  // Password change state
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [savingPassword, setSavingPassword] = useState(false)
 
   const supabase = createClient()
 
@@ -149,6 +155,37 @@ export default function ClientePerfil() {
         </div>
       </div>
     )
+  }
+
+  const handleCambiarPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (newPassword.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden')
+      return
+    }
+
+    setSavingPassword(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) {
+        toast.error('Error al cambiar contraseña', { description: error.message })
+        return
+      }
+      toast.success('Contraseña actualizada exitosamente')
+      setChangingPassword(false)
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch {
+      toast.error('Error inesperado al cambiar contraseña')
+    } finally {
+      setSavingPassword(false)
+    }
   }
 
   if (!user || !cliente) {
@@ -315,6 +352,67 @@ export default function ClientePerfil() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Cambiar Contraseña */}
+          {!changingPassword ? (
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setChangingPassword(true)}>
+                <Lock className="h-4 w-4 mr-2" />
+                Cambiar Contraseña
+              </Button>
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Cambiar Contraseña</CardTitle>
+                <CardDescription>Ingresá tu nueva contraseña</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleCambiarPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Nueva Contraseña</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      placeholder="Mínimo 6 caracteres"
+                      disabled={savingPassword}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-new-password">Confirmar Contraseña</Label>
+                    <Input
+                      id="confirm-new-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      disabled={savingPassword}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={savingPassword}>
+                      <Save className="h-4 w-4 mr-2" />
+                      {savingPassword ? 'Guardando...' : 'Guardar Contraseña'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => { setChangingPassword(false); setNewPassword(''); setConfirmPassword('') }}
+                      disabled={savingPassword}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

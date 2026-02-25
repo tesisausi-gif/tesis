@@ -168,7 +168,7 @@ export default function AdminAsignacionesPage() {
       </div>
 
       {incidenteSeleccionado && (
-        <IncidenteDetailModal incidenteId={incidenteSeleccionado} open={modalOpen} onOpenChange={(v) => setModalOpen(v)} rol="admin" />
+        <IncidenteDetailModal incidenteId={incidenteSeleccionado} open={modalOpen} onOpenChange={(v) => setModalOpen(v)} rol="tecnico" />
       )}
     </div>
   )

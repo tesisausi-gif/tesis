@@ -45,6 +45,7 @@ export interface AsignacionTecnico extends AsignacionBase {
     nivel_prioridad: string | null
     estado_actual: string
     inmuebles: InmuebleResumen | null
+    clientes: ClienteResumen | null
   } | null
 }
 
