@@ -57,3 +57,35 @@ export interface UpdateIncidenteDTO {
   nivel_prioridad?: string
   categoria?: string | null
 }
+
+// Métricas del dashboard admin
+export interface MetricasMes {
+  mes: string
+  total: number
+  resueltos: number
+}
+
+export interface MetricasCategoria {
+  categoria: string
+  count: number
+}
+
+export interface MetricasPrioridad {
+  prioridad: string
+  count: number
+}
+
+export interface MetricasTecnico {
+  nombre: string
+  apellido: string
+  incidentesResueltos: number
+}
+
+export interface MetricasDashboard {
+  incidentesPorMes: MetricasMes[]
+  distribucionCategorias: MetricasCategoria[]
+  distribucionPrioridades: MetricasPrioridad[]
+  tiempoPromedioResolucion: number
+  topTecnicos: MetricasTecnico[]
+  totalIncidentes: number
+}

@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   UserCog,
+  BarChart2,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -74,6 +75,11 @@ const menuItems = [
     title: 'Pagos',
     icon: FileCheck,
     href: '/dashboard/pagos',
+  },
+  {
+    title: 'Métricas',
+    icon: BarChart2,
+    href: '/dashboard/metricas',
   },
 ]
 
