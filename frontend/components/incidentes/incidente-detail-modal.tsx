@@ -54,8 +54,10 @@ import {
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
 import { crearAvance, getAvancesDelIncidente } from '@/features/avances/avances.service'
+import { getConformidadDelIncidente, crearConformidad, firmarConformidad } from '@/features/conformidades/conformidades.service'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
 import type { AvanceConDetalle } from '@/features/avances/avances.types'
+import type { Conformidad } from '@/features/conformidades/conformidades.types'
 
 interface TimelineEvent {
   id: string
@@ -69,6 +71,7 @@ interface TimelineEvent {
 
 interface IncidenteCompleto {
   id_incidente: number
+  id_cliente_reporta: number
   descripcion_problema: string
   disponibilidad: string | null
   categoria: string | null
@@ -131,6 +134,10 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [nuevoAvance, setNuevoAvance] = useState('')
   const [avancePorcentaje, setAvancePorcentaje] = useState<string>('')
   const [savingAvance, setSavingAvance] = useState(false)
+  const [conformidad, setConformidad] = useState<Conformidad | null>(null)
+  const [descConformidad, setDescConformidad] = useState('')
+  const [obsConformidad, setObsConformidad] = useState('')
+  const [savingConformidad, setSavingConformidad] = useState(false)
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -186,6 +193,16 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           setAvances(avancesData)
         } catch (error) {
           console.error('Error al cargar datos del técnico:', error)
+        }
+      }
+
+      // Cargar conformidad para admin y cliente
+      if (rol === 'admin' || rol === 'cliente') {
+        try {
+          const conformidadData = await getConformidadDelIncidente(incidenteId)
+          setConformidad(conformidadData)
+        } catch (error) {
+          console.error('Error al cargar conformidad:', error)
         }
       }
 
@@ -427,6 +444,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
               {rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && <TabsTrigger value="avances">Avances</TabsTrigger>}
               {rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
               {rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
+              {(rol === 'admin' || (rol === 'cliente' && asignaciones.some(a => a.estado_asignacion === 'completada'))) && <TabsTrigger value="conformidad">Conformidad</TabsTrigger>}
               {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
             </TabsList>
 
@@ -851,6 +869,141 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     cargarIncidente()
                   }}
                 />
+              </TabsContent>
+            )}
+
+            {/* Tab Conformidad (admin crea, cliente firma) */}
+            {(rol === 'admin' || (rol === 'cliente' && asignaciones.some(a => a.estado_asignacion === 'completada'))) && incidente && (
+              <TabsContent value="conformidad" className="mt-4 space-y-4">
+                <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Conformidad del Trabajo
+                </h4>
+
+                {conformidad ? (
+                  // Conformidad ya existe
+                  <div className="space-y-4">
+                    <div className={`border rounded-lg p-4 space-y-3 ${conformidad.esta_firmada ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">
+                          {conformidad.esta_firmada ? '✅ Conformidad firmada' : '⏳ Pendiente de firma del cliente'}
+                        </span>
+                        {conformidad.fecha_firma && (
+                          <span className="text-xs text-gray-500">
+                            Firmada: {format(new Date(conformidad.fecha_firma), "dd/MM/yy HH:mm", { locale: es })}
+                          </span>
+                        )}
+                      </div>
+                      {conformidad.descripcion_trabajo && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Descripción del trabajo:</p>
+                          <p className="text-sm text-gray-700">{conformidad.descripcion_trabajo}</p>
+                        </div>
+                      )}
+                      {conformidad.observaciones && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Observaciones del cliente:</p>
+                          <p className="text-sm text-gray-700 italic">{conformidad.observaciones}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Cliente puede firmar si aún no firmó */}
+                    {rol === 'cliente' && !conformidad.esta_firmada && (
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label htmlFor="obs-conformidad" className="text-sm">Observaciones (opcional)</Label>
+                          <Textarea
+                            id="obs-conformidad"
+                            placeholder="¿Algún comentario sobre el trabajo realizado?"
+                            value={obsConformidad}
+                            onChange={(e) => setObsConformidad(e.target.value)}
+                            rows={3}
+                            disabled={savingConformidad}
+                          />
+                        </div>
+                        <Button
+                          className="w-full"
+                          disabled={savingConformidad}
+                          onClick={async () => {
+                            setSavingConformidad(true)
+                            try {
+                              const result = await firmarConformidad(conformidad.id_conformidad, obsConformidad || null)
+                              if (!result.success) {
+                                toast.error('Error al firmar', { description: result.error })
+                                return
+                              }
+                              toast.success('Conformidad firmada exitosamente')
+                              const actualizada = await getConformidadDelIncidente(incidenteId!)
+                              setConformidad(actualizada)
+                              setObsConformidad('')
+                              onUpdate?.()
+                            } catch {
+                              toast.error('Error inesperado')
+                            } finally {
+                              setSavingConformidad(false)
+                            }
+                          }}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          {savingConformidad ? 'Firmando...' : 'Firmar Conformidad'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ) : rol === 'admin' ? (
+                  // Admin puede crear conformidad
+                  <div className="space-y-3 border rounded-lg p-4 bg-gray-50">
+                    <p className="text-xs text-gray-500">
+                      Crea la conformidad para que el cliente pueda firmarla digitalmente.
+                    </p>
+                    <div className="space-y-1">
+                      <Label htmlFor="desc-conformidad" className="text-sm">Descripción del trabajo realizado</Label>
+                      <Textarea
+                        id="desc-conformidad"
+                        placeholder="Describe el trabajo realizado en el incidente..."
+                        value={descConformidad}
+                        onChange={(e) => setDescConformidad(e.target.value)}
+                        rows={4}
+                        disabled={savingConformidad}
+                      />
+                    </div>
+                    <Button
+                      className="w-full"
+                      disabled={savingConformidad || !descConformidad.trim()}
+                      onClick={async () => {
+                        setSavingConformidad(true)
+                        try {
+                          const result = await crearConformidad({
+                            id_incidente: incidente.id_incidente,
+                            id_cliente: incidente.id_cliente_reporta,
+                            descripcion_trabajo: descConformidad.trim(),
+                          })
+                          if (!result.success) {
+                            toast.error('Error al crear conformidad', { description: result.error })
+                            return
+                          }
+                          toast.success('Conformidad creada. El cliente puede firmarla.')
+                          setDescConformidad('')
+                          const nueva = await getConformidadDelIncidente(incidenteId!)
+                          setConformidad(nueva)
+                          onUpdate?.()
+                        } catch {
+                          toast.error('Error inesperado')
+                        } finally {
+                          setSavingConformidad(false)
+                        }
+                      }}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      {savingConformidad ? 'Creando...' : 'Crear Conformidad'}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-6">
+                    El administrador aún no generó la conformidad para este incidente.
+                  </p>
+                )}
               </TabsContent>
             )}
 
