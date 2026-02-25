@@ -53,7 +53,9 @@ import {
 } from '@/features/incidentes/incidentes.service'
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
+import { crearAvance, getAvancesDelIncidente } from '@/features/avances/avances.service'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
+import type { AvanceConDetalle } from '@/features/avances/avances.types'
 
 interface TimelineEvent {
   id: string
@@ -125,6 +127,10 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([])
   const [inspecciones, setInspecciones] = useState<any[]>([])
+  const [avances, setAvances] = useState<AvanceConDetalle[]>([])
+  const [nuevoAvance, setNuevoAvance] = useState('')
+  const [avancePorcentaje, setAvancePorcentaje] = useState<string>('')
+  const [savingAvance, setSavingAvance] = useState(false)
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -169,13 +175,17 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       const asignacionesData = await getAsignacionesDelIncidente(incidenteId)
       setAsignaciones(asignacionesData as unknown as Asignacion[])
 
-      // Cargar inspecciones si el rol es técnico
+      // Cargar inspecciones y avances si el rol es técnico
       if (rol === 'tecnico') {
         try {
-          const inspeccionesData = await getInspeccionesDelIncidente(incidenteId)
+          const [inspeccionesData, avancesData] = await Promise.all([
+            getInspeccionesDelIncidente(incidenteId),
+            getAvancesDelIncidente(incidenteId),
+          ])
           setInspecciones(inspeccionesData)
+          setAvances(avancesData)
         } catch (error) {
-          console.error('Error al cargar inspecciones:', error)
+          console.error('Error al cargar datos del técnico:', error)
         }
       }
 
@@ -414,6 +424,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="detalles">Detalles</TabsTrigger>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              {rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && <TabsTrigger value="avances">Avances</TabsTrigger>}
               {rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
               {rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
               {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
@@ -731,6 +742,97 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       ))}
                     </div>
                   </>
+                )}
+              </TabsContent>
+            )}
+
+            {/* Tab Avances (para técnicos con asignación confirmada) */}
+            {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
+              <TabsContent value="avances" className="mt-4 space-y-4">
+                <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4" />
+                  Avances de Reparación
+                </h4>
+
+                {/* Formulario nuevo avance */}
+                <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+                  <p className="text-xs font-medium text-gray-600">Registrar nuevo avance</p>
+                  <Textarea
+                    placeholder="Describe el avance realizado..."
+                    value={nuevoAvance}
+                    onChange={(e) => setNuevoAvance(e.target.value)}
+                    rows={3}
+                    disabled={savingAvance}
+                  />
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="avance-pct" className="text-xs text-gray-600 whitespace-nowrap">% Avance</Label>
+                      <input
+                        id="avance-pct"
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={avancePorcentaje}
+                        onChange={(e) => setAvancePorcentaje(e.target.value)}
+                        placeholder="0-100"
+                        disabled={savingAvance}
+                        className="w-20 px-2 py-1 text-sm border rounded-md"
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      disabled={savingAvance || !nuevoAvance.trim()}
+                      onClick={async () => {
+                        if (!nuevoAvance.trim() || !incidenteId) return
+                        setSavingAvance(true)
+                        try {
+                          const result = await crearAvance({
+                            id_incidente: incidenteId,
+                            descripcion: nuevoAvance.trim(),
+                            porcentaje_avance: avancePorcentaje ? parseInt(avancePorcentaje) : null,
+                          })
+                          if (!result.success) {
+                            toast.error('Error al registrar avance', { description: result.error })
+                            return
+                          }
+                          toast.success('Avance registrado')
+                          setNuevoAvance('')
+                          setAvancePorcentaje('')
+                          const nuevosAvances = await getAvancesDelIncidente(incidenteId)
+                          setAvances(nuevosAvances)
+                        } catch {
+                          toast.error('Error inesperado')
+                        } finally {
+                          setSavingAvance(false)
+                        }
+                      }}
+                    >
+                      {savingAvance ? 'Guardando...' : 'Registrar'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Lista de avances */}
+                {avances.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">No hay avances registrados aún</p>
+                ) : (
+                  <div className="space-y-3">
+                    {avances.map((avance) => (
+                      <div key={avance.id_avance} className="border rounded-lg p-3 bg-white space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">
+                            {format(new Date(avance.fecha_avance), "dd/MM/yy HH:mm", { locale: es })}
+                          </span>
+                          {avance.porcentaje_avance !== null && (
+                            <Badge variant="outline" className="text-xs">
+                              {avance.porcentaje_avance}% completado
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-700">{avance.descripcion}</p>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </TabsContent>
             )}
