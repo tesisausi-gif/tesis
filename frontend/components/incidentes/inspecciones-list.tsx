@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { Plus, Trash2, Wrench, Eye } from 'lucide-react'
 import { crearInspeccion, eliminarInspeccion } from '@/features/inspecciones/inspecciones.service'
 import type { InspeccionConDetalle } from '@/features/inspecciones/inspecciones.types'
+import { FotoUploader } from '@/components/shared/foto-uploader.client'
 
 interface InspeccionsListProps {
   incidenteId: number
@@ -224,6 +225,11 @@ export function InspeccionesList({
                         <p className="text-sm text-amber-800">{inspeccion.hallazgos}</p>
                       </div>
                     )}
+
+                    <FotoUploader
+                      idInspeccion={inspeccion.id_inspeccion}
+                      fotosIniciales={inspeccion.fotos_url || []}
+                    />
 
                     <div className="text-xs text-gray-500 flex items-center gap-1">
                       <span>
