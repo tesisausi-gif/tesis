@@ -3,10 +3,15 @@
 /**
  * Servicio de Calificaciones
  * Lecturas y escrituras para Server Components y Server Actions
+ * Columnas según esquema actual de producción:
+ *   - puntuacion (no estrellas)
+ *   - comentarios (no comentario)
+ *   - resolvio_problema INTEGER 0/1
+ *   - tipo_calificacion nullable (CHECK constraint en DB)
+ *   - No existe id_cliente en la tabla
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
-import { requireClienteId } from '@/features/auth/auth.service'
 import type { Calificacion, CalificacionConDetalles } from './calificaciones.types'
 import type { ActionResult } from '@/shared/types'
 
@@ -14,14 +19,13 @@ const CALIFICACION_SELECT = `
   id_calificacion,
   id_incidente,
   id_tecnico,
-  id_cliente,
-  estrellas,
-  comentario,
-  aspecto_tecnico,
-  puntualidad,
-  actitud,
+  tipo_calificacion,
+  puntuacion,
+  comentarios,
+  resolvio_problema,
   fecha_calificacion,
-  fecha_registro,
+  fecha_creacion,
+  fecha_modificacion,
   incidentes (
     id_incidente,
     descripcion_problema,
@@ -31,10 +35,6 @@ const CALIFICACION_SELECT = `
     nombre,
     apellido,
     email
-  ),
-  clientes:id_cliente (
-    nombre,
-    apellido
   )
 `
 
@@ -48,7 +48,7 @@ export async function getCalificacionesDeTecnico(idTecnico: number): Promise<Cal
     .from('calificaciones')
     .select(CALIFICACION_SELECT)
     .eq('id_tecnico', idTecnico)
-    .order('fecha_registro', { ascending: false })
+    .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
   return data as unknown as CalificacionConDetalles[]
@@ -65,7 +65,7 @@ export async function getPromedioCalificacionesTecnico(idTecnico: number): Promi
 
   const { data, error } = await supabase
     .from('calificaciones')
-    .select('estrellas')
+    .select('puntuacion')
     .eq('id_tecnico', idTecnico)
 
   if (error) throw error
@@ -74,7 +74,7 @@ export async function getPromedioCalificacionesTecnico(idTecnico: number): Promi
     return { promedio: 0, cantidad: 0 }
   }
 
-  const suma = data.reduce((acc, cal) => acc + (cal.estrellas || 0), 0)
+  const suma = data.reduce((acc, cal) => acc + (cal.puntuacion || 0), 0)
   return {
     promedio: suma / data.length,
     cantidad: data.length,
@@ -93,7 +93,7 @@ export async function getCalificacionesDelIncidente(
     .from('calificaciones')
     .select(CALIFICACION_SELECT)
     .eq('id_incidente', idIncidente)
-    .order('fecha_registro', { ascending: false })
+    .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
   return data as unknown as CalificacionConDetalles[]
@@ -116,17 +116,16 @@ export async function getCalificacion(idCalificacion: number): Promise<Calificac
 }
 
 /**
- * Verificar si ya existe calificación del cliente para un incidente
+ * Verificar si ya existe calificación para un incidente.
+ * La tabla no tiene id_cliente, así que se verifica por id_incidente.
  */
 export async function existeCalificacionDelCliente(idIncidente: number): Promise<boolean> {
   const supabase = await createClient()
-  const idCliente = await requireClienteId()
 
   const { data, error } = await supabase
     .from('calificaciones')
-    .select('id_calificacion', { count: 'exact' })
+    .select('id_calificacion')
     .eq('id_incidente', idIncidente)
-    .eq('id_cliente', idCliente)
 
   if (error) throw error
   return (data?.length ?? 0) > 0
@@ -140,46 +139,27 @@ export async function existeCalificacionDelCliente(idIncidente: number): Promise
 export async function crearCalificacion(data: {
   id_incidente: number
   id_tecnico: number
-  estrellas: number
-  comentario?: string | null
-  aspecto_tecnico?: number | null
-  puntualidad?: number | null
-  actitud?: number | null
+  puntuacion: number
+  comentarios?: string | null
+  resolvio_problema?: number
 }): Promise<ActionResult<Calificacion>> {
   try {
     const supabase = await createClient()
-    const idCliente = await requireClienteId()
 
-    // Validar calificaciones
-    if (data.estrellas < 1 || data.estrellas > 5) {
-      return { success: false, error: 'Las estrellas deben estar entre 1 y 5' }
+    if (data.puntuacion < 1 || data.puntuacion > 5) {
+      return { success: false, error: 'La puntuación debe estar entre 1 y 5' }
     }
 
-    if (data.aspecto_tecnico && (data.aspecto_tecnico < 1 || data.aspecto_tecnico > 5)) {
-      return { success: false, error: 'Aspecto técnico debe estar entre 1 y 5' }
-    }
-
-    if (data.puntualidad && (data.puntualidad < 1 || data.puntualidad > 5)) {
-      return { success: false, error: 'Puntualidad debe estar entre 1 y 5' }
-    }
-
-    if (data.actitud && (data.actitud < 1 || data.actitud > 5)) {
-      return { success: false, error: 'Actitud debe estar entre 1 y 5' }
-    }
-
-    // Verificar que no exista ya una calificación
     const existe = await existeCalificacionDelCliente(data.id_incidente)
     if (existe) {
-      return { success: false, error: 'Ya has calificado este incidente' }
+      return { success: false, error: 'Ya existe una calificación para este incidente' }
     }
 
     const { data: calificacion, error } = await supabase
       .from('calificaciones')
       .insert({
         ...data,
-        id_cliente: idCliente,
         fecha_calificacion: new Date().toISOString(),
-        fecha_registro: new Date().toISOString(),
       })
       .select()
       .single()
@@ -197,19 +177,16 @@ export async function crearCalificacion(data: {
 export async function actualizarCalificacion(
   idCalificacion: number,
   updates: {
-    estrellas?: number
-    comentario?: string | null
-    aspecto_tecnico?: number | null
-    puntualidad?: number | null
-    actitud?: number | null
+    puntuacion?: number
+    comentarios?: string | null
+    resolvio_problema?: number
   }
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient()
 
-    // Validar valores si se proporcionan
-    if (updates.estrellas && (updates.estrellas < 1 || updates.estrellas > 5)) {
-      return { success: false, error: 'Las estrellas deben estar entre 1 y 5' }
+    if (updates.puntuacion && (updates.puntuacion < 1 || updates.puntuacion > 5)) {
+      return { success: false, error: 'La puntuación debe estar entre 1 y 5' }
     }
 
     const { error } = await supabase

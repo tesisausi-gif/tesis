@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Check, X, Eye, Calendar, DollarSign, FileText } from 'lucide-react'
+import { Check, X, Eye, DollarSign, FileText } from 'lucide-react'
 import {
   getEstadoPresupuestoColor,
   getEstadoPresupuestoLabel,
@@ -20,20 +20,11 @@ import { EstadoPresupuesto } from '@/shared/types/enums'
 interface Presupuesto {
   id_presupuesto: number
   id_incidente: number
-  id_tecnico: number
-  descripcion_trabajo: string
-  detalles_trabajo?: string
+  descripcion_detallada: string
   costo_total: number
   estado_presupuesto: string
   fecha_creacion: string
-  fecha_vencimiento?: string
-  fecha_aprobacion?: string
-  fecha_rechazo?: string
-  razon_rechazo?: string | null
-  tecnicos?: {
-    nombre: string
-    apellido: string
-  }
+  fecha_aprobacion?: string | null
 }
 
 interface PresupuestosClienteProps {
@@ -142,34 +133,16 @@ export function PresupuestosClienteList({
                           Presupuesto #{presupuesto.id_presupuesto}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {presupuesto.descripcion_trabajo}
+                          {presupuesto.descripcion_detallada}
                         </p>
-                        {presupuesto.detalles_trabajo && (
-                          <p className="text-xs text-gray-600 mt-2">
-                            {presupuesto.detalles_trabajo}
-                          </p>
-                        )}
                       </div>
 
                       <div className="text-right">
                         <div className="text-2xl font-bold text-green-600">
                           ${presupuesto.costo_total.toFixed(2)}
                         </div>
-                        <p className="text-xs text-gray-600">
-                          por {presupuesto.tecnicos?.nombre} {presupuesto.tecnicos?.apellido}
-                        </p>
                       </div>
                     </div>
-
-                    {presupuesto.fecha_vencimiento && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="h-4 w-4" />
-                        <span>
-                          Vencimiento:{' '}
-                          {new Date(presupuesto.fecha_vencimiento).toLocaleDateString('es-AR')}
-                        </span>
-                      </div>
-                    )}
 
                     <div className="flex gap-2 pt-4">
                       <Button
@@ -270,7 +243,7 @@ export function PresupuestosClienteList({
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600">
-                      {presupuesto.descripcion_trabajo}
+                      {presupuesto.descripcion_detallada}
                     </p>
                   </div>
 
@@ -282,11 +255,6 @@ export function PresupuestosClienteList({
                   </div>
                 </div>
 
-                {presupuesto.razon_rechazo && (
-                  <div className="mt-3 bg-red-50 p-2 rounded text-sm text-red-800">
-                    <strong>Razón del rechazo:</strong> {presupuesto.razon_rechazo}
-                  </div>
-                )}
               </CardContent>
             </Card>
           ))}

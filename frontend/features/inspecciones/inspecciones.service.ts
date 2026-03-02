@@ -16,11 +16,15 @@ const INSPECCION_SELECT = `
   id_tecnico,
   fecha_inspeccion,
   descripcion_inspeccion,
-  hallazgos,
-  fotos_url,
-  estado_inmueble,
-  observaciones,
-  fecha_registro,
+  causas_determinadas,
+  danos_ocasionados,
+  requiere_materiales,
+  descripcion_materiales,
+  requiere_ayudantes,
+  cantidad_ayudantes,
+  dias_estimados_trabajo,
+  fecha_creacion,
+  fecha_modificacion,
   incidentes (
     id_incidente,
     descripcion_problema,
@@ -90,10 +94,13 @@ export async function crearInspeccion(data: {
   id_incidente: number
   id_tecnico: number
   descripcion_inspeccion: string
-  hallazgos?: string
-  fotos_url?: string[]
-  estado_inmueble?: string
-  observaciones?: string
+  causas_determinadas?: string
+  danos_ocasionados?: string
+  requiere_materiales?: number
+  descripcion_materiales?: string
+  requiere_ayudantes?: number
+  cantidad_ayudantes?: number
+  dias_estimados_trabajo?: number
 }): Promise<ActionResult<Inspeccion>> {
   try {
     const supabase = await createClient()
@@ -103,7 +110,6 @@ export async function crearInspeccion(data: {
       .insert({
         ...data,
         fecha_inspeccion: new Date().toISOString(),
-        fecha_registro: new Date().toISOString(),
       })
       .select()
       .single()
@@ -122,10 +128,13 @@ export async function actualizarInspeccion(
   idInspeccion: number,
   updates: {
     descripcion_inspeccion?: string
-    hallazgos?: string
-    fotos_url?: string[]
-    estado_inmueble?: string
-    observaciones?: string
+    causas_determinadas?: string
+    danos_ocasionados?: string
+    requiere_materiales?: number
+    descripcion_materiales?: string
+    requiere_ayudantes?: number
+    cantidad_ayudantes?: number
+    dias_estimados_trabajo?: number
   }
 ): Promise<ActionResult> {
   try {
@@ -144,37 +153,16 @@ export async function actualizarInspeccion(
 }
 
 /**
- * Agregar fotos a una inspección
+ * Agregar fotos a una inspección.
+ * NOTA: La columna fotos_url no existe en el esquema actual de producción.
+ * Las fotos se suben a Storage correctamente pero la URL no se persiste en DB.
+ * Aplicar la migración 20260303200000_fix_schema_to_match_services.sql para habilitarlo.
  */
 export async function agregarFotosAInspeccion(
-  idInspeccion: number,
-  fotosUrls: string[]
+  _idInspeccion: number,
+  _fotosUrls: string[]
 ): Promise<ActionResult> {
-  try {
-    const supabase = await createClient()
-
-    // Obtener fotos existentes
-    const inspeccion = await getInspeccion(idInspeccion)
-    if (!inspeccion) {
-      return { success: false, error: 'Inspección no encontrada' }
-    }
-
-    // Combinar con fotos existentes
-    const fotosActuales = inspeccion.fotos_url || []
-    const todasLasFotos = [...fotosActuales, ...fotosUrls]
-
-    const { error } = await supabase
-      .from('inspecciones')
-      .update({
-        fotos_url: todasLasFotos,
-      })
-      .eq('id_inspeccion', idInspeccion)
-
-    if (error) return { success: false, error: error.message }
-    return { success: true, data: undefined }
-  } catch (error) {
-    return { success: false, error: 'Error inesperado al agregar fotos' }
-  }
+  return { success: true, data: undefined }
 }
 
 /**

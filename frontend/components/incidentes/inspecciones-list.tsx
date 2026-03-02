@@ -13,7 +13,6 @@ import { toast } from 'sonner'
 import { Plus, Trash2, Wrench, Eye } from 'lucide-react'
 import { crearInspeccion, eliminarInspeccion } from '@/features/inspecciones/inspecciones.service'
 import type { InspeccionConDetalle } from '@/features/inspecciones/inspecciones.types'
-import { FotoUploader } from '@/components/shared/foto-uploader.client'
 
 interface InspeccionsListProps {
   incidenteId: number
@@ -33,11 +32,11 @@ export function InspeccionesList({
   const [openModal, setOpenModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [descripcionInspeccion, setDescripcionInspeccion] = useState('')
-  const [hallazgos, setHallazgos] = useState('')
+  const [causasDeterminadas, setCausasDeterminadas] = useState('')
 
   const resetForm = () => {
     setDescripcionInspeccion('')
-    setHallazgos('')
+    setCausasDeterminadas('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +58,7 @@ export function InspeccionesList({
         id_incidente: incidenteId,
         id_tecnico: idTecnico,
         descripcion_inspeccion: descripcionInspeccion.trim(),
-        hallazgos: hallazgos.trim() || undefined,
+        causas_determinadas: causasDeterminadas.trim() || undefined,
       })
 
       if (result.success) {
@@ -143,17 +142,17 @@ export function InspeccionesList({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="hallazgos">Hallazgos Importantes (opcional)</Label>
+                <Label htmlFor="causas">Causas Determinadas (opcional)</Label>
                 <Textarea
-                  id="hallazgos"
-                  placeholder="Problemas detectados, recomendaciones, detalles relevantes..."
-                  value={hallazgos}
-                  onChange={(e) => setHallazgos(e.target.value)}
+                  id="causas"
+                  placeholder="Problemas detectados, causas del incidente, recomendaciones..."
+                  value={causasDeterminadas}
+                  onChange={(e) => setCausasDeterminadas(e.target.value)}
                   rows={3}
                   maxLength={500}
                 />
                 <p className="text-xs text-gray-500">
-                  {hallazgos.length}/500 caracteres
+                  {causasDeterminadas.length}/500 caracteres
                 </p>
               </div>
 
@@ -219,24 +218,26 @@ export function InspeccionesList({
                       </Button>
                     </div>
 
-                    {inspeccion.hallazgos && (
+                    {inspeccion.causas_determinadas && (
                       <div className="bg-amber-50 border border-amber-200 p-3 rounded">
-                        <p className="font-medium text-sm text-amber-900 mb-1">Hallazgos:</p>
-                        <p className="text-sm text-amber-800">{inspeccion.hallazgos}</p>
+                        <p className="font-medium text-sm text-amber-900 mb-1">Causas determinadas:</p>
+                        <p className="text-sm text-amber-800">{inspeccion.causas_determinadas}</p>
                       </div>
                     )}
 
-                    <FotoUploader
-                      idInspeccion={inspeccion.id_inspeccion}
-                      fotosIniciales={inspeccion.fotos_url || []}
-                    />
+                    {inspeccion.danos_ocasionados && (
+                      <div className="bg-red-50 border border-red-200 p-3 rounded">
+                        <p className="font-medium text-sm text-red-900 mb-1">Daños ocasionados:</p>
+                        <p className="text-sm text-red-800">{inspeccion.danos_ocasionados}</p>
+                      </div>
+                    )}
 
                     <div className="text-xs text-gray-500 flex items-center gap-1">
                       <span>
                         Por {inspeccion.tecnicos?.nombre} {inspeccion.tecnicos?.apellido}
                       </span>
                       <span>•</span>
-                      <span>{format(new Date(inspeccion.fecha_registro || new Date()), 'HH:mm', { locale: es })}</span>
+                      <span>{format(new Date(inspeccion.fecha_creacion || new Date()), 'HH:mm', { locale: es })}</span>
                     </div>
                   </div>
                 </CardContent>

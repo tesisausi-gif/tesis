@@ -3,6 +3,10 @@
 /**
  * Servicio de Conformidades
  * El admin crea la conformidad; el cliente la firma.
+ * Columnas según esquema actual de producción:
+ *   - tipo_conformidad (CHECK: 'final' | 'intermedia')
+ *   - esta_firmada INTEGER (0/1)
+ *   - fecha_conformidad (no fecha_firma)
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
@@ -33,7 +37,6 @@ export async function crearConformidad(dto: CreateConformidadDTO): Promise<Actio
   try {
     const supabase = await createAdminClient()
 
-    // Verificar que no exista ya una conformidad para este incidente
     const { data: existing } = await supabase
       .from('conformidades')
       .select('id_conformidad')
@@ -49,8 +52,8 @@ export async function crearConformidad(dto: CreateConformidadDTO): Promise<Actio
       .insert({
         id_incidente: dto.id_incidente,
         id_cliente: dto.id_cliente,
-        descripcion_trabajo: dto.descripcion_trabajo ?? null,
-        esta_firmada: false,
+        tipo_conformidad: dto.tipo_conformidad ?? 'intermedia',
+        esta_firmada: 0,
       })
 
     if (error) return { success: false, error: error.message }
@@ -70,8 +73,8 @@ export async function firmarConformidad(idConformidad: number, observaciones?: s
     const { error } = await supabase
       .from('conformidades')
       .update({
-        esta_firmada: true,
-        fecha_firma: new Date().toISOString(),
+        esta_firmada: 1,
+        fecha_conformidad: new Date().toISOString(),
         observaciones: observaciones ?? null,
       })
       .eq('id_conformidad', idConformidad)

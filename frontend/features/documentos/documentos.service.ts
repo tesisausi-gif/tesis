@@ -81,25 +81,13 @@ export async function eliminarFotoInspeccion(
     const pathSegments = url.pathname.split(`/storage/v1/object/public/${STORAGE_BUCKET}/`)
     const storagePath = pathSegments[1]
 
+    // Eliminar del Storage
     if (storagePath) {
       await supabase.storage.from(STORAGE_BUCKET).remove([storagePath])
     }
 
-    // Actualizar la lista de fotos en la DB
-    const { getInspeccion } = await import('@/features/inspecciones/inspecciones.service')
-    const inspeccion = await getInspeccion(idInspeccion)
-    if (!inspeccion) return { success: false, error: 'Inspección no encontrada' }
-
-    const fotosActualizadas = (inspeccion.fotos_url || []).filter((u: string) => u !== fotoUrl)
-
-    const { createClient } = await import('@/shared/lib/supabase/server')
-    const db = await createClient()
-    const { error } = await db
-      .from('inspecciones')
-      .update({ fotos_url: fotosActualizadas })
-      .eq('id_inspeccion', idInspeccion)
-
-    if (error) return { success: false, error: error.message }
+    // NOTA: la columna fotos_url no existe en el esquema actual de producción.
+    // La URL solo se elimina del Storage. Aplicar migración para habilitar persistencia en DB.
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al eliminar foto' }

@@ -1,5 +1,6 @@
 /**
  * Tipos y interfaces para el módulo de Presupuestos
+ * Columnas según esquema actual de producción.
  */
 
 import { EstadoPresupuesto } from '@/shared/types/enums'
@@ -7,17 +8,18 @@ import { EstadoPresupuesto } from '@/shared/types/enums'
 export interface PresupuestoBase {
   id_presupuesto?: number
   id_incidente: number
-  id_tecnico: number
-  descripcion_trabajo: string
+  id_inspeccion?: number | null
+  descripcion_detallada: string
+  costo_materiales?: number | null
+  costo_mano_obra?: number | null
+  gastos_administrativos?: number | null
   costo_total: number
-  detalles_trabajo?: string
   estado_presupuesto?: EstadoPresupuesto | string
+  fecha_aprobacion?: string | null
+  id_aprobado_por?: number | null
+  alternativas_reparacion?: string | null
   fecha_creacion?: string
-  fecha_vencimiento?: string
-  fecha_aprobacion?: string
-  fecha_rechazo?: string
-  razon_rechazo?: string | null
-  fecha_actualizacion?: string
+  fecha_modificacion?: string
 }
 
 export interface Presupuesto extends PresupuestoBase {
@@ -29,15 +31,10 @@ export interface PresupuestoConDetalle extends Presupuesto {
     id_incidente: number
     descripcion_problema: string
     categoria: string
-  }
-  tecnicos?: {
-    nombre: string
-    apellido: string
+    id_cliente_reporta?: number
   }
 }
 
 export interface PresupuestoParaCliente extends Presupuesto {
-  tecnico_nombre?: string
-  tecnico_apellido?: string
   incidente_categoria?: string
 }

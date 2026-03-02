@@ -13,24 +13,26 @@ import { TipoPago, MetodoPago } from '@/shared/types/enums'
 
 const PAGO_SELECT = `
   id_pago,
+  id_incidente,
   id_presupuesto,
-  id_cliente,
   tipo_pago,
-  monto,
+  monto_pagado,
   metodo_pago,
-  numero_referencia,
-  comprobante_url,
+  numero_comprobante,
+  url_comprobante,
   fecha_pago,
-  fecha_registro,
   observaciones,
+  fecha_creacion,
+  fecha_modificacion,
   presupuestos (
     id_presupuesto,
     costo_total,
     estado_presupuesto
   ),
-  clientes (
-    nombre,
-    apellido
+  incidentes (
+    id_incidente,
+    descripcion_problema,
+    id_cliente_reporta
   )
 `
 
@@ -44,7 +46,7 @@ export async function getPagosForAdmin(): Promise<PagoConDetalle[]> {
   const { data, error } = await supabase
     .from('pagos')
     .select(PAGO_SELECT)
-    .order('fecha_registro', { ascending: false })
+    .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
   return data as unknown as PagoConDetalle[]
@@ -67,16 +69,40 @@ export async function getPagosDelPresupuesto(idPresupuesto: number): Promise<Pag
 }
 
 /**
- * Obtener pagos de un cliente
+ * Obtener pagos de un cliente.
+ * Filtra a través de incidentes (pagos → incidentes → id_cliente_reporta).
  */
 export async function getPagosDelCliente(idCliente: number): Promise<PagoConDetalle[]> {
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('pagos')
-    .select(PAGO_SELECT)
-    .eq('id_cliente', idCliente)
-    .order('fecha_registro', { ascending: false })
+    .select(`
+      id_pago,
+      id_incidente,
+      id_presupuesto,
+      tipo_pago,
+      monto_pagado,
+      metodo_pago,
+      numero_comprobante,
+      url_comprobante,
+      fecha_pago,
+      observaciones,
+      fecha_creacion,
+      fecha_modificacion,
+      presupuestos (
+        id_presupuesto,
+        costo_total,
+        estado_presupuesto
+      ),
+      incidentes!inner (
+        id_incidente,
+        descripcion_problema,
+        id_cliente_reporta
+      )
+    `)
+    .eq('incidentes.id_cliente_reporta', idCliente)
+    .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
   return data as unknown as PagoConDetalle[]
@@ -104,13 +130,13 @@ export async function getPago(idPago: number): Promise<PagoConDetalle | null> {
  * Crear un nuevo pago
  */
 export async function crearPago(data: {
+  id_incidente: number
   id_presupuesto: number
-  id_cliente?: number
   tipo_pago: TipoPago | string
-  monto: number
+  monto_pagado: number
   metodo_pago: MetodoPago | string
-  numero_referencia?: string
-  comprobante_url?: string
+  numero_comprobante?: string
+  url_comprobante?: string
   fecha_pago?: string
   observaciones?: string
 }): Promise<ActionResult<Pago>> {
@@ -120,10 +146,7 @@ export async function crearPago(data: {
 
     const { data: pago, error } = await supabase
       .from('pagos')
-      .insert({
-        ...data,
-        fecha_registro: new Date().toISOString(),
-      })
+      .insert(data)
       .select()
       .single()
 
@@ -141,10 +164,10 @@ export async function actualizarPago(
   idPago: number,
   updates: {
     tipo_pago?: TipoPago | string
-    monto?: number
+    monto_pagado?: number
     metodo_pago?: MetodoPago | string
-    numero_referencia?: string
-    comprobante_url?: string
+    numero_comprobante?: string
+    url_comprobante?: string
     fecha_pago?: string
     observaciones?: string
   }
