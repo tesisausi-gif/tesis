@@ -7,7 +7,7 @@
 
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireClienteId } from '@/features/auth/auth.service'
-import type { Incidente, IncidenteConCliente, IncidenteConDetalles, MetricasDashboard } from './incidentes.types'
+import type { Incidente, IncidenteConCliente, IncidenteConDetalles, MetricasDashboard, FiltrosMetricas } from './incidentes.types'
 import type { ActionResult } from '@/shared/types'
 
 // Select base para incidentes
@@ -293,16 +293,56 @@ export async function actualizarIncidente(
 }
 
 /**
- * Métricas avanzadas para el dashboard admin
+ * Calificación del área técnica (admin) sobre la resolución de un incidente
  */
-export async function getMetricasDashboard(): Promise<MetricasDashboard> {
+export async function calificarIncidenteAdmin(
+  idIncidente: number,
+  estrellas: number,
+  comentario?: string | null
+): Promise<ActionResult> {
+  try {
+    if (estrellas < 1 || estrellas > 5) {
+      return { success: false, error: 'La calificación debe ser entre 1 y 5' }
+    }
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('incidentes')
+      .update({
+        calificacion_admin: estrellas,
+        comentario_admin: comentario ?? null,
+      })
+      .eq('id_incidente', idIncidente)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch {
+    return { success: false, error: 'Error inesperado al guardar calificación' }
+  }
+}
+
+/**
+ * Métricas avanzadas para el dashboard admin, con filtros opcionales
+ */
+export async function getMetricasDashboard(filtros?: FiltrosMetricas): Promise<MetricasDashboard> {
   const { createAdminClient } = await import('@/shared/lib/supabase/admin')
   const supabase = createAdminClient()
 
+  let incidentesQuery = supabase
+    .from('incidentes')
+    .select('id_incidente, estado_actual, categoria, nivel_prioridad, fecha_registro, fecha_cierre, fue_resuelto')
+
+  if (filtros?.fechaDesde) {
+    incidentesQuery = incidentesQuery.gte('fecha_registro', filtros.fechaDesde)
+  }
+  if (filtros?.fechaHasta) {
+    incidentesQuery = incidentesQuery.lte('fecha_registro', filtros.fechaHasta)
+  }
+  if (filtros?.categoria) {
+    incidentesQuery = incidentesQuery.eq('categoria', filtros.categoria)
+  }
+
   const [incidentesRes, asignacionesRes] = await Promise.all([
-    supabase
-      .from('incidentes')
-      .select('id_incidente, estado_actual, categoria, nivel_prioridad, fecha_registro, fecha_cierre, fue_resuelto'),
+    incidentesQuery,
     supabase
       .from('asignaciones_tecnico')
       .select('id_asignacion, estado_asignacion, tecnicos(nombre, apellido)')

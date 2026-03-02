@@ -33,6 +33,7 @@ import {
   UserPlus,
   Settings,
   Save,
+  Star,
 } from 'lucide-react'
 import { CategoriaIncidente, EstadoIncidente } from '@/shared/types/enums'
 import {
@@ -50,6 +51,7 @@ import {
   getAsignacionesDelIncidente,
   getTimelineData,
   actualizarIncidente,
+  calificarIncidenteAdmin,
 } from '@/features/incidentes/incidentes.service'
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
@@ -146,6 +148,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState('')
   const [observacionesAsignacion, setObservacionesAsignacion] = useState('')
 
+  // Calificación del área técnica
+  const [calificacionAdmin, setCalificacionAdmin] = useState<number>(0)
+  const [comentarioAdmin, setComentarioAdmin] = useState('')
+  const [savingCalifAdmin, setSavingCalifAdmin] = useState(false)
+
   const CATEGORIAS = Object.values(CategoriaIncidente) as string[]
 
   useEffect(() => {
@@ -177,6 +184,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       setIncidente(incidenteData as unknown as IncidenteCompleto)
       setNuevoEstado(incidenteData.estado_actual || '')
       setNuevaPrioridad(incidenteData.nivel_prioridad || '')
+      setCalificacionAdmin((incidenteData as any).calificacion_admin ?? 0)
+      setComentarioAdmin((incidenteData as any).comentario_admin ?? '')
 
       // Cargar asignaciones
       const asignacionesData = await getAsignacionesDelIncidente(incidenteId)
@@ -758,6 +767,77 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           )}
                         </div>
                       ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Calificación del área técnica */}
+                {incidente?.fue_resuelto && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                        <Star className="h-4 w-4" />
+                        Calificación de la Resolución
+                      </h4>
+                      <p className="text-xs text-gray-500">Evaluación interna del área técnica sobre la calidad del trabajo realizado.</p>
+
+                      {/* Estrellas */}
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setCalificacionAdmin(n)}
+                            className="p-0.5 focus:outline-none"
+                          >
+                            <Star
+                              className={`h-7 w-7 transition-colors ${
+                                n <= calificacionAdmin
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                        {calificacionAdmin > 0 && (
+                          <span className="text-sm text-gray-500 self-center ml-1">
+                            {calificacionAdmin}/5
+                          </span>
+                        )}
+                      </div>
+
+                      <Textarea
+                        value={comentarioAdmin}
+                        onChange={(e) => setComentarioAdmin(e.target.value)}
+                        placeholder="Observaciones internas sobre la calidad de la resolución (opcional)..."
+                        rows={2}
+                        disabled={savingCalifAdmin}
+                      />
+
+                      <Button
+                        disabled={calificacionAdmin === 0 || savingCalifAdmin}
+                        onClick={async () => {
+                          if (!incidente) return
+                          setSavingCalifAdmin(true)
+                          const result = await calificarIncidenteAdmin(
+                            incidente.id_incidente,
+                            calificacionAdmin,
+                            comentarioAdmin || null
+                          )
+                          setSavingCalifAdmin(false)
+                          if (result.success) {
+                            toast.success('Calificación guardada')
+                          } else {
+                            toast.error('Error al guardar', { description: result.error })
+                          }
+                        }}
+                        className="gap-2"
+                        size="sm"
+                      >
+                        <Save className="h-3.5 w-3.5" />
+                        {savingCalifAdmin ? 'Guardando...' : 'Guardar Calificación'}
+                      </Button>
                     </div>
                   </>
                 )}

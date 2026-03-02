@@ -18,6 +18,8 @@ export interface IncidenteBase {
   fecha_cierre: string | null
   fue_resuelto: boolean
   disponibilidad: string | null
+  calificacion_admin: number | null
+  comentario_admin: string | null
 }
 
 // Incidente con datos de inmueble
@@ -55,6 +57,13 @@ export interface CreateIncidenteDTO {
 export interface UpdateIncidenteDTO {
   estado_actual?: string
   nivel_prioridad?: string
+  categoria?: string | null
+}
+
+// Filtros para métricas y reportes
+export interface FiltrosMetricas {
+  fechaDesde?: string | null
+  fechaHasta?: string | null
   categoria?: string | null
 }
 
