@@ -33,16 +33,8 @@ import {
   UserPlus,
   Settings,
   Save,
-  Star,
 } from 'lucide-react'
 import { CategoriaIncidente, EstadoIncidente } from '@/shared/types/enums'
-import {
-  getEstadoIncidenteColor,
-  getEstadoIncidenteLabel,
-  getPrioridadColor,
-  ESTADO_ASIGNACION_LABELS,
-  ESTADO_INCIDENTE_LABELS,
-} from '@/shared/utils/colors'
 import { InspeccionesList } from './inspecciones-list'
 import { CalificacionTecnico } from '@/components/cliente/calificacion-tecnico'
 import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
@@ -51,15 +43,10 @@ import {
   getAsignacionesDelIncidente,
   getTimelineData,
   actualizarIncidente,
-  calificarIncidenteAdmin,
 } from '@/features/incidentes/incidentes.service'
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
-import { crearAvance, getAvancesDelIncidente } from '@/features/avances/avances.service'
-import { getConformidadDelIncidente, crearConformidad, firmarConformidad } from '@/features/conformidades/conformidades.service'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
-import type { AvanceConDetalle } from '@/features/avances/avances.types'
-import type { Conformidad } from '@/features/conformidades/conformidades.types'
 
 interface TimelineEvent {
   id: string
@@ -73,7 +60,6 @@ interface TimelineEvent {
 
 interface IncidenteCompleto {
   id_incidente: number
-  id_cliente_reporta: number
   descripcion_problema: string
   disponibilidad: string | null
   categoria: string | null
@@ -121,8 +107,41 @@ interface Props {
   rol?: 'admin' | 'cliente' | 'tecnico'
 }
 
-// Constantes centralizadas
+// Estados simplificados
+const ESTADOS_INCIDENTE = [
+  'pendiente',
+  'en_proceso',
+  'resuelto',
+]
+
+const ESTADOS_LABELS: Record<string, string> = {
+  'pendiente': 'Pendiente',
+  'en_proceso': 'En Proceso',
+  'resuelto': 'Resuelto',
+}
+
+const ESTADO_COLORS: Record<string, string> = {
+  'pendiente': 'bg-yellow-100 text-yellow-800',
+  'en_proceso': 'bg-blue-100 text-blue-800',
+  'resuelto': 'bg-green-100 text-green-800',
+}
+
 const PRIORIDADES = ['Baja', 'Media', 'Alta', 'Urgente']
+
+const ESTADO_ASIGNACION_LABELS: Record<string, string> = {
+  'pendiente': 'Pendiente',
+  'aceptada': 'Aceptada',
+  'rechazada': 'Rechazada',
+  'en_curso': 'En Curso',
+  'completada': 'Completada',
+}
+
+const PRIORIDAD_COLORS: Record<string, string> = {
+  'Baja': 'bg-green-100 text-green-800',
+  'Media': 'bg-yellow-100 text-yellow-800',
+  'Alta': 'bg-orange-100 text-orange-800',
+  'Urgente': 'bg-red-100 text-red-800',
+}
 
 export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin' }: Props) {
   const [loading, setLoading] = useState(true)
@@ -132,14 +151,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([])
   const [inspecciones, setInspecciones] = useState<any[]>([])
-  const [avances, setAvances] = useState<AvanceConDetalle[]>([])
-  const [nuevoAvance, setNuevoAvance] = useState('')
-  const [avancePorcentaje, setAvancePorcentaje] = useState<string>('')
-  const [savingAvance, setSavingAvance] = useState(false)
-  const [conformidad, setConformidad] = useState<Conformidad | null>(null)
-  const [descConformidad, setDescConformidad] = useState('')
-  const [obsConformidad, setObsConformidad] = useState('')
-  const [savingConformidad, setSavingConformidad] = useState(false)
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -147,11 +158,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [nuevaCategoria, setNuevaCategoria] = useState('')
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState('')
   const [observacionesAsignacion, setObservacionesAsignacion] = useState('')
-
-  // Calificación del área técnica
-  const [calificacionAdmin, setCalificacionAdmin] = useState<number>(0)
-  const [comentarioAdmin, setComentarioAdmin] = useState('')
-  const [savingCalifAdmin, setSavingCalifAdmin] = useState(false)
 
   const CATEGORIAS = Object.values(CategoriaIncidente) as string[]
 
@@ -184,34 +190,18 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       setIncidente(incidenteData as unknown as IncidenteCompleto)
       setNuevoEstado(incidenteData.estado_actual || '')
       setNuevaPrioridad(incidenteData.nivel_prioridad || '')
-      setCalificacionAdmin((incidenteData as any).calificacion_admin ?? 0)
-      setComentarioAdmin((incidenteData as any).comentario_admin ?? '')
 
       // Cargar asignaciones
       const asignacionesData = await getAsignacionesDelIncidente(incidenteId)
       setAsignaciones(asignacionesData as unknown as Asignacion[])
 
-      // Cargar inspecciones y avances si el rol es técnico
+      // Cargar inspecciones si el rol es técnico
       if (rol === 'tecnico') {
         try {
-          const [inspeccionesData, avancesData] = await Promise.all([
-            getInspeccionesDelIncidente(incidenteId),
-            getAvancesDelIncidente(incidenteId),
-          ])
+          const inspeccionesData = await getInspeccionesDelIncidente(incidenteId)
           setInspecciones(inspeccionesData)
-          setAvances(avancesData)
         } catch (error) {
-          console.error('Error al cargar datos del técnico:', error)
-        }
-      }
-
-      // Cargar conformidad para admin y cliente
-      if (rol === 'admin' || rol === 'cliente') {
-        try {
-          const conformidadData = await getConformidadDelIncidente(incidenteId)
-          setConformidad(conformidadData)
-        } catch (error) {
-          console.error('Error al cargar conformidad:', error)
+          console.error('Error al cargar inspecciones:', error)
         }
       }
 
@@ -424,7 +414,17 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     return ubicacion ? `${partes}, ${ubicacion}` : partes
   }
 
-// Helpers locales eliminados, se usan los de @/shared/utils/colors
+  const getEstadoColor = (estado: string) => {
+    return ESTADO_COLORS[estado] || 'bg-gray-100 text-gray-800'
+  }
+
+  const getPrioridadColor = (prioridad: string) => {
+    return PRIORIDAD_COLORS[prioridad] || 'bg-gray-100 text-gray-800'
+  }
+
+  const getEstadoLabel = (estado: string) => {
+    return ESTADOS_LABELS[estado] || estado
+  }
 
   if (!incidenteId) return null
 
@@ -450,10 +450,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="detalles">Detalles</TabsTrigger>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
-              {rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && <TabsTrigger value="avances">Avances</TabsTrigger>}
               {rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
               {rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
-              {(rol === 'admin' || (rol === 'cliente' && asignaciones.some(a => a.estado_asignacion === 'completada'))) && <TabsTrigger value="conformidad">Conformidad</TabsTrigger>}
               {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
             </TabsList>
 
@@ -461,11 +459,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             <TabsContent value="detalles" className="space-y-4 mt-4">
               {/* Estado y Prioridad */}
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className={getEstadoIncidenteColor(incidente.estado_actual)}>
-                  {getEstadoIncidenteLabel(incidente.estado_actual)}
+                <Badge className={getEstadoColor(incidente.estado_actual)}>
+                  {getEstadoLabel(incidente.estado_actual)}
                 </Badge>
                 {incidente.nivel_prioridad && (
-                  <Badge variant="outline" className={getPrioridadColor(incidente.nivel_prioridad)}>
+                  <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
                     Prioridad: {incidente.nivel_prioridad}
                   </Badge>
                 )}
@@ -641,9 +639,9 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           <SelectValue placeholder="Seleccionar estado" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.keys(ESTADO_INCIDENTE_LABELS).map((estado) => (
+                          {ESTADOS_INCIDENTE.map((estado) => (
                             <SelectItem key={estado} value={estado}>
-                              {getEstadoIncidenteLabel(estado)}
+                              {ESTADOS_LABELS[estado] || estado}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -770,168 +768,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </div>
                   </>
                 )}
-
-                {/* Calificación del área técnica */}
-                {incidente?.fue_resuelto && (
-                  <>
-                    <Separator />
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
-                        <Star className="h-4 w-4" />
-                        Calificación de la Resolución
-                      </h4>
-                      <p className="text-xs text-gray-500">Evaluación interna del área técnica sobre la calidad del trabajo realizado.</p>
-
-                      {/* Estrellas */}
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <button
-                            key={n}
-                            type="button"
-                            onClick={() => setCalificacionAdmin(n)}
-                            className="p-0.5 focus:outline-none"
-                          >
-                            <Star
-                              className={`h-7 w-7 transition-colors ${
-                                n <= calificacionAdmin
-                                  ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          </button>
-                        ))}
-                        {calificacionAdmin > 0 && (
-                          <span className="text-sm text-gray-500 self-center ml-1">
-                            {calificacionAdmin}/5
-                          </span>
-                        )}
-                      </div>
-
-                      <Textarea
-                        value={comentarioAdmin}
-                        onChange={(e) => setComentarioAdmin(e.target.value)}
-                        placeholder="Observaciones internas sobre la calidad de la resolución (opcional)..."
-                        rows={2}
-                        disabled={savingCalifAdmin}
-                      />
-
-                      <Button
-                        disabled={calificacionAdmin === 0 || savingCalifAdmin}
-                        onClick={async () => {
-                          if (!incidente) return
-                          setSavingCalifAdmin(true)
-                          const result = await calificarIncidenteAdmin(
-                            incidente.id_incidente,
-                            calificacionAdmin,
-                            comentarioAdmin || null
-                          )
-                          setSavingCalifAdmin(false)
-                          if (result.success) {
-                            toast.success('Calificación guardada')
-                          } else {
-                            toast.error('Error al guardar', { description: result.error })
-                          }
-                        }}
-                        className="gap-2"
-                        size="sm"
-                      >
-                        <Save className="h-3.5 w-3.5" />
-                        {savingCalifAdmin ? 'Guardando...' : 'Guardar Calificación'}
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </TabsContent>
-            )}
-
-            {/* Tab Avances (para técnicos con asignación confirmada) */}
-            {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
-              <TabsContent value="avances" className="mt-4 space-y-4">
-                <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
-                  <ClipboardList className="h-4 w-4" />
-                  Avances de Reparación
-                </h4>
-
-                {/* Formulario nuevo avance */}
-                <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
-                  <p className="text-xs font-medium text-gray-600">Registrar nuevo avance</p>
-                  <Textarea
-                    placeholder="Describe el avance realizado..."
-                    value={nuevoAvance}
-                    onChange={(e) => setNuevoAvance(e.target.value)}
-                    rows={3}
-                    disabled={savingAvance}
-                  />
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="avance-pct" className="text-xs text-gray-600 whitespace-nowrap">% Avance</Label>
-                      <input
-                        id="avance-pct"
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={avancePorcentaje}
-                        onChange={(e) => setAvancePorcentaje(e.target.value)}
-                        placeholder="0-100"
-                        disabled={savingAvance}
-                        className="w-20 px-2 py-1 text-sm border rounded-md"
-                      />
-                    </div>
-                    <Button
-                      size="sm"
-                      disabled={savingAvance || !nuevoAvance.trim()}
-                      onClick={async () => {
-                        if (!nuevoAvance.trim() || !incidenteId) return
-                        setSavingAvance(true)
-                        try {
-                          const result = await crearAvance({
-                            id_incidente: incidenteId,
-                            descripcion: nuevoAvance.trim(),
-                            porcentaje_avance: avancePorcentaje ? parseInt(avancePorcentaje) : null,
-                          })
-                          if (!result.success) {
-                            toast.error('Error al registrar avance', { description: result.error })
-                            return
-                          }
-                          toast.success('Avance registrado')
-                          setNuevoAvance('')
-                          setAvancePorcentaje('')
-                          const nuevosAvances = await getAvancesDelIncidente(incidenteId)
-                          setAvances(nuevosAvances)
-                        } catch {
-                          toast.error('Error inesperado')
-                        } finally {
-                          setSavingAvance(false)
-                        }
-                      }}
-                    >
-                      {savingAvance ? 'Guardando...' : 'Registrar'}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Lista de avances */}
-                {avances.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">No hay avances registrados aún</p>
-                ) : (
-                  <div className="space-y-3">
-                    {avances.map((avance) => (
-                      <div key={avance.id_avance} className="border rounded-lg p-3 bg-white space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">
-                            {format(new Date(avance.fecha_avance), "dd/MM/yy HH:mm", { locale: es })}
-                          </span>
-                          {avance.porcentaje_avance !== null && (
-                            <Badge variant="outline" className="text-xs">
-                              {avance.porcentaje_avance}% completado
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-700">{avance.descripcion}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </TabsContent>
             )}
 
@@ -949,141 +785,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     cargarIncidente()
                   }}
                 />
-              </TabsContent>
-            )}
-
-            {/* Tab Conformidad (admin crea, cliente firma) */}
-            {(rol === 'admin' || (rol === 'cliente' && asignaciones.some(a => a.estado_asignacion === 'completada'))) && incidente && (
-              <TabsContent value="conformidad" className="mt-4 space-y-4">
-                <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  Conformidad del Trabajo
-                </h4>
-
-                {conformidad ? (
-                  // Conformidad ya existe
-                  <div className="space-y-4">
-                    <div className={`border rounded-lg p-4 space-y-3 ${conformidad.esta_firmada ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">
-                          {conformidad.esta_firmada ? '✅ Conformidad firmada' : '⏳ Pendiente de firma del cliente'}
-                        </span>
-                        {conformidad.fecha_firma && (
-                          <span className="text-xs text-gray-500">
-                            Firmada: {format(new Date(conformidad.fecha_firma), "dd/MM/yy HH:mm", { locale: es })}
-                          </span>
-                        )}
-                      </div>
-                      {conformidad.descripcion_trabajo && (
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Descripción del trabajo:</p>
-                          <p className="text-sm text-gray-700">{conformidad.descripcion_trabajo}</p>
-                        </div>
-                      )}
-                      {conformidad.observaciones && (
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Observaciones del cliente:</p>
-                          <p className="text-sm text-gray-700 italic">{conformidad.observaciones}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Cliente puede firmar si aún no firmó */}
-                    {rol === 'cliente' && !conformidad.esta_firmada && (
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <Label htmlFor="obs-conformidad" className="text-sm">Observaciones (opcional)</Label>
-                          <Textarea
-                            id="obs-conformidad"
-                            placeholder="¿Algún comentario sobre el trabajo realizado?"
-                            value={obsConformidad}
-                            onChange={(e) => setObsConformidad(e.target.value)}
-                            rows={3}
-                            disabled={savingConformidad}
-                          />
-                        </div>
-                        <Button
-                          className="w-full"
-                          disabled={savingConformidad}
-                          onClick={async () => {
-                            setSavingConformidad(true)
-                            try {
-                              const result = await firmarConformidad(conformidad.id_conformidad, obsConformidad || null)
-                              if (!result.success) {
-                                toast.error('Error al firmar', { description: result.error })
-                                return
-                              }
-                              toast.success('Conformidad firmada exitosamente')
-                              const actualizada = await getConformidadDelIncidente(incidenteId!)
-                              setConformidad(actualizada)
-                              setObsConformidad('')
-                              onUpdate?.()
-                            } catch {
-                              toast.error('Error inesperado')
-                            } finally {
-                              setSavingConformidad(false)
-                            }
-                          }}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          {savingConformidad ? 'Firmando...' : 'Firmar Conformidad'}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ) : rol === 'admin' ? (
-                  // Admin puede crear conformidad
-                  <div className="space-y-3 border rounded-lg p-4 bg-gray-50">
-                    <p className="text-xs text-gray-500">
-                      Crea la conformidad para que el cliente pueda firmarla digitalmente.
-                    </p>
-                    <div className="space-y-1">
-                      <Label htmlFor="desc-conformidad" className="text-sm">Descripción del trabajo realizado</Label>
-                      <Textarea
-                        id="desc-conformidad"
-                        placeholder="Describe el trabajo realizado en el incidente..."
-                        value={descConformidad}
-                        onChange={(e) => setDescConformidad(e.target.value)}
-                        rows={4}
-                        disabled={savingConformidad}
-                      />
-                    </div>
-                    <Button
-                      className="w-full"
-                      disabled={savingConformidad || !descConformidad.trim()}
-                      onClick={async () => {
-                        setSavingConformidad(true)
-                        try {
-                          const result = await crearConformidad({
-                            id_incidente: incidente.id_incidente,
-                            id_cliente: incidente.id_cliente_reporta,
-                            descripcion_trabajo: descConformidad.trim(),
-                          })
-                          if (!result.success) {
-                            toast.error('Error al crear conformidad', { description: result.error })
-                            return
-                          }
-                          toast.success('Conformidad creada. El cliente puede firmarla.')
-                          setDescConformidad('')
-                          const nueva = await getConformidadDelIncidente(incidenteId!)
-                          setConformidad(nueva)
-                          onUpdate?.()
-                        } catch {
-                          toast.error('Error inesperado')
-                        } finally {
-                          setSavingConformidad(false)
-                        }
-                      }}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      {savingConformidad ? 'Creando...' : 'Crear Conformidad'}
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-6">
-                    El administrador aún no generó la conformidad para este incidente.
-                  </p>
-                )}
               </TabsContent>
             )}
 
