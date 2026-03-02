@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Download, FileText, DollarSign, Wrench, Loader2, FileSpreadsheet } from 'lucide-react'
+import { Download, FileText, DollarSign, Wrench, Loader2, FileSpreadsheet, Filter } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import {
   getIncidentesParaExportar,
@@ -93,6 +95,8 @@ const REPORTES: {
 
 export function ExportarContent() {
   const [cargando, setCargando] = useState<TipoReporte | null>(null)
+  const [fechaDesde, setFechaDesde] = useState('')
+  const [fechaHasta, setFechaHasta] = useState('')
 
   const exportarCSV = async (tipo: TipoReporte) => {
     setCargando(tipo)
@@ -101,13 +105,18 @@ export function ExportarContent() {
       let cabeceras: string[] = []
       const fecha = new Date().toISOString().slice(0, 10)
 
+      const filtro = {
+        fechaDesde: fechaDesde || undefined,
+        fechaHasta: fechaHasta || undefined,
+      }
+
       if (tipo === 'incidentes') {
-        const datos = await getIncidentesParaExportar()
+        const datos = await getIncidentesParaExportar(filtro)
         filas = datos as unknown as Record<string, unknown>[]
         cabeceras = REPORTES.find(r => r.tipo === 'incidentes')!.cabeceras
         descargarCSV(generarCSV(cabeceras, filas), `incidentes_${fecha}.csv`)
       } else if (tipo === 'pagos') {
-        const datos = await getPagosParaExportar()
+        const datos = await getPagosParaExportar(filtro)
         filas = datos as unknown as Record<string, unknown>[]
         cabeceras = REPORTES.find(r => r.tipo === 'pagos')!.cabeceras
         descargarCSV(generarCSV(cabeceras, filas), `pagos_${fecha}.csv`)
@@ -144,6 +153,56 @@ export function ExportarContent() {
           Descarga datos del sistema en formato CSV o genera PDF para imprimir
         </p>
       </div>
+
+      {/* Filtro de fechas global */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Filtrar por rango de fechas (opcional)
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Se aplica a incidentes y pagos. Dejar en blanco para exportar todo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs">Desde</Label>
+              <Input
+                type="date"
+                value={fechaDesde}
+                onChange={e => setFechaDesde(e.target.value)}
+                className="w-36 h-8 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Hasta</Label>
+              <Input
+                type="date"
+                value={fechaHasta}
+                onChange={e => setFechaHasta(e.target.value)}
+                className="w-36 h-8 text-sm"
+              />
+            </div>
+            {(fechaDesde || fechaHasta) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => { setFechaDesde(''); setFechaHasta('') }}
+                className="text-xs text-muted-foreground"
+              >
+                Limpiar filtro
+              </Button>
+            )}
+          </div>
+          {(fechaDesde || fechaHasta) && (
+            <p className="text-xs text-blue-600 mt-2">
+              Filtrando: {fechaDesde || '...'} → {fechaHasta || '...'}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
         {REPORTES.map((reporte) => {

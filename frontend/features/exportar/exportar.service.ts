@@ -7,11 +7,16 @@
 
 import type { FilaIncidenteExport, FilaPagoExport, FilaTecnicoExport } from './exportar.types'
 
-export async function getIncidentesParaExportar(): Promise<FilaIncidenteExport[]> {
+interface FiltroFechas {
+  fechaDesde?: string | null
+  fechaHasta?: string | null
+}
+
+export async function getIncidentesParaExportar(filtro?: FiltroFechas): Promise<FilaIncidenteExport[]> {
   const { createAdminClient } = await import('@/shared/lib/supabase/admin')
   const supabase = createAdminClient()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('incidentes')
     .select(`
       id_incidente,
@@ -27,6 +32,10 @@ export async function getIncidentesParaExportar(): Promise<FilaIncidenteExport[]
     `)
     .order('fecha_registro', { ascending: false })
 
+  if (filtro?.fechaDesde) query = query.gte('fecha_registro', filtro.fechaDesde)
+  if (filtro?.fechaHasta) query = query.lte('fecha_registro', filtro.fechaHasta)
+
+  const { data, error } = await query
   if (error) throw error
 
   return (data || []).map((row: any) => ({
@@ -45,11 +54,11 @@ export async function getIncidentesParaExportar(): Promise<FilaIncidenteExport[]
   }))
 }
 
-export async function getPagosParaExportar(): Promise<FilaPagoExport[]> {
+export async function getPagosParaExportar(filtro?: FiltroFechas): Promise<FilaPagoExport[]> {
   const { createAdminClient } = await import('@/shared/lib/supabase/admin')
   const supabase = createAdminClient()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('pagos')
     .select(`
       id_pago,
@@ -63,6 +72,10 @@ export async function getPagosParaExportar(): Promise<FilaPagoExport[]> {
     `)
     .order('fecha_pago', { ascending: false })
 
+  if (filtro?.fechaDesde) query = query.gte('fecha_pago', filtro.fechaDesde)
+  if (filtro?.fechaHasta) query = query.lte('fecha_pago', filtro.fechaHasta)
+
+  const { data, error } = await query
   if (error) throw error
 
   return (data || []).map((row: any) => ({

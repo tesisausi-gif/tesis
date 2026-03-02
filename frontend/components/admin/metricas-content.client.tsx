@@ -1,12 +1,28 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { BarChart2, Clock, TrendingUp, Users, AlertCircle, Tag } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { BarChart2, Clock, TrendingUp, Users, AlertCircle, Tag, Filter, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import type { MetricasDashboard } from '@/features/incidentes/incidentes.types'
 
 interface MetricasContentProps {
   metricas: MetricasDashboard
+}
+
+type Periodo = '7d' | '30d' | '90d' | '6m' | '1y' | 'custom' | 'todo'
+
+function fechaDesde(periodo: Periodo): string | null {
+  if (periodo === 'todo' || periodo === 'custom') return null
+  const ahora = new Date()
+  const dias: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '6m': 182, '1y': 365 }
+  ahora.setDate(ahora.getDate() - dias[periodo])
+  return ahora.toISOString().slice(0, 10)
 }
 
 const PRIORIDAD_COLORS: Record<string, string> = {
@@ -38,16 +54,106 @@ function BarraHorizontal({ valor, maximo, color = 'bg-blue-500' }: { valor: numb
   )
 }
 
-export function MetricasContent({ metricas }: MetricasContentProps) {
+export function MetricasContent({ metricas: metricasIniciales }: MetricasContentProps) {
+  const [metricas, setMetricas] = useState(metricasIniciales)
+  const [periodo, setPeriodo] = useState<Periodo>('todo')
+  const [customDesde, setCustomDesde] = useState('')
+  const [customHasta, setCustomHasta] = useState('')
+  const [cargando, setCargando] = useState(false)
+
+  const aplicarFiltro = async (p: Periodo) => {
+    setPeriodo(p)
+    if (p === 'custom') return // espera inputs manuales
+    setCargando(true)
+    try {
+      const desde = fechaDesde(p)
+      const nuevas = await getMetricasDashboard(desde ? { fechaDesde: desde } : undefined)
+      setMetricas(nuevas)
+    } catch {
+      toast.error('Error al filtrar métricas')
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  const aplicarFiltroCustom = async () => {
+    if (!customDesde && !customHasta) return
+    setCargando(true)
+    try {
+      const nuevas = await getMetricasDashboard({
+        fechaDesde: customDesde || undefined,
+        fechaHasta: customHasta || undefined,
+      })
+      setMetricas(nuevas)
+    } catch {
+      toast.error('Error al filtrar métricas')
+    } finally {
+      setCargando(false)
+    }
+  }
+
   const maxMes = Math.max(...metricas.incidentesPorMes.map(m => m.total), 1)
   const maxCategoria = Math.max(...metricas.distribucionCategorias.map(c => c.count), 1)
 
+  const PERIODOS: { valor: Periodo; label: string }[] = [
+    { valor: 'todo', label: 'Todo' },
+    { valor: '7d', label: '7 días' },
+    { valor: '30d', label: '30 días' },
+    { valor: '90d', label: '90 días' },
+    { valor: '6m', label: '6 meses' },
+    { valor: '1y', label: '1 año' },
+    { valor: 'custom', label: 'Personalizado' },
+  ]
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Métricas y Estadísticas</h2>
-        <p className="text-muted-foreground">Análisis de rendimiento del sistema</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Métricas y Estadísticas</h2>
+          <p className="text-muted-foreground">Análisis de rendimiento del sistema</p>
+        </div>
+        {cargando && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
       </div>
+
+      {/* Filtro de período */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Filtrar por período
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {PERIODOS.map(p => (
+              <Button
+                key={p.valor}
+                size="sm"
+                variant={periodo === p.valor ? 'default' : 'outline'}
+                onClick={() => aplicarFiltro(p.valor)}
+                disabled={cargando}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
+          {periodo === 'custom' && (
+            <div className="flex flex-wrap gap-3 items-end pt-1">
+              <div className="space-y-1">
+                <Label className="text-xs">Desde</Label>
+                <Input type="date" value={customDesde} onChange={e => setCustomDesde(e.target.value)} className="w-36 h-8 text-sm" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Hasta</Label>
+                <Input type="date" value={customHasta} onChange={e => setCustomHasta(e.target.value)} className="w-36 h-8 text-sm" />
+              </div>
+              <Button size="sm" onClick={aplicarFiltroCustom} disabled={cargando || (!customDesde && !customHasta)}>
+                Aplicar
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Tarjetas de resumen */}
       <div className="grid gap-4 md:grid-cols-3">
