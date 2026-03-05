@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { MapPin, Calendar, ClipboardList, Clock, CheckCircle2, FileSignature, Plus } from 'lucide-react'
+import { MapPin, Calendar, ClipboardList, Clock, CheckCircle2, Upload, Plus, ImageIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   getEstadoAsignacionColor,
@@ -29,15 +29,25 @@ import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.typ
 import { completarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { crearAvance } from '@/features/avances/avances.service'
 import { crearConformidadPorTecnico } from '@/features/conformidades/conformidades.service'
+import { createClient } from '@/shared/lib/supabase/client'
+
+interface ConformidadInfo {
+  id_conformidad: number
+  id_incidente: number
+  esta_firmada: number | boolean
+  url_documento: string | null
+}
 
 interface TrabajosContentProps {
   asignaciones: AsignacionTecnico[]
   estadoPresupuestoPorIncidente: Record<number, string>
+  conformidadesPorIncidente: Record<number, ConformidadInfo>
 }
 
-export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente }: TrabajosContentProps) {
+export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, conformidadesPorIncidente }: TrabajosContentProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -50,8 +60,11 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente }:
   // Dialog: Completar trabajo
   const [completarDialog, setCompletarDialog] = useState<{ open: boolean; idAsignacion: number } | null>(null)
 
-  // Dialog: Crear conformidad
+  // Dialog: Subir conformidad (foto)
   const [conformidadDialog, setConformidadDialog] = useState<{ open: boolean; idIncidente: number } | null>(null)
+  const [fotoFile, setFotoFile] = useState<File | null>(null)
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null)
+  const [uploadingFoto, setUploadingFoto] = useState(false)
 
   const abrirModal = (id: number) => {
     setIncidenteSeleccionado(id)
@@ -91,18 +104,49 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente }:
     })
   }
 
-  const handleConformidad = () => {
-    if (!conformidadDialog) return
-    startTransition(async () => {
-      const res = await crearConformidadPorTecnico(conformidadDialog.idIncidente)
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFotoFile(file)
+    setFotoPreview(URL.createObjectURL(file))
+  }
+
+  const handleSubirConformidad = async () => {
+    if (!conformidadDialog || !fotoFile) return
+    setUploadingFoto(true)
+    try {
+      const supabase = createClient()
+      const ext = fotoFile.name.split('.').pop() || 'jpg'
+      const path = `tecnico/${conformidadDialog.idIncidente}/${Date.now()}.${ext}`
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('conformidades')
+        .upload(path, fotoFile, { upsert: false })
+
+      if (uploadError) {
+        toast.error('Error al subir la foto: ' + uploadError.message)
+        return
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('conformidades')
+        .getPublicUrl(uploadData.path)
+
+      const res = await crearConformidadPorTecnico(conformidadDialog.idIncidente, publicUrl)
       if (res.success) {
-        toast.success('Conformidad creada. El cliente recibirá una notificación para firmarla.')
+        toast.success('Conformidad enviada', { description: 'La administración revisará la foto y te notificará.' })
         setConformidadDialog(null)
+        setFotoFile(null)
+        setFotoPreview(null)
         router.refresh()
       } else {
-        toast.error(res.error ?? 'Error al crear conformidad')
+        toast.error(res.error ?? 'Error al enviar conformidad')
       }
-    })
+    } catch {
+      toast.error('Error inesperado al subir la foto')
+    } finally {
+      setUploadingFoto(false)
+    }
   }
 
   // Stats
@@ -164,6 +208,12 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente }:
             const presupuestoAprobado = estadoPres === 'aprobado'
             const enTrabajo = (estado === 'aceptada' || estado === 'en_curso') && presupuestoAprobado
             const terminado = estado === 'completada'
+
+            // Estado de la conformidad para este incidente
+            const confInfo = conformidadesPorIncidente[asignacion.id_incidente]
+            const conformidadPendiente = confInfo && !confInfo.esta_firmada && confInfo.url_documento
+            const conformidadAprobada = confInfo && (confInfo.esta_firmada === 1 || confInfo.esta_firmada === true)
+            const puedeSubirConformidad = terminado && !confInfo
 
             return (
               <Card key={asignacion.id_asignacion} className="hover:shadow-md transition-shadow">
@@ -253,16 +303,32 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente }:
                         </Button>
                       </>
                     )}
-                    {terminado && (
+                    {puedeSubirConformidad && (
                       <Button
                         size="sm"
                         variant="outline"
                         className="gap-1 text-purple-700 border-purple-300 hover:bg-purple-50"
-                        onClick={() => setConformidadDialog({ open: true, idIncidente: asignacion.id_incidente })}
+                        onClick={() => {
+                          setFotoFile(null)
+                          setFotoPreview(null)
+                          setConformidadDialog({ open: true, idIncidente: asignacion.id_incidente })
+                        }}
                       >
-                        <FileSignature className="h-3 w-3" />
-                        Enviar Conformidad al Cliente
+                        <Upload className="h-3 w-3" />
+                        Subir Conformidad Firmada
                       </Button>
+                    )}
+                    {conformidadPendiente && (
+                      <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Conformidad en revisión por la administración
+                      </div>
+                    )}
+                    {conformidadAprobada && (
+                      <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Conformidad aprobada — incidente resuelto
+                      </div>
                     )}
                   </div>
                 )}
@@ -338,7 +404,7 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente }:
             <DialogTitle>Completar Trabajo</DialogTitle>
             <DialogDescription>
               ¿Confirmas que el trabajo fue finalizado? El estado de la asignación pasará a "Completada".
-              Después podrás enviar la conformidad al cliente.
+              Después podrás subir la conformidad firmada por el cliente.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -350,20 +416,78 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente }:
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Crear Conformidad */}
-      <Dialog open={conformidadDialog?.open ?? false} onOpenChange={(o) => !o && setConformidadDialog(null)}>
+      {/* Dialog: Subir Conformidad Firmada */}
+      <Dialog
+        open={conformidadDialog?.open ?? false}
+        onOpenChange={(o) => {
+          if (!o) {
+            setConformidadDialog(null)
+            setFotoFile(null)
+            setFotoPreview(null)
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enviar Conformidad al Cliente</DialogTitle>
+            <DialogTitle>Subir Conformidad Firmada</DialogTitle>
             <DialogDescription>
-              Se creará una conformidad final. El cliente recibirá una notificación por email para firmarla.
-              Una vez firmada, el administrador podrá cerrar el incidente.
+              Tomá una foto de la conformidad física firmada por el cliente y subila aquí.
+              La administración la revisará y aprobará para cerrar el incidente.
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Foto de la conformidad *</Label>
+              <div
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {fotoPreview ? (
+                  <img src={fotoPreview} alt="Preview" className="max-h-48 mx-auto rounded-md object-contain" />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    <ImageIcon className="h-10 w-10 text-gray-400" />
+                    <p className="text-sm font-medium">Tocá para seleccionar una foto</p>
+                    <p className="text-xs text-gray-400">JPG, PNG, HEIC — máx. 10 MB</p>
+                  </div>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFotoChange}
+              />
+              {fotoFile && (
+                <p className="text-xs text-gray-500">
+                  {fotoFile.name} ({(fotoFile.size / 1024 / 1024).toFixed(1)} MB)
+                </p>
+              )}
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConformidadDialog(null)} disabled={isPending}>Cancelar</Button>
-            <Button onClick={handleConformidad} disabled={isPending}>
-              {isPending ? 'Enviando...' : 'Enviar Conformidad'}
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConformidadDialog(null)
+                setFotoFile(null)
+                setFotoPreview(null)
+              }}
+              disabled={uploadingFoto}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubirConformidad}
+              disabled={uploadingFoto || !fotoFile}
+              className="gap-2"
+            >
+              {uploadingFoto ? (
+                <><Loader2 className="h-4 w-4 animate-spin" />Subiendo...</>
+              ) : (
+                <><Upload className="h-4 w-4" />Enviar Conformidad</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

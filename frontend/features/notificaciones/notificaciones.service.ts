@@ -476,6 +476,44 @@ export async function notificarTecnicoPresupuestoAprobado(idPresupuesto: number)
   )
 }
 
+// ─── Evento 11: Conformidad rechazada por admin → email al técnico ────────────
+
+export async function notificarTecnicoConformidadRechazada(idIncidente: number): Promise<void> {
+  const supabase = createAdminClient()
+
+  const { data: inc } = await supabase
+    .from('incidentes')
+    .select(`
+      id_incidente, descripcion_problema,
+      asignaciones_tecnico (
+        id_tecnico, estado_asignacion,
+        tecnicos (nombre, apellido, correo_electronico)
+      )
+    `)
+    .eq('id_incidente', idIncidente)
+    .single()
+
+  const asigs = Array.isArray(inc?.asignaciones_tecnico) ? inc.asignaciones_tecnico : []
+  const asig = (asigs as any[]).find((a) => a.estado_asignacion === 'completada') || (asigs as any[])[0]
+  const tec = asig?.tecnicos
+  if (!tec?.correo_electronico) return
+
+  const html = plantillaBase(
+    'Conformidad rechazada — se requiere nueva foto',
+    `Hola ${tec.nombre}, la foto de conformidad que subiste para el incidente #${inc?.id_incidente} fue rechazada por la administración.`,
+    tablaDatos([
+      fila('Incidente #', String(inc?.id_incidente || '')),
+      fila('Descripción', inc?.descripcion_problema || ''),
+    ]) + `<p style="font-size:13px;color:#374151;margin:0;">Por favor volvé a subir una foto clara de la conformidad firmada por el cliente.</p>`,
+  )
+
+  await sendEmail(
+    { email: tec.correo_electronico, name: `${tec.nombre} ${tec.apellido}` },
+    `[ISBA] Conformidad rechazada — Incidente #${inc?.id_incidente}`,
+    html,
+  )
+}
+
 // ─── Evento 10: Presupuesto rechazado por admin → email al técnico ────────────
 
 export async function notificarTecnicoPresupuestoRechazado(idPresupuesto: number): Promise<void> {

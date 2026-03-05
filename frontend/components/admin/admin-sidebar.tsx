@@ -16,6 +16,7 @@ import {
   UserCog,
   BarChart2,
   Download,
+  ClipboardCheck,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -76,6 +77,11 @@ const menuItems = [
     title: 'Pagos',
     icon: FileCheck,
     href: '/dashboard/pagos',
+  },
+  {
+    title: 'Conformidades',
+    icon: ClipboardCheck,
+    href: '/dashboard/conformidades',
   },
   {
     title: 'Métricas',
