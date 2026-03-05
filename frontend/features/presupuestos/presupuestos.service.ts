@@ -177,6 +177,11 @@ export async function crearPresupuesto(data: {
       .single()
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente (fire-and-forget)
+    const { notificarPresupuestoCreado } = await import('@/features/notificaciones/notificaciones.service')
+    notificarPresupuestoCreado(presupuesto.id_presupuesto).catch(console.error)
+
     return { success: true, data: presupuesto as Presupuesto }
   } catch (error) {
     return { success: false, error: 'Error inesperado al crear presupuesto' }
@@ -257,6 +262,11 @@ export async function aprobarPresupuesto(idPresupuesto: number): Promise<ActionR
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente que puede revisar y aprobar (fire-and-forget)
+    const { notificarPresupuestoAprobadoAdmin } = await import('@/features/notificaciones/notificaciones.service')
+    notificarPresupuestoAprobadoAdmin(idPresupuesto).catch(console.error)
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al aprobar presupuesto' }
@@ -280,6 +290,11 @@ export async function rechazarPresupuesto(
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente que el presupuesto fue rechazado (fire-and-forget)
+    const { notificarPresupuestoRechazado } = await import('@/features/notificaciones/notificaciones.service')
+    notificarPresupuestoRechazado(idPresupuesto).catch(console.error)
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al rechazar presupuesto' }

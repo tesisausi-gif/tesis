@@ -151,6 +151,11 @@ export async function crearPago(data: {
       .single()
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente que se registró un pago (fire-and-forget)
+    const { notificarPagoRegistrado } = await import('@/features/notificaciones/notificaciones.service')
+    notificarPagoRegistrado(pago.id_pago).catch(console.error)
+
     return { success: true, data: pago as Pago }
   } catch (error) {
     return { success: false, error: 'Error inesperado al crear pago' }

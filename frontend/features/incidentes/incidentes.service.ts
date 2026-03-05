@@ -286,6 +286,13 @@ export async function actualizarIncidente(
       .eq('id_incidente', idIncidente)
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente si el incidente fue marcado como resuelto (fire-and-forget)
+    if (updates.estado_actual === 'resuelto') {
+      const { notificarIncidenteResuelto } = await import('@/features/notificaciones/notificaciones.service')
+      notificarIncidenteResuelto(idIncidente).catch(console.error)
+    }
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar incidente' }

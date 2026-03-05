@@ -47,7 +47,7 @@ export async function crearConformidad(dto: CreateConformidadDTO): Promise<Actio
       return { success: false, error: 'Ya existe una conformidad para este incidente' }
     }
 
-    const { error } = await supabase
+    const { data: conformidad, error } = await supabase
       .from('conformidades')
       .insert({
         id_incidente: dto.id_incidente,
@@ -55,8 +55,15 @@ export async function crearConformidad(dto: CreateConformidadDTO): Promise<Actio
         tipo_conformidad: dto.tipo_conformidad ?? 'intermedia',
         esta_firmada: 0,
       })
+      .select('id_conformidad')
+      .single()
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente que tiene una conformidad para firmar (fire-and-forget)
+    const { notificarConformidadParaFirmar } = await import('@/features/notificaciones/notificaciones.service')
+    notificarConformidadParaFirmar(conformidad.id_conformidad, dto.id_cliente, dto.id_incidente).catch(console.error)
+
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al crear conformidad' }

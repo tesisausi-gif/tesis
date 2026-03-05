@@ -51,7 +51,7 @@ export async function crearAvance(dto: CreateAvanceDTO): Promise<ActionResult> {
     const supabase = await createClient()
     const idTecnico = await requireTecnicoId()
 
-    const { error } = await supabase
+    const { data: avance, error } = await supabase
       .from('avances_reparacion')
       .insert({
         id_incidente: dto.id_incidente,
@@ -60,8 +60,15 @@ export async function crearAvance(dto: CreateAvanceDTO): Promise<ActionResult> {
         porcentaje_completado: dto.porcentaje_completado ?? null,
         fecha_avance: new Date().toISOString(),
       })
+      .select('id_avance')
+      .single()
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente sobre el nuevo avance (fire-and-forget)
+    const { notificarNuevoAvance } = await import('@/features/notificaciones/notificaciones.service')
+    notificarNuevoAvance(avance.id_avance, dto.id_incidente).catch(console.error)
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al registrar avance' }

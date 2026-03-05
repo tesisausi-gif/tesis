@@ -234,6 +234,10 @@ export async function crearAsignacion(data: {
       .eq('id_incidente', data.id_incidente)
       .eq('estado_actual', 'pendiente')
 
+    // Notificar al técnico (fire-and-forget)
+    const { notificarNuevaAsignacion } = await import('@/features/notificaciones/notificaciones.service')
+    notificarNuevaAsignacion(data.id_incidente, data.id_tecnico).catch(console.error)
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al crear asignación' }
