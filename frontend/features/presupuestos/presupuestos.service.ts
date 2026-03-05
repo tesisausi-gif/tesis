@@ -89,7 +89,7 @@ export async function getPresupuestosDeTecnico(): Promise<PresupuestoConDetalle[
     .from('presupuestos')
     .select(PRESUPUESTO_SELECT)
     .in('id_incidente', idIncidentes)
-    .in('estado_presupuesto', [EstadoPresupuesto.ENVIADO, EstadoPresupuesto.APROBADO_ADMIN])
+    .in('estado_presupuesto', [EstadoPresupuesto.ENVIADO, EstadoPresupuesto.APROBADO_ADMIN, EstadoPresupuesto.APROBADO])
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
