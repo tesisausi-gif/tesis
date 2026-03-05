@@ -253,7 +253,7 @@ export default function PresupuestosTecnicoPage() {
                                         </p>
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-3 gap-4">
                                         <div className="space-y-1">
                                             <p className="text-xs text-gray-500">Materiales</p>
                                             <p className="text-sm font-medium">{formatCurrency(presupuesto.costo_materiales)}</p>
@@ -263,14 +263,10 @@ export default function PresupuestosTecnicoPage() {
                                             <p className="text-sm font-medium">{formatCurrency(presupuesto.costo_mano_obra)}</p>
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-xs text-gray-500">Gastos Admin.</p>
-                                            <p className="text-sm font-medium">{formatCurrency(presupuesto.gastos_administrativos)}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-xs text-gray-500 font-semibold">Total</p>
+                                            <p className="text-xs text-gray-500 font-semibold">Tu total</p>
                                             <p className="text-lg font-bold text-blue-600 flex items-center gap-1">
                                                 <DollarSign className="h-4 w-4" />
-                                                {formatCurrency(presupuesto.costo_total)}
+                                                {formatCurrency(presupuesto.costo_materiales + presupuesto.costo_mano_obra)}
                                             </p>
                                         </div>
                                     </div>

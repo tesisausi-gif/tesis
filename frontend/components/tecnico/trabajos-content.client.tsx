@@ -161,7 +161,7 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente }:
 
             const estado = asignacion.estado_asignacion
             const estadoPres = estadoPresupuestoPorIncidente[asignacion.id_incidente]
-            const presupuestoAprobado = estadoPres === 'aprobado' || estadoPres === 'aprobado_admin'
+            const presupuestoAprobado = estadoPres === 'aprobado'
             const enTrabajo = (estado === 'aceptada' || estado === 'en_curso') && presupuestoAprobado
             const terminado = estado === 'completada'
 
