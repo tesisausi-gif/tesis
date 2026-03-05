@@ -430,3 +430,92 @@ export async function notificarConformidadParaFirmar(
     html,
   )
 }
+
+// ─── Evento 9: Presupuesto aprobado por admin → email al técnico ──────────────
+
+export async function notificarTecnicoPresupuestoAprobado(idPresupuesto: number): Promise<void> {
+  const supabase = createAdminClient()
+
+  const { data: pres } = await supabase
+    .from('presupuestos')
+    .select(`
+      id_presupuesto, costo_total, gastos_administrativos,
+      incidentes (
+        id_incidente, descripcion_problema,
+        asignaciones_tecnico (
+          id_tecnico, estado_asignacion,
+          tecnicos (nombre, apellido, correo_electronico)
+        )
+      )
+    `)
+    .eq('id_presupuesto', idPresupuesto)
+    .single()
+
+  const inc = pres?.incidentes as any
+  const asig = Array.isArray(inc?.asignaciones_tecnico)
+    ? inc.asignaciones_tecnico.find((a: any) => ['aceptada', 'en_curso', 'pendiente'].includes(a.estado_asignacion))
+    : null
+  const tec = asig?.tecnicos
+  if (!tec?.correo_electronico) return
+
+  const html = plantillaBase(
+    'Presupuesto aprobado — puede comenzar el trabajo',
+    `Hola ${tec.nombre}, tu presupuesto fue aprobado por la administración.`,
+    tablaDatos([
+      fila('Presupuesto #', String(pres?.id_presupuesto)),
+      fila('Incidente #', String(inc?.id_incidente)),
+      fila('Descripción', inc?.descripcion_problema || ''),
+      fila('Total aprobado', `$${Number(pres?.costo_total).toLocaleString('es-AR')}`),
+    ]),
+  )
+
+  await sendEmail(
+    { email: tec.correo_electronico, name: `${tec.nombre} ${tec.apellido}` },
+    `[ISBA] Presupuesto #${pres?.id_presupuesto} aprobado — puede iniciar el trabajo`,
+    html,
+  )
+}
+
+// ─── Evento 10: Presupuesto rechazado por admin → email al técnico ────────────
+
+export async function notificarTecnicoPresupuestoRechazado(idPresupuesto: number): Promise<void> {
+  const supabase = createAdminClient()
+
+  const { data: pres } = await supabase
+    .from('presupuestos')
+    .select(`
+      id_presupuesto,
+      incidentes (
+        id_incidente, descripcion_problema,
+        asignaciones_tecnico (
+          id_tecnico, estado_asignacion,
+          tecnicos (nombre, apellido, correo_electronico)
+        )
+      )
+    `)
+    .eq('id_presupuesto', idPresupuesto)
+    .single()
+
+  const inc = pres?.incidentes as any
+  const asig = Array.isArray(inc?.asignaciones_tecnico)
+    ? inc.asignaciones_tecnico.find((a: any) => ['aceptada', 'en_curso', 'pendiente', 'rechazada'].includes(a.estado_asignacion))
+    : null
+  const tec = asig?.tecnicos
+  if (!tec?.correo_electronico) return
+
+  const html = plantillaBase(
+    'Presupuesto rechazado por la administración',
+    `Hola ${tec.nombre}, lamentablemente tu presupuesto no fue aprobado por la administración.`,
+    tablaDatos([
+      fila('Presupuesto #', String(pres?.id_presupuesto)),
+      fila('Incidente #', String(inc?.id_incidente)),
+      fila('Descripción', inc?.descripcion_problema || ''),
+    ]),
+  )
+
+  await sendEmail(
+    { email: tec.correo_electronico, name: `${tec.nombre} ${tec.apellido}` },
+    `[ISBA] Presupuesto #${pres?.id_presupuesto} rechazado`,
+    html,
+  )
+}

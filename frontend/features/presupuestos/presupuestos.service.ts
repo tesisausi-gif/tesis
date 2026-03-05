@@ -246,26 +246,42 @@ export async function enviarPresupuesto(idPresupuesto: number): Promise<ActionRe
 }
 
 /**
- * Aprobar presupuesto (admin/gestor)
+ * Aprobar presupuesto (admin/gestor) — guarda comisión y notifica al técnico
  */
-export async function aprobarPresupuesto(idPresupuesto: number): Promise<ActionResult> {
+export async function aprobarPresupuesto(
+  idPresupuesto: number,
+  gastosAdministrativos: number = 0,
+): Promise<ActionResult> {
   try {
     const supabase = await createClient()
     await requireAdminOrGestorId()
+
+    // Obtener costos base para recalcular total
+    const { data: pres, error: errGet } = await supabase
+      .from('presupuestos')
+      .select('costo_materiales, costo_mano_obra')
+      .eq('id_presupuesto', idPresupuesto)
+      .single()
+
+    if (errGet || !pres) return { success: false, error: 'Presupuesto no encontrado' }
+
+    const costoTotal = (pres.costo_materiales || 0) + (pres.costo_mano_obra || 0) + gastosAdministrativos
 
     const { error } = await supabase
       .from('presupuestos')
       .update({
         estado_presupuesto: EstadoPresupuesto.APROBADO,
         fecha_aprobacion: new Date().toISOString(),
+        gastos_administrativos: gastosAdministrativos,
+        costo_total: costoTotal,
       })
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
 
-    // Notificar al cliente que puede revisar y aprobar (fire-and-forget)
-    const { notificarPresupuestoAprobadoAdmin } = await import('@/features/notificaciones/notificaciones.service')
-    notificarPresupuestoAprobadoAdmin(idPresupuesto).catch(console.error)
+    // Notificar al técnico que el presupuesto fue aprobado (fire-and-forget)
+    const { notificarTecnicoPresupuestoAprobado } = await import('@/features/notificaciones/notificaciones.service')
+    notificarTecnicoPresupuestoAprobado(idPresupuesto).catch(console.error)
 
     return { success: true, data: undefined }
   } catch (error) {
@@ -274,7 +290,7 @@ export async function aprobarPresupuesto(idPresupuesto: number): Promise<ActionR
 }
 
 /**
- * Rechazar presupuesto (admin/gestor)
+ * Rechazar presupuesto (admin/gestor) — desvincula al técnico y vuelve el incidente a pendiente
  */
 export async function rechazarPresupuesto(
   idPresupuesto: number,
@@ -284,6 +300,13 @@ export async function rechazarPresupuesto(
     const supabase = await createClient()
     await requireAdminOrGestorId()
 
+    // Obtener id_incidente del presupuesto
+    const { data: pres } = await supabase
+      .from('presupuestos')
+      .select('id_incidente')
+      .eq('id_presupuesto', idPresupuesto)
+      .single()
+
     const { error } = await supabase
       .from('presupuestos')
       .update({ estado_presupuesto: EstadoPresupuesto.RECHAZADO })
@@ -291,9 +314,32 @@ export async function rechazarPresupuesto(
 
     if (error) return { success: false, error: error.message }
 
-    // Notificar al cliente que el presupuesto fue rechazado (fire-and-forget)
-    const { notificarPresupuestoRechazado } = await import('@/features/notificaciones/notificaciones.service')
-    notificarPresupuestoRechazado(idPresupuesto).catch(console.error)
+    if (pres?.id_incidente) {
+      // Desvincular técnico: marcar asignación activa como rechazada
+      const { data: asig } = await supabase
+        .from('asignaciones_tecnico')
+        .select('id_asignacion')
+        .eq('id_incidente', pres.id_incidente)
+        .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
+        .maybeSingle()
+
+      if (asig) {
+        await supabase
+          .from('asignaciones_tecnico')
+          .update({ estado_asignacion: 'rechazada' })
+          .eq('id_asignacion', asig.id_asignacion)
+      }
+
+      // Volver incidente a pendiente para búsqueda de nuevo técnico
+      await supabase
+        .from('incidentes')
+        .update({ estado_actual: 'pendiente' })
+        .eq('id_incidente', pres.id_incidente)
+    }
+
+    // Notificar al técnico que el presupuesto fue rechazado (fire-and-forget)
+    const { notificarTecnicoPresupuestoRechazado } = await import('@/features/notificaciones/notificaciones.service')
+    notificarTecnicoPresupuestoRechazado(idPresupuesto).catch(console.error)
 
     return { success: true, data: undefined }
   } catch (error) {

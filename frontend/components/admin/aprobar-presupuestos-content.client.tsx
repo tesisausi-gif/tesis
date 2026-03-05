@@ -58,7 +58,8 @@ export function AprobarPresupuestosContent({ presupuestosIniciales }: AprobarPre
 
         try {
             if (accion === 'aprobar') {
-                const result = await aprobarPresupuesto(presupuestoSeleccionado.id_presupuesto)
+                const gastosVal = parseFloat(comision[presupuestoSeleccionado.id_presupuesto] || '0') || 0
+                const result = await aprobarPresupuesto(presupuestoSeleccionado.id_presupuesto, gastosVal)
 
                 if (!result.success) {
                     toast.error('Error', { description: result.error })

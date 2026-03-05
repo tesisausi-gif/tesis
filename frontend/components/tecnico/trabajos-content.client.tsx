@@ -32,9 +32,10 @@ import { crearConformidadPorTecnico } from '@/features/conformidades/conformidad
 
 interface TrabajosContentProps {
   asignaciones: AsignacionTecnico[]
+  estadoPresupuestoPorIncidente: Record<number, string>
 }
 
-export function TrabajosContent({ asignaciones }: TrabajosContentProps) {
+export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente }: TrabajosContentProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -159,7 +160,9 @@ export function TrabajosContent({ asignaciones }: TrabajosContentProps) {
             const direccion = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
 
             const estado = asignacion.estado_asignacion
-            const enTrabajo = estado === 'aceptada' || estado === 'en_curso'
+            const estadoPres = estadoPresupuestoPorIncidente[asignacion.id_incidente]
+            const presupuestoAprobado = estadoPres === 'aprobado' || estadoPres === 'aprobado_admin'
+            const enTrabajo = (estado === 'aceptada' || estado === 'en_curso') && presupuestoAprobado
             const terminado = estado === 'completada'
 
             return (

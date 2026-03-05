@@ -321,7 +321,7 @@ export default function NuevoPresupuestoTecnicoPage() {
                         </div>
 
                         {/* Costos */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="materiales">Costo Materiales *</Label>
                                 <Input
@@ -350,21 +350,7 @@ export default function NuevoPresupuestoTecnicoPage() {
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="gastos">Gastos Administrativos</Label>
-                                <Input
-                                    id="gastos"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value="0"
-                                    placeholder="0.00"
-                                    disabled={true}
-                                    readOnly
-                                    className="bg-gray-50"
-                                />
-                                <p className="text-xs text-gray-500">Los gastos administrativos serán agregados por el administrador</p>
-                            </div>
+
                         </div>
 
                         {/* Total */}
