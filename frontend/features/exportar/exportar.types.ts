@@ -1,10 +1,12 @@
 /**
  * Tipos para el módulo de Exportación de Reportes
+ * Incluye tipos legacy (3 exportaciones básicas) + 12 reportes analíticos
  */
 
 export type FormatoExport = 'csv' | 'pdf'
-
 export type TipoReporte = 'incidentes' | 'pagos' | 'tecnicos'
+
+// ─── Legacy types ──────────────────────────────────────────────────────────────
 
 export interface FilaIncidenteExport {
   id_incidente: number
@@ -48,4 +50,262 @@ export interface DatosReporte {
   incidentes: FilaIncidenteExport[]
   pagos: FilaPagoExport[]
   tecnicos: FilaTecnicoExport[]
+}
+
+// ─── Select option types ─────────────────────────────────────────────────────
+
+export interface TecnicoSelect {
+  id_tecnico: number
+  nombre: string
+  apellido: string
+}
+
+export interface InmuebleSelect {
+  id_inmueble: number
+  calle: string
+  localidad: string
+}
+
+// ─── R1: Incidentes por Tipo y Estado ────────────────────────────────────────
+
+export interface R1FilaCategoria {
+  categoria: string
+  cantidad: number
+  porcentaje: number
+}
+
+export interface R1FilaEstado {
+  estado: string
+  cantidad: number
+  porcentaje: number
+}
+
+export interface R1Resultado {
+  total: number
+  porcentajeCerrados: number
+  porcentajeEnCurso: number
+  promedioDiario: number
+  porCategoria: R1FilaCategoria[]
+  porEstado: R1FilaEstado[]
+}
+
+// ─── R2: Tiempos de Resolución ────────────────────────────────────────────────
+
+export interface R2FilaIncidente {
+  id_incidente: number
+  categoria: string
+  descripcion: string
+  inmueble: string
+  fecha_registro: string
+  fecha_cierre: string | null
+  dias: number
+}
+
+export interface R2Resultado {
+  promedioDias: number
+  minDias: number
+  maxDias: number
+  totalIncidentes: number
+  incidentesMasLentos: R2FilaIncidente[]
+}
+
+// ─── R3: Técnicos por Volumen ─────────────────────────────────────────────────
+
+export interface R3FilaTecnico {
+  id_tecnico: number
+  nombre: string
+  apellido: string
+  especialidad: string
+  asignados: number
+  cerrados: number
+  enCurso: number
+  tasaCierre: number
+  promedioDias: number
+}
+
+export interface R3Resultado {
+  totalTecnicos: number
+  promedioAsignados: number
+  promedioCerrados: number
+  tecnicos: R3FilaTecnico[]
+}
+
+// ─── R4: Propiedades con Más Incidentes ───────────────────────────────────────
+
+export interface R4FilaInmueble {
+  id_inmueble: number
+  nombre: string
+  direccion: string
+  totalIncidentes: number
+  costoTotal: number
+  tipoFrecuente: string
+  incidentesAbiertos: number
+}
+
+export interface R4Resultado {
+  totalPropiedades: number
+  totalIncidentes: number
+  costoTotal: number
+  inmuebles: R4FilaInmueble[]
+}
+
+// ─── R5: Rentabilidad por Refacción ──────────────────────────────────────────
+
+export interface R5FilaTipo {
+  tipo: string
+  montoTotal: number
+  comisiones: number
+  gananciaNeta: number
+  margen: number
+}
+
+export interface R5Resultado {
+  montoTotal: number
+  comisionesTotales: number
+  gananciaNeta: number
+  margenGlobal: number
+  porTipo: R5FilaTipo[]
+}
+
+// ─── R6: Desempeño de Técnicos ────────────────────────────────────────────────
+
+export interface R6FilaTecnico {
+  id_tecnico: number
+  nombre: string
+  apellido: string
+  asignados: number
+  cerrados: number
+  productividad: number
+  satisfaccion: number | null
+  rankingPos: number
+}
+
+export interface R6Resultado {
+  totalTecnicos: number
+  promedioProductividad: number
+  promedioSatisfaccion: number
+  tecnicos: R6FilaTecnico[]
+}
+
+// ─── R7: Satisfacción de ISBA ─────────────────────────────────────────────────
+
+export interface R7FilaTecnico {
+  id_tecnico: number
+  nombre: string
+  apellido: string
+  promedioPuntuacion: number
+  totalEvaluaciones: number
+  distribucion: Record<string, number>
+  comentarios: string[]
+}
+
+export interface R7Resultado {
+  promedioGlobal: number
+  totalEvaluaciones: number
+  tecnicos: R7FilaTecnico[]
+}
+
+// ─── R8: Costos de Mantenimiento ─────────────────────────────────────────────
+
+export interface R8FilaCategoria {
+  categoria: string
+  costoTotal: number
+  materiales: number
+  manoObra: number
+  gastosAdmin: number
+  totalIncidentes: number
+  promedioCosto: number
+}
+
+export interface R8Resultado {
+  costoTotal: number
+  totalIncidentes: number
+  costoPromedio: number
+  presupuestoTotal: number
+  porCategoria: R8FilaCategoria[]
+}
+
+// ─── R9: Eficiencia de Costos por Técnico ────────────────────────────────────
+
+export interface R9FilaTecnico {
+  id_tecnico: number
+  nombre: string
+  apellido: string
+  incidentesCerrados: number
+  costoTotal: number
+  costoPromedio: number
+  desviacion: number
+}
+
+export interface R9Resultado {
+  costoPromedioGlobal: number
+  totalIncidentes: number
+  costoTotal: number
+  tecnicos: R9FilaTecnico[]
+}
+
+// ─── R10: Rentabilidad por Inmueble ──────────────────────────────────────────
+
+export interface R10FilaInmueble {
+  id_inmueble: number
+  nombre: string
+  ingresos: number
+  costos: number
+  rentabilidadNeta: number
+  margen: number
+  totalIncidentes: number
+}
+
+export interface R10Resultado {
+  ingresosTotal: number
+  costosTotal: number
+  rentabilidadNeta: number
+  margenGlobal: number
+  inmuebles: R10FilaInmueble[]
+}
+
+// ─── R11: Comparativo de Desempeño ───────────────────────────────────────────
+
+export interface R11FilaIndicador {
+  indicador: string
+  periodo1: number
+  periodo2: number
+  cambioPorcentaje: number
+  tendencia: 'sube' | 'baja' | 'igual'
+}
+
+export interface R11Resultado {
+  periodo1Label: string
+  periodo2Label: string
+  indicadores: R11FilaIndicador[]
+}
+
+// ─── R12: Indicadores Globales ───────────────────────────────────────────────
+
+export interface R12FilaTecnico {
+  nombre: string
+  apellido: string
+  asignados: number
+  cerrados: number
+  satisfaccion: number
+}
+
+export interface R12FilaPropiedad {
+  nombre: string
+  direccion: string
+  incidentes: number
+  costoTotal: number
+}
+
+export interface R12Resultado {
+  totalIncidentes: number
+  incidentesAbiertos: number
+  incidentesCerrados: number
+  promedioResolucionDias: number
+  totalIngresos: number
+  totalCostos: number
+  rentabilidadNeta: number
+  satisfaccionPromedio: number
+  topTecnicos: R12FilaTecnico[]
+  topPropiedades: R12FilaPropiedad[]
 }

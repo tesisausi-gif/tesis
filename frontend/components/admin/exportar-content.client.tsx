@@ -1,276 +1,1125 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useEffect, useCallback } from 'react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Download, FileText, DollarSign, Wrench, Loader2, FileSpreadsheet, Filter } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Loader2, FileSpreadsheet, Printer, BarChart3, TrendingUp, Users, Building2, DollarSign, Star, Wrench, LayoutDashboard } from 'lucide-react'
 import { toast } from 'sonner'
 import {
-  getIncidentesParaExportar,
-  getPagosParaExportar,
-  getTecnicosParaExportar,
+  getTecnicosSelect,
+  getInmueblesSelect,
+  getR1IncidentesPorTipoEstado,
+  getR2TiemposResolucion,
+  getR3TecnicosPorVolumen,
+  getR4PropiedadesMasIncidentes,
+  getR5RentabilidadPorRefaccion,
+  getR6DesempenoTecnicos,
+  getR7Satisfaccion,
+  getR8CostosMantenimiento,
+  getR9EficienciaCostos,
+  getR10RentabilidadInmueble,
+  getR11ComparativoDesempenio,
+  getR12IndicadoresGlobales,
 } from '@/features/exportar/exportar.service'
-import type { TipoReporte } from '@/features/exportar/exportar.types'
+import { CategoriaIncidente } from '@/shared/types/enums'
+import type {
+  TecnicoSelect, InmuebleSelect,
+  R1Resultado, R2Resultado, R3Resultado, R4Resultado, R5Resultado, R6Resultado,
+  R7Resultado, R8Resultado, R9Resultado, R10Resultado, R11Resultado, R12Resultado,
+} from '@/features/exportar/exportar.types'
 
-// ─── helpers CSV ────────────────────────────────────────────────────────────
+// ─── CSV helpers ──────────────────────────────────────────────────────────────
 
-function escaparCSV(valor: unknown): string {
-  if (valor === null || valor === undefined) return ''
-  const str = String(valor)
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`
-  }
-  return str
+function escaparCSV(v: unknown): string {
+  if (v === null || v === undefined) return ''
+  const s = String(v)
+  return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s
 }
-
-function generarCSV(cabeceras: string[], filas: Record<string, unknown>[]): string {
-  const header = cabeceras.map(escaparCSV).join(',')
-  const body = filas.map(fila => cabeceras.map(c => escaparCSV(fila[c])).join(','))
-  return [header, ...body].join('\n')
+function generarCSV(cols: string[], filas: Record<string, unknown>[]): string {
+  return [cols.map(escaparCSV).join(','), ...filas.map(f => cols.map(c => escaparCSV(f[c])).join(','))].join('\n')
 }
-
-function descargarCSV(csv: string, nombreArchivo: string) {
+function descargarCSV(csv: string, nombre: string) {
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = nombreArchivo
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  const a = document.createElement('a')
+  a.href = url; a.download = nombre
+  document.body.appendChild(a); a.click()
+  document.body.removeChild(a); URL.revokeObjectURL(url)
 }
 
-// ─── definición de reportes ──────────────────────────────────────────────────
+// ─── Format helpers ───────────────────────────────────────────────────────────
 
-const REPORTES: {
-  tipo: TipoReporte
-  titulo: string
-  descripcion: string
-  icon: typeof FileText
-  color: string
-  cabeceras: string[]
-}[] = [
-  {
-    tipo: 'incidentes',
-    titulo: 'Reporte de Incidentes',
-    descripcion: 'Todos los incidentes del sistema con estado, cliente e inmueble',
-    icon: FileText,
-    color: 'text-blue-600',
-    cabeceras: [
-      'id_incidente', 'fecha_registro', 'descripcion_problema', 'categoria',
-      'nivel_prioridad', 'estado_actual', 'fue_resuelto', 'fecha_cierre',
-      'cliente_nombre', 'cliente_apellido', 'inmueble_calle', 'inmueble_localidad',
-    ],
-  },
-  {
-    tipo: 'pagos',
-    titulo: 'Reporte de Pagos',
-    descripcion: 'Historial de pagos con importes, métodos y comprobantes',
-    icon: DollarSign,
-    color: 'text-green-600',
-    cabeceras: [
-      'id_pago', 'fecha_pago', 'monto_pagado', 'tipo_pago', 'metodo_pago',
-      'numero_comprobante', 'incidente_id', 'incidente_descripcion',
-      'cliente_nombre', 'cliente_apellido',
-    ],
-  },
-  {
-    tipo: 'tecnicos',
-    titulo: 'Reporte de Técnicos',
-    descripcion: 'Técnicos activos con asignaciones totales y completadas',
-    icon: Wrench,
-    color: 'text-orange-600',
-    cabeceras: [
-      'nombre', 'apellido', 'especialidad', 'email', 'telefono',
-      'total_asignaciones', 'asignaciones_completadas',
-    ],
-  },
-]
+const AR = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
+const fmt$ = (n: number) => AR.format(n)
+const fmtPct = (n: number) => `${n.toFixed(1)}%`
+const fmtN = (n: number) => n.toFixed(1)
+const hoy = () => new Date().toISOString().slice(0, 10)
 
-// ─── componente ──────────────────────────────────────────────────────────────
+// ─── Shared sub-components ────────────────────────────────────────────────────
+
+function KpiCard({ label, valor, sub }: { label: string; valor: string; sub?: string }) {
+  return (
+    <div className="rounded-lg border bg-blue-50 border-blue-200 p-3">
+      <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className="text-xl font-bold text-blue-700 mt-0.5">{valor}</p>
+      {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+    </div>
+  )
+}
+
+function FilaFechas({
+  desde, hasta,
+  onDesde, onHasta,
+}: { desde: string; hasta: string; onDesde: (v: string) => void; onHasta: (v: string) => void }) {
+  return (
+    <>
+      <div className="space-y-1">
+        <Label className="text-xs">Desde</Label>
+        <Input type="date" value={desde} onChange={e => onDesde(e.target.value)} className="h-8 text-sm" />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Hasta</Label>
+        <Input type="date" value={hasta} onChange={e => onHasta(e.target.value)} className="h-8 text-sm" />
+      </div>
+    </>
+  )
+}
+
+function SelectCategoria({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const cats = Object.values(CategoriaIncidente)
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">Categoría</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todas">Todas</SelectItem>
+          {cats.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
+function SelectTecnico({ value, onChange, tecnicos }: { value: string; onChange: (v: string) => void; tecnicos: TecnicoSelect[] }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">Técnico</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todos">Todos</SelectItem>
+          {tecnicos.map(t => (
+            <SelectItem key={t.id_tecnico} value={String(t.id_tecnico)}>{t.nombre} {t.apellido}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
+function SelectInmueble({ value, onChange, inmuebles }: { value: string; onChange: (v: string) => void; inmuebles: InmuebleSelect[] }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">Inmueble</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todos">Todos</SelectItem>
+          {inmuebles.map(i => (
+            <SelectItem key={i.id_inmueble} value={String(i.id_inmueble)}>{i.calle}, {i.localidad}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
+function TablaResultados({ cols, filas }: { cols: string[]; filas: Record<string, unknown>[] }) {
+  if (!filas.length) return <p className="text-sm text-muted-foreground py-4 text-center">Sin datos para mostrar.</p>
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className="border-b">
+            {cols.map(c => <th key={c} className="text-left py-2 px-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">{c}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((fila, i) => (
+            <tr key={i} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
+              {cols.map(c => <td key={c} className="py-2 px-3 text-xs">{String(fila[c] ?? '')}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function BotonesExport({
+  onCSV, onPDF, disabled, cargando,
+}: { onCSV: () => void; onPDF: () => void; disabled: boolean; cargando: boolean }) {
+  return (
+    <div className="flex gap-2">
+      <Button size="sm" variant="outline" onClick={onCSV} disabled={disabled} className="gap-1.5 text-xs">
+        <FileSpreadsheet className="h-3.5 w-3.5" /> CSV
+      </Button>
+      <Button size="sm" variant="outline" onClick={onPDF} disabled={disabled} className="gap-1.5 text-xs">
+        <Printer className="h-3.5 w-3.5" /> PDF
+      </Button>
+    </div>
+  )
+}
+
+function BtnGenerar({ onClick, cargando }: { onClick: () => void; cargando: boolean }) {
+  return (
+    <Button onClick={onClick} disabled={cargando} size="sm" className="gap-1.5">
+      {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
+      Generar reporte
+    </Button>
+  )
+}
+
+function abrirPDF(tipo: number | string, params: Record<string, string | undefined>) {
+  const qs = new URLSearchParams()
+  qs.set('tipo', String(tipo))
+  for (const [k, v] of Object.entries(params)) {
+    if (v) qs.set(k, v)
+  }
+  window.open(`/exportar/imprimir?${qs.toString()}`, '_blank', 'width=1000,height=750,noopener')
+}
+
+// ─── R1: Incidentes por Tipo y Estado ────────────────────────────────────────
+
+function TabR1() {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [categoria, setCategoria] = useState('todas')
+  const [estado, setEstado] = useState('todos')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R1Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR1IncidentesPorTipoEstado({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        categoria: categoria === 'todas' ? undefined : categoria,
+        estadoActual: estado === 'todos' ? undefined : estado,
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R1') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['Categoría', 'Cantidad', '%']
+  const filas = resultado?.porCategoria.map(c => ({ 'Categoría': c.categoria, 'Cantidad': c.cantidad, '%': fmtPct(c.porcentaje) })) ?? []
+
+  const estadosFijos = ['pendiente', 'en_proceso', 'resuelto']
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm">Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectCategoria value={categoria} onChange={setCategoria} />
+            <div className="space-y-1">
+              <Label className="text-xs">Estado</Label>
+              <Select value={estado} onValueChange={setEstado}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  {estadosFijos.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard label="Total" valor={String(resultado.total)} />
+            <KpiCard label="% Resueltos" valor={fmtPct(resultado.porcentajeCerrados)} />
+            <KpiCard label="% En proceso" valor={fmtPct(resultado.porcentajeEnCurso)} />
+            <KpiCard label="Prom. diario" valor={fmtN(resultado.promedioDiario)} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Desglose por Categoría</CardTitle>
+              <BotonesExport
+                disabled={!filas.length}
+                cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r1_categorias_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(1, { fechaDesde: desde, fechaHasta: hasta, categoria: categoria === 'todas' ? undefined : categoria, estadoActual: estado === 'todos' ? undefined : estado })}
+              />
+            </CardHeader>
+            <CardContent>
+              <TablaResultados cols={cols} filas={filas} />
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R2: Tiempos de Resolución ────────────────────────────────────────────────
+
+function TabR2() {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [categoria, setCategoria] = useState('todas')
+  const [orden, setOrden] = useState('mayor')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R2Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR2TiemposResolucion({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        categoria: categoria === 'todas' ? undefined : categoria,
+        ordenarPor: orden as any,
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R2') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['ID', 'Categoría', 'Descripción', 'Inmueble', 'Días']
+  const filas = resultado?.incidentesMasLentos.map(i => ({
+    'ID': `#${i.id_incidente}`, 'Categoría': i.categoria,
+    'Descripción': i.descripcion, 'Inmueble': i.inmueble, 'Días': i.dias,
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectCategoria value={categoria} onChange={setCategoria} />
+            <div className="space-y-1">
+              <Label className="text-xs">Ordenar por</Label>
+              <Select value={orden} onValueChange={setOrden}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mayor">Más lentos primero</SelectItem>
+                  <SelectItem value="menor">Más rápidos primero</SelectItem>
+                  <SelectItem value="reciente">Más recientes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard label="Promedio días" valor={fmtN(resultado.promedioDias)} />
+            <KpiCard label="Mínimo días" valor={String(resultado.minDias)} />
+            <KpiCard label="Máximo días" valor={String(resultado.maxDias)} />
+            <KpiCard label="Total" valor={String(resultado.totalIncidentes)} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Incidentes ({resultado.incidentesMasLentos.length} mostrados)</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r2_tiempos_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(2, { fechaDesde: desde, fechaHasta: hasta, categoria: categoria === 'todas' ? undefined : categoria, ordenarPor: orden })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R3: Técnicos por Volumen ─────────────────────────────────────────────────
+
+function TabR3({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [tecnico, setTecnico] = useState('todos')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R3Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR3TecnicosPorVolumen({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        idTecnico: tecnico === 'todos' ? undefined : Number(tecnico),
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R3') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['Técnico', 'Especialidad', 'Asignados', 'Cerrados', 'En curso', 'Tasa %', 'Días prom.']
+  const filas = resultado?.tecnicos.map(t => ({
+    'Técnico': `${t.nombre} ${t.apellido}`, 'Especialidad': t.especialidad,
+    'Asignados': t.asignados, 'Cerrados': t.cerrados, 'En curso': t.enCurso,
+    'Tasa %': fmtPct(t.tasaCierre), 'Días prom.': fmtN(t.promedioDias),
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            <KpiCard label="Total técnicos" valor={String(resultado.totalTecnicos)} />
+            <KpiCard label="Prom. asignados" valor={fmtN(resultado.promedioAsignados)} />
+            <KpiCard label="Prom. cerrados" valor={fmtN(resultado.promedioCerrados)} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Técnicos</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r3_tecnicos_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(3, { fechaDesde: desde, fechaHasta: hasta, idTecnico: tecnico === 'todos' ? undefined : tecnico })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R4: Propiedades con Más Incidentes ───────────────────────────────────────
+
+function TabR4({ inmuebles }: { inmuebles: InmuebleSelect[] }) {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [inmueble, setInmueble] = useState('todos')
+  const [topN, setTopN] = useState('10')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R4Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR4PropiedadesMasIncidentes({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        idInmueble: inmueble === 'todos' ? undefined : Number(inmueble),
+        topN: Number(topN) || 10,
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R4') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['Inmueble', 'Incidentes', 'Costo total', 'Tipo frecuente', 'Abiertos']
+  const filas = resultado?.inmuebles.map(i => ({
+    'Inmueble': i.nombre, 'Incidentes': i.totalIncidentes, 'Costo total': fmt$(i.costoTotal),
+    'Tipo frecuente': i.tipoFrecuente, 'Abiertos': i.incidentesAbiertos,
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectInmueble value={inmueble} onChange={setInmueble} inmuebles={inmuebles} />
+            <div className="space-y-1">
+              <Label className="text-xs">Top N propiedades</Label>
+              <Input type="number" min="1" max="50" value={topN} onChange={e => setTopN(e.target.value)} className="h-8 text-sm" />
+            </div>
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            <KpiCard label="Propiedades" valor={String(resultado.totalPropiedades)} />
+            <KpiCard label="Total incidentes" valor={String(resultado.totalIncidentes)} />
+            <KpiCard label="Costo total" valor={fmt$(resultado.costoTotal)} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Propiedades</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r4_propiedades_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(4, { fechaDesde: desde, fechaHasta: hasta, idInmueble: inmueble === 'todos' ? undefined : inmueble, topN })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R5: Rentabilidad por Refacción ──────────────────────────────────────────
+
+function TabR5() {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [categoria, setCategoria] = useState('todas')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R5Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR5RentabilidadPorRefaccion({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        categoria: categoria === 'todas' ? undefined : categoria,
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R5') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['Tipo', 'Monto total', 'Comisión (10%)', 'Ganancia neta', 'Margen %']
+  const filas = resultado?.porTipo.map(t => ({
+    'Tipo': t.tipo, 'Monto total': fmt$(t.montoTotal),
+    'Comisión (10%)': fmt$(t.comisiones), 'Ganancia neta': fmt$(t.gananciaNeta), 'Margen %': fmtPct(t.margen),
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectCategoria value={categoria} onChange={setCategoria} />
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard label="Monto total" valor={fmt$(resultado.montoTotal)} />
+            <KpiCard label="Comisiones (10%)" valor={fmt$(resultado.comisionesTotales)} />
+            <KpiCard label="Ganancia neta" valor={fmt$(resultado.gananciaNeta)} />
+            <KpiCard label="Margen global" valor={fmtPct(resultado.margenGlobal)} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Por tipo de refacción</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r5_rentabilidad_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(5, { fechaDesde: desde, fechaHasta: hasta, categoria: categoria === 'todas' ? undefined : categoria })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R6: Desempeño de Técnicos ────────────────────────────────────────────────
+
+function TabR6({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [tecnico, setTecnico] = useState('todos')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R6Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR6DesempenoTecnicos({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        idTecnico: tecnico === 'todos' ? undefined : Number(tecnico),
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R6') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['#', 'Técnico', 'Asignados', 'Cerrados', 'Productividad %', 'Satisfacción ★']
+  const filas = resultado?.tecnicos.map(t => ({
+    '#': t.rankingPos, 'Técnico': `${t.nombre} ${t.apellido}`,
+    'Asignados': t.asignados, 'Cerrados': t.cerrados,
+    'Productividad %': fmtPct(t.productividad),
+    'Satisfacción ★': t.satisfaccion != null ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            <KpiCard label="Total técnicos" valor={String(resultado.totalTecnicos)} />
+            <KpiCard label="Productividad prom." valor={fmtPct(resultado.promedioProductividad)} />
+            <KpiCard label="Satisfacción prom." valor={resultado.promedioSatisfaccion > 0 ? `${fmtN(resultado.promedioSatisfaccion)} ★` : 'N/A'} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Ranking de desempeño</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r6_desempeno_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(6, { fechaDesde: desde, fechaHasta: hasta, idTecnico: tecnico === 'todos' ? undefined : tecnico })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R7: Satisfacción de ISBA ─────────────────────────────────────────────────
+
+function TabR7({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [tecnico, setTecnico] = useState('todos')
+  const [calMin, setCalMin] = useState('')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R7Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR7Satisfaccion({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        idTecnico: tecnico === 'todos' ? undefined : Number(tecnico),
+        calificacionMinima: calMin ? Number(calMin) : undefined,
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R7') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['Técnico', 'Promedio ★', 'Evaluaciones', '5★', '4★', '3★', '2★', '1★']
+  const filas = resultado?.tecnicos.map(t => ({
+    'Técnico': `${t.nombre} ${t.apellido}`, 'Promedio ★': fmtN(t.promedioPuntuacion),
+    'Evaluaciones': t.totalEvaluaciones,
+    '5★': t.distribucion['5'] || 0, '4★': t.distribucion['4'] || 0,
+    '3★': t.distribucion['3'] || 0, '2★': t.distribucion['2'] || 0, '1★': t.distribucion['1'] || 0,
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
+            <div className="space-y-1">
+              <Label className="text-xs">Calificación mínima (1-5)</Label>
+              <Input type="number" min="1" max="5" value={calMin} onChange={e => setCalMin(e.target.value)} className="h-8 text-sm" placeholder="Sin mínimo" />
+            </div>
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <KpiCard label="Promedio global" valor={`${fmtN(resultado.promedioGlobal)} ★`} />
+            <KpiCard label="Total evaluaciones" valor={String(resultado.totalEvaluaciones)} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Satisfacción por técnico</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r7_satisfaccion_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(7, { fechaDesde: desde, fechaHasta: hasta, idTecnico: tecnico === 'todos' ? undefined : tecnico, calificacionMinima: calMin || undefined })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R8: Costos de Mantenimiento ─────────────────────────────────────────────
+
+function TabR8() {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [categoria, setCategoria] = useState('todas')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R8Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR8CostosMantenimiento({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        categoria: categoria === 'todas' ? undefined : categoria,
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R8') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['Categoría', 'Costo total', 'Materiales', 'Mano de obra', 'Incidentes', 'Promedio']
+  const filas = resultado?.porCategoria.map(c => ({
+    'Categoría': c.categoria, 'Costo total': fmt$(c.costoTotal), 'Materiales': fmt$(c.materiales),
+    'Mano de obra': fmt$(c.manoObra), 'Incidentes': c.totalIncidentes, 'Promedio': fmt$(c.promedioCosto),
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectCategoria value={categoria} onChange={setCategoria} />
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            <KpiCard label="Costo total" valor={fmt$(resultado.costoTotal)} />
+            <KpiCard label="Total incidentes" valor={String(resultado.totalIncidentes)} />
+            <KpiCard label="Costo promedio" valor={fmt$(resultado.costoPromedio)} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Costos por categoría</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r8_costos_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(8, { fechaDesde: desde, fechaHasta: hasta, categoria: categoria === 'todas' ? undefined : categoria })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R9: Eficiencia de Costos por Técnico ────────────────────────────────────
+
+function TabR9({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [tecnico, setTecnico] = useState('todos')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R9Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR9EficienciaCostos({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        idTecnico: tecnico === 'todos' ? undefined : Number(tecnico),
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R9') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['Técnico', 'Incidentes', 'Costo total', 'Costo promedio', 'Desviación %']
+  const filas = resultado?.tecnicos.map(t => ({
+    'Técnico': `${t.nombre} ${t.apellido}`, 'Incidentes': t.incidentesCerrados,
+    'Costo total': fmt$(t.costoTotal), 'Costo promedio': fmt$(t.costoPromedio),
+    'Desviación %': `${t.desviacion >= 0 ? '+' : ''}${fmtN(t.desviacion)}%`,
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            <KpiCard label="Costo prom. global" valor={fmt$(resultado.costoPromedioGlobal)} />
+            <KpiCard label="Total incidentes" valor={String(resultado.totalIncidentes)} />
+            <KpiCard label="Costo total" valor={fmt$(resultado.costoTotal)} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Eficiencia por técnico</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r9_eficiencia_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(9, { fechaDesde: desde, fechaHasta: hasta, idTecnico: tecnico === 'todos' ? undefined : tecnico })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R10: Rentabilidad por Inmueble ──────────────────────────────────────────
+
+function TabR10({ inmuebles }: { inmuebles: InmuebleSelect[] }) {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [inmueble, setInmueble] = useState('todos')
+  const [topN, setTopN] = useState('10')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R10Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR10RentabilidadInmueble({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        idInmueble: inmueble === 'todos' ? undefined : Number(inmueble),
+        topN: Number(topN) || 10,
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R10') }
+    finally { setCargando(false) }
+  }
+
+  const cols = ['Inmueble', 'Ingresos', 'Costos', 'Rentabilidad', 'Margen %', 'Incidentes']
+  const filas = resultado?.inmuebles.map(i => ({
+    'Inmueble': i.nombre, 'Ingresos': fmt$(i.ingresos), 'Costos': fmt$(i.costos),
+    'Rentabilidad': fmt$(i.rentabilidadNeta), 'Margen %': fmtPct(i.margen), 'Incidentes': i.totalIncidentes,
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <SelectInmueble value={inmueble} onChange={setInmueble} inmuebles={inmuebles} />
+            <div className="space-y-1">
+              <Label className="text-xs">Top N inmuebles</Label>
+              <Input type="number" min="1" max="50" value={topN} onChange={e => setTopN(e.target.value)} className="h-8 text-sm" />
+            </div>
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard label="Ingresos" valor={fmt$(resultado.ingresosTotal)} />
+            <KpiCard label="Costos" valor={fmt$(resultado.costosTotal)} />
+            <KpiCard label="Rentabilidad neta" valor={fmt$(resultado.rentabilidadNeta)} />
+            <KpiCard label="Margen global" valor={fmtPct(resultado.margenGlobal)} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Rentabilidad por inmueble</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r10_rentabilidad_inmueble_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(10, { fechaDesde: desde, fechaHasta: hasta, idInmueble: inmueble === 'todos' ? undefined : inmueble, topN })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R11: Comparativo de Desempeño ───────────────────────────────────────────
+
+function TabR11() {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [periodo, setPeriodo] = useState('semestral')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R11Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR11ComparativoDesempenio({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        periodo: periodo as any,
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R11') }
+    finally { setCargando(false) }
+  }
+
+  const cols = resultado ? ['Indicador', resultado.periodo1Label, resultado.periodo2Label, 'Cambio %', 'Tendencia'] : []
+  const filas = resultado?.indicadores.map(i => ({
+    'Indicador': i.indicador,
+    [resultado.periodo1Label]: fmtN(i.periodo1),
+    [resultado.periodo2Label]: fmtN(i.periodo2),
+    'Cambio %': `${i.cambioPorcentaje >= 0 ? '+' : ''}${fmtN(i.cambioPorcentaje)}%`,
+    'Tendencia': i.tendencia === 'sube' ? '↑ Sube' : i.tendencia === 'baja' ? '↓ Baja' : '→ Igual',
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <div className="space-y-1">
+              <Label className="text-xs">Período por defecto</Label>
+              <Select value={periodo} onValueChange={setPeriodo}>
+                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="trimestral">Trimestral</SelectItem>
+                  <SelectItem value="semestral">Semestral</SelectItem>
+                  <SelectItem value="anual">Anual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">Si se especifican fechas, se divide en dos mitades. Si no, se usa el período seleccionado hasta hoy.</p>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <KpiCard label="Período 1" valor={resultado.periodo1Label} />
+            <KpiCard label="Período 2" valor={resultado.periodo2Label} />
+          </div>
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Comparativo de indicadores</CardTitle>
+              <BotonesExport disabled={!filas.length} cargando={cargando}
+                onCSV={() => descargarCSV(generarCSV(cols, filas), `r11_comparativo_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(11, { fechaDesde: desde, fechaHasta: hasta, periodo })}
+              />
+            </CardHeader>
+            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── R12: Indicadores Globales ────────────────────────────────────────────────
+
+function TabR12() {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [topTec, setTopTec] = useState('5')
+  const [topProp, setTopProp] = useState('5')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R12Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR12IndicadoresGlobales({
+        fechaDesde: desde || undefined,
+        fechaHasta: hasta || undefined,
+        topTecnicos: Number(topTec) || 5,
+        topPropiedades: Number(topProp) || 5,
+      })
+      setResultado(r)
+    } catch { toast.error('Error al generar R12') }
+    finally { setCargando(false) }
+  }
+
+  const colsTec = ['Top Técnicos', 'Asignados', 'Cerrados', 'Satisfacción ★']
+  const filasTec = resultado?.topTecnicos.map(t => ({
+    'Top Técnicos': `${t.nombre} ${t.apellido}`,
+    'Asignados': t.asignados, 'Cerrados': t.cerrados,
+    'Satisfacción ★': t.satisfaccion > 0 ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
+  })) ?? []
+
+  const colsProp = ['Propiedad', 'Dirección', 'Incidentes']
+  const filasProp = resultado?.topPropiedades.map(p => ({
+    'Propiedad': p.nombre, 'Dirección': p.direccion, 'Incidentes': p.incidentes,
+  })) ?? []
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <div className="space-y-1">
+              <Label className="text-xs">Top técnicos</Label>
+              <Input type="number" min="3" max="10" value={topTec} onChange={e => setTopTec(e.target.value)} className="h-8 text-sm" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Top propiedades</Label>
+              <Input type="number" min="3" max="10" value={topProp} onChange={e => setTopProp(e.target.value)} className="h-8 text-sm" />
+            </div>
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard label="Total incidentes" valor={String(resultado.totalIncidentes)} />
+            <KpiCard label="Abiertos" valor={String(resultado.incidentesAbiertos)} />
+            <KpiCard label="Resueltos" valor={String(resultado.incidentesCerrados)} />
+            <KpiCard label="Días prom. resolución" valor={fmtN(resultado.promedioResolucionDias)} />
+            <KpiCard label="Ingresos totales" valor={fmt$(resultado.totalIngresos)} />
+            <KpiCard label="Costos totales" valor={fmt$(resultado.totalCostos)} />
+            <KpiCard label="Rentabilidad neta" valor={fmt$(resultado.rentabilidadNeta)} />
+            <KpiCard label="Satisfacción prom." valor={resultado.satisfaccionPromedio > 0 ? `${fmtN(resultado.satisfaccionPromedio)} ★` : 'N/A'} />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Top técnicos</CardTitle>
+                <BotonesExport disabled={!filasTec.length} cargando={cargando}
+                  onCSV={() => descargarCSV(generarCSV(colsTec, filasTec), `r12_top_tecnicos_${hoy()}.csv`)}
+                  onPDF={() => abrirPDF(12, { fechaDesde: desde, fechaHasta: hasta, topTecnicos: topTec, topPropiedades: topProp })}
+                />
+              </CardHeader>
+              <CardContent><TablaResultados cols={colsTec} filas={filasTec} /></CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Top propiedades</CardTitle>
+              </CardHeader>
+              <CardContent><TablaResultados cols={colsProp} filas={filasProp} /></CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
 
 export function ExportarContent() {
-  const [cargando, setCargando] = useState<TipoReporte | null>(null)
-  const [fechaDesde, setFechaDesde] = useState('')
-  const [fechaHasta, setFechaHasta] = useState('')
+  const [tecnicos, setTecnicos] = useState<TecnicoSelect[]>([])
+  const [inmuebles, setInmuebles] = useState<InmuebleSelect[]>([])
 
-  const exportarCSV = async (tipo: TipoReporte) => {
-    setCargando(tipo)
-    try {
-      let filas: Record<string, unknown>[] = []
-      let cabeceras: string[] = []
-      const fecha = new Date().toISOString().slice(0, 10)
+  useEffect(() => {
+    Promise.all([getTecnicosSelect(), getInmueblesSelect()])
+      .then(([t, i]) => { setTecnicos(t); setInmuebles(i) })
+      .catch(() => { /* selects quedan vacíos, los reportes siguen funcionando */ })
+  }, [])
 
-      const filtro = {
-        fechaDesde: fechaDesde || undefined,
-        fechaHasta: fechaHasta || undefined,
-      }
-
-      if (tipo === 'incidentes') {
-        const datos = await getIncidentesParaExportar(filtro)
-        filas = datos as unknown as Record<string, unknown>[]
-        cabeceras = REPORTES.find(r => r.tipo === 'incidentes')!.cabeceras
-        descargarCSV(generarCSV(cabeceras, filas), `incidentes_${fecha}.csv`)
-      } else if (tipo === 'pagos') {
-        const datos = await getPagosParaExportar(filtro)
-        filas = datos as unknown as Record<string, unknown>[]
-        cabeceras = REPORTES.find(r => r.tipo === 'pagos')!.cabeceras
-        descargarCSV(generarCSV(cabeceras, filas), `pagos_${fecha}.csv`)
-      } else if (tipo === 'tecnicos') {
-        const datos = await getTecnicosParaExportar()
-        filas = datos as unknown as Record<string, unknown>[]
-        cabeceras = REPORTES.find(r => r.tipo === 'tecnicos')!.cabeceras
-        descargarCSV(generarCSV(cabeceras, filas), `tecnicos_${fecha}.csv`)
-      }
-
-      toast.success('Reporte exportado', {
-        description: `${filas.length} registros descargados como CSV`,
-      })
-    } catch {
-      toast.error('Error al exportar', { description: 'Intenta de nuevo más tarde' })
-    } finally {
-      setCargando(null)
-    }
-  }
-
-  const exportarPDF = (tipo: TipoReporte) => {
-    const reporte = REPORTES.find(r => r.tipo === tipo)!
-    // Abre la página de impresión del reporte en una ventana nueva
-    const url = `/dashboard/exportar/imprimir?tipo=${tipo}`
-    window.open(url, '_blank', 'width=900,height=700,noopener,noreferrer')
-    toast.info(`Abriendo vista de impresión: ${reporte.titulo}`)
-  }
+  const tabs = [
+    { value: 'r1', label: 'Incidentes', icon: BarChart3, desc: 'Por tipo y estado' },
+    { value: 'r2', label: 'Tiempos', icon: TrendingUp, desc: 'Resolución' },
+    { value: 'r3', label: 'Vol. Técnicos', icon: Users, desc: 'Asignaciones' },
+    { value: 'r4', label: 'Propiedades', icon: Building2, desc: 'Con más incidentes' },
+    { value: 'r5', label: 'Rentabilidad', icon: DollarSign, desc: 'Por refacción' },
+    { value: 'r6', label: 'Desempeño', icon: Star, desc: 'Ranking técnicos' },
+    { value: 'r7', label: 'Satisfacción', icon: Star, desc: 'Calificaciones ISBA' },
+    { value: 'r8', label: 'Costos', icon: Wrench, desc: 'Mantenimiento' },
+    { value: 'r9', label: 'Efic. Costos', icon: DollarSign, desc: 'Por técnico' },
+    { value: 'r10', label: 'Rent. Inmueble', icon: Building2, desc: 'Por propiedad' },
+    { value: 'r11', label: 'Comparativo', icon: TrendingUp, desc: 'Período a período' },
+    { value: 'r12', label: 'Dashboard', icon: LayoutDashboard, desc: 'Indicadores globales' },
+  ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Exportar Reportes</h2>
-        <p className="text-muted-foreground">
-          Descarga datos del sistema en formato CSV o genera PDF para imprimir
-        </p>
+        <h2 className="text-3xl font-bold tracking-tight">Informes y Reportes</h2>
+        <p className="text-muted-foreground mt-1">12 reportes analíticos con filtros, exportación CSV y PDF para impresión.</p>
       </div>
 
-      {/* Filtro de fechas global */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filtrar por rango de fechas (opcional)
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Se aplica a incidentes y pagos. Dejar en blanco para exportar todo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="space-y-1">
-              <Label className="text-xs">Desde</Label>
-              <Input
-                type="date"
-                value={fechaDesde}
-                onChange={e => setFechaDesde(e.target.value)}
-                className="w-36 h-8 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Hasta</Label>
-              <Input
-                type="date"
-                value={fechaHasta}
-                onChange={e => setFechaHasta(e.target.value)}
-                className="w-36 h-8 text-sm"
-              />
-            </div>
-            {(fechaDesde || fechaHasta) && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => { setFechaDesde(''); setFechaHasta('') }}
-                className="text-xs text-muted-foreground"
-              >
-                Limpiar filtro
-              </Button>
-            )}
-          </div>
-          {(fechaDesde || fechaHasta) && (
-            <p className="text-xs text-blue-600 mt-2">
-              Filtrando: {fechaDesde || '...'} → {fechaHasta || '...'}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="r1">
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1 rounded-lg mb-2">
+          {tabs.map(t => (
+            <TabsTrigger key={t.value} value={t.value} className="flex flex-col items-center gap-0 px-3 py-1.5 text-xs leading-tight h-auto">
+              <span className="font-medium">{t.label}</span>
+              <span className="text-[10px] text-muted-foreground hidden sm:block">{t.desc}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-        {REPORTES.map((reporte) => {
-          const Icon = reporte.icon
-          const ocupado = cargando === reporte.tipo
-          return (
-            <Card key={reporte.tipo} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className={`flex items-center gap-2 ${reporte.color}`}>
-                  <Icon className="h-5 w-5" />
-                  {reporte.titulo}
-                </CardTitle>
-                <CardDescription>{reporte.descripcion}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex flex-wrap gap-1">
-                  {reporte.cabeceras.slice(0, 4).map(c => (
-                    <Badge key={c} variant="outline" className="text-xs font-mono">
-                      {c}
-                    </Badge>
-                  ))}
-                  {reporte.cabeceras.length > 4 && (
-                    <Badge variant="outline" className="text-xs text-gray-400">
-                      +{reporte.cabeceras.length - 4} más
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    onClick={() => exportarCSV(reporte.tipo)}
-                    disabled={cargando !== null}
-                    className="flex-1 gap-2"
-                    variant="default"
-                  >
-                    {ocupado ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <FileSpreadsheet className="h-4 w-4" />
-                    )}
-                    CSV
-                  </Button>
-
-                  <Button
-                    onClick={() => exportarPDF(reporte.tipo)}
-                    disabled={cargando !== null}
-                    variant="outline"
-                    className="flex-1 gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    PDF
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      <Card className="border-dashed border-gray-300 bg-gray-50">
-        <CardContent className="py-4">
-          <p className="text-xs text-gray-500">
-            <strong>CSV:</strong> Compatible con Excel, Google Sheets y cualquier herramienta de análisis. Incluye BOM UTF-8 para soporte de caracteres especiales.
-            <br />
-            <strong>PDF:</strong> Abre una vista optimizada para impresión. Usa Ctrl+P (o Cmd+P) para guardar como PDF.
-          </p>
-        </CardContent>
-      </Card>
+        <TabsContent value="r1"><TabR1 /></TabsContent>
+        <TabsContent value="r2"><TabR2 /></TabsContent>
+        <TabsContent value="r3"><TabR3 tecnicos={tecnicos} /></TabsContent>
+        <TabsContent value="r4"><TabR4 inmuebles={inmuebles} /></TabsContent>
+        <TabsContent value="r5"><TabR5 /></TabsContent>
+        <TabsContent value="r6"><TabR6 tecnicos={tecnicos} /></TabsContent>
+        <TabsContent value="r7"><TabR7 tecnicos={tecnicos} /></TabsContent>
+        <TabsContent value="r8"><TabR8 /></TabsContent>
+        <TabsContent value="r9"><TabR9 tecnicos={tecnicos} /></TabsContent>
+        <TabsContent value="r10"><TabR10 inmuebles={inmuebles} /></TabsContent>
+        <TabsContent value="r11"><TabR11 /></TabsContent>
+        <TabsContent value="r12"><TabR12 /></TabsContent>
+      </Tabs>
     </div>
   )
 }
