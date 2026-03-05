@@ -7,7 +7,8 @@ import { motion } from 'framer-motion'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { FileText, DollarSign, Calendar, CheckCircle, XCircle, Clock, ArrowLeft, Wrench } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { FileText, DollarSign, Calendar, CheckCircle, XCircle, Clock, ArrowLeft, Wrench, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { EstadoPresupuesto } from '@/shared/types/enums'
 
@@ -175,11 +176,19 @@ export default function PresupuestosTecnicoPage() {
                 Volver al Inicio
             </Link>
 
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Mis Presupuestos</h1>
-                <p className="text-sm text-gray-600 mt-1">
-                    Presupuestos generados para tus inspecciones
-                </p>
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Mis Presupuestos</h1>
+                    <p className="text-sm text-gray-600 mt-1">
+                        Presupuestos generados para tus inspecciones
+                    </p>
+                </div>
+                <Link href="/tecnico/presupuestos/nuevo">
+                    <Button size="sm" className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Nuevo
+                    </Button>
+                </Link>
             </div>
 
             {presupuestos.length === 0 ? (

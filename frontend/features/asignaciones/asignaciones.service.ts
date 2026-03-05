@@ -243,3 +243,23 @@ export async function crearAsignacion(data: {
     return { success: false, error: 'Error inesperado al crear asignación' }
   }
 }
+
+/**
+ * Técnico marca su asignación como completada
+ */
+export async function completarAsignacion(idAsignacion: number): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+    await requireTecnicoId()
+
+    const { error } = await supabase
+      .from('asignaciones_tecnico')
+      .update({ estado_asignacion: 'completada' })
+      .eq('id_asignacion', idAsignacion)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al completar asignación' }
+  }
+}
