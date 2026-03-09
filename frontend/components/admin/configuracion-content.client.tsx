@@ -13,6 +13,7 @@ import {
   crearEspecialidad,
   toggleActivaEspecialidad,
 } from '@/features/usuarios/usuarios.service'
+import { ChangePasswordCard } from '@/components/shared/change-password-card'
 
 interface Especialidad {
   id_especialidad: number
@@ -213,6 +214,8 @@ export function ConfiguracionContent({ especialidades: esp }: ConfiguracionConte
           </div>
         </CardContent>
       </Card>
+
+      <ChangePasswordCard />
     </div>
   )
 }

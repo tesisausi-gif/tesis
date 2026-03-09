@@ -1,8 +1,9 @@
 import { createClient } from '@/shared/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, Building2, Plus, ArrowRight, Clock, CheckCircle2 } from 'lucide-react'
+import { AlertCircle, Building2, Plus, ArrowRight, Clock, CheckCircle2, FileText } from 'lucide-react'
 import Link from 'next/link'
+import { getClienteBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 
 export default async function ClienteDashboard() {
   const supabase = await createClient()
@@ -46,6 +47,8 @@ export default async function ClienteDashboard() {
   const totalInmuebles = inmuebles?.length || 0
   const inmueblesActivos = inmuebles?.filter(i => i.esta_activo).length || 0
 
+  const badgeCounts = await getClienteBadgeCounts().catch(() => ({ presupuestos: 0 }))
+
   return (
     <div className="space-y-4 px-4 py-6 md:px-6 md:py-8">
       {/* Header - Mobile First */}
@@ -67,6 +70,27 @@ export default async function ClienteDashboard() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Alerta: Presupuestos pendientes de aprobación */}
+      {badgeCounts.presupuestos > 0 && (
+        <Link href="/cliente/presupuestos" className="block">
+          <Card className="border-2 border-blue-400 bg-blue-50 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="flex items-center gap-4 py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                <FileText className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-blue-800">
+                  {badgeCounts.presupuestos === 1
+                    ? 'Tenés 1 presupuesto para aprobar'
+                    : `Tenés ${badgeCounts.presupuestos} presupuestos para aprobar`}
+                </p>
+                <p className="text-sm text-blue-600">Toca para revisar y aprobar →</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       )}
 
       {/* Dos Secciones Principales */}
