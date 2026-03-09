@@ -309,3 +309,21 @@ export interface R12Resultado {
   topTecnicos: R12FilaTecnico[]
   topPropiedades: R12FilaPropiedad[]
 }
+
+// ─── R13: Medios de Pago ─────────────────────────────────────────────────────
+
+export interface R13FilaMetodo {
+  metodo: string
+  cantidad: number
+  montoCobradoClientes: number
+  montoPagadoTecnicos: number
+  montoTotal: number
+}
+
+export interface R13Resultado {
+  totalCobradoClientes: number
+  totalPagadoTecnicos: number
+  cantidadCobros: number
+  cantidadPagos: number
+  porMetodo: R13FilaMetodo[]
+}

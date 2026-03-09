@@ -24,6 +24,7 @@ import type {
   R10Resultado,
   R11Resultado,
   R12Resultado,
+  R13Resultado,
 } from './exportar.types'
 
 interface FiltroFechas {
@@ -1097,5 +1098,54 @@ export async function getR12IndicadoresGlobales(filtros: {
     satisfaccionPromedio,
     topTecnicos,
     topPropiedades,
+  }
+}
+
+// ─── R13: Medios de Pago ──────────────────────────────────────────────────────
+
+export async function getR13MediosDePago(filtro?: FiltroFechas): Promise<R13Resultado> {
+  const supabase = createAdminClient()
+
+  let qCobros = supabase
+    .from('cobros_clientes')
+    .select('metodo_pago, monto_cobro, fecha_cobro')
+  if (filtro?.fechaDesde) qCobros = qCobros.gte('fecha_cobro', filtro.fechaDesde)
+  if (filtro?.fechaHasta) qCobros = qCobros.lte('fecha_cobro', filtro.fechaHasta)
+  const { data: cobros } = await qCobros
+  const cobrosArr = cobros || []
+
+  let qPagos = supabase
+    .from('pagos_tecnicos')
+    .select('metodo_pago, monto_pago, fecha_pago')
+  if (filtro?.fechaDesde) qPagos = qPagos.gte('fecha_pago', filtro.fechaDesde)
+  if (filtro?.fechaHasta) qPagos = qPagos.lte('fecha_pago', filtro.fechaHasta)
+  const { data: pagos } = await qPagos
+  const pagosArr = pagos || []
+
+  const metodosSet = new Set<string>([
+    ...cobrosArr.map((c: any) => c.metodo_pago ?? 'Sin especificar'),
+    ...pagosArr.map((p: any) => p.metodo_pago ?? 'Sin especificar'),
+  ])
+
+  const porMetodo = Array.from(metodosSet).map(metodo => {
+    const cobrosMetodo = cobrosArr.filter((c: any) => (c.metodo_pago ?? 'Sin especificar') === metodo)
+    const pagosMetodo = pagosArr.filter((p: any) => (p.metodo_pago ?? 'Sin especificar') === metodo)
+    const montoCobradoClientes = cobrosMetodo.reduce((s: number, c: any) => s + (Number(c.monto_cobro) || 0), 0)
+    const montoPagadoTecnicos = pagosMetodo.reduce((s: number, p: any) => s + (Number(p.monto_pago) || 0), 0)
+    return {
+      metodo,
+      cantidad: cobrosMetodo.length + pagosMetodo.length,
+      montoCobradoClientes,
+      montoPagadoTecnicos,
+      montoTotal: montoCobradoClientes + montoPagadoTecnicos,
+    }
+  }).sort((a, b) => b.montoTotal - a.montoTotal)
+
+  return {
+    totalCobradoClientes: cobrosArr.reduce((s: number, c: any) => s + (Number(c.monto_cobro) || 0), 0),
+    totalPagadoTecnicos: pagosArr.reduce((s: number, p: any) => s + (Number(p.monto_pago) || 0), 0),
+    cantidadCobros: cobrosArr.length,
+    cantidadPagos: pagosArr.length,
+    porMetodo,
   }
 }

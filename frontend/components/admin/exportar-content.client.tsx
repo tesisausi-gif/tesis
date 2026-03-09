@@ -25,12 +25,14 @@ import {
   getR10RentabilidadInmueble,
   getR11ComparativoDesempenio,
   getR12IndicadoresGlobales,
+  getR13MediosDePago,
 } from '@/features/exportar/exportar.service'
 import { CategoriaIncidente } from '@/shared/types/enums'
 import type {
   TecnicoSelect, InmuebleSelect,
   R1Resultado, R2Resultado, R3Resultado, R4Resultado, R5Resultado, R6Resultado,
   R7Resultado, R8Resultado, R9Resultado, R10Resultado, R11Resultado, R12Resultado,
+  R13Resultado,
 } from '@/features/exportar/exportar.types'
 
 // ─── CSV helpers ──────────────────────────────────────────────────────────────
@@ -1089,6 +1091,114 @@ function TabR12() {
   )
 }
 
+// ─── R13: Medios de Pago ─────────────────────────────────────────────────────
+
+const METODO_LABELS: Record<string, string> = {
+  efectivo: 'Efectivo', transferencia: 'Transferencia', debito: 'Débito', credito: 'Crédito',
+}
+
+function TabR13() {
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
+  const [cargando, setCargando] = useState(false)
+  const [resultado, setResultado] = useState<R13Resultado | null>(null)
+
+  const generar = async () => {
+    setCargando(true)
+    try {
+      const r = await getR13MediosDePago({ fechaDesde: desde || undefined, fechaHasta: hasta || undefined })
+      setResultado(r)
+    } catch { toast.error('Error al generar R13') }
+    finally { setCargando(false) }
+  }
+
+  const colsMetodos = ['Método', 'Transacciones', 'Cobrado a Clientes', 'Pagado a Técnicos', 'Total']
+  const filasMetodos = resultado?.porMetodo.map(m => ({
+    'Método': METODO_LABELS[m.metodo] ?? m.metodo,
+    'Transacciones': m.cantidad,
+    'Cobrado a Clientes': fmt$(m.montoCobradoClientes),
+    'Pagado a Técnicos': fmt$(m.montoPagadoTecnicos),
+    'Total': fmt$(m.montoTotal),
+  })) ?? []
+
+  const totalTransacciones = resultado ? resultado.cantidadCobros + resultado.cantidadPagos : 0
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+          </div>
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
+        </CardContent>
+      </Card>
+
+      {resultado && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard label="Total cobrado a clientes" valor={fmt$(resultado.totalCobradoClientes)} />
+            <KpiCard label="Total pagado a técnicos" valor={fmt$(resultado.totalPagadoTecnicos)} />
+            <KpiCard label="Cobros registrados" valor={String(resultado.cantidadCobros)} />
+            <KpiCard label="Pagos a técnicos" valor={String(resultado.cantidadPagos)} />
+          </div>
+
+          {resultado.porMetodo.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm">Distribución por medio de pago</CardTitle>
+                  <CardDescription className="text-xs">{totalTransacciones} transacciones totales</CardDescription>
+                </div>
+                <BotonesExport disabled={!filasMetodos.length} cargando={cargando}
+                  onCSV={() => descargarCSV(generarCSV(colsMetodos, filasMetodos), `r13_medios_pago_${hoy()}.csv`)}
+                  onPDF={() => abrirPDF(13, { fechaDesde: desde, fechaHasta: hasta })}
+                />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {resultado.porMetodo.map(m => {
+                  const maxMonto = resultado.porMetodo[0]?.montoTotal || 1
+                  const pctMonto = maxMonto > 0 ? Math.round((m.montoTotal / maxMonto) * 100) : 0
+                  const metodoLabel = METODO_LABELS[m.metodo] ?? m.metodo
+                  return (
+                    <div key={m.metodo} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{metodoLabel}</span>
+                          <Badge variant="outline" className="text-xs">{m.cantidad} transac.</Badge>
+                        </div>
+                        <span className="font-bold text-gray-700">{fmt$(m.montoTotal)}</span>
+                      </div>
+                      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bg-blue-500 transition-all duration-500" style={{ width: `${pctMonto}%` }} />
+                      </div>
+                      <div className="flex gap-4 text-xs text-gray-500">
+                        <span className="text-green-600">Cobrado clientes: {fmt$(m.montoCobradoClientes)}</span>
+                        <span className="text-blue-600">Pagado técnicos: {fmt$(m.montoPagadoTecnicos)}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+                <TablaResultados cols={colsMetodos} filas={filasMetodos} />
+              </CardContent>
+            </Card>
+          )}
+
+          {resultado.porMetodo.length === 0 && (
+            <Card className="border-dashed border-2">
+              <CardContent className="flex flex-col items-center py-10 text-center">
+                <DollarSign className="h-10 w-10 text-gray-300 mb-2" />
+                <p className="text-gray-500">Sin transacciones registradas en el período</p>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export function ExportarContent() {
@@ -1114,13 +1224,14 @@ export function ExportarContent() {
     { value: 'r10', label: 'Rent. Inmueble', icon: Building2, desc: 'Por propiedad' },
     { value: 'r11', label: 'Comparativo', icon: TrendingUp, desc: 'Período a período' },
     { value: 'r12', label: 'Dashboard', icon: LayoutDashboard, desc: 'Indicadores globales' },
+    { value: 'r13', label: 'Medios de Pago', icon: DollarSign, desc: 'Cobros y pagos' },
   ]
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Informes y Reportes</h2>
-        <p className="text-muted-foreground mt-1">12 reportes analíticos con filtros, exportación CSV y PDF para impresión.</p>
+        <p className="text-muted-foreground mt-1">13 reportes analíticos con filtros, exportación CSV y PDF para impresión.</p>
       </div>
 
       <Tabs defaultValue="r1">
@@ -1145,6 +1256,7 @@ export function ExportarContent() {
         <TabsContent value="r10"><TabR10 inmuebles={inmuebles} /></TabsContent>
         <TabsContent value="r11"><TabR11 /></TabsContent>
         <TabsContent value="r12"><TabR12 /></TabsContent>
+        <TabsContent value="r13"><TabR13 /></TabsContent>
       </Tabs>
     </div>
   )

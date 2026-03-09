@@ -31,6 +31,10 @@ export interface PagoTecnicoRegistrado {
   id_presupuesto: number
   id_incidente: number
   monto_pago: number
+  metodo_pago: string | null
+  referencia_pago: string | null
+  banco: string | null
+  cuotas: number | null
   fecha_pago: string
   marcado_por_email: string | null
   marcado_por_nombre: string | null
@@ -117,7 +121,8 @@ export async function getPagosTecnicosRealizados(): Promise<PagoTecnicoRegistrad
     .from('pagos_tecnicos')
     .select(`
       id_pago_tecnico, id_tecnico, id_presupuesto, id_incidente,
-      monto_pago, fecha_pago, marcado_por_email, marcado_por_nombre,
+      monto_pago, metodo_pago, referencia_pago, banco, cuotas,
+      fecha_pago, marcado_por_email, marcado_por_nombre,
       observaciones, fecha_creacion,
       tecnicos (nombre, apellido),
       incidentes (descripcion_problema)
@@ -143,6 +148,10 @@ export async function registrarPagoTecnico(
   idTecnico: number,
   idIncidente: number,
   montoPago: number,
+  metodoPago?: string,
+  referenciaPago?: string,
+  banco?: string,
+  cuotas?: number,
   observaciones?: string,
 ): Promise<ActionResult> {
   try {
@@ -171,6 +180,10 @@ export async function registrarPagoTecnico(
         id_presupuesto: idPresupuesto,
         id_incidente: idIncidente,
         monto_pago: montoPago,
+        metodo_pago: metodoPago ?? null,
+        referencia_pago: referenciaPago ?? null,
+        banco: banco ?? null,
+        cuotas: cuotas ?? null,
         fecha_pago: new Date().toISOString(),
         marcado_por_email: emailAdmin,
         marcado_por_nombre: nombreAdmin,
