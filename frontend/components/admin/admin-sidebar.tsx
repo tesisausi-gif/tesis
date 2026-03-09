@@ -84,14 +84,9 @@ const menuItems = [
     href: '/dashboard/conformidades',
   },
   {
-    title: 'Métricas',
+    title: 'Métricas e Informes',
     icon: BarChart2,
     href: '/dashboard/metricas',
-  },
-  {
-    title: 'Exportar',
-    icon: Download,
-    href: '/dashboard/exportar',
   },
 ]
 

@@ -72,20 +72,45 @@ function KpiCard({ label, valor, sub }: { label: string; valor: string; sub?: st
   )
 }
 
+function validarRangoFechas(desde: string, hasta: string): string | null {
+  const hoyStr = new Date().toISOString().slice(0, 10)
+  if (desde && desde > hoyStr) return 'La fecha "Desde" no puede ser futura'
+  if (hasta && hasta > hoyStr) return 'La fecha "Hasta" no puede ser futura'
+  if (desde && hasta && desde > hasta) return '"Desde" debe ser anterior o igual a "Hasta"'
+  return null
+}
+
 function FilaFechas({
   desde, hasta,
   onDesde, onHasta,
 }: { desde: string; hasta: string; onDesde: (v: string) => void; onHasta: (v: string) => void }) {
+  const hoy = new Date().toISOString().slice(0, 10)
+  const error = validarRangoFechas(desde, hasta)
   return (
     <>
       <div className="space-y-1">
         <Label className="text-xs">Desde</Label>
-        <Input type="date" value={desde} onChange={e => onDesde(e.target.value)} className="h-8 text-sm" />
+        <Input
+          type="date"
+          value={desde}
+          max={hoy}
+          onChange={e => onDesde(e.target.value)}
+          className={`h-8 text-sm ${error ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
+        />
       </div>
       <div className="space-y-1">
         <Label className="text-xs">Hasta</Label>
-        <Input type="date" value={hasta} onChange={e => onHasta(e.target.value)} className="h-8 text-sm" />
+        <Input
+          type="date"
+          value={hasta}
+          max={hoy}
+          onChange={e => onHasta(e.target.value)}
+          className={`h-8 text-sm ${error ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
+        />
       </div>
+      {error && (desde || hasta) && (
+        <p className="text-xs text-red-600 col-span-2">⚠ {error}</p>
+      )}
     </>
   )
 }
@@ -177,9 +202,10 @@ function BotonesExport({
   )
 }
 
-function BtnGenerar({ onClick, cargando }: { onClick: () => void; cargando: boolean }) {
+function BtnGenerar({ onClick, cargando, desde, hasta }: { onClick: () => void; cargando: boolean; desde?: string; hasta?: string }) {
+  const errorFechas = validarRangoFechas(desde ?? '', hasta ?? '')
   return (
-    <Button onClick={onClick} disabled={cargando} size="sm" className="gap-1.5">
+    <Button onClick={onClick} disabled={cargando || !!errorFechas} size="sm" className="gap-1.5" title={errorFechas ?? undefined}>
       {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
       Generar reporte
     </Button>
@@ -245,7 +271,7 @@ function TabR1() {
               </Select>
             </div>
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -327,7 +353,7 @@ function TabR2() {
               </Select>
             </div>
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -393,7 +419,7 @@ function TabR3({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
             <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -463,7 +489,7 @@ function TabR4({ inmuebles }: { inmuebles: InmuebleSelect[] }) {
               <Input type="number" min="1" max="50" value={topN} onChange={e => setTopN(e.target.value)} className="h-8 text-sm" />
             </div>
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -527,7 +553,7 @@ function TabR5() {
             <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectCategoria value={categoria} onChange={setCategoria} />
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -594,7 +620,7 @@ function TabR6({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
             <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -666,7 +692,7 @@ function TabR7({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
               <Input type="number" min="1" max="5" value={calMin} onChange={e => setCalMin(e.target.value)} className="h-8 text-sm" placeholder="Sin mínimo" />
             </div>
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -729,7 +755,7 @@ function TabR8() {
             <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectCategoria value={categoria} onChange={setCategoria} />
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -794,7 +820,7 @@ function TabR9({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
             <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -864,7 +890,7 @@ function TabR10({ inmuebles }: { inmuebles: InmuebleSelect[] }) {
               <Input type="number" min="1" max="50" value={topN} onChange={e => setTopN(e.target.value)} className="h-8 text-sm" />
             </div>
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -943,7 +969,7 @@ function TabR11() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground mb-3">Si se especifican fechas, se divide en dos mitades. Si no, se usa el período seleccionado hasta hoy.</p>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 
@@ -1021,7 +1047,7 @@ function TabR12() {
               <Input type="number" min="3" max="10" value={topProp} onChange={e => setTopProp(e.target.value)} className="h-8 text-sm" />
             </div>
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
       </Card>
 

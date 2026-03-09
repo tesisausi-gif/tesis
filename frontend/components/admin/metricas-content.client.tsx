@@ -6,10 +6,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { BarChart2, Clock, TrendingUp, Users, AlertCircle, Tag, Filter, Loader2 } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { BarChart2, Clock, TrendingUp, Users, AlertCircle, Tag, Filter, Loader2, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import type { MetricasDashboard } from '@/features/incidentes/incidentes.types'
+import { ExportarContent } from '@/components/admin/exportar-content.client'
 
 interface MetricasContentProps {
   metricas: MetricasDashboard
@@ -109,11 +111,23 @@ export function MetricasContent({ metricas: metricasIniciales }: MetricasContent
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Métricas y Estadísticas</h2>
-          <p className="text-muted-foreground">Análisis de rendimiento del sistema</p>
+          <h2 className="text-3xl font-bold tracking-tight">Métricas e Informes</h2>
+          <p className="text-muted-foreground">Análisis de rendimiento y reportes exportables</p>
         </div>
         {cargando && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
       </div>
+
+    <Tabs defaultValue="metricas">
+      <TabsList className="mb-4">
+        <TabsTrigger value="metricas" className="gap-2"><BarChart2 className="h-4 w-4" />Métricas</TabsTrigger>
+        <TabsTrigger value="informes" className="gap-2"><FileSpreadsheet className="h-4 w-4" />Informes</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="informes">
+        <ExportarContent />
+      </TabsContent>
+
+      <TabsContent value="metricas" className="space-y-6">
 
       {/* Filtro de período */}
       <Card>
@@ -352,6 +366,8 @@ export function MetricasContent({ metricas: metricasIniciales }: MetricasContent
           )}
         </CardContent>
       </Card>
+      </TabsContent>
+    </Tabs>
     </div>
   )
 }
