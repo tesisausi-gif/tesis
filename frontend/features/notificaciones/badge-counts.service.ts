@@ -17,11 +17,13 @@ export interface AdminBadgeCounts {
 
 export interface ClienteBadgeCounts {
   presupuestos: number   // presupuestos aprobados por admin esperando aprobación cliente
+  pagos: number          // cobros pendientes de pagar
 }
 
 export interface TecnicoBadgeCounts {
   disponibles: number    // asignaciones pendientes de aceptar
   trabajos: number       // trabajos con presupuesto aprobado sin conformidad subida
+  pagos: number          // presupuestos aprobados sin pago recibido
 }
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
@@ -101,19 +103,38 @@ export async function getClienteBadgeCounts(): Promise<ClienteBadgeCounts> {
       .select('id_incidente')
       .eq('id_cliente_reporta', idCliente)
 
-    if (!incidentes?.length) return { presupuestos: 0 }
+    if (!incidentes?.length) return { presupuestos: 0, pagos: 0 }
 
     const ids = incidentes.map((i: any) => i.id_incidente)
 
-    const { count } = await supabase
-      .from('presupuestos')
-      .select('id_presupuesto', { count: 'exact', head: true })
-      .in('id_incidente', ids)
-      .eq('estado_presupuesto', 'aprobado_admin')
+    // En paralelo: presupuestos pendientes de aprobación y cobros pendientes de pago
+    const [presResult, presAprobResult] = await Promise.all([
+      supabase
+        .from('presupuestos')
+        .select('id_presupuesto', { count: 'exact', head: true })
+        .in('id_incidente', ids)
+        .eq('estado_presupuesto', 'aprobado_admin'),
+      supabase
+        .from('presupuestos')
+        .select('id_presupuesto')
+        .in('id_incidente', ids)
+        .eq('estado_presupuesto', 'aprobado'),
+    ])
 
-    return { presupuestos: count ?? 0 }
+    let pagosPendientes = 0
+    if (presAprobResult.data?.length) {
+      const idsPres = presAprobResult.data.map((p: any) => p.id_presupuesto)
+      const { data: cobros } = await supabase
+        .from('cobros_clientes')
+        .select('id_presupuesto')
+        .in('id_presupuesto', idsPres)
+      const cobradosSet = new Set((cobros || []).map((c: any) => c.id_presupuesto))
+      pagosPendientes = idsPres.filter((id: number) => !cobradosSet.has(id)).length
+    }
+
+    return { presupuestos: presResult.count ?? 0, pagos: pagosPendientes }
   } catch {
-    return { presupuestos: 0 }
+    return { presupuestos: 0, pagos: 0 }
   }
 }
 
@@ -145,33 +166,45 @@ export async function getTecnicoBadgeCounts(): Promise<TecnicoBadgeCounts> {
       .map((a: any) => a.id_incidente)
       .filter(Boolean) as number[]
 
-    if (!idIncidentes.length) return { disponibles, trabajos: 0 }
+    if (!idIncidentes.length) return { disponibles, trabajos: 0, pagos: 0 }
 
-    // Presupuestos aprobados para esos incidentes
+    // Presupuestos aprobados para esos incidentes (con id_presupuesto también)
     const { data: presAprobados } = await supabase
       .from('presupuestos')
-      .select('id_incidente')
+      .select('id_incidente, id_presupuesto')
       .in('id_incidente', idIncidentes)
       .eq('estado_presupuesto', 'aprobado')
 
     const incidentesConPresupuesto = new Set((presAprobados || []).map((p: any) => p.id_incidente))
-    if (!incidentesConPresupuesto.size) return { disponibles, trabajos: 0 }
+    if (!incidentesConPresupuesto.size) return { disponibles, trabajos: 0, pagos: 0 }
 
-    // Conformidades ya subidas para esos incidentes
-    const { data: conformidades } = await supabase
-      .from('conformidades')
-      .select('id_incidente')
-      .in('id_incidente', Array.from(incidentesConPresupuesto))
-      .not('url_documento', 'is', null)
+    const idPresupuestosAprobados = (presAprobados || []).map((p: any) => p.id_presupuesto)
 
-    const incidentesConConformidad = new Set((conformidades || []).map((c: any) => c.id_incidente))
+    // Conformidades ya subidas y pagos ya recibidos (en paralelo)
+    const [conformidadesRes, pagosRecibidosRes] = await Promise.all([
+      supabase
+        .from('conformidades')
+        .select('id_incidente')
+        .in('id_incidente', Array.from(incidentesConPresupuesto))
+        .not('url_documento', 'is', null),
+      supabase
+        .from('pagos_tecnicos')
+        .select('id_presupuesto')
+        .in('id_presupuesto', idPresupuestosAprobados),
+    ])
+
+    const incidentesConConformidad = new Set((conformidadesRes.data || []).map((c: any) => c.id_incidente))
+    const presupuestosConPago = new Set((pagosRecibidosRes.data || []).map((p: any) => p.id_presupuesto))
 
     // Trabajos = incidentes con presupuesto aprobado y sin conformidad subida
     const trabajos = Array.from(incidentesConPresupuesto)
       .filter(id => !incidentesConConformidad.has(id)).length
 
-    return { disponibles, trabajos }
+    // Pagos = presupuestos aprobados sin pago técnico recibido
+    const pagos = idPresupuestosAprobados.filter((id: number) => !presupuestosConPago.has(id)).length
+
+    return { disponibles, trabajos, pagos }
   } catch {
-    return { disponibles: 0, trabajos: 0 }
+    return { disponibles: 0, trabajos: 0, pagos: 0 }
   }
 }

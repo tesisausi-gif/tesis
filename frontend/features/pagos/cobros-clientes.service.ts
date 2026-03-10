@@ -179,3 +179,105 @@ export async function registrarCobroCliente(params: {
     return { success: false, error: 'Error inesperado al registrar cobro' }
   }
 }
+
+// ─── Vista Cliente: mis cobros pendientes y realizados ────────────────────────
+
+export interface MiCobroPendiente {
+  id_presupuesto: number
+  id_incidente: number
+  descripcion_problema: string
+  categoria: string | null
+  monto_a_pagar: number
+  fecha_presupuesto: string
+}
+
+export interface MiCobroRealizado {
+  id_cobro: number
+  id_incidente: number
+  id_presupuesto: number
+  monto_cobro: number
+  metodo_pago: string
+  referencia_pago: string | null
+  banco: string | null
+  cuotas: number | null
+  observaciones: string | null
+  fecha_cobro: string
+  descripcion_problema: string | null
+}
+
+/**
+ * Cobros pendientes del cliente actual: presupuestos aprobados/resueltos sin cobro registrado.
+ */
+export async function getMisCobrosComoCliente(): Promise<{ pendientes: MiCobroPendiente[], realizados: MiCobroRealizado[] }> {
+  const supabase = await createClient()
+  const idCliente = await requireClienteId()
+
+  // Mis incidentes
+  const { data: incidentes } = await supabase
+    .from('incidentes')
+    .select('id_incidente')
+    .eq('id_cliente_reporta', idCliente)
+
+  if (!incidentes?.length) return { pendientes: [], realizados: [] }
+  const idIncidentes = incidentes.map((i: any) => i.id_incidente)
+
+  // Presupuestos aprobados de mis incidentes
+  const { data: presupuestos } = await supabase
+    .from('presupuestos')
+    .select(`
+      id_presupuesto, id_incidente, costo_total, fecha_creacion,
+      incidentes (descripcion_problema, categoria, estado_actual)
+    `)
+    .in('id_incidente', idIncidentes)
+    .eq('estado_presupuesto', 'aprobado')
+    .order('fecha_creacion', { ascending: false })
+
+  if (!presupuestos?.length) return { pendientes: [], realizados: [] }
+
+  const idPresupuestos = presupuestos.map((p: any) => p.id_presupuesto)
+
+  // Cobros ya registrados para mis presupuestos
+  const { data: cobros } = await supabase
+    .from('cobros_clientes')
+    .select(`
+      id_cobro, id_incidente, id_presupuesto,
+      monto_cobro, metodo_pago, referencia_pago, banco, cuotas, observaciones, fecha_cobro,
+      incidentes (descripcion_problema)
+    `)
+    .in('id_presupuesto', idPresupuestos)
+    .order('fecha_cobro', { ascending: false })
+
+  const cobradosIds = new Set((cobros || []).map((c: any) => c.id_presupuesto))
+
+  const pendientes: MiCobroPendiente[] = presupuestos
+    .filter((p: any) => !cobradosIds.has(p.id_presupuesto))
+    .map((p: any) => {
+      const inc = p.incidentes as any
+      return {
+        id_presupuesto: p.id_presupuesto,
+        id_incidente: p.id_incidente,
+        descripcion_problema: inc?.descripcion_problema || '',
+        categoria: inc?.categoria || null,
+        monto_a_pagar: Number(p.costo_total) || 0,
+        fecha_presupuesto: p.fecha_creacion,
+      }
+    })
+
+  const realizados: MiCobroRealizado[] = (cobros || []).map((c: any) => ({
+    id_cobro: c.id_cobro,
+    id_incidente: c.id_incidente,
+    id_presupuesto: c.id_presupuesto,
+    monto_cobro: Number(c.monto_cobro) || 0,
+    metodo_pago: c.metodo_pago,
+    referencia_pago: c.referencia_pago,
+    banco: c.banco,
+    cuotas: c.cuotas,
+    observaciones: c.observaciones,
+    fecha_cobro: c.fecha_cobro,
+    descripcion_problema: (c.incidentes as any)?.descripcion_problema || null,
+  }))
+
+  return { pendientes, realizados }
+}
+
+import { requireClienteId } from '@/features/auth/auth.service'

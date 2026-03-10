@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, ClipboardList, User, LogOut, Wrench, FileText, Search } from 'lucide-react'
+import { Home, ClipboardList, User, LogOut, Wrench, FileText, Search, DollarSign } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -17,6 +17,7 @@ const navItems: { title: string; icon: React.ElementType; href: string; badge?: 
   { title: 'Asignación', icon: Search, href: '/tecnico/disponibles', badge: 'disponibles' },
   { title: 'Trabajos', icon: ClipboardList, href: '/tecnico/trabajos', badge: 'trabajos' },
   { title: 'Presupuestos', icon: FileText, href: '/tecnico/presupuestos' },
+  { title: 'Cobros', icon: DollarSign, href: '/tecnico/pagos', badge: 'pagos' as BadgeKey },
   { title: 'Perfil', icon: User, href: '/tecnico/perfil' },
 ]
 
@@ -24,7 +25,7 @@ function TecnicoNavComponent() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const [counts, setCounts] = useState<TecnicoBadgeCounts>({ disponibles: 0, trabajos: 0 })
+  const [counts, setCounts] = useState<TecnicoBadgeCounts>({ disponibles: 0, trabajos: 0, pagos: 0 })
 
   useEffect(() => {
     getTecnicoBadgeCounts()

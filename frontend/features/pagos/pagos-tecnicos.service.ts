@@ -196,3 +196,112 @@ export async function registrarPagoTecnico(
     return { success: false, error: 'Error inesperado al registrar pago' }
   }
 }
+
+// ─── Vista Técnico: mis pagos pendientes y recibidos ─────────────────────────
+
+export interface MiPagoPendiente {
+  id_presupuesto: number
+  id_incidente: number
+  descripcion_problema: string
+  categoria: string | null
+  costo_materiales: number
+  costo_mano_obra: number
+  monto_a_recibir: number
+  fecha_presupuesto: string
+}
+
+export interface MiPagoRecibido {
+  id_pago_tecnico: number
+  id_incidente: number
+  id_presupuesto: number
+  monto_pago: number
+  metodo_pago: string | null
+  referencia_pago: string | null
+  banco: string | null
+  cuotas: number | null
+  observaciones: string | null
+  fecha_pago: string
+  descripcion_problema: string | null
+}
+
+/**
+ * Pagos pendientes y recibidos del técnico actual.
+ */
+export async function getMisPagosComoTecnico(): Promise<{ pendientes: MiPagoPendiente[], recibidos: MiPagoRecibido[] }> {
+  const supabase = await createClient()
+  const idTecnico = await requireTecnicoId()
+
+  // Mis asignaciones activas/completadas
+  const { data: asignaciones } = await supabase
+    .from('asignaciones_tecnico')
+    .select('id_incidente')
+    .eq('id_tecnico', idTecnico)
+    .in('estado_asignacion', ['en_curso', 'completado', 'aceptada'])
+
+  if (!asignaciones?.length) return { pendientes: [], recibidos: [] }
+  const idIncidentes = asignaciones.map((a: any) => a.id_incidente).filter(Boolean) as number[]
+
+  // Presupuestos aprobados de mis incidentes
+  const { data: presupuestos } = await supabase
+    .from('presupuestos')
+    .select(`
+      id_presupuesto, id_incidente, costo_materiales, costo_mano_obra, fecha_creacion,
+      incidentes (descripcion_problema, categoria)
+    `)
+    .in('id_incidente', idIncidentes)
+    .eq('estado_presupuesto', 'aprobado')
+    .order('fecha_creacion', { ascending: false })
+
+  if (!presupuestos?.length) return { pendientes: [], recibidos: [] }
+
+  const idPresupuestos = presupuestos.map((p: any) => p.id_presupuesto)
+
+  // Pagos ya recibidos
+  const { data: pagos } = await supabase
+    .from('pagos_tecnicos')
+    .select(`
+      id_pago_tecnico, id_incidente, id_presupuesto,
+      monto_pago, metodo_pago, referencia_pago, banco, cuotas, observaciones, fecha_pago,
+      incidentes (descripcion_problema)
+    `)
+    .in('id_presupuesto', idPresupuestos)
+    .order('fecha_pago', { ascending: false })
+
+  const pagadosIds = new Set((pagos || []).map((p: any) => p.id_presupuesto))
+
+  const pendientes: MiPagoPendiente[] = presupuestos
+    .filter((p: any) => !pagadosIds.has(p.id_presupuesto))
+    .map((p: any) => {
+      const inc = p.incidentes as any
+      const mat = Number(p.costo_materiales) || 0
+      const mdo = Number(p.costo_mano_obra) || 0
+      return {
+        id_presupuesto: p.id_presupuesto,
+        id_incidente: p.id_incidente,
+        descripcion_problema: inc?.descripcion_problema || '',
+        categoria: inc?.categoria || null,
+        costo_materiales: mat,
+        costo_mano_obra: mdo,
+        monto_a_recibir: mat + mdo,
+        fecha_presupuesto: p.fecha_creacion,
+      }
+    })
+
+  const recibidos: MiPagoRecibido[] = (pagos || []).map((p: any) => ({
+    id_pago_tecnico: p.id_pago_tecnico,
+    id_incidente: p.id_incidente,
+    id_presupuesto: p.id_presupuesto,
+    monto_pago: Number(p.monto_pago) || 0,
+    metodo_pago: p.metodo_pago,
+    referencia_pago: p.referencia_pago,
+    banco: p.banco,
+    cuotas: p.cuotas,
+    observaciones: p.observaciones,
+    fecha_pago: p.fecha_pago,
+    descripcion_problema: (p.incidentes as any)?.descripcion_problema || null,
+  }))
+
+  return { pendientes, recibidos }
+}
+
+import { requireTecnicoId } from '@/features/auth/auth.service'
