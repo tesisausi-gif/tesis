@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { FileText, DollarSign, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { EstadoPresupuesto } from '@/shared/types/enums'
@@ -170,12 +172,21 @@ export default function PresupuestosPage() {
                                             )}
                                         </CardDescription>
                                     </div>
-                                    <Badge className={getEstadoBadgeColor(presupuesto.estado_presupuesto)}>
-                                        <span className="flex items-center gap-1">
-                                            {getEstadoIcon(presupuesto.estado_presupuesto)}
-                                            {presupuesto.estado_presupuesto}
-                                        </span>
-                                    </Badge>
+                                    <div className="flex items-center gap-2">
+                                        <Badge className={getEstadoBadgeColor(presupuesto.estado_presupuesto)}>
+                                            <span className="flex items-center gap-1">
+                                                {getEstadoIcon(presupuesto.estado_presupuesto)}
+                                                {presupuesto.estado_presupuesto}
+                                            </span>
+                                        </Badge>
+                                        {presupuesto.estado_presupuesto === 'enviado' && (
+                                            <Link href="/dashboard/presupuestos/aprobar">
+                                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                                                    Revisar
+                                                </Button>
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
                             </CardHeader>
                             <CardContent>

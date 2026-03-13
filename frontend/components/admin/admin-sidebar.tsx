@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -14,6 +15,8 @@ import {
   Settings,
   LogOut,
   UserCog,
+  BarChart2,
+  ClipboardCheck,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -28,59 +31,45 @@ import {
 } from '@/components/ui/sidebar'
 import { createClient } from '@/shared/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { getAdminBadgeCounts } from '@/features/notificaciones/badge-counts.service'
+import type { AdminBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 
-const menuItems = [
-  {
-    title: 'Dashboard',
-    icon: Home,
-    href: '/dashboard',
-  },
-  {
-    title: 'Incidentes',
-    icon: FileText,
-    href: '/dashboard/incidentes',
-  },
-  {
-    title: 'Inmuebles',
-    icon: Building2,
-    href: '/dashboard/propiedades',
-  },
-  {
-    title: 'Clientes',
-    icon: Users,
-    href: '/dashboard/clientes',
-  },
-  {
-    title: 'Técnicos',
-    icon: Wrench,
-    href: '/dashboard/tecnicos',
-  },
-  {
-    title: 'Empleados',
-    icon: UserCog,
-    href: '/dashboard/usuarios',
-  },
-  {
-    title: 'Presupuestos',
-    icon: DollarSign,
-    href: '/dashboard/presupuestos',
-  },
-  {
-    title: 'Asignaciones',
-    icon: Star,
-    href: '/dashboard/asignaciones',
-  },
-  {
-    title: 'Pagos',
-    icon: FileCheck,
-    href: '/dashboard/pagos',
-  },
+type BadgeKey = keyof AdminBadgeCounts
+
+const menuItems: { title: string; icon: React.ElementType; href: string; badge?: BadgeKey }[] = [
+  { title: 'Dashboard', icon: Home, href: '/dashboard' },
+  { title: 'Incidentes', icon: FileText, href: '/dashboard/incidentes' },
+  { title: 'Inmuebles', icon: Building2, href: '/dashboard/propiedades' },
+  { title: 'Clientes', icon: Users, href: '/dashboard/clientes' },
+  { title: 'Técnicos', icon: Wrench, href: '/dashboard/tecnicos' },
+  { title: 'Empleados', icon: UserCog, href: '/dashboard/usuarios' },
+  { title: 'Presupuestos', icon: DollarSign, href: '/dashboard/presupuestos', badge: 'presupuestos' },
+  { title: 'Asignaciones', icon: Star, href: '/dashboard/asignaciones' },
+  { title: 'Pagos', icon: FileCheck, href: '/dashboard/pagos', badge: 'pagos' },
+  { title: 'Conformidades', icon: ClipboardCheck, href: '/dashboard/conformidades', badge: 'conformidades' },
+  { title: 'Métricas e Informes', icon: BarChart2, href: '/dashboard/metricas' },
 ]
+
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null
+  return (
+    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+      {count > 99 ? '99+' : count}
+    </span>
+  )
+}
 
 export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const [counts, setCounts] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0 })
+
+  useEffect(() => {
+    getAdminBadgeCounts()
+      .then(setCounts)
+      .catch(() => {})
+  }, [pathname])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -97,19 +86,23 @@ export function AdminSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const badgeCount = item.badge ? counts[item.badge] : 0
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.href}
+                    >
+                      <Link href={item.href} className="flex items-center gap-2 w-full">
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="flex-1">{item.title}</span>
+                        <NavBadge count={badgeCount} />
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

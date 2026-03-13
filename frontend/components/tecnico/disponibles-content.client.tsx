@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { prioridadColors, NivelPrioridad } from '@/shared/types/enums'
+import { getPrioridadColor } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -110,10 +110,6 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales }: Disp
     const ubicacion = [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ')
 
     return ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
-  }
-
-  const getPrioridadColor = (prioridad: string) => {
-    return prioridadColors[prioridad as NivelPrioridad] || 'bg-gray-100 text-gray-800'
   }
 
   const getCategoriaColor = (categoria: string) => {

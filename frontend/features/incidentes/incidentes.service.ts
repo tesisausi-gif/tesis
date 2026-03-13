@@ -7,7 +7,7 @@
 
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireClienteId } from '@/features/auth/auth.service'
-import type { Incidente, IncidenteConCliente, IncidenteConDetalles } from './incidentes.types'
+import type { Incidente, IncidenteConCliente, IncidenteConDetalles, MetricasDashboard, FiltrosMetricas } from './incidentes.types'
 import type { ActionResult } from '@/shared/types'
 
 // Select base para incidentes
@@ -286,8 +286,150 @@ export async function actualizarIncidente(
       .eq('id_incidente', idIncidente)
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente si el incidente fue marcado como resuelto (fire-and-forget)
+    if (updates.estado_actual === 'resuelto') {
+      const { notificarIncidenteResuelto } = await import('@/features/notificaciones/notificaciones.service')
+      notificarIncidenteResuelto(idIncidente).catch(console.error)
+    }
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar incidente' }
+  }
+}
+
+/**
+ * Calificación del área técnica (admin) sobre la resolución de un incidente
+ */
+export async function calificarIncidenteAdmin(
+  idIncidente: number,
+  estrellas: number,
+  comentario?: string | null
+): Promise<ActionResult> {
+  try {
+    if (estrellas < 1 || estrellas > 5) {
+      return { success: false, error: 'La calificación debe ser entre 1 y 5' }
+    }
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('incidentes')
+      .update({
+        calificacion_admin: estrellas,
+        comentario_admin: comentario ?? null,
+      })
+      .eq('id_incidente', idIncidente)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch {
+    return { success: false, error: 'Error inesperado al guardar calificación' }
+  }
+}
+
+/**
+ * Métricas avanzadas para el dashboard admin, con filtros opcionales
+ */
+export async function getMetricasDashboard(filtros?: FiltrosMetricas): Promise<MetricasDashboard> {
+  const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+  const supabase = createAdminClient()
+
+  let incidentesQuery = supabase
+    .from('incidentes')
+    .select('id_incidente, estado_actual, categoria, nivel_prioridad, fecha_registro, fecha_cierre, fue_resuelto')
+
+  if (filtros?.fechaDesde) {
+    incidentesQuery = incidentesQuery.gte('fecha_registro', filtros.fechaDesde)
+  }
+  if (filtros?.fechaHasta) {
+    incidentesQuery = incidentesQuery.lte('fecha_registro', filtros.fechaHasta)
+  }
+  if (filtros?.categoria) {
+    incidentesQuery = incidentesQuery.eq('categoria', filtros.categoria)
+  }
+
+  const [incidentesRes, asignacionesRes] = await Promise.all([
+    incidentesQuery,
+    supabase
+      .from('asignaciones_tecnico')
+      .select('id_asignacion, estado_asignacion, tecnicos(nombre, apellido)')
+      .eq('estado_asignacion', 'completada'),
+  ])
+
+  const incidentes = incidentesRes.data || []
+  const asignaciones = asignacionesRes.data || []
+
+  // Incidentes por mes (últimos 6 meses)
+  const ahora = new Date()
+  const incidentesPorMes = Array.from({ length: 6 }, (_, i) => {
+    const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - (5 - i), 1)
+    const año = fecha.getFullYear()
+    const mes = fecha.getMonth()
+    const nombre = fecha.toLocaleString('es-AR', { month: 'short', year: '2-digit' })
+    const enMes = incidentes.filter(inc => {
+      const f = new Date(inc.fecha_registro)
+      return f.getFullYear() === año && f.getMonth() === mes
+    })
+    return {
+      mes: nombre,
+      total: enMes.length,
+      resueltos: enMes.filter(i => i.fue_resuelto).length,
+    }
+  })
+
+  // Distribución por categoría
+  const categoriasMap: Record<string, number> = {}
+  incidentes.forEach(inc => {
+    const cat = inc.categoria || 'Sin categoría'
+    categoriasMap[cat] = (categoriasMap[cat] || 0) + 1
+  })
+  const distribucionCategorias = Object.entries(categoriasMap)
+    .map(([categoria, count]) => ({ categoria, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6)
+
+  // Distribución por prioridad
+  const prioridadesMap: Record<string, number> = {}
+  incidentes.forEach(inc => {
+    const pri = inc.nivel_prioridad || 'Sin prioridad'
+    prioridadesMap[pri] = (prioridadesMap[pri] || 0) + 1
+  })
+  const distribucionPrioridades = Object.entries(prioridadesMap)
+    .map(([prioridad, count]) => ({ prioridad, count }))
+    .sort((a, b) => b.count - a.count)
+
+  // Tiempo promedio de resolución (días)
+  const resueltos = incidentes.filter(inc => inc.fue_resuelto && inc.fecha_cierre)
+  const tiempoPromedioResolucion = resueltos.length > 0
+    ? Math.round(
+        resueltos.reduce((acc, inc) => {
+          const dias = (new Date(inc.fecha_cierre!).getTime() - new Date(inc.fecha_registro).getTime()) / (1000 * 60 * 60 * 24)
+          return acc + dias
+        }, 0) / resueltos.length * 10
+      ) / 10
+    : 0
+
+  // Top técnicos por incidentes resueltos
+  const tecnicosMap: Record<string, { nombre: string; apellido: string; count: number }> = {}
+  for (const asig of asignaciones as any[]) {
+    if (!asig.tecnicos) continue
+    const tec = Array.isArray(asig.tecnicos) ? asig.tecnicos[0] : asig.tecnicos
+    if (!tec) continue
+    const key = `${tec.nombre}_${tec.apellido}`
+    if (!tecnicosMap[key]) tecnicosMap[key] = { nombre: tec.nombre, apellido: tec.apellido, count: 0 }
+    tecnicosMap[key].count++
+  }
+  const topTecnicos = Object.values(tecnicosMap)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map(t => ({ nombre: t.nombre, apellido: t.apellido, incidentesResueltos: t.count }))
+
+  return {
+    incidentesPorMes,
+    distribucionCategorias,
+    distribucionPrioridades,
+    tiempoPromedioResolucion,
+    topTecnicos,
+    totalIncidentes: incidentes.length,
   }
 }

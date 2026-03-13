@@ -1,5 +1,6 @@
 /**
  * Tipos y interfaces para el módulo de Calificaciones
+ * Columnas según esquema actual de producción.
  */
 
 export enum EstrellasCalificacion {
@@ -14,14 +15,13 @@ export interface CalificacionBase {
   id_calificacion?: number
   id_incidente: number
   id_tecnico: number
-  id_cliente: number
-  estrellas: EstrellasCalificacion | number
-  comentario?: string | null
-  aspecto_tecnico?: number | null // 1-5
-  puntualidad?: number | null // 1-5
-  actitud?: number | null // 1-5
+  tipo_calificacion?: string | null  // CHECK constraint en DB, puede ser NULL
+  puntuacion: EstrellasCalificacion | number
+  comentarios?: string | null
+  resolvio_problema?: number | null  // INTEGER 0/1 en DB
   fecha_calificacion?: string
-  fecha_registro?: string
+  fecha_creacion?: string
+  fecha_modificacion?: string
 }
 
 export interface Calificacion extends CalificacionBase {
@@ -38,9 +38,5 @@ export interface CalificacionConDetalles extends Calificacion {
     nombre: string
     apellido: string
     email: string
-  }
-  clientes?: {
-    nombre: string
-    apellido: string
   }
 }

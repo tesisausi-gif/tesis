@@ -7,9 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Building2, MapPin, Home, ArrowLeft, AlertCircle, Calendar, User, Wrench } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { estadoIncidenteColors, estadoIncidenteLabels, prioridadColors } from '@/shared/types'
+import {
+  getEstadoIncidenteColor,
+  getEstadoIncidenteLabel,
+  getPrioridadColor,
+} from '@/shared/utils/colors'
 import type { InmuebleConCliente } from '@/features/inmuebles/inmuebles.types'
-import type { EstadoIncidente, NivelPrioridad } from '@/shared/types'
+import { EstadoIncidente, NivelPrioridad } from '@/shared/types/enums'
 
 interface IncidenteDeInmueble {
   id_incidente: number
@@ -180,15 +184,13 @@ export function InmuebleDetalleContent({ inmueble, incidentes }: InmuebleDetalle
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-semibold">#{incidente.id_incidente}</h4>
                         <div className="flex gap-2">
-                          <Badge className={estadoIncidenteColors[incidente.estado_actual as EstadoIncidente] || 'bg-gray-100 text-gray-800'}>
-                            {estadoIncidenteLabels[incidente.estado_actual as EstadoIncidente] || incidente.estado_actual}
+                          <Badge variant="outline" className={getEstadoIncidenteColor(incidente.estado_actual)}>
+                            {getEstadoIncidenteLabel(incidente.estado_actual)}
                           </Badge>
-                          {incidente.nivel_prioridad ? (
-                            <Badge className={prioridadColors[incidente.nivel_prioridad as NivelPrioridad] || 'bg-gray-100 text-gray-800'}>
+                          {incidente.nivel_prioridad && (
+                            <Badge variant="outline" className={getPrioridadColor(incidente.nivel_prioridad)}>
                               {incidente.nivel_prioridad}
                             </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-gray-400">Sin prioridad</Badge>
                           )}
                         </div>
                       </div>

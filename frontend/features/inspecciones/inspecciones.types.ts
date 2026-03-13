@@ -1,5 +1,6 @@
 /**
  * Tipos y interfaces para el módulo de Inspecciones
+ * Columnas según esquema actual de producción.
  */
 
 export interface InspeccionBase {
@@ -8,11 +9,15 @@ export interface InspeccionBase {
   id_tecnico: number
   fecha_inspeccion?: string
   descripcion_inspeccion: string
-  hallazgos?: string | null
-  fotos_url?: string[] | null
-  estado_inmueble?: string | null
-  observaciones?: string | null
-  fecha_registro?: string
+  causas_determinadas?: string | null
+  danos_ocasionados?: string | null
+  requiere_materiales?: number | null     // INTEGER 0/1 en DB
+  descripcion_materiales?: string | null
+  requiere_ayudantes?: number | null      // INTEGER 0/1 en DB
+  cantidad_ayudantes?: number | null
+  dias_estimados_trabajo?: number | null
+  fecha_creacion?: string
+  fecha_modificacion?: string
 }
 
 export interface Inspeccion extends InspeccionBase {

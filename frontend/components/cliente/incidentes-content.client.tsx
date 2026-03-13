@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Plus, AlertCircle, Eye, Clock } from 'lucide-react'
-import { estadoIncidenteColors, prioridadColors, EstadoIncidente, NivelPrioridad } from '@/shared/types'
+import { EstadoIncidente } from '@/shared/types'
+import { getEstadoIncidenteColor, getPrioridadColor } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { Incidente } from '@/features/incidentes/incidentes.types'
 
@@ -20,13 +21,9 @@ export function IncidentesContent({ incidentes }: IncidentesContentProps) {
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
 
-  const getEstadoBadgeColor = (estado: string) => {
-    return estadoIncidenteColors[estado as EstadoIncidente] || 'bg-gray-100 text-gray-800'
-  }
+  const getEstadoBadgeColor = (estado: string) => getEstadoIncidenteColor(estado)
 
-  const getPrioridadBadgeColor = (prioridad: string) => {
-    return prioridadColors[prioridad as NivelPrioridad] || 'bg-gray-100 text-gray-800'
-  }
+  const getPrioridadBadgeColor = (prioridad: string) => getPrioridadColor(prioridad)
 
   const abrirModal = (id: number) => {
     setIncidenteSeleccionado(id)

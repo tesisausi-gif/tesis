@@ -3,50 +3,33 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, ClipboardList, User, LogOut, Wrench, FileText, Search } from 'lucide-react'
+import { Home, ClipboardList, User, LogOut, Wrench, FileText, Search, DollarSign } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { getCountAsignacionesPendientes } from '@/features/asignaciones/asignaciones.service'
+import { getTecnicoBadgeCounts } from '@/features/notificaciones/badge-counts.service'
+import type { TecnicoBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 
-const navItems = [
-  {
-    title: 'Inicio',
-    icon: Home,
-    href: '/tecnico',
-  },
-  {
-    title: 'Asignación',
-    icon: Search,
-    href: '/tecnico/disponibles',
-    badgeKey: 'pendientes',
-  },
-  {
-    title: 'Trabajos',
-    icon: ClipboardList,
-    href: '/tecnico/trabajos',
-  },
-  {
-    title: 'Presupuestos',
-    icon: FileText,
-    href: '/tecnico/presupuestos',
-  },
-  {
-    title: 'Perfil',
-    icon: User,
-    href: '/tecnico/perfil',
-  },
+type BadgeKey = keyof TecnicoBadgeCounts
+
+const navItems: { title: string; icon: React.ElementType; href: string; badge?: BadgeKey }[] = [
+  { title: 'Inicio', icon: Home, href: '/tecnico' },
+  { title: 'Asignación', icon: Search, href: '/tecnico/disponibles', badge: 'disponibles' },
+  { title: 'Trabajos', icon: ClipboardList, href: '/tecnico/trabajos', badge: 'trabajos' },
+  { title: 'Presupuestos', icon: FileText, href: '/tecnico/presupuestos' },
+  { title: 'Cobros', icon: DollarSign, href: '/tecnico/pagos', badge: 'pagos' as BadgeKey },
+  { title: 'Perfil', icon: User, href: '/tecnico/perfil' },
 ]
 
 function TecnicoNavComponent() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const [pendientesCount, setPendientesCount] = useState(0)
+  const [counts, setCounts] = useState<TecnicoBadgeCounts>({ disponibles: 0, trabajos: 0, pagos: 0 })
 
   useEffect(() => {
-    getCountAsignacionesPendientes()
-      .then(setPendientesCount)
+    getTecnicoBadgeCounts()
+      .then(setCounts)
       .catch(() => {})
   }, [pathname])
 
@@ -79,7 +62,7 @@ function TecnicoNavComponent() {
         <div className="flex justify-around">
           {navItems.map((item) => {
             const isActive = pathname === item.href
-            const badgeCount = item.badgeKey === 'pendientes' ? pendientesCount : 0
+            const badgeCount = item.badge ? counts[item.badge] : 0
             return (
               <Link
                 key={item.href}

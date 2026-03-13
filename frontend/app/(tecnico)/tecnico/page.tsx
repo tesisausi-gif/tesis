@@ -2,6 +2,8 @@ import { createClient } from '@/shared/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ClipboardList, CheckCircle2, Clock, Star } from 'lucide-react'
+import Link from 'next/link'
+import { getTecnicoBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 
 export default async function TecnicoDashboard() {
   const supabase = await createClient()
@@ -27,8 +29,10 @@ export default async function TecnicoDashboard() {
     .select('*, incidentes(*)')
     .eq('id_tecnico', tecnico?.id_tecnico)
 
-  const trabajosActivos = asignaciones?.filter(a => 
-    a.estado_asignacion === 'asignado' || a.estado_asignacion === 'en_proceso'
+  const badgeCounts = await getTecnicoBadgeCounts().catch(() => ({ disponibles: 0, trabajos: 0 }))
+
+  const trabajosActivos = asignaciones?.filter(a =>
+    a.estado_asignacion === 'en_curso'
   ).length || 0
 
   const trabajosCompletados = asignaciones?.filter(a => 
@@ -48,6 +52,27 @@ export default async function TecnicoDashboard() {
           {tecnico?.especialidad && `Especialidad: ${tecnico.especialidad}`}
         </p>
       </div>
+
+      {/* Alerta: Trabajos listos para conformidad */}
+      {badgeCounts.trabajos > 0 && (
+        <Link href="/tecnico/trabajos" className="block">
+          <Card className="border-2 border-amber-400 bg-amber-50 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="flex items-center gap-4 py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                <ClipboardList className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-amber-800">
+                  {badgeCounts.trabajos === 1
+                    ? 'Tenés 1 trabajo listo para subir conformidad'
+                    : `Tenés ${badgeCounts.trabajos} trabajos listos para subir conformidad`}
+                </p>
+                <p className="text-sm text-amber-600">Tocá para ir a Trabajos →</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       {/* Stats Grid - Responsive */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
@@ -127,9 +152,7 @@ export default async function TecnicoDashboard() {
               {asignaciones.slice(0, 3).map((asignacion) => {
                 const getEstadoColor = (estado: string) => {
                   switch (estado) {
-                    case 'asignado':
-                      return 'bg-blue-100 text-blue-800'
-                    case 'en_proceso':
+                    case 'en_curso':
                       return 'bg-orange-100 text-orange-800'
                     case 'completado':
                       return 'bg-green-100 text-green-800'

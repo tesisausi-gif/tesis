@@ -18,6 +18,8 @@ export interface IncidenteBase {
   fecha_cierre: string | null
   fue_resuelto: boolean
   disponibilidad: string | null
+  calificacion_admin: number | null
+  comentario_admin: string | null
 }
 
 // Incidente con datos de inmueble
@@ -56,4 +58,43 @@ export interface UpdateIncidenteDTO {
   estado_actual?: string
   nivel_prioridad?: string
   categoria?: string | null
+}
+
+// Filtros para métricas y reportes
+export interface FiltrosMetricas {
+  fechaDesde?: string | null
+  fechaHasta?: string | null
+  categoria?: string | null
+}
+
+// Métricas del dashboard admin
+export interface MetricasMes {
+  mes: string
+  total: number
+  resueltos: number
+}
+
+export interface MetricasCategoria {
+  categoria: string
+  count: number
+}
+
+export interface MetricasPrioridad {
+  prioridad: string
+  count: number
+}
+
+export interface MetricasTecnico {
+  nombre: string
+  apellido: string
+  incidentesResueltos: number
+}
+
+export interface MetricasDashboard {
+  incidentesPorMes: MetricasMes[]
+  distribucionCategorias: MetricasCategoria[]
+  distribucionPrioridades: MetricasPrioridad[]
+  tiempoPromedioResolucion: number
+  topTecnicos: MetricasTecnico[]
+  totalIncidentes: number
 }

@@ -360,8 +360,8 @@ export default function InmueblesPage() {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={inmueble.esta_activo ? 'default' : 'secondary'}
-                        className={inmueble.esta_activo ? 'bg-green-500' : 'bg-gray-500'}
+                        variant="outline"
+                        className={inmueble.esta_activo ? 'border-green-200 bg-green-50 text-green-700' : 'border-gray-200 bg-gray-50 text-gray-700'}
                       >
                         {inmueble.esta_activo ? (
                           <>

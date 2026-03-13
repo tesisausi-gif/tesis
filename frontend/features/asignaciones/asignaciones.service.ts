@@ -128,6 +128,11 @@ export async function getAsignacionesActivas(): Promise<AsignacionTecnico[]> {
           dpto,
           barrio,
           localidad
+        ),
+        clientes:id_cliente_reporta (
+          nombre,
+          apellido,
+          telefono
         )
       )
     `)
@@ -229,8 +234,32 @@ export async function crearAsignacion(data: {
       .eq('id_incidente', data.id_incidente)
       .eq('estado_actual', 'pendiente')
 
+    // Notificar al técnico (fire-and-forget)
+    const { notificarNuevaAsignacion } = await import('@/features/notificaciones/notificaciones.service')
+    notificarNuevaAsignacion(data.id_incidente, data.id_tecnico).catch(console.error)
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al crear asignación' }
+  }
+}
+
+/**
+ * Técnico marca su asignación como completada
+ */
+export async function completarAsignacion(idAsignacion: number): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+    await requireTecnicoId()
+
+    const { error } = await supabase
+      .from('asignaciones_tecnico')
+      .update({ estado_asignacion: 'completada' })
+      .eq('id_asignacion', idAsignacion)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: undefined }
+  } catch (error) {
+    return { success: false, error: 'Error inesperado al completar asignación' }
   }
 }

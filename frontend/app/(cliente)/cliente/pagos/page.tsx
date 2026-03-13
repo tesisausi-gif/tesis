@@ -1,297 +1,147 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { createClient } from '@/shared/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getMisCobrosComoCliente } from '@/features/pagos/cobros-clientes.service'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { DollarSign, CreditCard, Calendar, FileText, Receipt, ArrowLeft } from 'lucide-react'
-import { toast } from 'sonner'
-import { TipoPago, MetodoPago } from '@/shared/types/enums'
+import { DollarSign, Clock, CheckCircle2, CreditCard, Building2, Banknote, Wallet } from 'lucide-react'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 
-interface Pago {
-    id_pago: number
-    id_incidente: number
-    id_presupuesto: number
-    monto_pagado: number
-    tipo_pago: string
-    fecha_pago: string
-    metodo_pago: string
-    numero_comprobante: string | null
-    observaciones: string | null
-    fecha_creacion: string
-    incidentes?: {
-        id_incidente: number
-        descripcion_problema: string
-        categoria: string | null
-    }
-    presupuestos?: {
-        id_presupuesto: number
-        costo_total: number
-    }
+function fmt$(n: number) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n)
 }
 
-const getTipoPagoBadgeColor = (tipo: string) => {
-    switch (tipo) {
-        case TipoPago.TOTAL:
-            return 'bg-green-100 text-green-800'
-        case TipoPago.PARCIAL:
-            return 'bg-blue-100 text-blue-800'
-        case TipoPago.ADELANTO:
-            return 'bg-yellow-100 text-yellow-800'
-        case TipoPago.REEMBOLSO:
-            return 'bg-purple-100 text-purple-800'
-        default:
-            return 'bg-gray-100 text-gray-800'
-    }
+function fmtFecha(s: string) {
+  return format(new Date(s), "d 'de' MMMM yyyy", { locale: es })
 }
 
-const getMetodoPagoIcon = (metodo: string) => {
-    switch (metodo) {
-        case MetodoPago.TARJETA:
-            return <CreditCard className="h-4 w-4" />
-        case MetodoPago.EFECTIVO:
-            return <DollarSign className="h-4 w-4" />
-        case MetodoPago.TRANSFERENCIA:
-            return <Receipt className="h-4 w-4" />
-        default:
-            return <FileText className="h-4 w-4" />
-    }
+const METODO_LABELS: Record<string, string> = {
+  efectivo: 'Efectivo', transferencia: 'Transferencia', debito: 'Débito', credito: 'Crédito',
 }
 
-export default function PagosClientePage() {
-    const router = useRouter()
-    const supabase = createClient()
-    const [loading, setLoading] = useState(true)
-    const [pagos, setPagos] = useState<Pago[]>([])
-    const [idCliente, setIdCliente] = useState<number | null>(null)
+function MetodoIcon({ metodo }: { metodo: string }) {
+  const m = metodo?.toLowerCase()
+  if (m === 'efectivo') return <Banknote className="h-4 w-4 text-green-600" />
+  if (m === 'transferencia') return <Building2 className="h-4 w-4 text-blue-600" />
+  if (m === 'debito' || m === 'credito') return <CreditCard className="h-4 w-4 text-purple-600" />
+  return <Wallet className="h-4 w-4 text-gray-500" />
+}
 
-    useEffect(() => {
-        cargarPagos()
-    }, [])
+export default async function PagosClientePage() {
+  const { pendientes, realizados } = await getMisCobrosComoCliente().catch(() => ({ pendientes: [], realizados: [] }))
 
-    const cargarPagos = async () => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser()
+  const totalPagado = realizados.reduce((s, r) => s + r.monto_cobro, 0)
+  const totalPendiente = pendientes.reduce((s, p) => s + p.monto_a_pagar, 0)
 
-            if (!user) {
-                router.push('/login')
-                return
-            }
+  return (
+    <div className="space-y-6 px-4 py-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Mis Pagos</h1>
+        <p className="text-sm text-gray-500 mt-1">Estado de cobros por tus servicios contratados</p>
+      </div>
 
-            // Obtener id_cliente del usuario
-            const { data: usuario } = await supabase
-                .from('usuarios')
-                .select('id_cliente')
-                .eq('id', user.id)
-                .single()
+      <div className="grid grid-cols-2 gap-3">
+        <Card className="border-l-4 border-l-orange-400 bg-orange-50">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-xs text-gray-500">Pendiente de pago</p>
+            <p className="text-xl font-bold text-orange-600">{fmt$(totalPendiente)}</p>
+            <p className="text-xs text-gray-500">{pendientes.length} {pendientes.length === 1 ? 'cobro' : 'cobros'}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-green-400 bg-green-50">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-xs text-gray-500">Total pagado</p>
+            <p className="text-xl font-bold text-green-600">{fmt$(totalPagado)}</p>
+            <p className="text-xs text-gray-500">{realizados.length} {realizados.length === 1 ? 'cobro' : 'cobros'}</p>
+          </CardContent>
+        </Card>
+      </div>
 
-            if (!usuario?.id_cliente) {
-                toast.error('No se pudo identificar el cliente')
-                return
-            }
-
-            setIdCliente(usuario.id_cliente)
-
-            // Obtener pagos de los incidentes del cliente
-            const { data, error } = await supabase
-                .from('pagos')
-                .select(`
-          *,
-          incidentes!inner (
-            id_incidente,
-            descripcion_problema,
-            categoria,
-            id_cliente_reporta
-          ),
-          presupuestos (
-            id_presupuesto,
-            costo_total
-          )
-        `)
-                .eq('incidentes.id_cliente_reporta', usuario.id_cliente)
-                .order('fecha_pago', { ascending: false })
-
-            if (error) {
-                console.error('Error al cargar pagos:', error)
-                toast.error('Error al cargar pagos')
-                return
-            }
-
-            setPagos(data as unknown as Pago[] || [])
-        } catch (error) {
-            console.error('Error:', error)
-            toast.error('Error inesperado')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('es-AR', {
-            style: 'currency',
-            currency: 'ARS',
-        }).format(amount)
-    }
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('es-AR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        })
-    }
-
-    const calcularTotalPagos = () => {
-        return pagos.reduce((sum, pago) => sum + pago.monto_pagado, 0)
-    }
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Cargando pagos...</p>
+      {pendientes.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-orange-500" />
+            Pendientes de pago
+          </h2>
+          {pendientes.map(p => (
+            <Card key={p.id_presupuesto} className="border-2 border-orange-200 bg-orange-50/40">
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-base">Incidente #{p.id_incidente}</CardTitle>
+                    <CardDescription className="text-sm mt-0.5 line-clamp-2">{p.descripcion_problema}</CardDescription>
+                  </div>
+                  <Badge className="bg-orange-100 text-orange-700 border-orange-200 shrink-0">Pendiente</Badge>
                 </div>
-            </div>
-        )
-    }
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-4 px-4 py-6"
-        >
-            <Link
-                href="/cliente"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-                <ArrowLeft className="h-4 w-4" />
-                Volver al Inicio
-            </Link>
-
-            <div className="flex items-start justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Mis Pagos</h1>
-                    <p className="text-sm text-gray-600 mt-1">
-                        Registro de tus pagos realizados
-                    </p>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-2">
+                {p.categoria && <p className="text-xs text-gray-500">Categoría: {p.categoria}</p>}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Monto a pagar</span>
+                  <span className="text-lg font-bold text-orange-600">{fmt$(p.monto_a_pagar)}</span>
                 </div>
-                {pagos.length > 0 && (
-                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-                        <CardContent className="pt-6">
-                            <div className="text-center">
-                                <p className="text-xs text-gray-600 mb-1">Total Pagado</p>
-                                <p className="text-xl font-bold text-green-700">
-                                    {formatCurrency(calcularTotalPagos())}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                <p className="text-xs text-gray-400">Presupuesto del {fmtFecha(p.fecha_presupuesto)}</p>
+                <p className="text-xs text-gray-500 bg-white border rounded px-2 py-1.5">
+                  La administración te contactará para coordinar el pago.
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {realizados.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            Historial de pagos realizados
+          </h2>
+          {realizados.map(r => (
+            <Card key={r.id_cobro} className="border-green-200">
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-base">Incidente #{r.id_incidente}</CardTitle>
+                    {r.descripcion_problema && (
+                      <CardDescription className="text-sm mt-0.5 line-clamp-2">{r.descripcion_problema}</CardDescription>
+                    )}
+                  </div>
+                  <Badge className="bg-green-100 text-green-700 border-green-200 shrink-0">Pagado</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Monto pagado</span>
+                  <span className="text-lg font-bold text-green-600">{fmt$(r.monto_cobro)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <MetodoIcon metodo={r.metodo_pago} />
+                  <span>{METODO_LABELS[r.metodo_pago] ?? r.metodo_pago}</span>
+                  {r.banco && <span className="text-gray-400">• {r.banco}</span>}
+                  {r.cuotas && r.cuotas > 1 && <span className="text-gray-400">• {r.cuotas} cuotas</span>}
+                </div>
+                {r.referencia_pago && (
+                  <p className="text-xs text-gray-500">Ref: <span className="font-mono">{r.referencia_pago}</span></p>
                 )}
+                {r.observaciones && <p className="text-xs text-gray-500 italic">{r.observaciones}</p>}
+                <p className="text-xs text-gray-400">Pagado el {fmtFecha(r.fecha_cobro)}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {pendientes.length === 0 && realizados.length === 0 && (
+        <Card className="border-dashed border-2">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="rounded-full bg-gray-100 p-4 mb-4">
+              <DollarSign className="h-10 w-10 text-gray-400" />
             </div>
-
-            {pagos.length === 0 ? (
-                <Card className="border-dashed border-2">
-                    <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                        <div className="rounded-full bg-gray-100 p-4 mb-4">
-                            <DollarSign className="h-12 w-12 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                            No tienes pagos registrados
-                        </h3>
-                        <p className="text-sm text-gray-600 max-w-md">
-                            Tus pagos aparecerán aquí cuando se registren para los presupuestos aprobados.
-                        </p>
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="grid gap-4">
-                    {pagos.map((pago) => (
-                        <Card key={pago.id_pago} className="hover:shadow-md transition-shadow">
-                            <CardHeader>
-                                <div className="flex items-start justify-between">
-                                    <div className="space-y-1">
-                                        <CardTitle className="text-lg flex items-center gap-2">
-                                            <DollarSign className="h-5 w-5 text-green-600" />
-                                            Pago #{pago.id_pago}
-                                        </CardTitle>
-                                        <CardDescription>
-                                            Incidente #{pago.id_incidente} • Presupuesto #{pago.id_presupuesto}
-                                            {pago.incidentes?.categoria && (
-                                                <span className="ml-2">• {pago.incidentes.categoria}</span>
-                                            )}
-                                        </CardDescription>
-                                    </div>
-                                    <Badge className={getTipoPagoBadgeColor(pago.tipo_pago)}>
-                                        {pago.tipo_pago}
-                                    </Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {pago.incidentes?.descripcion_problema && (
-                                        <div className="bg-gray-50 p-3 rounded-lg">
-                                            <p className="text-xs text-gray-500 mb-1">Incidente:</p>
-                                            <p className="text-sm text-gray-700 line-clamp-2">
-                                                {pago.incidentes.descripcion_problema}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                        <div className="space-y-1">
-                                            <p className="text-xs text-gray-500">Monto Pagado</p>
-                                            <p className="text-xl font-bold text-green-600">
-                                                {formatCurrency(pago.monto_pagado)}
-                                            </p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-xs text-gray-500">Método de Pago</p>
-                                            <p className="text-sm font-medium flex items-center gap-1">
-                                                {getMetodoPagoIcon(pago.metodo_pago)}
-                                                {pago.metodo_pago}
-                                            </p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-xs text-gray-500">Fecha de Pago</p>
-                                            <p className="text-sm font-medium flex items-center gap-1">
-                                                <Calendar className="h-3 w-3" />
-                                                {formatDate(pago.fecha_pago)}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {pago.numero_comprobante && (
-                                        <div className="pt-2 border-t">
-                                            <p className="text-xs text-gray-500 mb-1">Número de Comprobante</p>
-                                            <p className="text-sm font-medium font-mono">{pago.numero_comprobante}</p>
-                                        </div>
-                                    )}
-
-                                    {pago.observaciones && (
-                                        <div className="pt-2 border-t">
-                                            <p className="text-xs text-gray-500 mb-1">Observaciones</p>
-                                            <p className="text-sm text-gray-700">{pago.observaciones}</p>
-                                        </div>
-                                    )}
-
-                                    {pago.presupuestos && (
-                                        <div className="flex items-center gap-2 text-xs text-gray-500 pt-2 border-t">
-                                            <FileText className="h-3 w-3" />
-                                            Presupuesto total: {formatCurrency(pago.presupuestos.costo_total)}
-                                        </div>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            )}
-        </motion.div>
-    )
+            <h3 className="font-semibold text-gray-700 mb-1">Sin movimientos</h3>
+            <p className="text-sm text-gray-500 max-w-xs">
+              Cuando se apruebe un presupuesto y se resuelva el incidente, los cobros aparecerán aquí.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
 }

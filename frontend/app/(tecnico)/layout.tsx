@@ -6,7 +6,9 @@ import { PageTransitionProvider, PageTransition } from '@/components/ui/page-tra
 
 const tecnicoRoutes = [
   '/tecnico',
+  '/tecnico/disponibles',
   '/tecnico/trabajos',
+  '/tecnico/presupuestos',
   '/tecnico/perfil',
 ]
 

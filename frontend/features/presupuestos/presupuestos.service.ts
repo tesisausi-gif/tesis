@@ -14,25 +14,23 @@ import type { Presupuesto, PresupuestoConDetalle } from './presupuestos.types'
 const PRESUPUESTO_SELECT = `
   id_presupuesto,
   id_incidente,
-  id_tecnico,
-  descripcion_trabajo,
+  id_inspeccion,
+  descripcion_detallada,
+  costo_materiales,
+  costo_mano_obra,
+  gastos_administrativos,
   costo_total,
-  detalles_trabajo,
   estado_presupuesto,
-  fecha_creacion,
-  fecha_vencimiento,
   fecha_aprobacion,
-  fecha_rechazo,
-  razon_rechazo,
-  fecha_actualizacion,
+  id_aprobado_por,
+  alternativas_reparacion,
+  fecha_creacion,
+  fecha_modificacion,
   incidentes (
     id_incidente,
     descripcion_problema,
-    categoria
-  ),
-  tecnicos (
-    nombre,
-    apellido
+    categoria,
+    id_cliente_reporta
   )
 `
 
@@ -69,17 +67,29 @@ export async function getPresupuestosDelIncidente(idIncidente: number): Promise<
 }
 
 /**
- * Obtener presupuestos del técnico actual
+ * Obtener presupuestos del técnico actual.
+ * Busca a través de las asignaciones del técnico para encontrar los incidentes relacionados.
  */
 export async function getPresupuestosDeTecnico(): Promise<PresupuestoConDetalle[]> {
   const supabase = await createClient()
   const idTecnico = await requireTecnicoId()
 
+  const { data: asignaciones, error: asigError } = await supabase
+    .from('asignaciones_tecnico')
+    .select('id_incidente')
+    .eq('id_tecnico', idTecnico)
+
+  if (asigError) throw asigError
+  if (!asignaciones?.length) return []
+
+  const idIncidentes = asignaciones.map((a: any) => a.id_incidente).filter(Boolean)
+  if (!idIncidentes.length) return []
+
   const { data, error } = await supabase
     .from('presupuestos')
     .select(PRESUPUESTO_SELECT)
-    .eq('id_tecnico', idTecnico)
-    .in('estado_presupuesto', ['borrador', 'enviado', 'aprobado_admin'])
+    .in('id_incidente', idIncidentes)
+    .in('estado_presupuesto', [EstadoPresupuesto.ENVIADO, EstadoPresupuesto.APROBADO_ADMIN, EstadoPresupuesto.APROBADO])
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
@@ -87,7 +97,7 @@ export async function getPresupuestosDeTecnico(): Promise<PresupuestoConDetalle[
 }
 
 /**
- * Obtener presupuestos de los incidentes de un cliente (para que vea los presupuestos)
+ * Obtener presupuestos de los incidentes de un cliente
  */
 export async function getPresupuestosDelCliente(idCliente: number): Promise<PresupuestoConDetalle[]> {
   const supabase = await createClient()
@@ -97,26 +107,23 @@ export async function getPresupuestosDelCliente(idCliente: number): Promise<Pres
     .select(`
       id_presupuesto,
       id_incidente,
-      id_tecnico,
-      descripcion_trabajo,
+      id_inspeccion,
+      descripcion_detallada,
+      costo_materiales,
+      costo_mano_obra,
+      gastos_administrativos,
       costo_total,
-      detalles_trabajo,
       estado_presupuesto,
-      fecha_creacion,
-      fecha_vencimiento,
       fecha_aprobacion,
-      fecha_rechazo,
-      razon_rechazo,
-      fecha_actualizacion,
+      id_aprobado_por,
+      alternativas_reparacion,
+      fecha_creacion,
+      fecha_modificacion,
       incidentes!inner (
         id_incidente,
         descripcion_problema,
         categoria,
         id_cliente_reporta
-      ),
-      tecnicos (
-        nombre,
-        apellido
       )
     `)
     .eq('incidentes.id_cliente_reporta', idCliente)
@@ -138,7 +145,7 @@ export async function getPresupuesto(idPresupuesto: number): Promise<Presupuesto
     .eq('id_presupuesto', idPresupuesto)
     .single()
 
-  if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows found
+  if (error && error.code !== 'PGRST116') throw error
   return (data as unknown as PresupuestoConDetalle) || null
 }
 
@@ -149,11 +156,13 @@ export async function getPresupuesto(idPresupuesto: number): Promise<Presupuesto
  */
 export async function crearPresupuesto(data: {
   id_incidente: number
-  id_tecnico: number
-  descripcion_trabajo: string
+  id_inspeccion?: number | null
+  descripcion_detallada: string
   costo_total: number
-  detalles_trabajo?: string
-  fecha_vencimiento?: string
+  costo_materiales?: number
+  costo_mano_obra?: number
+  gastos_administrativos?: number
+  alternativas_reparacion?: string
 }): Promise<ActionResult<Presupuesto>> {
   try {
     const supabase = await createClient()
@@ -162,13 +171,17 @@ export async function crearPresupuesto(data: {
       .from('presupuestos')
       .insert({
         ...data,
-        estado_presupuesto: EstadoPresupuesto.BORRADOR,
-        fecha_creacion: new Date().toISOString(),
+        estado_presupuesto: EstadoPresupuesto.ENVIADO,
       })
       .select()
       .single()
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente (fire-and-forget)
+    const { notificarPresupuestoCreado } = await import('@/features/notificaciones/notificaciones.service')
+    notificarPresupuestoCreado(presupuesto.id_presupuesto).catch(console.error)
+
     return { success: true, data: presupuesto as Presupuesto }
   } catch (error) {
     return { success: false, error: 'Error inesperado al crear presupuesto' }
@@ -176,39 +189,34 @@ export async function crearPresupuesto(data: {
 }
 
 /**
- * Actualizar presupuesto (solo en estado borrador o enviado)
+ * Actualizar presupuesto (solo en estado enviado)
  */
 export async function actualizarPresupuesto(
   idPresupuesto: number,
   updates: {
-    descripcion_trabajo?: string
-    detalles_trabajo?: string
+    descripcion_detallada?: string
     costo_total?: number
-    fecha_vencimiento?: string
+    costo_materiales?: number
+    costo_mano_obra?: number
+    gastos_administrativos?: number
+    alternativas_reparacion?: string
   }
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient()
 
-    // Verificar que está en estado editable
     const presupuesto = await getPresupuesto(idPresupuesto)
     if (!presupuesto) {
       return { success: false, error: 'Presupuesto no encontrado' }
     }
 
-    if (
-      presupuesto.estado_presupuesto !== EstadoPresupuesto.BORRADOR &&
-      presupuesto.estado_presupuesto !== EstadoPresupuesto.ENVIADO
-    ) {
+    if (presupuesto.estado_presupuesto !== EstadoPresupuesto.ENVIADO) {
       return { success: false, error: 'No se puede editar un presupuesto en este estado' }
     }
 
     const { error } = await supabase
       .from('presupuestos')
-      .update({
-        ...updates,
-        fecha_actualizacion: new Date().toISOString(),
-      })
+      .update(updates)
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
@@ -219,7 +227,7 @@ export async function actualizarPresupuesto(
 }
 
 /**
- * Enviar presupuesto (cambiar de borrador a enviado)
+ * Enviar presupuesto (marcar como enviado)
  */
 export async function enviarPresupuesto(idPresupuesto: number): Promise<ActionResult> {
   try {
@@ -227,12 +235,8 @@ export async function enviarPresupuesto(idPresupuesto: number): Promise<ActionRe
 
     const { error } = await supabase
       .from('presupuestos')
-      .update({
-        estado_presupuesto: EstadoPresupuesto.ENVIADO,
-        fecha_actualizacion: new Date().toISOString(),
-      })
+      .update({ estado_presupuesto: EstadoPresupuesto.ENVIADO })
       .eq('id_presupuesto', idPresupuesto)
-      .eq('estado_presupuesto', EstadoPresupuesto.BORRADOR)
 
     if (error) return { success: false, error: error.message }
     return { success: true, data: undefined }
@@ -242,23 +246,42 @@ export async function enviarPresupuesto(idPresupuesto: number): Promise<ActionRe
 }
 
 /**
- * Aprobar presupuesto (admin/gestor)
+ * Aprobar presupuesto (admin/gestor) — guarda comisión y notifica al técnico
  */
-export async function aprobarPresupuesto(idPresupuesto: number): Promise<ActionResult> {
+export async function aprobarPresupuesto(
+  idPresupuesto: number,
+  gastosAdministrativos: number = 0,
+): Promise<ActionResult> {
   try {
     const supabase = await createClient()
     await requireAdminOrGestorId()
 
+    // Obtener costos base para recalcular total
+    const { data: pres, error: errGet } = await supabase
+      .from('presupuestos')
+      .select('costo_materiales, costo_mano_obra')
+      .eq('id_presupuesto', idPresupuesto)
+      .single()
+
+    if (errGet || !pres) return { success: false, error: 'Presupuesto no encontrado' }
+
+    const costoTotal = (pres.costo_materiales || 0) + (pres.costo_mano_obra || 0) + gastosAdministrativos
+
     const { error } = await supabase
       .from('presupuestos')
       .update({
-        estado_presupuesto: EstadoPresupuesto.APROBADO,
-        fecha_aprobacion: new Date().toISOString(),
-        fecha_actualizacion: new Date().toISOString(),
+        estado_presupuesto: EstadoPresupuesto.APROBADO_ADMIN,
+        gastos_administrativos: gastosAdministrativos,
+        costo_total: costoTotal,
       })
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al cliente para que revise y apruebe (fire-and-forget)
+    const { notificarPresupuestoAprobadoAdmin } = await import('@/features/notificaciones/notificaciones.service')
+    notificarPresupuestoAprobadoAdmin(idPresupuesto).catch(console.error)
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al aprobar presupuesto' }
@@ -266,27 +289,57 @@ export async function aprobarPresupuesto(idPresupuesto: number): Promise<ActionR
 }
 
 /**
- * Rechazar presupuesto (admin/gestor)
+ * Rechazar presupuesto (admin/gestor) — desvincula al técnico y vuelve el incidente a pendiente
  */
 export async function rechazarPresupuesto(
   idPresupuesto: number,
-  razonRechazo?: string
+  _razonRechazo?: string
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient()
     await requireAdminOrGestorId()
 
+    // Obtener id_incidente del presupuesto
+    const { data: pres } = await supabase
+      .from('presupuestos')
+      .select('id_incidente')
+      .eq('id_presupuesto', idPresupuesto)
+      .single()
+
     const { error } = await supabase
       .from('presupuestos')
-      .update({
-        estado_presupuesto: EstadoPresupuesto.RECHAZADO,
-        fecha_rechazo: new Date().toISOString(),
-        razon_rechazo: razonRechazo || null,
-        fecha_actualizacion: new Date().toISOString(),
-      })
+      .update({ estado_presupuesto: EstadoPresupuesto.RECHAZADO })
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
+
+    if (pres?.id_incidente) {
+      // Desvincular técnico: marcar asignación activa como rechazada
+      const { data: asig } = await supabase
+        .from('asignaciones_tecnico')
+        .select('id_asignacion')
+        .eq('id_incidente', pres.id_incidente)
+        .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
+        .maybeSingle()
+
+      if (asig) {
+        await supabase
+          .from('asignaciones_tecnico')
+          .update({ estado_asignacion: 'rechazada' })
+          .eq('id_asignacion', asig.id_asignacion)
+      }
+
+      // Volver incidente a pendiente para búsqueda de nuevo técnico
+      await supabase
+        .from('incidentes')
+        .update({ estado_actual: 'pendiente' })
+        .eq('id_incidente', pres.id_incidente)
+    }
+
+    // Notificar al técnico que el presupuesto fue rechazado (fire-and-forget)
+    const { notificarTecnicoPresupuestoRechazado } = await import('@/features/notificaciones/notificaciones.service')
+    notificarTecnicoPresupuestoRechazado(idPresupuesto).catch(console.error)
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al rechazar presupuesto' }
@@ -303,10 +356,7 @@ export async function marcarPresupuestoVencido(idPresupuesto: number): Promise<A
 
     const { error } = await supabase
       .from('presupuestos')
-      .update({
-        estado_presupuesto: EstadoPresupuesto.VENCIDO,
-        fecha_actualizacion: new Date().toISOString(),
-      })
+      .update({ estado_presupuesto: EstadoPresupuesto.VENCIDO })
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
@@ -323,7 +373,6 @@ export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<
   try {
     const supabase = await createClient()
 
-    // Verificar que el presupuesto esté en estado aprobado_admin
     const presupuesto = await getPresupuesto(idPresupuesto)
     if (!presupuesto) {
       return { success: false, error: 'Presupuesto no encontrado' }
@@ -338,11 +387,20 @@ export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<
       .update({
         estado_presupuesto: EstadoPresupuesto.APROBADO,
         fecha_aprobacion: new Date().toISOString(),
-        fecha_actualizacion: new Date().toISOString(),
       })
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
+
+    // Poner incidente en_proceso y notificar al técnico (fire-and-forget)
+    const supabaseAdmin = (await import('@/shared/lib/supabase/admin')).createAdminClient()
+    const { data: pres } = await supabase.from('presupuestos').select('id_incidente').eq('id_presupuesto', idPresupuesto).single()
+    if (pres?.id_incidente) {
+      await supabaseAdmin.from('incidentes').update({ estado_actual: 'en_proceso' }).eq('id_incidente', pres.id_incidente)
+    }
+    const { notificarTecnicoPresupuestoAprobado } = await import('@/features/notificaciones/notificaciones.service')
+    notificarTecnicoPresupuestoAprobado(idPresupuesto).catch(console.error)
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al aprobar presupuesto' }
@@ -350,16 +408,15 @@ export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<
 }
 
 /**
- * Rechazar presupuesto como cliente (cambiar a rechazado)
+ * Rechazar presupuesto como cliente
  */
 export async function rechazarPresupuestoCliente(
   idPresupuesto: number,
-  razonRechazo?: string
+  _razonRechazo?: string
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient()
 
-    // Verificar que el presupuesto esté en estado aprobado_admin
     const presupuesto = await getPresupuesto(idPresupuesto)
     if (!presupuesto) {
       return { success: false, error: 'Presupuesto no encontrado' }
@@ -371,15 +428,28 @@ export async function rechazarPresupuestoCliente(
 
     const { error } = await supabase
       .from('presupuestos')
-      .update({
-        estado_presupuesto: EstadoPresupuesto.RECHAZADO,
-        fecha_rechazo: new Date().toISOString(),
-        razon_rechazo: razonRechazo || 'Rechazado por cliente',
-        fecha_actualizacion: new Date().toISOString(),
-      })
+      .update({ estado_presupuesto: EstadoPresupuesto.RECHAZADO })
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
+
+    // Finalizar incidente y desvincular técnico
+    const supabaseAdmin = (await import('@/shared/lib/supabase/admin')).createAdminClient()
+    if (presupuesto.id_incidente) {
+      // Marcar asignacion activa como rechazada
+      const { data: asig } = await supabaseAdmin
+        .from('asignaciones_tecnico')
+        .select('id_asignacion')
+        .eq('id_incidente', presupuesto.id_incidente)
+        .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
+        .maybeSingle()
+      if (asig) {
+        await supabaseAdmin.from('asignaciones_tecnico').update({ estado_asignacion: 'rechazada' }).eq('id_asignacion', asig.id_asignacion)
+      }
+      // Finalizar incidente
+      await supabaseAdmin.from('incidentes').update({ estado_actual: 'resuelto' }).eq('id_incidente', presupuesto.id_incidente)
+    }
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al rechazar presupuesto' }

@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { User, Mail, Phone, Hash, MapPin, Wrench, Star, Briefcase, Settings, Save, X } from 'lucide-react'
+import { User, Mail, Phone, Hash, MapPin, Wrench, Star, Briefcase, Settings, Save, X, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { actualizarPerfilTecnico } from '@/features/usuarios/usuarios.service'
+import { createClient } from '@/shared/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 interface TecnicoData {
@@ -31,12 +32,19 @@ interface Props {
 
 export function TecnicoPerfilContent({ tecnico, email }: Props) {
   const router = useRouter()
+  const supabase = createClient()
   const [editing, setEditing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   // Form state (only editable fields)
   const [telefono, setTelefono] = useState(tecnico.telefono || '')
   const [direccion, setDireccion] = useState(tecnico.direccion || '')
+
+  // Password change state
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [savingPassword, setSavingPassword] = useState(false)
 
   const handleEditar = () => {
     setEditing(true)
@@ -71,6 +79,37 @@ export function TecnicoPerfilContent({ tecnico, email }: Props) {
       toast.error('Error inesperado al actualizar perfil')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleCambiarPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (newPassword.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden')
+      return
+    }
+
+    setSavingPassword(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) {
+        toast.error('Error al cambiar contraseña', { description: error.message })
+        return
+      }
+      toast.success('Contraseña actualizada exitosamente')
+      setChangingPassword(false)
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch {
+      toast.error('Error inesperado al cambiar contraseña')
+    } finally {
+      setSavingPassword(false)
     }
   }
 
@@ -253,6 +292,68 @@ export function TecnicoPerfilContent({ tecnico, email }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Cambiar Contraseña */}
+      {!changingPassword ? (
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={() => setChangingPassword(true)}>
+            <Lock className="h-4 w-4 mr-2" />
+            Cambiar Contraseña
+          </Button>
+        </div>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Cambiar Contraseña</CardTitle>
+            <CardDescription>Ingresá tu nueva contraseña</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCambiarPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password-tec">Nueva Contraseña</Label>
+                <Input
+                  id="new-password-tec"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="Mínimo 6 caracteres"
+                  disabled={savingPassword}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password-tec">Confirmar Contraseña</Label>
+                <Input
+                  id="confirm-password-tec"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  disabled={savingPassword}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" size="sm" disabled={savingPassword}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {savingPassword ? 'Guardando...' : 'Guardar Contraseña'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setChangingPassword(false); setNewPassword(''); setConfirmPassword('') }}
+                  disabled={savingPassword}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
