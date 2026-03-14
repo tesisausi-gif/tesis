@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, FileSpreadsheet, Printer, BarChart3, TrendingUp, Users, Building2, DollarSign, Star, Wrench, LayoutDashboard } from 'lucide-react'
+import { Loader2, FileSpreadsheet, Download, BarChart3, TrendingUp, Users, Building2, DollarSign, Star, Wrench, LayoutDashboard } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   getTecnicosSelect,
@@ -74,7 +74,15 @@ function KpiCard({ label, valor, sub }: { label: string; valor: string; sub?: st
   )
 }
 
+function esFechaCalendarioValida(s: string): boolean {
+  if (!s) return true
+  const d = new Date(s)
+  return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s
+}
+
 function validarRangoFechas(desde: string, hasta: string): string | null {
+  if (desde && !esFechaCalendarioValida(desde)) return 'La fecha "Desde" no es válida (ej: 30/02 no existe)'
+  if (hasta && !esFechaCalendarioValida(hasta)) return 'La fecha "Hasta" no es válida (ej: 30/02 no existe)'
   const hoyStr = new Date().toISOString().slice(0, 10)
   if (desde && desde > hoyStr) return 'La fecha "Desde" no puede ser futura'
   if (hasta && hasta > hoyStr) return 'La fecha "Hasta" no puede ser futura'
@@ -198,7 +206,7 @@ function BotonesExport({
         <FileSpreadsheet className="h-3.5 w-3.5" /> CSV
       </Button>
       <Button size="sm" variant="outline" onClick={onPDF} disabled={disabled} className="gap-1.5 text-xs">
-        <Printer className="h-3.5 w-3.5" /> PDF
+        <Download className="h-3.5 w-3.5" /> PDF
       </Button>
     </div>
   )
@@ -217,10 +225,11 @@ function BtnGenerar({ onClick, cargando, desde, hasta }: { onClick: () => void; 
 function abrirPDF(tipo: number | string, params: Record<string, string | undefined>) {
   const qs = new URLSearchParams()
   qs.set('tipo', String(tipo))
+  qs.set('autoprint', '1')
   for (const [k, v] of Object.entries(params)) {
     if (v) qs.set(k, v)
   }
-  window.open(`/exportar/imprimir?${qs.toString()}`, '_blank', 'width=1000,height=750,noopener')
+  window.open(`/exportar/imprimir?${qs.toString()}`, '_blank', 'width=1100,height=800,noopener')
 }
 
 // ─── R1: Incidentes por Tipo y Estado ────────────────────────────────────────
