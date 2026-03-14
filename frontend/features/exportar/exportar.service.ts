@@ -231,13 +231,20 @@ export async function getR1IncidentesPorTipoEstado(filtros: {
     porcentajeCerrados: total > 0 ? (cerrados / total) * 100 : 0,
     porcentajeEnCurso: total > 0 ? (enCurso / total) * 100 : 0,
     promedioDiario: total / dias,
-    porCategoria: Object.entries(categoriasMap)
-      .sort((a, b) => b[1] - a[1])
-      .map(([categoria, cantidad]) => ({
+    porCategoria: (() => {
+      const sorted = Object.entries(categoriasMap).sort((a, b) => b[1] - a[1])
+      const items = sorted.map(([categoria, cantidad]) => ({
         categoria,
         cantidad,
-        porcentaje: total > 0 ? (cantidad / total) * 100 : 0,
-      })),
+        porcentaje: total > 0 ? Math.round((cantidad / total) * 1000) / 10 : 0,
+      }))
+      // Ajustar el último para que la suma sea exactamente 100%
+      if (items.length > 0 && total > 0) {
+        const sumaParcial = items.slice(0, -1).reduce((s, i) => s + i.porcentaje, 0)
+        items[items.length - 1].porcentaje = Math.round((100 - sumaParcial) * 10) / 10
+      }
+      return items
+    })(),
     porEstado: Object.entries(estadosMap)
       .sort((a, b) => b[1] - a[1])
       .map(([estado, cantidad]) => ({
