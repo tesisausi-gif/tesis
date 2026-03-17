@@ -219,6 +219,7 @@ export async function getR1IncidentesPorTipoEstado(filtros: {
 
   const cerrados = estadosMap['resuelto'] || 0
   const enCurso = estadosMap['en_proceso'] || 0
+  const pendientesCount = estadosMap['pendiente'] || 0
 
   // Calcular días del período para promedio diario
   let dias = 1
@@ -230,6 +231,7 @@ export async function getR1IncidentesPorTipoEstado(filtros: {
     total,
     porcentajeCerrados: total > 0 ? (cerrados / total) * 100 : 0,
     porcentajeEnCurso: total > 0 ? (enCurso / total) * 100 : 0,
+    porcentajePendientes: total > 0 ? (pendientesCount / total) * 100 : 0,
     promedioDiario: total / dias,
     porCategoria: (() => {
       const sorted = Object.entries(categoriasMap).sort((a, b) => b[1] - a[1])

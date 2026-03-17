@@ -31,7 +31,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalAsignarOpen, setModalAsignarOpen] = useState(false)
-  const [incidenteParaAsignar, setIncidenteParaAsignar] = useState<{id: number, categoria: string | null} | null>(null)
+  const [incidenteParaAsignar, setIncidenteParaAsignar] = useState<IncidenteConCliente | null>(null)
 
   const incidentesFiltrados = incidentes.filter((incidente) => {
     if (filtroEstado !== 'todos' && incidente.estado_actual !== filtroEstado) {
@@ -62,8 +62,8 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     setModalOpen(true)
   }
 
-  const abrirModalAsignar = (id: number, categoria: string | null) => {
-    setIncidenteParaAsignar({ id, categoria })
+  const abrirModalAsignar = (incidente: IncidenteConCliente) => {
+    setIncidenteParaAsignar(incidente)
     setModalAsignarOpen(true)
   }
 
@@ -139,7 +139,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => abrirModalAsignar(incidente.id_incidente, incidente.categoria)}
+                        onClick={() => abrirModalAsignar(incidente)}
                         className="gap-1"
                       >
                         <Wrench className="h-4 w-4" />
@@ -365,12 +365,18 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
         <ModalAsignarTecnico
           open={modalAsignarOpen}
           onOpenChange={setModalAsignarOpen}
-          idIncidente={incidenteParaAsignar.id}
-          categoriaIncidente={incidenteParaAsignar.categoria}
-          onAsignarExito={() => {
-            // Refresh the page to reload data
-            window.location.reload()
+          incidente={{
+            id_incidente: incidenteParaAsignar.id_incidente,
+            descripcion_problema: incidenteParaAsignar.descripcion_problema,
+            categoria: incidenteParaAsignar.categoria,
+            nivel_prioridad: incidenteParaAsignar.nivel_prioridad,
+            nombre_cliente: incidenteParaAsignar.clientes?.nombre,
+            apellido_cliente: incidenteParaAsignar.clientes?.apellido,
+            calle: incidenteParaAsignar.inmuebles?.calle ?? undefined,
+            altura: incidenteParaAsignar.inmuebles?.altura ?? undefined,
+            localidad: incidenteParaAsignar.inmuebles?.localidad ?? undefined,
           }}
+          onAsignarExito={() => { setModalAsignarOpen(false); window.location.reload() }}
         />
       )}
     </div>

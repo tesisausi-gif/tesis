@@ -84,6 +84,7 @@ export interface R1Resultado {
   total: number
   porcentajeCerrados: number
   porcentajeEnCurso: number
+  porcentajePendientes: number
   promedioDiario: number
   porCategoria: R1FilaCategoria[]
   porEstado: R1FilaEstado[]

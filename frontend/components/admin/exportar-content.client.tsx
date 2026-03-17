@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, FileSpreadsheet, Download, BarChart3, TrendingUp, Users, Building2, DollarSign, Star, Wrench, LayoutDashboard } from 'lucide-react'
+import { FilaFechasPicker } from '@/components/ui/date-picker-informes'
 import { toast } from 'sonner'
 import {
   getTecnicosSelect,
@@ -74,56 +75,7 @@ function KpiCard({ label, valor, sub }: { label: string; valor: string; sub?: st
   )
 }
 
-function esFechaCalendarioValida(s: string): boolean {
-  if (!s) return true
-  const d = new Date(s)
-  return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s
-}
-
-function validarRangoFechas(desde: string, hasta: string): string | null {
-  if (desde && !esFechaCalendarioValida(desde)) return 'La fecha "Desde" no es válida (ej: 30/02 no existe)'
-  if (hasta && !esFechaCalendarioValida(hasta)) return 'La fecha "Hasta" no es válida (ej: 30/02 no existe)'
-  const hoyStr = new Date().toISOString().slice(0, 10)
-  if (desde && desde > hoyStr) return 'La fecha "Desde" no puede ser futura'
-  if (hasta && hasta > hoyStr) return 'La fecha "Hasta" no puede ser futura'
-  if (desde && hasta && desde > hasta) return '"Desde" debe ser anterior o igual a "Hasta"'
-  return null
-}
-
-function FilaFechas({
-  desde, hasta,
-  onDesde, onHasta,
-}: { desde: string; hasta: string; onDesde: (v: string) => void; onHasta: (v: string) => void }) {
-  const hoy = new Date().toISOString().slice(0, 10)
-  const error = validarRangoFechas(desde, hasta)
-  return (
-    <>
-      <div className="space-y-1">
-        <Label className="text-xs">Desde</Label>
-        <Input
-          type="date"
-          value={desde}
-          max={hoy}
-          onChange={e => onDesde(e.target.value)}
-          className={`h-8 text-sm ${error ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
-        />
-      </div>
-      <div className="space-y-1">
-        <Label className="text-xs">Hasta</Label>
-        <Input
-          type="date"
-          value={hasta}
-          max={hoy}
-          onChange={e => onHasta(e.target.value)}
-          className={`h-8 text-sm ${error ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
-        />
-      </div>
-      {error && (desde || hasta) && (
-        <p className="text-xs text-red-600 col-span-2">⚠ {error}</p>
-      )}
-    </>
-  )
-}
+// FilaFechas ahora usa el DatePicker con calendario (ver date-picker-informes.tsx)
 
 function SelectCategoria({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const cats = Object.values(CategoriaIncidente)
@@ -213,9 +165,15 @@ function BotonesExport({
 }
 
 function BtnGenerar({ onClick, cargando, desde, hasta }: { onClick: () => void; cargando: boolean; desde?: string; hasta?: string }) {
-  const errorFechas = validarRangoFechas(desde ?? '', hasta ?? '')
+  const faltaFecha = !desde || !hasta
   return (
-    <Button onClick={onClick} disabled={cargando || !!errorFechas} size="sm" className="gap-1.5" title={errorFechas ?? undefined}>
+    <Button
+      onClick={onClick}
+      disabled={cargando || faltaFecha}
+      size="sm"
+      className="gap-1.5"
+      title={faltaFecha ? 'Seleccioná ambas fechas para generar el informe' : undefined}
+    >
       {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
       Generar reporte
     </Button>
@@ -269,7 +227,7 @@ function TabR1() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectCategoria value={categoria} onChange={setCategoria} />
             <div className="space-y-1">
               <Label className="text-xs">Estado</Label>
@@ -290,9 +248,9 @@ function TabR1() {
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <KpiCard label="Total" valor={String(resultado.total)} />
-            <KpiCard label="% Resueltos" valor={fmtPct(resultado.porcentajeCerrados)} />
-            <KpiCard label="% En proceso" valor={fmtPct(resultado.porcentajeEnCurso)} />
-            <KpiCard label="Prom. diario" valor={fmtN(resultado.promedioDiario)} />
+            <KpiCard label="% Resueltos" valor={fmtPct(resultado.porcentajeCerrados)} sub="del total" />
+            <KpiCard label="% En proceso" valor={fmtPct(resultado.porcentajeEnCurso)} sub="del total" />
+            <KpiCard label="% Pendientes" valor={fmtPct(resultado.porcentajePendientes)} sub="del total" />
           </div>
           <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -350,7 +308,7 @@ function TabR2() {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectCategoria value={categoria} onChange={setCategoria} />
             <div className="space-y-1">
               <Label className="text-xs">Ordenar por</Label>
@@ -427,7 +385,7 @@ function TabR3({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
           </div>
           <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
@@ -493,7 +451,7 @@ function TabR4({ inmuebles }: { inmuebles: InmuebleSelect[] }) {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectInmueble value={inmueble} onChange={setInmueble} inmuebles={inmuebles} />
             <div className="space-y-1">
               <Label className="text-xs">Top N propiedades</Label>
@@ -561,7 +519,7 @@ function TabR5() {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectCategoria value={categoria} onChange={setCategoria} />
           </div>
           <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
@@ -628,7 +586,7 @@ function TabR6({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
           </div>
           <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
@@ -696,7 +654,7 @@ function TabR7({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
             <div className="space-y-1">
               <Label className="text-xs">Calificación mínima (1-5)</Label>
@@ -763,7 +721,7 @@ function TabR8() {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectCategoria value={categoria} onChange={setCategoria} />
           </div>
           <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
@@ -828,7 +786,7 @@ function TabR9({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
           </div>
           <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
@@ -894,7 +852,7 @@ function TabR10({ inmuebles }: { inmuebles: InmuebleSelect[] }) {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectInmueble value={inmueble} onChange={setInmueble} inmuebles={inmuebles} />
             <div className="space-y-1">
               <Label className="text-xs">Top N inmuebles</Label>
@@ -966,7 +924,7 @@ function TabR11() {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <div className="space-y-1">
               <Label className="text-xs">Período por defecto</Label>
               <Select value={periodo} onValueChange={setPeriodo}>
@@ -1048,7 +1006,7 @@ function TabR12() {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <div className="space-y-1">
               <Label className="text-xs">Top técnicos</Label>
               <Input type="number" min="3" max="10" value={topTec} onChange={e => setTopTec(e.target.value)} className="h-8 text-sm" />
@@ -1138,7 +1096,7 @@ function TabR13() {
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechas desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
+            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
           </div>
           <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>

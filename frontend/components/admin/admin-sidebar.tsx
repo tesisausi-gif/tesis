@@ -66,10 +66,30 @@ export function AdminSidebar() {
   const [counts, setCounts] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0 })
 
   useEffect(() => {
-    getAdminBadgeCounts()
-      .then(setCounts)
-      .catch(() => {})
-  }, [pathname])
+    // Carga inicial
+    getAdminBadgeCounts().then(setCounts).catch(() => {})
+
+    // Suscripciones realtime para actualizar badges automáticamente
+    const channel = supabase
+      .channel('admin-badges-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cobros_clientes' }, () => {
+        getAdminBadgeCounts().then(setCounts).catch(() => {})
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos_tecnicos' }, () => {
+        getAdminBadgeCounts().then(setCounts).catch(() => {})
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conformidades' }, () => {
+        getAdminBadgeCounts().then(setCounts).catch(() => {})
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, () => {
+        getAdminBadgeCounts().then(setCounts).catch(() => {})
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, []) // Solo ejecutar una vez al montar
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
