@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle } from 'lucide-react'
+import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle, Phone, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { getPrioridadColor } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -205,11 +205,23 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales }: Disp
                 )}
 
                 {asignacion.incidentes.clientes && (
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
-                    <span>
-                      Cliente: {asignacion.incidentes.clientes.nombre} {asignacion.incidentes.clientes.apellido}
-                    </span>
-                    {asignacion.incidentes.clientes.telefono && <span>• Tel: {asignacion.incidentes.clientes.telefono}</span>}
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-2.5 space-y-1.5">
+                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Contacto del cliente</p>
+                    <div className="text-sm text-gray-700 font-medium">
+                      {asignacion.incidentes.clientes.nombre} {asignacion.incidentes.clientes.apellido}
+                    </div>
+                    {asignacion.incidentes.clientes.telefono && (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                        <Phone className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                        <span>{asignacion.incidentes.clientes.telefono}</span>
+                      </div>
+                    )}
+                    {asignacion.incidentes.clientes.correo_electronico && (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                        <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                        <span>{asignacion.incidentes.clientes.correo_electronico}</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
