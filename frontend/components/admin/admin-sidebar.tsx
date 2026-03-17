@@ -41,7 +41,7 @@ const menuItems: { title: string; icon: React.ElementType; href: string; badge?:
   { title: 'Incidentes', icon: FileText, href: '/dashboard/incidentes' },
   { title: 'Inmuebles', icon: Building2, href: '/dashboard/propiedades' },
   { title: 'Clientes', icon: Users, href: '/dashboard/clientes' },
-  { title: 'Técnicos', icon: Wrench, href: '/dashboard/tecnicos' },
+  { title: 'Técnicos', icon: Wrench, href: '/dashboard/tecnicos', badge: 'solicitudes' },
   { title: 'Empleados', icon: UserCog, href: '/dashboard/usuarios' },
   { title: 'Presupuestos', icon: DollarSign, href: '/dashboard/presupuestos', badge: 'presupuestos' },
   { title: 'Asignaciones', icon: Star, href: '/dashboard/asignaciones' },
@@ -63,7 +63,7 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const [counts, setCounts] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0 })
+  const [counts, setCounts] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0 })
 
   useEffect(() => {
     // Carga inicial
@@ -82,6 +82,9 @@ export function AdminSidebar() {
         getAdminBadgeCounts().then(setCounts).catch(() => {})
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, () => {
+        getAdminBadgeCounts().then(setCounts).catch(() => {})
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes_registro' }, () => {
         getAdminBadgeCounts().then(setCounts).catch(() => {})
       })
       .subscribe()
