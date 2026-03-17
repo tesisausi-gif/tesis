@@ -17,7 +17,10 @@ import {
 } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { MapPin, Calendar, ClipboardList, Clock, CheckCircle2, Upload, Plus, ImageIcon, Loader2 } from 'lucide-react'
+import {
+  MapPin, Calendar, ClipboardList, Clock, CheckCircle2, Upload,
+  Plus, ImageIcon, Loader2, Phone, Mail, Home, FileText, Wrench,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import {
   getEstadoAsignacionColor,
@@ -29,6 +32,7 @@ import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.typ
 import { completarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { crearAvance } from '@/features/avances/avances.service'
 import { crearConformidadPorTecnico } from '@/features/conformidades/conformidades.service'
+import { crearInspeccion } from '@/features/inspecciones/inspecciones.service'
 import { createClient } from '@/shared/lib/supabase/client'
 
 interface ConformidadInfo {
@@ -42,9 +46,10 @@ interface TrabajosContentProps {
   asignaciones: AsignacionTecnico[]
   estadoPresupuestoPorIncidente: Record<number, string>
   conformidadesPorIncidente: Record<number, ConformidadInfo>
+  idTecnico: number
 }
 
-export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, conformidadesPorIncidente }: TrabajosContentProps) {
+export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, conformidadesPorIncidente, idTecnico }: TrabajosContentProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -65,6 +70,12 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
   const [fotoFile, setFotoFile] = useState<File | null>(null)
   const [fotoPreview, setFotoPreview] = useState<string | null>(null)
   const [uploadingFoto, setUploadingFoto] = useState(false)
+
+  // Dialog: Cargar inspección
+  const [inspeccionDialog, setInspeccionDialog] = useState<{ open: boolean; idIncidente: number } | null>(null)
+  const [inspeccionDesc, setInspeccionDesc] = useState('')
+  const [inspeccionCausas, setInspeccionCausas] = useState('')
+  const [loadingInspeccion, setLoadingInspeccion] = useState(false)
 
   const abrirModal = (id: number) => {
     setIncidenteSeleccionado(id)
@@ -149,6 +160,34 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
     }
   }
 
+  const handleCargarInspeccion = async () => {
+    if (!inspeccionDialog || !inspeccionDesc.trim()) return
+    if (inspeccionDesc.trim().length < 10) {
+      toast.error('La descripción debe tener al menos 10 caracteres')
+      return
+    }
+    setLoadingInspeccion(true)
+    try {
+      const result = await crearInspeccion({
+        id_incidente: inspeccionDialog.idIncidente,
+        id_tecnico: idTecnico,
+        descripcion_inspeccion: inspeccionDesc.trim(),
+        causas_determinadas: inspeccionCausas.trim() || undefined,
+      })
+      if (result.success) {
+        toast.success('Inspección registrada', { description: 'Se ha guardado el reporte de inspección.' })
+        setInspeccionDialog(null)
+        setInspeccionDesc('')
+        setInspeccionCausas('')
+        router.refresh()
+      } else {
+        toast.error('Error', { description: result.error })
+      }
+    } finally {
+      setLoadingInspeccion(false)
+    }
+  }
+
   // Stats
   const totalTrabajos = asignaciones.length
   const aceptados = asignaciones.filter(a => a.estado_asignacion === 'aceptada').length
@@ -196,12 +235,13 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
           {asignaciones.map((asignacion) => {
             const incidente = asignacion.incidentes
             const inmueble = incidente?.inmuebles
+            const cliente = incidente?.clientes
 
             const direccionPartes = inmueble
               ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
               : ''
             const ubicacion = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
-            const direccion = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
+            const direccionInmueble = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
 
             const estado = asignacion.estado_asignacion
             const estadoPres = estadoPresupuestoPorIncidente[asignacion.id_incidente]
@@ -209,7 +249,6 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
             const enTrabajo = (estado === 'aceptada' || estado === 'en_curso') && presupuestoAprobado
             const terminado = estado === 'completada'
 
-            // Estado de la conformidad para este incidente
             const confInfo = conformidadesPorIncidente[asignacion.id_incidente]
             const conformidadPendiente = confInfo && !confInfo.esta_firmada && confInfo.url_documento
             const conformidadAprobada = confInfo && (confInfo.esta_firmada === 1 || confInfo.esta_firmada === true)
@@ -226,10 +265,10 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
                           <ClipboardList className="h-4 w-4 text-blue-600 flex-shrink-0" />
                           Incidente #{asignacion.id_incidente}
                         </CardTitle>
-                        {direccion && (
+                        {direccionInmueble && (
                           <CardDescription className="flex items-center gap-1 mt-1 text-xs">
                             <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{direccion}</span>
+                            <span className="truncate">{direccionInmueble}</span>
                           </CardDescription>
                         )}
                       </div>
@@ -245,16 +284,48 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-0 pb-3 space-y-2">
+
+                  <CardContent className="pt-0 pb-3 space-y-3">
+                    {/* Descripción del problema */}
                     {incidente?.descripcion_problema && (
-                      <p className="text-sm text-gray-700 line-clamp-2">{incidente.descripcion_problema}</p>
-                    )}
-                    {incidente?.clientes && (
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <span>Cliente: {incidente.clientes.nombre} {incidente.clientes.apellido}</span>
-                        {incidente.clientes.telefono && <span>• Tel: {incidente.clientes.telefono}</span>}
+                      <div className="flex items-start gap-2 bg-slate-50 rounded-md p-2.5 border border-slate-200">
+                        <FileText className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Descripción del problema</p>
+                          <p className="text-sm text-gray-700">{incidente.descripcion_problema}</p>
+                        </div>
                       </div>
                     )}
+
+                    {/* Información de contacto del cliente */}
+                    {cliente && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-md p-2.5 space-y-1.5">
+                        <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Contacto del cliente</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <span className="font-medium">{cliente.nombre} {cliente.apellido}</span>
+                        </div>
+                        {cliente.telefono && (
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                            <Phone className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                            <span>{cliente.telefono}</span>
+                          </div>
+                        )}
+                        {cliente.correo_electronico && (
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                            <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                            <span>{cliente.correo_electronico}</span>
+                          </div>
+                        )}
+                        {cliente.direccion && (
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                            <Home className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                            <span>{cliente.direccion}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Fechas y categoría */}
                     <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -272,66 +343,81 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
                 </div>
 
                 {/* Botones de acción (no abren el modal) */}
-                {(enTrabajo || terminado) && (
-                  <div
-                    className="px-6 pb-4 flex flex-wrap gap-2 border-t pt-3"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {enTrabajo && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1 text-blue-700 border-blue-300 hover:bg-blue-50"
-                          onClick={() => {
-                            setAvanceDesc('')
-                            setAvancePct('')
-                            setAvanceDialog({ open: true, idAsignacion: asignacion.id_asignacion, idIncidente: asignacion.id_incidente })
-                          }}
-                        >
-                          <Plus className="h-3 w-3" />
-                          Registrar Avance
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1 text-green-700 border-green-300 hover:bg-green-50"
-                          onClick={() => setCompletarDialog({ open: true, idAsignacion: asignacion.id_asignacion })}
-                        >
-                          <CheckCircle2 className="h-3 w-3" />
-                          Completar Trabajo
-                        </Button>
-                      </>
-                    )}
-                    {puedeSubirConformidad && (
+                <div
+                  className="px-6 pb-4 flex flex-wrap gap-2 border-t pt-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Botón de inspección — siempre visible si hay incidente */}
+                  {incidente && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-indigo-700 border-indigo-300 hover:bg-indigo-50"
+                      onClick={() => {
+                        setInspeccionDesc('')
+                        setInspeccionCausas('')
+                        setInspeccionDialog({ open: true, idIncidente: asignacion.id_incidente })
+                      }}
+                    >
+                      <Wrench className="h-3 w-3" />
+                      Cargar Inspección
+                    </Button>
+                  )}
+
+                  {enTrabajo && (
+                    <>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 text-purple-700 border-purple-300 hover:bg-purple-50"
+                        className="gap-1 text-blue-700 border-blue-300 hover:bg-blue-50"
                         onClick={() => {
-                          setFotoFile(null)
-                          setFotoPreview(null)
-                          setConformidadDialog({ open: true, idIncidente: asignacion.id_incidente })
+                          setAvanceDesc('')
+                          setAvancePct('')
+                          setAvanceDialog({ open: true, idAsignacion: asignacion.id_asignacion, idIncidente: asignacion.id_incidente })
                         }}
                       >
-                        <Upload className="h-3 w-3" />
-                        Subir Conformidad Firmada
+                        <Plus className="h-3 w-3" />
+                        Registrar Avance
                       </Button>
-                    )}
-                    {conformidadPendiente && (
-                      <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        Conformidad en revisión por la administración
-                      </div>
-                    )}
-                    {conformidadAprobada && (
-                      <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 text-green-700 border-green-300 hover:bg-green-50"
+                        onClick={() => setCompletarDialog({ open: true, idAsignacion: asignacion.id_asignacion })}
+                      >
                         <CheckCircle2 className="h-3 w-3" />
-                        Conformidad aprobada — incidente resuelto
-                      </div>
-                    )}
-                  </div>
-                )}
+                        Completar Trabajo
+                      </Button>
+                    </>
+                  )}
+                  {puedeSubirConformidad && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-purple-700 border-purple-300 hover:bg-purple-50"
+                      onClick={() => {
+                        setFotoFile(null)
+                        setFotoPreview(null)
+                        setConformidadDialog({ open: true, idIncidente: asignacion.id_incidente })
+                      }}
+                    >
+                      <Upload className="h-3 w-3" />
+                      Subir Conformidad Firmada
+                    </Button>
+                  )}
+                  {conformidadPendiente && (
+                    <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Conformidad en revisión por la administración
+                    </div>
+                  )}
+                  {conformidadAprobada && (
+                    <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Conformidad aprobada — incidente resuelto
+                    </div>
+                  )}
+                </div>
               </Card>
             )
           })}
@@ -355,6 +441,74 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
         onOpenChange={setModalOpen}
         rol="tecnico"
       />
+
+      {/* Dialog: Cargar Inspección */}
+      <Dialog
+        open={inspeccionDialog?.open ?? false}
+        onOpenChange={(o) => {
+          if (!o) {
+            setInspeccionDialog(null)
+            setInspeccionDesc('')
+            setInspeccionCausas('')
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar Inspección</DialogTitle>
+            <DialogDescription>
+              Documenta los resultados de tu inspección técnica para el incidente #{inspeccionDialog?.idIncidente}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="inspeccion-desc">Descripción de la Inspección *</Label>
+              <Textarea
+                id="inspeccion-desc"
+                placeholder="Describe en detalle qué inspeccionaste y qué encontraste..."
+                value={inspeccionDesc}
+                onChange={(e) => setInspeccionDesc(e.target.value)}
+                rows={4}
+                maxLength={1000}
+                disabled={loadingInspeccion}
+              />
+              <p className="text-xs text-gray-500">{inspeccionDesc.length}/1000 caracteres</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inspeccion-causas">Causas Determinadas (opcional)</Label>
+              <Textarea
+                id="inspeccion-causas"
+                placeholder="Problemas detectados, causas del incidente, recomendaciones..."
+                value={inspeccionCausas}
+                onChange={(e) => setInspeccionCausas(e.target.value)}
+                rows={3}
+                maxLength={500}
+                disabled={loadingInspeccion}
+              />
+              <p className="text-xs text-gray-500">{inspeccionCausas.length}/500 caracteres</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setInspeccionDialog(null)
+                setInspeccionDesc('')
+                setInspeccionCausas('')
+              }}
+              disabled={loadingInspeccion}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCargarInspeccion}
+              disabled={loadingInspeccion || !inspeccionDesc.trim() || inspeccionDesc.trim().length < 10}
+            >
+              {loadingInspeccion ? 'Guardando...' : 'Registrar Inspección'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog: Registrar Avance */}
       <Dialog open={avanceDialog?.open ?? false} onOpenChange={(o) => !o && setAvanceDialog(null)}>
@@ -403,7 +557,7 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
           <DialogHeader>
             <DialogTitle>Completar Trabajo</DialogTitle>
             <DialogDescription>
-              ¿Confirmas que el trabajo fue finalizado? El estado de la asignación pasará a "Completada".
+              ¿Confirmas que el trabajo fue finalizado? El estado de la asignación pasará a &quot;Completada&quot;.
               Después podrás subir la conformidad firmada por el cliente.
             </DialogDescription>
           </DialogHeader>

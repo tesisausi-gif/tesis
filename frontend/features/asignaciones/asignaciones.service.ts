@@ -132,7 +132,9 @@ export async function getAsignacionesActivas(): Promise<AsignacionTecnico[]> {
         clientes:id_cliente_reporta (
           nombre,
           apellido,
-          telefono
+          telefono,
+          correo_electronico,
+          direccion
         )
       )
     `)
