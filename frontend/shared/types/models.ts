@@ -15,6 +15,7 @@ export interface ClienteResumen {
   apellido: string
   telefono?: string | null
   correo_electronico?: string | null
+  direccion?: string | null
 }
 
 /**

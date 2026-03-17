@@ -38,6 +38,7 @@ export default async function TecnicoTrabajosPage() {
       asignaciones={asignaciones}
       estadoPresupuestoPorIncidente={estadoPresupuestoPorIncidente}
       conformidadesPorIncidente={conformidadesPorIncidente}
+      idTecnico={user.id_tecnico!}
     />
   )
 }
