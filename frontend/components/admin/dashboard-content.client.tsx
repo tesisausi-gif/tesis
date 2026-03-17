@@ -80,7 +80,7 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
   const [asignacionesRecientes, setAsignacionesRecientes] = useState<AsignacionReciente[]>(initialAsignaciones)
   const [conectado, setConectado] = useState(false)
   const refreshingRef = useRef(false)
-  const [pendientes, setPendientes] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0 })
+  const [pendientes, setPendientes] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0 })
 
   const refrescarDatos = async () => {
     if (refreshingRef.current) return

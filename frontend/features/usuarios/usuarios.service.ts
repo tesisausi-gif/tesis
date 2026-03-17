@@ -313,53 +313,88 @@ export async function aprobarSolicitudTecnico(
   solicitudId: number,
   password: string
 ): Promise<ActionResult> {
-  try {
-    const supabase = createAdminClient()
+  const supabase = createAdminClient()
 
-    // 1. Obtener la solicitud
-    const { data: solicitud, error: solicitudError } = await supabase
-      .from('solicitudes_registro')
-      .select('*')
-      .eq('id_solicitud', solicitudId)
-      .single()
+  // 1. Obtener la solicitud
+  const { data: solicitud, error: solicitudError } = await supabase
+    .from('solicitudes_registro')
+    .select('*')
+    .eq('id_solicitud', solicitudId)
+    .single()
 
-    if (solicitudError || !solicitud) {
-      return { success: false, error: 'Solicitud no encontrada' }
-    }
-
-    // 2. Crear usuario en Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: solicitud.email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        nombre: solicitud.nombre,
-        apellido: solicitud.apellido,
-        rol: 'tecnico',
-        telefono: solicitud.telefono,
-        dni: solicitud.dni,
-        especialidad: solicitud.especialidad,
-        direccion: solicitud.direccion,
-      },
-    })
-
-    if (authError) {
-      return { success: false, error: authError.message }
-    }
-
-    // 3. Actualizar solicitud como aprobada
-    await supabase
-      .from('solicitudes_registro')
-      .update({
-        estado_solicitud: 'aprobada',
-        fecha_aprobacion: new Date().toISOString(),
-      })
-      .eq('id_solicitud', solicitudId)
-
-    return { success: true, data: undefined }
-  } catch (error) {
-    return { success: false, error: 'Error inesperado al aprobar técnico' }
+  if (solicitudError || !solicitud) {
+    return { success: false, error: 'Solicitud no encontrada' }
   }
+
+  // 2. Crear usuario en Supabase Auth con rol 'gestor' para que el trigger
+  //    solo inserte en `usuarios` (sin tocar `tecnicos`) — evita fallos del trigger.
+  //    Luego insertamos manualmente en `tecnicos` y actualizamos `usuarios`.
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email: solicitud.email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      nombre: solicitud.nombre,
+      apellido: solicitud.apellido,
+      rol: 'gestor', // Neutral: trigger solo crea registro en `usuarios`
+    },
+  })
+
+  if (authError) {
+    return { success: false, error: authError.message }
+  }
+
+  if (!authData.user) {
+    return { success: false, error: 'No se pudo crear el usuario' }
+  }
+
+  const authUserId = authData.user.id
+
+  // 3. Insertar manualmente en `tecnicos`
+  const { data: tecnicoInsert, error: tecnicoError } = await supabase
+    .from('tecnicos')
+    .insert({
+      nombre: solicitud.nombre,
+      apellido: solicitud.apellido,
+      correo_electronico: solicitud.email,
+      telefono: solicitud.telefono ?? null,
+      dni: solicitud.dni ?? null,
+      direccion: solicitud.direccion ?? null,
+      especialidad: solicitud.especialidad ?? null,
+      calificacion_promedio: null,
+      cantidad_trabajos_realizados: 0,
+      esta_activo: true,
+    })
+    .select('id_tecnico')
+    .single()
+
+  if (tecnicoError) {
+    try { await supabase.auth.admin.deleteUser(authUserId) } catch {}
+    return { success: false, error: 'Error al crear perfil de técnico' }
+  }
+
+  // 4. Actualizar el registro en `usuarios`: cambiar rol a 'tecnico' y vincular id_tecnico
+  const { error: updError } = await supabase
+    .from('usuarios')
+    .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico })
+    .eq('id', authUserId)
+
+  if (updError) {
+    try { await supabase.from('tecnicos').delete().eq('id_tecnico', tecnicoInsert.id_tecnico) } catch {}
+    try { await supabase.auth.admin.deleteUser(authUserId) } catch {}
+    return { success: false, error: 'Error al vincular usuario técnico' }
+  }
+
+  // 5. Marcar solicitud como aprobada
+  await supabase
+    .from('solicitudes_registro')
+    .update({
+      estado_solicitud: 'aprobada',
+      fecha_aprobacion: new Date().toISOString(),
+    })
+    .eq('id_solicitud', solicitudId)
+
+  return { success: true, data: undefined }
 }
 
 export async function crearSolicitudRegistro(data: {

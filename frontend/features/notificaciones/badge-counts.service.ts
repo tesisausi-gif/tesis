@@ -13,6 +13,7 @@ export interface AdminBadgeCounts {
   conformidades: number  // fotos subidas pendientes de revisión
   presupuestos: number   // presupuestos enviados esperando aprobación admin
   pagos: number          // cobros a clientes + pagos a técnicos pendientes
+  solicitudes: number    // solicitudes de registro de técnicos pendientes
 }
 
 export interface ClienteBadgeCounts {
@@ -31,7 +32,7 @@ export interface TecnicoBadgeCounts {
 export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
   const supabase = createAdminClient()
 
-  const [confResult, presResult, cobrosPendResult, pagosTecResult] = await Promise.all([
+  const [confResult, presResult, cobrosPendResult, pagosTecResult, solResult] = await Promise.all([
     // Conformidades con foto subida esperando revisión
     supabase
       .from('conformidades')
@@ -58,6 +59,12 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
       .select('id_presupuesto', { count: 'exact', head: true })
       .eq('estado_presupuesto', 'aprobado')
       .not('id_presupuesto', 'in', '(select id_presupuesto from pagos_tecnicos)'),
+
+    // Solicitudes de registro de técnicos pendientes de aprobación
+    supabase
+      .from('solicitudes_registro')
+      .select('id_solicitud', { count: 'exact', head: true })
+      .eq('estado_solicitud', 'pendiente'),
   ])
 
   // Supabase PostgREST no soporta subqueries nativas, fallback a conteo manual
@@ -86,6 +93,7 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
     conformidades: confResult.count ?? 0,
     presupuestos: presResult.count ?? 0,
     pagos: pendientesCobros + pendientesPagos,
+    solicitudes: solResult.count ?? 0,
   }
 }
 
