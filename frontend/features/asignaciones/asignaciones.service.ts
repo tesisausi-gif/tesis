@@ -39,7 +39,8 @@ const ASIGNACION_SELECT = `
     clientes:id_cliente_reporta (
       nombre,
       apellido,
-      telefono
+      telefono,
+      correo_electronico
     )
   ),
   tecnicos (
