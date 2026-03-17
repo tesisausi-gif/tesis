@@ -290,9 +290,9 @@ function TabR1() {
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <KpiCard label="Total" valor={String(resultado.total)} />
-            <KpiCard label="% Resueltos" valor={fmtPct(resultado.porcentajeCerrados)} />
-            <KpiCard label="% En proceso" valor={fmtPct(resultado.porcentajeEnCurso)} />
-            <KpiCard label="Prom. diario" valor={fmtN(resultado.promedioDiario)} />
+            <KpiCard label="% Resueltos" valor={fmtPct(resultado.porcentajeCerrados)} sub="del total" />
+            <KpiCard label="% En proceso" valor={fmtPct(resultado.porcentajeEnCurso)} sub="del total" />
+            <KpiCard label="% Pendientes" valor={fmtPct(resultado.porcentajePendientes)} sub="del total" />
           </div>
           <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">

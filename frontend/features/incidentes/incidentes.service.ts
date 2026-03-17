@@ -6,6 +6,7 @@
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
+import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireClienteId } from '@/features/auth/auth.service'
 import type { Incidente, IncidenteConCliente, IncidenteConDetalles, MetricasDashboard, FiltrosMetricas } from './incidentes.types'
 import type { ActionResult } from '@/shared/types'
@@ -432,4 +433,96 @@ export async function getMetricasDashboard(filtros?: FiltrosMetricas): Promise<M
     topTecnicos,
     totalIncidentes: incidentes.length,
   }
+}
+
+export interface EventoTimeline {
+  fecha: string
+  titulo: string
+  descripcion: string
+  tipo: 'registro' | 'asignacion' | 'presupuesto' | 'conformidad' | 'pago' | 'calificacion'
+}
+
+/**
+ * Construye el timeline cronológico de un incidente para la vista admin.
+ */
+export async function getTimelineIncidente(idIncidente: number): Promise<EventoTimeline[]> {
+  const supabase = createAdminClient()
+  const eventos: EventoTimeline[] = []
+
+  // 1. El incidente en sí
+  const { data: inc } = await supabase
+    .from('incidentes')
+    .select('fecha_registro, descripcion_problema, categoria, estado_actual')
+    .eq('id_incidente', idIncidente)
+    .single()
+  if (inc) {
+    eventos.push({ fecha: inc.fecha_registro, titulo: 'Incidente reportado', descripcion: inc.descripcion_problema, tipo: 'registro' })
+  }
+
+  // 2. Asignaciones
+  const { data: asigs } = await supabase
+    .from('asignaciones_tecnico')
+    .select('fecha_asignacion, estado_asignacion, tecnicos(nombre, apellido)')
+    .eq('id_incidente', idIncidente)
+    .order('fecha_asignacion')
+  for (const a of (asigs || [])) {
+    const tec = Array.isArray(a.tecnicos) ? a.tecnicos[0] : a.tecnicos
+    eventos.push({
+      fecha: a.fecha_asignacion,
+      titulo: `Técnico asignado: ${tec?.nombre ?? ''} ${tec?.apellido ?? ''}`.trim(),
+      descripcion: `Estado: ${a.estado_asignacion}`,
+      tipo: 'asignacion',
+    })
+  }
+
+  // 3. Presupuestos
+  const { data: pres } = await supabase
+    .from('presupuestos')
+    .select('fecha_creacion, estado_presupuesto, costo_total')
+    .eq('id_incidente', idIncidente)
+    .order('fecha_creacion')
+  for (const p of (pres || [])) {
+    const AR = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
+    eventos.push({
+      fecha: p.fecha_creacion,
+      titulo: 'Presupuesto creado',
+      descripcion: `${p.estado_presupuesto} — ${AR.format(p.costo_total ?? 0)}`,
+      tipo: 'presupuesto',
+    })
+  }
+
+  // 4. Conformidades
+  const { data: conf } = await supabase
+    .from('conformidades')
+    .select('fecha_creacion, tipo_conformidad, esta_firmada')
+    .eq('id_incidente', idIncidente)
+    .order('fecha_creacion')
+  for (const c of (conf || [])) {
+    eventos.push({
+      fecha: c.fecha_creacion,
+      titulo: 'Conformidad subida',
+      descripcion: `Tipo: ${c.tipo_conformidad ?? '—'} — ${c.esta_firmada ? 'Firmada' : 'Sin firmar'}`,
+      tipo: 'conformidad',
+    })
+  }
+
+  // 5. Pagos al técnico
+  const { data: pagos } = await supabase
+    .from('pagos_tecnicos')
+    .select('fecha_pago, monto_pago, tecnicos(nombre, apellido)')
+    .eq('id_incidente', idIncidente)
+    .order('fecha_pago')
+  for (const p of (pagos || [])) {
+    const tec = Array.isArray(p.tecnicos) ? p.tecnicos[0] : p.tecnicos
+    const AR = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
+    eventos.push({
+      fecha: p.fecha_pago,
+      titulo: `Pago al técnico: ${tec?.nombre ?? ''} ${tec?.apellido ?? ''}`.trim(),
+      descripcion: AR.format(p.monto_pago ?? 0),
+      tipo: 'pago',
+    })
+  }
+
+  // Ordenar por fecha
+  return eventos.sort((a, b) => a.fecha.localeCompare(b.fecha))
 }
