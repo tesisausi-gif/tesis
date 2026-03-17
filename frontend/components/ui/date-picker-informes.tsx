@@ -6,7 +6,6 @@ import { es } from 'date-fns/locale'
 import { CalendarIcon, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { DayPicker } from 'react-day-picker'
 import { cn } from '@/shared/utils'
-import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -21,11 +20,17 @@ function dateToStr(d: Date | undefined): string {
   return d ? format(d, 'yyyy-MM-dd') : ''
 }
 
-// ── Selector de mes/año ───────────────────────────────────────────────────────
+// ── Selector de año + mes ────────────────────────────────────────────────────
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-function MonthYearCaption({ displayMonth, onMonthChange }: { displayMonth: Date; onMonthChange: (d: Date) => void }) {
+function MonthYearNav({
+  displayMonth,
+  onMonthChange,
+}: {
+  displayMonth: Date
+  onMonthChange: (d: Date) => void
+}) {
   const hoy = new Date()
   const year = displayMonth.getFullYear()
   const month = displayMonth.getMonth()
@@ -35,6 +40,7 @@ function MonthYearCaption({ displayMonth, onMonthChange }: { displayMonth: Date;
     d.setFullYear(d.getFullYear() + delta)
     if (d <= hoy) onMonthChange(d)
   }
+
   const esMesFuturo = (m: number, y: number) =>
     y > hoy.getFullYear() || (y === hoy.getFullYear() && m > hoy.getMonth())
 
@@ -43,13 +49,13 @@ function MonthYearCaption({ displayMonth, onMonthChange }: { displayMonth: Date;
       {/* Año */}
       <div className="flex items-center justify-between">
         <button type="button" onClick={() => irAnio(-1)}
-          className="h-6 w-6 flex items-center justify-center rounded border text-gray-500 hover:bg-gray-100 text-xs">
+          className="h-6 w-6 flex items-center justify-center rounded border text-gray-500 hover:bg-gray-100">
           <ChevronLeft className="h-3.5 w-3.5" />
         </button>
         <span className="text-sm font-bold text-gray-800">{year}</span>
         <button type="button" onClick={() => irAnio(1)}
           disabled={year >= hoy.getFullYear()}
-          className="h-6 w-6 flex items-center justify-center rounded border text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-xs">
+          className="h-6 w-6 flex items-center justify-center rounded border text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed">
           <ChevronRight className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -59,11 +65,15 @@ function MonthYearCaption({ displayMonth, onMonthChange }: { displayMonth: Date;
           <button key={i} type="button"
             disabled={esMesFuturo(i, year)}
             onClick={() => {
-              const d = new Date(displayMonth); d.setMonth(i); onMonthChange(d)
+              const d = new Date(displayMonth)
+              d.setMonth(i)
+              onMonthChange(d)
             }}
             className={cn(
               'text-[11px] py-0.5 rounded transition-colors',
-              i === month ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-gray-100 text-gray-600',
+              i === month
+                ? 'bg-primary text-primary-foreground font-semibold'
+                : 'hover:bg-gray-100 text-gray-600',
               esMesFuturo(i, year) && 'opacity-30 cursor-not-allowed'
             )}>
             {nombre}
@@ -119,37 +129,41 @@ function SinglePicker({ label, value, onChange, disabledDates, placeholder, hasE
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-3" align="start">
-          <MonthYearCaption displayMonth={displayMonth} onMonthChange={setDisplayMonth} />
-          <DayPicker locale={es} mode="single" selected={value}
-            month={displayMonth} onMonthChange={setDisplayMonth}
-            onSelect={d => { onChange(d); if (d) setOpen(false) }}
+          <MonthYearNav displayMonth={displayMonth} onMonthChange={setDisplayMonth} />
+          {/* react-day-picker v9 API */}
+          <DayPicker
+            locale={es}
+            mode="single"
+            selected={value}
+            month={displayMonth}
+            onMonthChange={setDisplayMonth}
+            onSelect={(d: Date | undefined) => { onChange(d); if (d) setOpen(false) }}
             disabled={disabledDates}
             showOutsideDays
             classNames={{
-              months: 'flex flex-col',
-              month: 'space-y-1',
-              caption: 'hidden',
+              month_caption: 'hidden',
               nav: 'hidden',
-              table: 'w-full border-collapse',
-              head_row: 'flex',
-              head_cell: 'text-muted-foreground w-8 font-normal text-[0.7rem] text-center py-1',
-              row: 'flex w-full mt-0.5',
-              cell: 'h-8 w-8 text-center text-xs p-0 relative',
-              day: 'h-8 w-8 p-0 rounded-md hover:bg-accent inline-flex items-center justify-center text-xs font-normal',
-              day_selected: 'bg-primary text-primary-foreground hover:bg-primary rounded-md font-semibold',
-              day_today: 'bg-accent text-accent-foreground font-semibold',
-              day_outside: 'text-muted-foreground opacity-40',
-              day_disabled: 'text-muted-foreground opacity-25 cursor-not-allowed',
-              day_hidden: 'invisible',
-            }} />
+              month_grid: 'w-full border-collapse',
+              weekdays: 'flex',
+              weekday: 'text-muted-foreground w-8 font-normal text-[0.7rem] text-center py-1',
+              weeks: '',
+              week: 'flex w-full mt-0.5',
+              day: 'h-8 w-8 text-center text-xs p-0 relative',
+              day_button: 'h-8 w-8 p-0 rounded-md hover:bg-accent inline-flex items-center justify-center text-xs font-normal w-full',
+              selected: 'bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary',
+              today: 'bg-accent text-accent-foreground font-semibold',
+              outside: 'text-muted-foreground opacity-40',
+              disabled: 'text-muted-foreground opacity-25 cursor-not-allowed',
+              hidden: 'invisible',
+            }}
+          />
         </PopoverContent>
       </Popover>
     </div>
   )
 }
 
-// ── FilaFechasPicker — reemplaza FilaFechas con API de strings ────────────────
-// Renderiza como `col-span-2` dentro del grid de filtros.
+// ── FilaFechasPicker — API de strings para no cambiar los tabs ────────────────
 
 interface FilaFechasPickerProps {
   desde: string
