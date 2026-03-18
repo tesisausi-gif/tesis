@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select'
 import {
   DollarSign, CreditCard, Calendar, FileText, Receipt, Wrench,
-  CheckCircle2, Clock, User, Banknote, ArrowLeftRight, Star, History, Loader2,
+  CheckCircle2, Clock, User, Banknote, ArrowLeftRight, History, Loader2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -26,7 +26,7 @@ import { registrarPagoTecnico } from '@/features/pagos/pagos-tecnicos.service'
 import { registrarCobroCliente } from '@/features/pagos/cobros-clientes.service'
 import type { PendientePagoTecnico, PagoTecnicoRegistrado } from '@/features/pagos/pagos-tecnicos.service'
 import type { PendienteCobroCliente, CobroClienteRegistrado } from '@/features/pagos/cobros-clientes.service'
-import { calificarIncidenteAdmin, getTimelineIncidente } from '@/features/incidentes/incidentes.service'
+import { getTimelineIncidente } from '@/features/incidentes/incidentes.service'
 import type { EventoTimeline } from '@/features/incidentes/incidentes.service'
 
 const AR = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
@@ -277,11 +277,6 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
   const [pagarDialog, setPagarDialog] = useState<PendientePagoTecnico | null>(null)
   const [formPago, setFormPago] = useState<MetodoPagoData>(METODO_INICIAL)
 
-  // Estado para calificación post-pago
-  const [calDialog, setCalDialog] = useState<{ idIncidente: number; idTecnico: number; nombre: string } | null>(null)
-  const [estrellas, setEstrellas] = useState(0)
-  const [comentarioCalif, setComentarioCalif] = useState('')
-  const [guardandoCal, setGuardandoCal] = useState(false)
   // Estado para timeline
   const [timeline, setTimeline] = useState<EventoTimeline[] | null>(null)
   const [cargandoTimeline, setCargandoTimeline] = useState(false)
@@ -308,26 +303,9 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
         toast.success('Pago registrado', { description: `${fmt$(pagarDialog.monto_a_pagar)} a ${pagarDialog.nombre_tecnico} — ${metodoLabel(formPago.metodo)}` })
         setPagarDialog(null)
         setFormPago(METODO_INICIAL)
-        // Abrir dialog de calificación obligatoria
-        setEstrellas(0)
-        setComentarioCalif('')
-        setCalDialog({ idIncidente: pagarDialog.id_incidente, idTecnico: pagarDialog.id_tecnico, nombre: `${pagarDialog.nombre_tecnico} ${pagarDialog.apellido_tecnico}` })
         router.refresh()
       } else { toast.error(res.error ?? 'Error al registrar pago') }
     })
-  }
-
-  const handleGuardarCalificacion = async () => {
-    if (estrellas === 0) { toast.error('Seleccioná una calificación (1-5 estrellas)'); return }
-    if (!calDialog) return
-    setGuardandoCal(true)
-    try {
-      const res = await calificarIncidenteAdmin(calDialog.idIncidente, estrellas, comentarioCalif || null)
-      if (res.success) {
-        toast.success('Calificación guardada')
-        setCalDialog(null)
-      } else { toast.error(res.error ?? 'Error al guardar calificación') }
-    } finally { setGuardandoCal(false) }
   }
 
   const abrirTimeline = async (idIncidente: number) => {
@@ -445,45 +423,6 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
             <Button variant="outline" onClick={() => setPagarDialog(null)} disabled={isPending}>Cancelar</Button>
             <Button onClick={handlePagar} disabled={isPending || !formPago.metodo} className="bg-green-600 hover:bg-green-700 gap-2">
               <CheckCircle2 className="h-4 w-4"/>{isPending ? 'Registrando...' : 'Confirmar pago'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog de calificación obligatoria */}
-      <Dialog open={calDialog !== null} onOpenChange={(o) => { if (!o && estrellas === 0) { toast.warning('Debés calificar al técnico antes de continuar'); return } if (!o) setCalDialog(null) }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Calificar trabajo del técnico</DialogTitle>
-            <DialogDescription>
-              Evaluá la calidad del trabajo realizado por <strong>{calDialog?.nombre}</strong> en el incidente #{calDialog?.idIncidente}.
-              Esta calificación es <strong>obligatoria</strong>.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label className="text-sm mb-2 block">Puntuación *</Label>
-              <div className="flex gap-2 justify-center py-2">
-                {[1,2,3,4,5].map(n => (
-                  <button key={n} type="button" onClick={() => setEstrellas(n)} className="focus:outline-none transition-transform hover:scale-110">
-                    <Star className={`h-8 w-8 ${n <= estrellas ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 hover:text-yellow-300'}`} />
-                  </button>
-                ))}
-              </div>
-              {estrellas > 0 && (
-                <p className="text-center text-sm font-medium text-gray-700">
-                  {estrellas === 1 ? 'Muy malo' : estrellas === 2 ? 'Malo' : estrellas === 3 ? 'Regular' : estrellas === 4 ? 'Bueno' : 'Excelente'}
-                </p>
-              )}
-            </div>
-            <div>
-              <Label className="text-xs">Comentario (opcional)</Label>
-              <Textarea value={comentarioCalif} onChange={e => setComentarioCalif(e.target.value)} placeholder="Observaciones sobre el trabajo..." rows={2} className="text-sm mt-1" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleGuardarCalificacion} disabled={estrellas === 0 || guardandoCal} className="w-full">
-              {guardandoCal ? 'Guardando...' : 'Guardar calificación'}
             </Button>
           </DialogFooter>
         </DialogContent>
