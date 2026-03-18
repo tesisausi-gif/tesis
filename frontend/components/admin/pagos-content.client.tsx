@@ -566,7 +566,7 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(p.fecha_pago),'dd/MM/yyyy HH:mm',{locale:es})}</span>
                   {p.referencia_pago && <span>Ref: {p.referencia_pago}</span>}
                   {p.banco && <span>{p.banco}</span>}
-                  {p.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Por: {p.marcado_por_nombre}</span>}
+                  {(p.marcado_por_nombre || p.marcado_por_email) && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Por: {p.marcado_por_nombre ?? p.marcado_por_email}</span>}
                 </div>
                 {p.observaciones && <p className="text-xs text-gray-400 italic mt-1">{p.observaciones}</p>}
               </CardContent>
@@ -589,7 +589,7 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(c.fecha_cobro),'dd/MM/yyyy HH:mm',{locale:es})}</span>
                   {c.referencia_pago && <span>Ref: {c.referencia_pago}</span>}
                   {c.banco && <span>{c.banco}</span>}
-                  {c.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Por: {c.marcado_por_nombre}</span>}
+                  {(c.marcado_por_nombre || c.marcado_por_email) && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Por: {c.marcado_por_nombre ?? c.marcado_por_email}</span>}
                 </div>
                 {c.observaciones && <p className="text-xs text-gray-400 italic mt-1">{c.observaciones}</p>}
               </CardContent>

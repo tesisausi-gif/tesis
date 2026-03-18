@@ -103,7 +103,8 @@ export async function getCountAsignacionesPendientes(): Promise<number> {
  * Obtener asignaciones activas del técnico actual (aceptadas, en_curso, completadas)
  */
 export async function getAsignacionesActivas(): Promise<AsignacionTecnico[]> {
-  const supabase = await createClient()
+  const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+  const supabase = createAdminClient()
   const idTecnico = await requireTecnicoId()
 
   const { data, error } = await supabase
