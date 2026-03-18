@@ -527,23 +527,89 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
   )
 }
 
-interface Pago {
-  id_pago: number; id_incidente: number; id_presupuesto: number
-  monto_pagado: number; tipo_pago: string; fecha_pago: string
-  metodo_pago: string; numero_comprobante: string | null; observaciones: string | null
-  incidentes?: { descripcion_problema: string; categoria: string | null }
-  presupuestos?: { costo_total: number }
+function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { realizadosTecnicos: PagoTecnicoRegistrado[]; realizadosCobroCliente: CobroClienteRegistrado[] }) {
+  type RegistroItem =
+    | { tipo: 'tecnico'; fecha: string; item: PagoTecnicoRegistrado }
+    | { tipo: 'cliente'; fecha: string; item: CobroClienteRegistrado }
+
+  const items: RegistroItem[] = [
+    ...realizadosTecnicos.map(p => ({ tipo: 'tecnico' as const, fecha: p.fecha_pago, item: p })),
+    ...realizadosCobroCliente.map(c => ({ tipo: 'cliente' as const, fecha: c.fecha_cobro, item: c })),
+  ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+
+  if (items.length === 0) {
+    return (
+      <Card className="border-dashed border-2"><CardContent className="flex flex-col items-center py-12 text-center">
+        <Receipt className="h-12 w-12 text-gray-300 mb-3"/>
+        <p className="text-gray-600">No hay pagos en el registro histórico</p>
+      </CardContent></Card>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {items.map((entry, i) => {
+        if (entry.tipo === 'tecnico') {
+          const p = entry.item
+          return (
+            <Card key={`t-${p.id_pago_tecnico ?? i}`} className="border-blue-100">
+              <CardContent className="pt-3 pb-3">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
+                  <span className="font-medium text-sm">{p.nombre_tecnico} {p.apellido_tecnico}</span>
+                  {p.metodo_pago && <MetodoBadge metodo={p.metodo_pago}/>}
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">Pago técnico</Badge>
+                </div>
+                {p.descripcion_problema && <p className="text-xs text-gray-500 truncate mb-1">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>}
+                <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                  <span className="font-semibold text-blue-700">{fmt$(Number(p.monto_pago))}</span>
+                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(p.fecha_pago),'dd/MM/yyyy HH:mm',{locale:es})}</span>
+                  {p.referencia_pago && <span>Ref: {p.referencia_pago}</span>}
+                  {p.banco && <span>{p.banco}</span>}
+                  {p.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Por: {p.marcado_por_nombre}</span>}
+                </div>
+                {p.observaciones && <p className="text-xs text-gray-400 italic mt-1">{p.observaciones}</p>}
+              </CardContent>
+            </Card>
+          )
+        } else {
+          const c = entry.item
+          return (
+            <Card key={`c-${c.id_cobro ?? i}`} className="border-green-100">
+              <CardContent className="pt-3 pb-3">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <User className="h-4 w-4 text-green-600 flex-shrink-0"/>
+                  <span className="font-medium text-sm">{c.nombre_cliente} {c.apellido_cliente}</span>
+                  <MetodoBadge metodo={c.metodo_pago}/>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Cobro cliente</Badge>
+                </div>
+                {c.descripcion_problema && <p className="text-xs text-gray-500 truncate mb-1">Incidente #{c.id_incidente} — {c.descripcion_problema}</p>}
+                <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                  <span className="font-semibold text-green-700">{fmt$(Number(c.monto_cobro))}</span>
+                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(c.fecha_cobro),'dd/MM/yyyy HH:mm',{locale:es})}</span>
+                  {c.referencia_pago && <span>Ref: {c.referencia_pago}</span>}
+                  {c.banco && <span>{c.banco}</span>}
+                  {c.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Por: {c.marcado_por_nombre}</span>}
+                </div>
+                {c.observaciones && <p className="text-xs text-gray-400 italic mt-1">{c.observaciones}</p>}
+              </CardContent>
+            </Card>
+          )
+        }
+      })}
+    </div>
+  )
 }
 
 interface PagosContentProps {
-  pagos: Pago[]
+  pagos: unknown[]
   pendientesTecnicos: PendientePagoTecnico[]
   realizadosTecnicos: PagoTecnicoRegistrado[]
   pendientesCobroCliente: PendienteCobroCliente[]
   realizadosCobroCliente: CobroClienteRegistrado[]
 }
 
-export function PagosContent({ pagos, pendientesTecnicos, realizadosTecnicos, pendientesCobroCliente, realizadosCobroCliente }: PagosContentProps) {
+export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendientesCobroCliente, realizadosCobroCliente }: PagosContentProps) {
   return (
     <div className="space-y-4 px-4 py-6">
       <div>
@@ -575,31 +641,7 @@ export function PagosContent({ pagos, pendientesTecnicos, realizadosTecnicos, pe
           <TabPagosTecnicos pendientes={pendientesTecnicos} realizados={realizadosTecnicos}/>
         </TabsContent>
         <TabsContent value="registro" className="mt-4">
-          <div className="space-y-4">
-            {pagos.length === 0 ? (
-              <Card className="border-dashed border-2"><CardContent className="flex flex-col items-center py-12 text-center">
-                <DollarSign className="h-12 w-12 text-gray-300 mb-3"/>
-                <p className="text-gray-600">No hay pagos en el registro histórico</p>
-              </CardContent></Card>
-            ) : pagos.map(pago => (
-              <Card key={pago.id_pago} className="hover:shadow-md transition-shadow">
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-semibold flex items-center gap-2"><DollarSign className="h-4 w-4 text-green-600"/>Pago #{pago.id_pago}</p>
-                      <p className="text-xs text-gray-500">Incidente #{pago.id_incidente} • Presupuesto #{pago.id_presupuesto}</p>
-                    </div>
-                    <Badge className="bg-gray-100 text-gray-700">{pago.tipo_pago}</Badge>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 text-sm">
-                    <div><p className="text-xs text-gray-500">Monto</p><p className="font-bold text-green-600">{AR.format(pago.monto_pagado)}</p></div>
-                    <div><p className="text-xs text-gray-500">Método</p><p>{pago.metodo_pago}</p></div>
-                    <div><p className="text-xs text-gray-500">Fecha</p><p>{format(new Date(pago.fecha_pago),'dd/MM/yyyy',{locale:es})}</p></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <TabRegistroHistorico realizadosTecnicos={realizadosTecnicos} realizadosCobroCliente={realizadosCobroCliente}/>
         </TabsContent>
       </Tabs>
     </div>

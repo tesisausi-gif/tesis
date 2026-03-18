@@ -286,34 +286,28 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
                   </CardHeader>
 
                   <CardContent className="pt-0 pb-3 space-y-3">
-                    {/* Descripción del problema + contacto del cliente juntos */}
+                    {/* Descripción del problema */}
                     {incidente?.descripcion_problema && (
                       <div className="flex items-start gap-2 bg-slate-50 rounded-md p-2.5 border border-slate-200">
                         <FileText className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Descripción del problema</p>
-                          <p className="text-sm text-gray-700 mb-2">{incidente.descripcion_problema}</p>
-                          {cliente && (
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 border-t border-slate-200">
-                              <span className="text-xs font-semibold text-gray-700">
-                                {cliente.nombre} {cliente.apellido}
-                              </span>
-                              {cliente.telefono && (
-                                <span className="flex items-center gap-1 text-xs text-gray-600">
-                                  <Phone className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                                  {cliente.telefono}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          <p className="text-sm text-gray-700">{incidente.descripcion_problema}</p>
                         </div>
                       </div>
                     )}
 
-                    {/* Información de contacto adicional (email y dirección) */}
-                    {cliente && (cliente.correo_electronico || cliente.direccion) && (
+                    {/* Contacto del cliente */}
+                    {cliente && (
                       <div className="bg-blue-50 border border-blue-200 rounded-md p-2.5 space-y-1.5">
                         <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Contacto del cliente</p>
+                        <p className="text-sm font-medium text-gray-800">{cliente.nombre} {cliente.apellido}</p>
+                        {cliente.telefono && (
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                            <Phone className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                            <span>{cliente.telefono}</span>
+                          </div>
+                        )}
                         {cliente.correo_electronico && (
                           <div className="flex items-center gap-1.5 text-xs text-gray-600">
                             <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
