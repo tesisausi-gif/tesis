@@ -93,17 +93,34 @@ export async function getClienteById(idCliente: number): Promise<Cliente> {
 
 /**
  * Obtener todos los técnicos (admin)
+ * Calificación y cantidad de trabajos se calculan desde la tabla calificaciones (no dependen de columnas denormalizadas).
  */
 export async function getTecnicos(): Promise<Tecnico[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
-  const { data, error } = await supabase
-    .from('tecnicos')
-    .select('*')
-    .order('id_tecnico', { ascending: false })
+  const [tecnicosRes, calsRes] = await Promise.all([
+    supabase.from('tecnicos').select('*').order('id_tecnico', { ascending: false }),
+    supabase.from('calificaciones').select('id_tecnico, puntuacion'),
+  ])
 
-  if (error) throw error
-  return data as Tecnico[]
+  if (tecnicosRes.error) throw tecnicosRes.error
+
+  // Agrupar calificaciones por técnico
+  const calsPorTecnico = new Map<number, number[]>()
+  for (const c of calsRes.data ?? []) {
+    const arr = calsPorTecnico.get(c.id_tecnico) ?? []
+    arr.push(c.puntuacion)
+    calsPorTecnico.set(c.id_tecnico, arr)
+  }
+
+  return (tecnicosRes.data ?? []).map((t: any) => {
+    const cals = calsPorTecnico.get(t.id_tecnico) ?? []
+    const cantidad = cals.length
+    const promedio = cantidad > 0
+      ? parseFloat((cals.reduce((s, v) => s + v, 0) / cantidad).toFixed(2))
+      : null
+    return { ...t, cantidad_trabajos_realizados: cantidad, calificacion_promedio: promedio }
+  }) as Tecnico[]
 }
 
 /**
