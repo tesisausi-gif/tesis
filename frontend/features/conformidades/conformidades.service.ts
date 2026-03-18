@@ -36,6 +36,8 @@ export async function getConformidadDelIncidente(idIncidente: number): Promise<C
  * Para la página de administración
  */
 export async function getConformidadesPendientes() {
+  const { requireAdminOrGestorId } = await import('@/features/auth/auth.service')
+  await requireAdminOrGestorId()
   const supabase = await createAdminClient()
 
   const { data, error } = await supabase
