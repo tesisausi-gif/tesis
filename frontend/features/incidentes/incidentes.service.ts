@@ -48,6 +48,13 @@ export async function getIncidentesForAdmin(): Promise<IncidenteConCliente[]> {
         nombre,
         apellido,
         telefono
+      ),
+      asignaciones_tecnico (
+        estado_asignacion,
+        tecnicos (
+          nombre,
+          apellido
+        )
       )
     `)
     .order('fecha_registro', { ascending: false })

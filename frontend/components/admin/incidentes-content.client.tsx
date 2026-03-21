@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle, Wrench } from 'lucide-react'
+import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle, Wrench, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 import { EstadoIncidente, CategoriaIncidente } from '@/shared/types'
 import { getEstadoIncidenteLabel, getPrioridadColor } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -75,7 +76,13 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   ).length
   const resueltos = incidentes.filter(i => i.estado_actual === EstadoIncidente.RESUELTO).length
 
-  const renderTablaIncidentes = (incidentesAMostrar: IncidenteConCliente[]) => {
+  const getTecnicoAsignado = (incidente: IncidenteConCliente) => {
+    const asig = incidente.asignaciones_tecnico?.find(a => a.estado_asignacion === 'aceptada')
+    if (!asig?.tecnicos) return null
+    return `${asig.tecnicos.nombre} ${asig.tecnicos.apellido}`
+  }
+
+  const renderTablaIncidentes = (incidentesAMostrar: IncidenteConCliente[], mostrarTecnico = false) => {
     if (incidentesAMostrar.length === 0) {
       return (
         <div className="text-center py-12">
@@ -92,9 +99,10 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             <TableRow>
               <TableHead className="w-[80px]">ID</TableHead>
               <TableHead>Cliente</TableHead>
-              <TableHead>Dirección</TableHead>
+              <TableHead>Inmueble</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Prioridad</TableHead>
+              {mostrarTecnico && <TableHead>Técnico</TableHead>}
               <TableHead>Fecha</TableHead>
               <TableHead className="w-[150px]">Acciones</TableHead>
             </TableRow>
@@ -113,10 +121,16 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                     ? `${incidente.clientes.nombre} ${incidente.clientes.apellido}`
                     : '-'}
                 </TableCell>
-                <TableCell className="max-w-[200px] truncate">
-                  {incidente.inmuebles
-                    ? `${incidente.inmuebles.calle} ${incidente.inmuebles.altura}, ${incidente.inmuebles.localidad}`
-                    : '-'}
+                <TableCell className="max-w-[200px]">
+                  {incidente.inmuebles ? (
+                    <Link
+                      href={`/inmueble/${incidente.id_propiedad}`}
+                      className="flex items-center gap-1 text-blue-600 hover:underline truncate"
+                    >
+                      <span className="truncate">{incidente.inmuebles.calle} {incidente.inmuebles.altura}, {incidente.inmuebles.localidad}</span>
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </Link>
+                  ) : '-'}
                 </TableCell>
                 <TableCell>
                   {incidente.categoria || '-'}
@@ -130,6 +144,11 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                     <Badge variant="outline" className="text-gray-400">Sin asignar</Badge>
                   )}
                 </TableCell>
+                {mostrarTecnico && (
+                  <TableCell className="text-sm text-gray-700">
+                    {getTecnicoAsignado(incidente) ?? <span className="text-gray-400">-</span>}
+                  </TableCell>
+                )}
                 <TableCell className="text-sm text-gray-600">
                   {format(new Date(incidente.fecha_registro), 'dd/MM/yy', { locale: es })}
                 </TableCell>
@@ -327,7 +346,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {renderTablaIncidentes(incidentesFiltrados.filter(i => i.estado_actual === 'en_proceso'))}
+                {renderTablaIncidentes(incidentesFiltrados.filter(i => i.estado_actual === 'en_proceso'), true)}
               </CardContent>
             </Card>
           </TabsContent>

@@ -30,6 +30,7 @@ export interface Incidente extends IncidenteBase {
 // Incidente con datos de cliente (para admin)
 export interface IncidenteConCliente extends Incidente {
   clientes: ClienteResumen | null
+  asignaciones_tecnico?: { estado_asignacion: string; tecnicos: { nombre: string; apellido: string } | null }[]
 }
 
 // Incidente con todos los detalles
