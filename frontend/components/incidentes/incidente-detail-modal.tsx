@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -33,8 +34,10 @@ import {
   UserPlus,
   Settings,
   Save,
+  Loader2,
+  Send,
 } from 'lucide-react'
-import { CategoriaIncidente, EstadoIncidente } from '@/shared/types/enums'
+import { CategoriaIncidente, EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { InspeccionesList } from './inspecciones-list'
 import { CalificacionTecnico } from '@/components/cliente/calificacion-tecnico'
 import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
@@ -46,6 +49,8 @@ import {
 } from '@/features/incidentes/incidentes.service'
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
+import { getPresupuestosDelIncidente, crearPresupuesto } from '@/features/presupuestos/presupuestos.service'
+import type { Presupuesto } from '@/features/presupuestos/presupuestos.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
 
 interface TimelineEvent {
@@ -143,12 +148,21 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([])
   const [inspecciones, setInspecciones] = useState<any[]>([])
+  const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([])
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
   const [nuevaCategoria, setNuevaCategoria] = useState('')
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState('')
   const [observacionesAsignacion, setObservacionesAsignacion] = useState('')
+
+  // Form state para presupuesto
+  const [presDescripcion, setPresDescripcion] = useState('')
+  const [presCostoMateriales, setPresCostoMateriales] = useState('')
+  const [presCostoManoObra, setPresCostoManoObra] = useState('')
+  const [presAlternativas, setPresAlternativas] = useState('')
+  const [presInspeccionId, setPresInspeccionId] = useState('')
+  const [savingPresupuesto, setSavingPresupuesto] = useState(false)
 
   const CATEGORIAS = Object.values(CategoriaIncidente) as string[]
 
@@ -184,13 +198,17 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       const asignacionesData = await getAsignacionesDelIncidente(incidenteId)
       setAsignaciones(asignacionesData as unknown as Asignacion[])
 
-      // Cargar inspecciones si el rol es técnico
+      // Cargar inspecciones y presupuestos si el rol es técnico
       if (rol === 'tecnico') {
         try {
-          const inspeccionesData = await getInspeccionesDelIncidente(incidenteId)
+          const [inspeccionesData, presupuestosData] = await Promise.all([
+            getInspeccionesDelIncidente(incidenteId),
+            getPresupuestosDelIncidente(incidenteId),
+          ])
           setInspecciones(inspeccionesData)
+          setPresupuestos(presupuestosData)
         } catch (error) {
-          console.error('Error al cargar inspecciones:', error)
+          console.error('Error al cargar datos del técnico:', error)
         }
       }
 
@@ -389,6 +407,50 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     }
   }
 
+  const handleCrearPresupuesto = async () => {
+    if (!incidenteId || !presDescripcion.trim()) {
+      toast.error('La descripción es obligatoria')
+      return
+    }
+
+    const materiales = parseFloat(presCostoMateriales) || 0
+    const manoObra = parseFloat(presCostoManoObra) || 0
+    const total = materiales + manoObra
+
+    setSavingPresupuesto(true)
+    try {
+      const result = await crearPresupuesto({
+        id_incidente: incidenteId,
+        id_inspeccion: presInspeccionId ? parseInt(presInspeccionId) : null,
+        descripcion_detallada: presDescripcion.trim(),
+        costo_materiales: materiales || undefined,
+        costo_mano_obra: manoObra || undefined,
+        costo_total: total,
+        alternativas_reparacion: presAlternativas.trim() || undefined,
+      })
+
+      if (!result.success) {
+        toast.error('Error al crear presupuesto', { description: result.error })
+        return
+      }
+
+      toast.success('Presupuesto enviado correctamente')
+      setPresDescripcion('')
+      setPresCostoMateriales('')
+      setPresCostoManoObra('')
+      setPresAlternativas('')
+      setPresInspeccionId('')
+      // Recargar presupuestos
+      const data = await getPresupuestosDelIncidente(incidenteId)
+      setPresupuestos(data)
+      onUpdate?.()
+    } catch {
+      toast.error('Error inesperado al crear presupuesto')
+    } finally {
+      setSavingPresupuesto(false)
+    }
+  }
+
   const formatDireccion = () => {
     if (!incidente?.inmuebles) return 'Sin dirección'
     const i = incidente.inmuebles
@@ -428,13 +490,24 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           </div>
         ) : incidente ? (
           <Tabs defaultValue="detalles" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="detalles">Detalles</TabsTrigger>
-              <TabsTrigger value="timeline">Timeline</TabsTrigger>
-              {rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
-              {rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
-              {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
-            </TabsList>
+            {(() => {
+              const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))
+              const tabCount = 2
+                + (hasTecnicoTabs ? 2 : 0)
+                + (rol === 'admin' ? 1 : 0)
+                + (rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO ? 1 : 0)
+              const gridClass = tabCount === 2 ? 'grid-cols-2' : tabCount === 3 ? 'grid-cols-3' : 'grid-cols-4'
+              return (
+                <TabsList className={`grid w-full ${gridClass}`}>
+                  <TabsTrigger value="detalles">Detalles</TabsTrigger>
+                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                  {hasTecnicoTabs && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
+                  {hasTecnicoTabs && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
+                  {rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
+                  {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
+                </TabsList>
+              )
+            })()}
 
             {/* Tab Detalles */}
             <TabsContent value="detalles" className="space-y-4 mt-4">
@@ -745,6 +818,156 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     cargarIncidente()
                   }}
                 />
+              </TabsContent>
+            )}
+
+            {/* Tab Presupuesto (para técnicos con asignación confirmada) */}
+            {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
+              <TabsContent value="presupuesto" className="mt-4 space-y-4">
+                {presupuestos.length > 0 ? (
+                  <div className="space-y-4">
+                    {presupuestos.map((pres) => {
+                      const estado = pres.estado_presupuesto as EstadoPresupuesto
+                      const estadoConfig: Record<string, { label: string; className: string }> = {
+                        [EstadoPresupuesto.ENVIADO]: { label: 'Enviado — pendiente de revisión', className: 'bg-blue-50 border-blue-200 text-blue-800' },
+                        [EstadoPresupuesto.APROBADO_ADMIN]: { label: 'Aprobado por administración — pendiente de aprobación del cliente', className: 'bg-amber-50 border-amber-200 text-amber-800' },
+                        [EstadoPresupuesto.APROBADO]: { label: 'Aprobado — autorizado para ejecutar', className: 'bg-green-50 border-green-200 text-green-800' },
+                        [EstadoPresupuesto.RECHAZADO]: { label: 'Rechazado', className: 'bg-red-50 border-red-200 text-red-800' },
+                        [EstadoPresupuesto.VENCIDO]: { label: 'Vencido', className: 'bg-gray-50 border-gray-200 text-gray-600' },
+                      }
+                      const cfg = estadoConfig[estado] ?? { label: estado, className: 'bg-gray-50 border-gray-200 text-gray-600' }
+                      return (
+                        <div key={pres.id_presupuesto} className={`rounded-lg border p-4 space-y-3 ${cfg.className}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold uppercase tracking-wide">Presupuesto #{pres.id_presupuesto}</span>
+                            <Badge variant="outline" className={cfg.className}>{cfg.label}</Badge>
+                          </div>
+                          <p className="text-sm">{pres.descripcion_detallada}</p>
+                          <div className="grid grid-cols-3 gap-2 text-center">
+                            {pres.costo_materiales != null && (
+                              <div className="bg-white/70 rounded p-2">
+                                <p className="text-xs text-gray-500">Materiales</p>
+                                <p className="text-sm font-semibold">${pres.costo_materiales.toLocaleString()}</p>
+                              </div>
+                            )}
+                            {pres.costo_mano_obra != null && (
+                              <div className="bg-white/70 rounded p-2">
+                                <p className="text-xs text-gray-500">Mano de obra</p>
+                                <p className="text-sm font-semibold">${pres.costo_mano_obra.toLocaleString()}</p>
+                              </div>
+                            )}
+                            <div className="bg-white/70 rounded p-2">
+                              <p className="text-xs text-gray-500">Total</p>
+                              <p className="text-sm font-bold">${pres.costo_total.toLocaleString()}</p>
+                            </div>
+                          </div>
+                          {pres.alternativas_reparacion && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 mb-1">Alternativas</p>
+                              <p className="text-xs">{pres.alternativas_reparacion}</p>
+                            </div>
+                          )}
+                          {pres.fecha_creacion && (
+                            <p className="text-xs text-gray-500">
+                              Creado: {format(new Date(pres.fecha_creacion), "dd/MM/yy HH:mm", { locale: es })}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {inspecciones.length === 0 && (
+                      <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <span>Antes de cargar un presupuesto, se recomienda realizar al menos una inspección del incidente.</span>
+                      </div>
+                    )}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Nuevo Presupuesto
+                      </h4>
+                      <div className="space-y-2">
+                        <Label>Descripción detallada <span className="text-red-500">*</span></Label>
+                        <Textarea
+                          value={presDescripcion}
+                          onChange={(e) => setPresDescripcion(e.target.value)}
+                          placeholder="Describí el trabajo a realizar, materiales necesarios, etc."
+                          rows={3}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Costo materiales ($)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={presCostoMateriales}
+                            onChange={(e) => setPresCostoMateriales(e.target.value)}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Costo mano de obra ($)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={presCostoManoObra}
+                            onChange={(e) => setPresCostoManoObra(e.target.value)}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      {(presCostoMateriales || presCostoManoObra) && (
+                        <p className="text-sm text-gray-600 font-medium">
+                          Total estimado: ${((parseFloat(presCostoMateriales) || 0) + (parseFloat(presCostoManoObra) || 0)).toLocaleString()}
+                        </p>
+                      )}
+                      <div className="space-y-2">
+                        <Label>Alternativas de reparación (opcional)</Label>
+                        <Textarea
+                          value={presAlternativas}
+                          onChange={(e) => setPresAlternativas(e.target.value)}
+                          placeholder="Otras opciones de resolución..."
+                          rows={2}
+                        />
+                      </div>
+                      {inspecciones.length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Inspección relacionada (opcional)</Label>
+                          <Select value={presInspeccionId} onValueChange={setPresInspeccionId}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar inspección" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">Sin inspección</SelectItem>
+                              {inspecciones.map((insp: any) => (
+                                <SelectItem key={insp.id_inspeccion} value={insp.id_inspeccion.toString()}>
+                                  #{insp.id_inspeccion} — {format(new Date(insp.fecha_inspeccion), "dd/MM/yy", { locale: es })}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <Button
+                        onClick={handleCrearPresupuesto}
+                        disabled={savingPresupuesto || !presDescripcion.trim()}
+                        className="w-full gap-2"
+                      >
+                        {savingPresupuesto ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" />Enviando...</>
+                        ) : (
+                          <><Send className="h-4 w-4" />Enviar Presupuesto</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
             )}
 

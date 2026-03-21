@@ -26,6 +26,7 @@ import {
   getEstadoAsignacionColor,
   getEstadoAsignacionLabel,
 } from '@/shared/utils/colors'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
 import { completarAsignacion } from '@/features/asignaciones/asignaciones.service'
@@ -193,11 +194,164 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
   const enCurso = asignaciones.filter(a => a.estado_asignacion === 'en_curso').length
   const completados = asignaciones.filter(a => a.estado_asignacion === 'completada').length
 
+  const enProceso = asignaciones.filter(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion))
+  const resueltas = asignaciones.filter(a => a.estado_asignacion === 'completada')
+
+  const renderCard = (asignacion: AsignacionTecnico) => {
+    const incidente = asignacion.incidentes
+    const inmueble = incidente?.inmuebles
+    const cliente = incidente?.clientes
+
+    const direccionPartes = inmueble
+      ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
+      : ''
+    const ubicacion = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
+    const direccionInmueble = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
+
+    const estado = asignacion.estado_asignacion
+    const estadoPres = estadoPresupuestoPorIncidente[asignacion.id_incidente]
+    const presupuestoAprobado = estadoPres === 'aprobado'
+    const enTrabajo = (estado === 'aceptada' || estado === 'en_curso') && presupuestoAprobado
+    const terminado = estado === 'completada'
+
+    const confInfo = conformidadesPorIncidente[asignacion.id_incidente]
+    const conformidadPendiente = confInfo && !confInfo.esta_firmada && confInfo.url_documento
+    const conformidadAprobada = confInfo && (confInfo.esta_firmada === 1 || confInfo.esta_firmada === true)
+    const puedeSubirConformidad = terminado && !confInfo
+
+    return (
+      <Card key={asignacion.id_asignacion} className="hover:shadow-md transition-shadow">
+        <div className="cursor-pointer" onClick={() => abrirModal(asignacion.id_incidente)}>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  Incidente #{asignacion.id_incidente}
+                </CardTitle>
+                {direccionInmueble && (
+                  <CardDescription className="flex items-center gap-1 mt-1 text-xs">
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{direccionInmueble}</span>
+                  </CardDescription>
+                )}
+              </div>
+              <div className="flex flex-col gap-1 items-end flex-shrink-0">
+                <Badge variant="outline" className={getEstadoAsignacionColor(estado)}>
+                  {getEstadoAsignacionLabel(estado)}
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="pt-0 pb-3 space-y-3">
+            {incidente?.descripcion_problema && (
+              <div className="flex items-start gap-2 bg-slate-50 rounded-md p-2.5 border border-slate-200">
+                <FileText className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Descripción del problema</p>
+                  <p className="text-sm text-gray-700">{incidente.descripcion_problema}</p>
+                </div>
+              </div>
+            )}
+            {cliente && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-2.5 space-y-1.5">
+                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Contacto del cliente</p>
+                <p className="text-sm font-medium text-gray-800">{cliente.nombre} {cliente.apellido}</p>
+                {cliente.telefono && (
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <Phone className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                    <span>{cliente.telefono}</span>
+                  </div>
+                )}
+                {cliente.correo_electronico && (
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                    <span>{cliente.correo_electronico}</span>
+                  </div>
+                )}
+                {cliente.direccion && (
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <Home className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                    <span>{cliente.direccion}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yy', { locale: es })}
+              </span>
+              {asignacion.fecha_visita_programada && (
+                <span className="flex items-center gap-1 text-blue-600">
+                  <Clock className="h-3 w-3" />
+                  Visita: {format(new Date(asignacion.fecha_visita_programada), 'dd/MM HH:mm', { locale: es })}
+                </span>
+              )}
+              {incidente?.categoria && <span>{incidente.categoria}</span>}
+            </div>
+          </CardContent>
+        </div>
+
+        <div className="px-6 pb-4 flex flex-wrap gap-2 border-t pt-3" onClick={(e) => e.stopPropagation()}>
+          {incidente && (
+            <Button size="sm" variant="outline" className="gap-1 text-indigo-700 border-indigo-300 hover:bg-indigo-50"
+              onClick={() => { setInspeccionDesc(''); setInspeccionCausas(''); setInspeccionDialog({ open: true, idIncidente: asignacion.id_incidente }) }}>
+              <Wrench className="h-3 w-3" />Cargar Inspección
+            </Button>
+          )}
+          {enTrabajo && (
+            <>
+              <Button size="sm" variant="outline" className="gap-1 text-blue-700 border-blue-300 hover:bg-blue-50"
+                onClick={() => { setAvanceDesc(''); setAvancePct(''); setAvanceDialog({ open: true, idAsignacion: asignacion.id_asignacion, idIncidente: asignacion.id_incidente }) }}>
+                <Plus className="h-3 w-3" />Registrar Avance
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1 text-green-700 border-green-300 hover:bg-green-50"
+                onClick={() => setCompletarDialog({ open: true, idAsignacion: asignacion.id_asignacion })}>
+                <CheckCircle2 className="h-3 w-3" />Completar Trabajo
+              </Button>
+            </>
+          )}
+          {puedeSubirConformidad && (
+            <Button size="sm" variant="outline" className="gap-1 text-purple-700 border-purple-300 hover:bg-purple-50"
+              onClick={() => { setFotoFile(null); setFotoPreview(null); setConformidadDialog({ open: true, idIncidente: asignacion.id_incidente }) }}>
+              <Upload className="h-3 w-3" />Subir Conformidad Firmada
+            </Button>
+          )}
+          {conformidadPendiente && (
+            <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+              <Loader2 className="h-3 w-3 animate-spin" />Conformidad en revisión por la administración
+            </div>
+          )}
+          {conformidadAprobada && (
+            <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+              <CheckCircle2 className="h-3 w-3" />Conformidad aprobada — incidente resuelto
+            </div>
+          )}
+        </div>
+      </Card>
+    )
+  }
+
+  const renderCards = (lista: AsignacionTecnico[]) => lista.length === 0 ? (
+    <Card className="border-dashed border-2 border-gray-300 bg-gradient-to-br from-slate-50 to-slate-100">
+      <CardContent className="flex flex-col items-center justify-center py-10 px-6 text-center">
+        <ClipboardList className="h-10 w-10 text-slate-400 mb-3" />
+        <p className="text-sm text-gray-500">No hay incidentes en este estado</p>
+      </CardContent>
+    </Card>
+  ) : (
+    <div className="space-y-3">
+      {lista.map((asignacion) => renderCard(asignacion))}
+    </div>
+  )
+
   return (
     <div className="space-y-4 px-4 py-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Mis Trabajos</h1>
-        <p className="text-gray-600 text-sm mt-1">Trabajos asignados y su estado</p>
+        <h1 className="text-2xl font-bold text-gray-900">Mis Incidentes</h1>
+        <p className="text-gray-600 text-sm mt-1">Incidentes asignados y su estado</p>
       </div>
 
       {asignaciones.length > 0 && (
@@ -229,199 +383,29 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
         </div>
       )}
 
-      {asignaciones.length > 0 ? (
-        <div className="space-y-3">
-          {asignaciones.map((asignacion) => {
-            const incidente = asignacion.incidentes
-            const inmueble = incidente?.inmuebles
-            const cliente = incidente?.clientes
+      {asignaciones.length > 0 && (
+        <Tabs defaultValue="en_proceso">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="en_proceso" className="gap-2">
+              En Proceso
+              <Badge variant="secondary">{enProceso.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="resueltos" className="gap-2">
+              Resueltos
+              <Badge variant="secondary">{resueltas.length}</Badge>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="en_proceso" className="mt-3">{renderCards(enProceso)}</TabsContent>
+          <TabsContent value="resueltos" className="mt-3">{renderCards(resueltas)}</TabsContent>
+        </Tabs>
+      )}
 
-            const direccionPartes = inmueble
-              ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
-              : ''
-            const ubicacion = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
-            const direccionInmueble = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
-
-            const estado = asignacion.estado_asignacion
-            const estadoPres = estadoPresupuestoPorIncidente[asignacion.id_incidente]
-            const presupuestoAprobado = estadoPres === 'aprobado'
-            const enTrabajo = (estado === 'aceptada' || estado === 'en_curso') && presupuestoAprobado
-            const terminado = estado === 'completada'
-
-            const confInfo = conformidadesPorIncidente[asignacion.id_incidente]
-            const conformidadPendiente = confInfo && !confInfo.esta_firmada && confInfo.url_documento
-            const conformidadAprobada = confInfo && (confInfo.esta_firmada === 1 || confInfo.esta_firmada === true)
-            const puedeSubirConformidad = terminado && !confInfo
-
-            return (
-              <Card key={asignacion.id_asignacion} className="hover:shadow-md transition-shadow">
-                {/* Zona clickable para abrir modal */}
-                <div className="cursor-pointer" onClick={() => abrirModal(asignacion.id_incidente)}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <ClipboardList className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                          Incidente #{asignacion.id_incidente}
-                        </CardTitle>
-                        {direccionInmueble && (
-                          <CardDescription className="flex items-center gap-1 mt-1 text-xs">
-                            <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{direccionInmueble}</span>
-                          </CardDescription>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-1 items-end flex-shrink-0">
-                        <Badge variant="outline" className={getEstadoAsignacionColor(estado)}>
-                          {getEstadoAsignacionLabel(estado)}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="pt-0 pb-3 space-y-3">
-                    {/* Descripción del problema */}
-                    {incidente?.descripcion_problema && (
-                      <div className="flex items-start gap-2 bg-slate-50 rounded-md p-2.5 border border-slate-200">
-                        <FileText className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Descripción del problema</p>
-                          <p className="text-sm text-gray-700">{incidente.descripcion_problema}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Contacto del cliente */}
-                    {cliente && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-md p-2.5 space-y-1.5">
-                        <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Contacto del cliente</p>
-                        <p className="text-sm font-medium text-gray-800">{cliente.nombre} {cliente.apellido}</p>
-                        {cliente.telefono && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <Phone className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                            <span>{cliente.telefono}</span>
-                          </div>
-                        )}
-                        {cliente.correo_electronico && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                            <span>{cliente.correo_electronico}</span>
-                          </div>
-                        )}
-                        {cliente.direccion && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <Home className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                            <span>{cliente.direccion}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Fechas y categoría */}
-                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yy', { locale: es })}
-                      </span>
-                      {asignacion.fecha_visita_programada && (
-                        <span className="flex items-center gap-1 text-blue-600">
-                          <Clock className="h-3 w-3" />
-                          Visita: {format(new Date(asignacion.fecha_visita_programada), 'dd/MM HH:mm', { locale: es })}
-                        </span>
-                      )}
-                      {incidente?.categoria && <span>{incidente.categoria}</span>}
-                    </div>
-                  </CardContent>
-                </div>
-
-                {/* Botones de acción (no abren el modal) */}
-                <div
-                  className="px-6 pb-4 flex flex-wrap gap-2 border-t pt-3"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Botón de inspección — siempre visible si hay incidente */}
-                  {incidente && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 text-indigo-700 border-indigo-300 hover:bg-indigo-50"
-                      onClick={() => {
-                        setInspeccionDesc('')
-                        setInspeccionCausas('')
-                        setInspeccionDialog({ open: true, idIncidente: asignacion.id_incidente })
-                      }}
-                    >
-                      <Wrench className="h-3 w-3" />
-                      Cargar Inspección
-                    </Button>
-                  )}
-
-                  {enTrabajo && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1 text-blue-700 border-blue-300 hover:bg-blue-50"
-                        onClick={() => {
-                          setAvanceDesc('')
-                          setAvancePct('')
-                          setAvanceDialog({ open: true, idAsignacion: asignacion.id_asignacion, idIncidente: asignacion.id_incidente })
-                        }}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Registrar Avance
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1 text-green-700 border-green-300 hover:bg-green-50"
-                        onClick={() => setCompletarDialog({ open: true, idAsignacion: asignacion.id_asignacion })}
-                      >
-                        <CheckCircle2 className="h-3 w-3" />
-                        Completar Trabajo
-                      </Button>
-                    </>
-                  )}
-                  {puedeSubirConformidad && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 text-purple-700 border-purple-300 hover:bg-purple-50"
-                      onClick={() => {
-                        setFotoFile(null)
-                        setFotoPreview(null)
-                        setConformidadDialog({ open: true, idIncidente: asignacion.id_incidente })
-                      }}
-                    >
-                      <Upload className="h-3 w-3" />
-                      Subir Conformidad Firmada
-                    </Button>
-                  )}
-                  {conformidadPendiente && (
-                    <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Conformidad en revisión por la administración
-                    </div>
-                  )}
-                  {conformidadAprobada && (
-                    <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Conformidad aprobada — incidente resuelto
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )
-          })}
-        </div>
-      ) : (
+      {asignaciones.length === 0 && (
         <Card className="border-dashed border-2 border-gray-300 bg-gradient-to-br from-slate-50 to-slate-100">
           <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
-            <div className="rounded-full bg-slate-200 p-4 mb-6">
-              <ClipboardList className="h-12 w-12 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No tienes trabajos asignados</h3>
-            <p className="text-sm text-gray-600 max-w-md">Cuando te asignen un nuevo trabajo, aparecerá aquí.</p>
+            <ClipboardList className="h-12 w-12 text-slate-400 mb-3" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No tienes incidentes asignados</h3>
+            <p className="text-sm text-gray-600">Cuando aceptes una asignación, aparecerá aquí.</p>
           </CardContent>
         </Card>
       )}
