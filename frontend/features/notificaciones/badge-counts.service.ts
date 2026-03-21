@@ -14,6 +14,7 @@ export interface AdminBadgeCounts {
   presupuestos: number   // presupuestos enviados esperando aprobación admin
   pagos: number          // cobros a clientes + pagos a técnicos pendientes
   solicitudes: number    // solicitudes de registro de técnicos pendientes
+  reasignaciones: number // incidentes en asignacion_solicitada con asignacion rechazada
 }
 
 export interface ClienteBadgeCounts {
@@ -32,7 +33,7 @@ export interface TecnicoBadgeCounts {
 export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
   const supabase = createAdminClient()
 
-  const [confResult, presResult, cobrosPendResult, pagosTecResult, solResult] = await Promise.all([
+  const [confResult, presResult, cobrosPendResult, pagosTecResult, solResult, reasigResult] = await Promise.all([
     // Conformidades con foto subida esperando revisión
     supabase
       .from('conformidades')
@@ -65,6 +66,12 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
       .from('solicitudes_registro')
       .select('id_solicitud', { count: 'exact', head: true })
       .eq('estado_solicitud', 'pendiente'),
+
+    // Incidentes en asignacion_solicitada con técnico rechazado (necesitan re-asignación)
+    supabase
+      .from('asignaciones_tecnico')
+      .select('id_incidente', { count: 'exact', head: false })
+      .eq('estado_asignacion', 'rechazada'),
   ])
 
   // Supabase PostgREST no soporta subqueries nativas, fallback a conteo manual
@@ -91,11 +98,24 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
     pendientesPagos = pagosTecResult.count ?? 0
   }
 
+  // Calcular reasignaciones: incidentes en asignacion_solicitada con al menos una asignacion rechazada
+  let reasignaciones = 0
+  if (!reasigResult.error && reasigResult.data?.length) {
+    const idsConRechazo = [...new Set(reasigResult.data.map((r: any) => r.id_incidente))]
+    const { count } = await supabase
+      .from('incidentes')
+      .select('id_incidente', { count: 'exact', head: true })
+      .in('id_incidente', idsConRechazo)
+      .eq('estado_actual', 'asignacion_solicitada')
+    reasignaciones = count ?? 0
+  }
+
   return {
     conformidades: confResult.count ?? 0,
     presupuestos: presResult.count ?? 0,
     pagos: pendientesCobros + pendientesPagos,
     solicitudes: solResult.count ?? 0,
+    reasignaciones,
   }
 }
 

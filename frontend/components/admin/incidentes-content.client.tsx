@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { createClient } from '@/shared/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle, Wrench, ExternalLink } from 'lucide-react'
+import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle, Wrench, ExternalLink, Send, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import { EstadoIncidente, CategoriaIncidente } from '@/shared/types'
 import { getEstadoIncidenteLabel } from '@/shared/utils/colors'
@@ -57,6 +58,21 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     }, 200)
   }, [])
 
+  // Realtime: actualizar tabla automáticamente cuando técnico acepta/rechaza
+  useEffect(() => {
+    const supabase = createClient()
+    const canal = supabase
+      .channel('incidentes-admin')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'incidentes' }, () => {
+        router.refresh()
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'asignaciones_tecnico' }, () => {
+        router.refresh()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(canal) }
+  }, [])
+
   const incidentesFiltrados = incidentes.filter((incidente) => {
     if (filtroEstado !== 'todos' && incidente.estado_actual !== filtroEstado) {
       return false
@@ -99,9 +115,8 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   // Stats
   const totalIncidentes = incidentes.length
   const pendientes = incidentes.filter(i => i.estado_actual === EstadoIncidente.PENDIENTE).length
-  const enProceso = incidentes.filter(i =>
-    i.estado_actual === EstadoIncidente.EN_PROCESO
-  ).length
+  const asignacionSolicitada = incidentes.filter(i => i.estado_actual === EstadoIncidente.ASIGNACION_SOLICITADA).length
+  const enProceso = incidentes.filter(i => i.estado_actual === EstadoIncidente.EN_PROCESO).length
   const resueltos = incidentes.filter(i => i.estado_actual === EstadoIncidente.RESUELTO).length
 
   const renderTablaPendientes = (lista: IncidenteConCliente[]) => {
@@ -175,6 +190,115 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     const asig = incidente.asignaciones_tecnico?.find(a => a.estado_asignacion === 'aceptada')
     if (!asig?.tecnicos) return null
     return `${asig.tecnicos.nombre} ${asig.tecnicos.apellido}`
+  }
+
+  const getAsignacionActiva = (incidente: IncidenteConCliente) => {
+    const asigs = incidente.asignaciones_tecnico ?? []
+    return asigs.find(a => a.estado_asignacion === 'pendiente')
+      ?? asigs.find(a => a.estado_asignacion === 'rechazada')
+      ?? null
+  }
+
+  const renderTablaAsignacionSolicitada = (lista: IncidenteConCliente[]) => {
+    if (lista.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Send className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500">No hay solicitudes de asignación pendientes</p>
+        </div>
+      )
+    }
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">ID</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Inmueble</TableHead>
+              <TableHead>Técnico solicitado</TableHead>
+              <TableHead>Estado solicitud</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead className="w-[140px]">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {lista.map((incidente) => {
+              const asig = getAsignacionActiva(incidente)
+              const rechazada = asig?.estado_asignacion === 'rechazada'
+              return (
+                <TableRow
+                  key={incidente.id_incidente}
+                  ref={incidente.id_incidente === highlightId ? highlightRef : undefined}
+                  className={`transition-colors duration-[1800ms] ${incidente.id_incidente === highlightId ? 'bg-amber-100' : rechazada ? 'bg-red-50 hover:bg-red-50/80' : 'hover:bg-gray-50'}`}
+                >
+                  <TableCell className="font-medium">#{incidente.id_incidente}</TableCell>
+                  <TableCell>
+                    {incidente.clientes
+                      ? `${incidente.clientes.nombre} ${incidente.clientes.apellido}`
+                      : '-'}
+                  </TableCell>
+                  <TableCell className="max-w-[200px]">
+                    {incidente.inmuebles ? (
+                      <Link
+                        href={`/inmueble/${incidente.id_propiedad}`}
+                        className="flex items-center gap-1 text-blue-600 hover:underline truncate"
+                      >
+                        <span className="truncate">{incidente.inmuebles.calle} {incidente.inmuebles.altura}, {incidente.inmuebles.localidad}</span>
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                      </Link>
+                    ) : '-'}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-700">
+                    {asig?.tecnicos
+                      ? `${asig.tecnicos.nombre} ${asig.tecnicos.apellido}`
+                      : <span className="text-gray-400">—</span>}
+                  </TableCell>
+                  <TableCell>
+                    {rechazada ? (
+                      <Badge className="border-red-200 bg-red-50 text-red-700 gap-1 flex items-center w-fit">
+                        <XCircle className="h-3 w-3" />
+                        Rechazada
+                      </Badge>
+                    ) : (
+                      <Badge className="border-orange-200 bg-orange-50 text-orange-700 gap-1 flex items-center w-fit">
+                        <Clock className="h-3 w-3" />
+                        Esperando respuesta
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {format(new Date(incidente.fecha_registro), 'dd/MM/yy', { locale: es })}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      {rechazada && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => abrirModalGestionar(incidente)}
+                          className="gap-1 bg-orange-600 hover:bg-orange-700"
+                        >
+                          <Wrench className="h-3.5 w-3.5" />
+                          Re-asignar
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => abrirModal(incidente.id_incidente)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    )
   }
 
   const renderTablaIncidentes = (incidentesAMostrar: IncidenteConCliente[], mostrarTecnico = false) => {
@@ -279,7 +403,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
@@ -310,6 +434,17 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{enProceso}</div>
             <p className="text-xs text-muted-foreground">siendo atendidos</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Asig. Solicitada</CardTitle>
+            <Send className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{asignacionSolicitada}</div>
+            <p className="text-xs text-muted-foreground">esperando técnico</p>
           </CardContent>
         </Card>
 
@@ -377,13 +512,33 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       {/* Tabla de Incidentes por Estado */}
       <div className="space-y-4">
         <Tabs value={tabActiva} onValueChange={setTabActiva} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="pendiente" className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               Pendientes
               <Badge variant="secondary" className="ml-2">
                 {incidentesFiltrados.filter(i => i.estado_actual === 'pendiente').length}
               </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="asignacion_solicitada" className="flex items-center gap-1.5">
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline">Asig. Solicitada</span>
+              <span className="sm:hidden">Asig.</span>
+              {(() => {
+                const count = incidentesFiltrados.filter(i => i.estado_actual === 'asignacion_solicitada').length
+                const rechazadas = incidentesFiltrados.filter(i =>
+                  i.estado_actual === 'asignacion_solicitada' &&
+                  (i.asignaciones_tecnico ?? []).some(a => a.estado_asignacion === 'rechazada')
+                ).length
+                return (
+                  <Badge
+                    variant="secondary"
+                    className={`ml-1 ${rechazadas > 0 ? 'bg-red-100 text-red-700' : ''}`}
+                  >
+                    {count}
+                  </Badge>
+                )
+              })()}
             </TabsTrigger>
             <TabsTrigger value="en_proceso" className="flex items-center gap-2">
               <Wrench className="h-4 w-4" />
@@ -415,6 +570,24 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               </CardHeader>
               <CardContent>
                 {renderTablaPendientes(incidentesFiltrados.filter(i => i.estado_actual === 'pendiente'))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Asignación Solicitada */}
+          <TabsContent value="asignacion_solicitada">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Send className="h-5 w-5 text-orange-600" />
+                  Asignación Solicitada
+                </CardTitle>
+                <CardDescription>
+                  Incidentes con técnico notificado, esperando que acepte o rechace.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderTablaAsignacionSolicitada(incidentesFiltrados.filter(i => i.estado_actual === 'asignacion_solicitada'))}
               </CardContent>
             </Card>
           </TabsContent>

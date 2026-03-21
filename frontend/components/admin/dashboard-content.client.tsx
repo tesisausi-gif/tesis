@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Users, Building2, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight, Wifi, WifiOff, FileText, ClipboardCheck, DollarSign } from 'lucide-react'
+import { Users, Building2, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight, Wifi, WifiOff, FileText, ClipboardCheck, DollarSign, Send } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
@@ -59,11 +59,13 @@ interface DashboardContentProps {
 const getEstadoBadge = (estado: string) => {
   const estilos: Record<string, string> = {
     'pendiente': 'bg-yellow-100 text-yellow-800',
+    'asignacion_solicitada': 'bg-orange-100 text-orange-800',
     'en_proceso': 'bg-blue-100 text-blue-800',
     'resuelto': 'bg-green-100 text-green-800',
   }
   const labels: Record<string, string> = {
     'pendiente': 'Pendiente',
+    'asignacion_solicitada': 'Asig. Solicitada',
     'en_proceso': 'En Proceso',
     'resuelto': 'Resuelto',
   }
@@ -80,7 +82,7 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
   const [asignacionesRecientes, setAsignacionesRecientes] = useState<AsignacionReciente[]>(initialAsignaciones)
   const [conectado, setConectado] = useState(false)
   const refreshingRef = useRef(false)
-  const [pendientes, setPendientes] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0 })
+  const [pendientes, setPendientes] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0, reasignaciones: 0 })
 
   const refrescarDatos = async () => {
     if (refreshingRef.current) return
@@ -234,13 +236,13 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
       </div>
 
       {/* Acciones Pendientes */}
-      {(pendientes.conformidades > 0 || pendientes.presupuestos > 0 || pendientes.pagos > 0) && (
+      {(pendientes.conformidades > 0 || pendientes.presupuestos > 0 || pendientes.pagos > 0 || pendientes.reasignaciones > 0) && (
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
             <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
             Requieren atención
           </h3>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {pendientes.conformidades > 0 && (
               <Link href="/dashboard/conformidades">
                 <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow cursor-pointer">
@@ -279,6 +281,20 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
                       <p className="text-xs text-gray-500">pendientes de cobro/pago</p>
                     </div>
                     <DollarSign className="h-8 w-8 text-green-400" />
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+            {pendientes.reasignaciones > 0 && (
+              <Link href="/dashboard/incidentes?tab=asignacion_solicitada">
+                <Card className="border-l-4 border-l-red-500 hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="flex items-center justify-between pt-4 pb-4">
+                    <div>
+                      <p className="text-xs text-gray-500">Re-asignaciones</p>
+                      <p className="text-xl font-bold text-red-600">{pendientes.reasignaciones}</p>
+                      <p className="text-xs text-gray-500">técnicos rechazaron</p>
+                    </div>
+                    <Send className="h-8 w-8 text-red-400" />
                   </CardContent>
                 </Card>
               </Link>

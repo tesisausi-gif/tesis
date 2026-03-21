@@ -56,7 +56,7 @@ interface GestionarPendienteModalProps {
 const CATEGORIAS = Object.values(CategoriaIncidente)
 
 function StepperHeader({ paso }: { paso: 1 | 2 | 3 }) {
-  const pasos = ['Categorización', 'Asignación', 'Confirmación']
+  const pasos = ['Categorización', 'Solicitud de asignación', 'Confirmación']
   return (
     <div className="flex items-center mb-6 px-1">
       {pasos.map((label, i) => {
@@ -130,6 +130,12 @@ function IncidenteInfoCard({ incidente, compact = false }: { incidente: Incident
             </span>
           )}
         </div>
+        {incidente.disponibilidad && (
+          <div className="mt-2 pt-2 border-t border-blue-200">
+            <p className="text-xs font-semibold text-blue-800 mb-0.5">Disponibilidad del cliente:</p>
+            <p className="text-xs text-blue-700 italic">&ldquo;{incidente.disponibilidad}&rdquo;</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
@@ -460,7 +466,7 @@ export function GestionarPendienteModal({
                 </div>
                 <div>
                   <h3 className="font-semibold text-green-900 text-base">
-                    Técnico notificado exitosamente
+                    Solicitud de asignación enviada
                   </h3>
                   {tecnicoSeleccionado && (
                     <p className="text-sm text-green-700 mt-1">
@@ -469,9 +475,9 @@ export function GestionarPendienteModal({
                   )}
                 </div>
                 <div className="text-sm text-green-800 bg-green-100 rounded-md px-4 py-3 w-full text-left space-y-1">
-                  <p>✓ Incidente <strong>#{incidente.id_incidente}</strong> movido a <strong>En Proceso</strong></p>
-                  <p>✓ El técnico debe aceptar la asignación para comenzar</p>
-                  <p>✓ Si el técnico rechaza, el incidente volverá a <strong>Pendientes</strong></p>
+                  <p>✓ Incidente <strong>#{incidente.id_incidente}</strong> movido a <strong>Asignación Solicitada</strong></p>
+                  <p>✓ El técnico debe aceptar para que pase a <strong>En Proceso</strong></p>
+                  <p>✓ Si el técnico rechaza, podrás re-asignar desde la bandeja</p>
                 </div>
               </CardContent>
             </Card>

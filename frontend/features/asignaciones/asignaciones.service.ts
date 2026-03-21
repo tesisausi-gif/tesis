@@ -199,10 +199,10 @@ export async function rechazarAsignacion(
 
     if (errorAsignacion) return { success: false, error: errorAsignacion.message }
 
-    // Al rechazar, volver a 'pendiente' para que pueda ser reasignado
+    // Al rechazar, el incidente queda en 'asignacion_solicitada' para que el admin pueda re-asignar
     const { error: errorIncidente } = await supabase
       .from('incidentes')
-      .update({ estado_actual: 'pendiente' })
+      .update({ estado_actual: 'asignacion_solicitada' })
       .eq('id_incidente', idIncidente)
 
     if (errorIncidente) return { success: false, error: errorIncidente.message }
@@ -231,12 +231,12 @@ export async function crearAsignacion(data: {
 
     if (error) return { success: false, error: error.message }
 
-    // Actualizar estado del incidente a "en_proceso" si está en "pendiente"
+    // Actualizar estado del incidente a "asignacion_solicitada" para indicar solicitud enviada
     await supabase
       .from('incidentes')
-      .update({ estado_actual: 'en_proceso' })
+      .update({ estado_actual: 'asignacion_solicitada' })
       .eq('id_incidente', data.id_incidente)
-      .eq('estado_actual', 'pendiente')
+      .in('estado_actual', ['pendiente', 'asignacion_solicitada'])
 
     // Notificar al técnico (fire-and-forget)
     const { notificarNuevaAsignacion } = await import('@/features/notificaciones/notificaciones.service')
