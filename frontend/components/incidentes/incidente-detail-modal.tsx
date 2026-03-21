@@ -444,7 +444,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     try {
       const result = await crearPresupuesto({
         id_incidente: incidenteId,
-        id_inspeccion: presInspeccionId && presInspeccionId !== '__none__' ? parseInt(presInspeccionId) : null,
+        id_inspeccion: inspecciones[0]?.id_inspeccion ?? null,
         descripcion_detallada: presDescripcion.trim(),
         costo_materiales: materiales || undefined,
         costo_mano_obra: manoObra || undefined,
@@ -962,24 +962,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           rows={2}
                         />
                       </div>
-                      {inspecciones.length > 0 && (
-                        <div className="space-y-2">
-                          <Label>Inspección relacionada (opcional)</Label>
-                          <Select value={presInspeccionId} onValueChange={setPresInspeccionId}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar inspección" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">Sin inspección</SelectItem>
-                              {inspecciones.map((insp: any) => (
-                                <SelectItem key={insp.id_inspeccion} value={insp.id_inspeccion.toString()}>
-                                  #{insp.id_inspeccion} — {format(new Date(insp.fecha_inspeccion), "dd/MM/yy", { locale: es })}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                      <div className="space-y-2">
+                        <Label>Inspección vinculada <span className="text-red-500">*</span></Label>
+                        <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                          Inspección #{inspecciones[0]?.id_inspeccion} — {inspecciones[0] ? format(new Date(inspecciones[0].fecha_inspeccion), "dd/MM/yy", { locale: es }) : ''}
                         </div>
-                      )}
+                      </div>
                       <Button
                         onClick={handleCrearPresupuesto}
                         disabled={savingPresupuesto || !presDescripcion.trim()}
