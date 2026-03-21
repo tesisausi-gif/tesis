@@ -19,7 +19,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   MapPin, Calendar, ClipboardList, Clock, CheckCircle2, Upload,
-  Plus, ImageIcon, Loader2, Phone, Mail, Home, FileText, Wrench,
+  Plus, ImageIcon, Loader2, Phone, Mail, Home, FileText,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -32,7 +32,6 @@ import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.typ
 import { completarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { crearAvance } from '@/features/avances/avances.service'
 import { crearConformidadPorTecnico } from '@/features/conformidades/conformidades.service'
-import { crearInspeccion } from '@/features/inspecciones/inspecciones.service'
 import { createClient } from '@/shared/lib/supabase/client'
 
 interface ConformidadInfo {
@@ -71,11 +70,6 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
   const [fotoPreview, setFotoPreview] = useState<string | null>(null)
   const [uploadingFoto, setUploadingFoto] = useState(false)
 
-  // Dialog: Cargar inspección
-  const [inspeccionDialog, setInspeccionDialog] = useState<{ open: boolean; idIncidente: number } | null>(null)
-  const [inspeccionDesc, setInspeccionDesc] = useState('')
-  const [inspeccionCausas, setInspeccionCausas] = useState('')
-  const [loadingInspeccion, setLoadingInspeccion] = useState(false)
 
   const abrirModal = (id: number) => {
     setIncidenteSeleccionado(id)
@@ -160,33 +154,6 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
     }
   }
 
-  const handleCargarInspeccion = async () => {
-    if (!inspeccionDialog || !inspeccionDesc.trim()) return
-    if (inspeccionDesc.trim().length < 10) {
-      toast.error('La descripción debe tener al menos 10 caracteres')
-      return
-    }
-    setLoadingInspeccion(true)
-    try {
-      const result = await crearInspeccion({
-        id_incidente: inspeccionDialog.idIncidente,
-        id_tecnico: idTecnico,
-        descripcion_inspeccion: inspeccionDesc.trim(),
-        causas_determinadas: inspeccionCausas.trim() || undefined,
-      })
-      if (result.success) {
-        toast.success('Inspección registrada', { description: 'Se ha guardado el reporte de inspección.' })
-        setInspeccionDialog(null)
-        setInspeccionDesc('')
-        setInspeccionCausas('')
-        router.refresh()
-      } else {
-        toast.error('Error', { description: result.error })
-      }
-    } finally {
-      setLoadingInspeccion(false)
-    }
-  }
 
   // Stats
   const totalTrabajos = asignaciones.length
@@ -295,12 +262,6 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
         </div>
 
         <div className="px-6 pb-4 flex flex-wrap gap-2 border-t pt-3" onClick={(e) => e.stopPropagation()}>
-          {incidente && (
-            <Button size="sm" variant="outline" className="gap-1 text-indigo-700 border-indigo-300 hover:bg-indigo-50"
-              onClick={() => { setInspeccionDesc(''); setInspeccionCausas(''); setInspeccionDialog({ open: true, idIncidente: asignacion.id_incidente }) }}>
-              <Wrench className="h-3 w-3" />Cargar Inspección
-            </Button>
-          )}
           {enTrabajo && (
             <>
               <Button size="sm" variant="outline" className="gap-1 text-blue-700 border-blue-300 hover:bg-blue-50"
@@ -417,74 +378,6 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
         onOpenChange={setModalOpen}
         rol="tecnico"
       />
-
-      {/* Dialog: Cargar Inspección */}
-      <Dialog
-        open={inspeccionDialog?.open ?? false}
-        onOpenChange={(o) => {
-          if (!o) {
-            setInspeccionDialog(null)
-            setInspeccionDesc('')
-            setInspeccionCausas('')
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar Inspección</DialogTitle>
-            <DialogDescription>
-              Documenta los resultados de tu inspección técnica para el incidente #{inspeccionDialog?.idIncidente}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="inspeccion-desc">Descripción de la Inspección *</Label>
-              <Textarea
-                id="inspeccion-desc"
-                placeholder="Describe en detalle qué inspeccionaste y qué encontraste..."
-                value={inspeccionDesc}
-                onChange={(e) => setInspeccionDesc(e.target.value)}
-                rows={4}
-                maxLength={1000}
-                disabled={loadingInspeccion}
-              />
-              <p className="text-xs text-gray-500">{inspeccionDesc.length}/1000 caracteres</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="inspeccion-causas">Causas Determinadas (opcional)</Label>
-              <Textarea
-                id="inspeccion-causas"
-                placeholder="Problemas detectados, causas del incidente, recomendaciones..."
-                value={inspeccionCausas}
-                onChange={(e) => setInspeccionCausas(e.target.value)}
-                rows={3}
-                maxLength={500}
-                disabled={loadingInspeccion}
-              />
-              <p className="text-xs text-gray-500">{inspeccionCausas.length}/500 caracteres</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setInspeccionDialog(null)
-                setInspeccionDesc('')
-                setInspeccionCausas('')
-              }}
-              disabled={loadingInspeccion}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleCargarInspeccion}
-              disabled={loadingInspeccion || !inspeccionDesc.trim() || inspeccionDesc.trim().length < 10}
-            >
-              {loadingInspeccion ? 'Guardando...' : 'Registrar Inspección'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Dialog: Registrar Avance */}
       <Dialog open={avanceDialog?.open ?? false} onOpenChange={(o) => !o && setAvanceDialog(null)}>

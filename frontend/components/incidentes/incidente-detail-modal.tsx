@@ -847,18 +847,18 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                             {pres.costo_materiales != null && (
                               <div className="bg-white/70 rounded p-2">
                                 <p className="text-xs text-gray-500">Materiales</p>
-                                <p className="text-sm font-semibold">${pres.costo_materiales.toLocaleString()}</p>
+                                <p className="text-sm font-semibold">${(pres.costo_materiales ?? 0).toLocaleString()}</p>
                               </div>
                             )}
                             {pres.costo_mano_obra != null && (
                               <div className="bg-white/70 rounded p-2">
                                 <p className="text-xs text-gray-500">Mano de obra</p>
-                                <p className="text-sm font-semibold">${pres.costo_mano_obra.toLocaleString()}</p>
+                                <p className="text-sm font-semibold">${(pres.costo_mano_obra ?? 0).toLocaleString()}</p>
                               </div>
                             )}
                             <div className="bg-white/70 rounded p-2">
                               <p className="text-xs text-gray-500">Total</p>
-                              <p className="text-sm font-bold">${pres.costo_total.toLocaleString()}</p>
+                              <p className="text-sm font-bold">${(pres.costo_total ?? 0).toLocaleString()}</p>
                             </div>
                           </div>
                           {pres.alternativas_reparacion && (
