@@ -292,7 +292,7 @@ export function GestionarPendienteModal({
               {incidente.categoria && incidente.categoria === categoria && (
                 <div className="flex items-center gap-2 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
                   <CheckCircle className="h-3.5 w-3.5 shrink-0" />
-                  Ya tiene categoría asignada — podés cambiarla si querés
+                  Categoría actual: <strong>{incidente.categoria}</strong> — podés cambiarla si querés
                 </div>
               )}
 
