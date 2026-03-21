@@ -17,6 +17,7 @@
 | 11 | Modal Gestionar: muestra disponibilidad del cliente, renombra paso 2 a "Solicitud de asignación" | `gestionar-pendiente-modal.tsx` |
 | 12 | Realtime en bandeja de incidentes: se actualiza automáticamente | `incidentes-content.client.tsx` |
 | 13 | Dashboard: badge "Re-asignaciones" cuando técnico rechaza | `badge-counts.service.ts`, `dashboard-content.client.tsx` |
+| 14 | Re-asignación proactiva: admin puede cambiar técnico en cualquier momento desde la bandeja | `asignaciones.service.ts`, `incidentes-content.client.tsx` |
 
 ---
 
@@ -122,6 +123,9 @@ En la sección "Requieren atención" del dashboard, aparece una nueva tarjeta ro
 ### Técnico acepta
 1. Loguearse como técnico → aceptar la asignación.
 2. Sin recargar la página del admin, el incidente desaparece de **Asig. Solicitada** y aparece en **En Proceso**.
+
+### Re-asignación proactiva (cambio 14)
+El botón **Re-asignar** aparece en todos los rows de la bandeja, no solo en los rechazados (naranja = rechazado, gris = esperando respuesta). Al hacer click abre el modal Gestionar. Al confirmar la nueva asignación, `crearAsignacion` cancela automáticamente la asignación pendiente anterior (la pone en `rechazada`) antes de crear la nueva. El técnico original deja de recibir la solicitud.
 
 ### Disponibilidad en modal
 1. Reportar un incidente con comentario de disponibilidad.

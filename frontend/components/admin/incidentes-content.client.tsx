@@ -272,17 +272,15 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      {rechazada && (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => abrirModalGestionar(incidente)}
-                          className="gap-1 bg-orange-600 hover:bg-orange-700"
-                        >
-                          <Wrench className="h-3.5 w-3.5" />
-                          Re-asignar
-                        </Button>
-                      )}
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => abrirModalGestionar(incidente)}
+                        className={`gap-1 ${rechazada ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+                      >
+                        <Wrench className="h-3.5 w-3.5" />
+                        Re-asignar
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"

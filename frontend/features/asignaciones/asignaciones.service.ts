@@ -222,6 +222,13 @@ export async function crearAsignacion(data: {
     const { createAdminClient } = await import('@/shared/lib/supabase/admin')
     const supabase = createAdminClient()
 
+    // Cancelar asignaciones pendientes anteriores (re-asignación por parte del admin)
+    await supabase
+      .from('asignaciones_tecnico')
+      .update({ estado_asignacion: 'rechazada', fecha_rechazo: new Date().toISOString() })
+      .eq('id_incidente', data.id_incidente)
+      .eq('estado_asignacion', 'pendiente')
+
     const { error } = await supabase
       .from('asignaciones_tecnico')
       .insert({
