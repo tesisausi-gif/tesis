@@ -36,6 +36,7 @@ import {
   Save,
   Loader2,
   Send,
+  XCircle,
 } from 'lucide-react'
 import { CategoriaIncidente, EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { InspeccionesList } from './inspecciones-list'
@@ -50,6 +51,7 @@ import {
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
 import { getPresupuestosDelIncidente, crearPresupuesto } from '@/features/presupuestos/presupuestos.service'
+import { PresupuestosClienteList } from '@/components/cliente/presupuestos-cliente-list'
 import type { Presupuesto } from '@/features/presupuestos/presupuestos.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
 
@@ -198,7 +200,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       const asignacionesData = await getAsignacionesDelIncidente(incidenteId)
       setAsignaciones(asignacionesData as unknown as Asignacion[])
 
-      // Cargar inspecciones y presupuestos si el rol es técnico
+      // Cargar datos específicos por rol
       if (rol === 'tecnico') {
         try {
           const [inspeccionesData, presupuestosData] = await Promise.all([
@@ -209,6 +211,15 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           setPresupuestos(presupuestosData)
         } catch (error) {
           console.error('Error al cargar datos del técnico:', error)
+        }
+      }
+
+      if (rol === 'cliente') {
+        try {
+          const presupuestosData = await getPresupuestosDelIncidente(incidenteId)
+          setPresupuestos(presupuestosData)
+        } catch (error) {
+          console.error('Error al cargar presupuestos del cliente:', error)
         }
       }
 
@@ -244,15 +255,15 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       switch (asig.estado_asignacion) {
         case 'pendiente':
-          titulo = 'Asignación Pendiente de Aprobación'
-          color = 'bg-yellow-500'
+          titulo = 'Solicitud de Asignación'
+          color = 'bg-orange-400'
           break
         case 'aceptada':
-          titulo = 'Técnico Asignado'
+          titulo = 'Técnico Aceptó la Asignación'
           color = 'bg-purple-500'
           break
         case 'rechazada':
-          titulo = 'Asignación Rechazada'
+          titulo = 'Técnico Rechazó la Asignación'
           color = 'bg-red-500'
           break
         case 'en_curso':
@@ -302,12 +313,24 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       timelineEvents.push({
         id: `pres-${pres.id_presupuesto}`,
         tipo: 'presupuesto',
-        titulo: `Presupuesto ${pres.estado_presupuesto || ''}`,
+        titulo: 'Presupuesto Enviado',
         descripcion: `Total: $${pres.costo_total?.toLocaleString() || 0}`,
         fecha: pres.fecha_creacion,
         icono: <FileText className="h-4 w-4" />,
         color: 'bg-cyan-500',
       })
+
+      if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
+        timelineEvents.push({
+          id: `pres-rechazado-${pres.id_presupuesto}`,
+          tipo: 'presupuesto',
+          titulo: 'Presupuesto Rechazado',
+          descripcion: 'El incidente volvió a estado Pendiente',
+          fecha: pres.fecha_modificacion,
+          icono: <XCircle className="h-4 w-4" />,
+          color: 'bg-red-500',
+        })
+      }
     })
 
     pagos?.forEach((pago: any) => {
@@ -490,10 +513,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           </div>
         ) : incidente ? (() => {
           const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))
+          const hasClientePresupuesto = rol === 'cliente' && presupuestos.length > 0
+          const hasCalificacion = rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO
           const tabCount = 2
             + (hasTecnicoTabs ? 2 : 0)
             + (rol === 'admin' ? 1 : 0)
-            + (rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO ? 1 : 0)
+            + (hasClientePresupuesto ? 1 : 0)
+            + (hasCalificacion ? 1 : 0)
           const tabGridClass = tabCount === 3 ? 'grid-cols-3' : tabCount === 4 ? 'grid-cols-4' : 'grid-cols-2'
           return (
           <Tabs defaultValue="detalles" className="w-full">
@@ -502,7 +528,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
               {hasTecnicoTabs && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
               {hasTecnicoTabs && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
-              {rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
+              {hasClientePresupuesto && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
+              {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
               {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
             </TabsList>
 
@@ -967,6 +994,16 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </div>
                   </div>
                 )}
+              </TabsContent>
+            )}
+
+            {/* Tab Presupuesto (para clientes con presupuestos) */}
+            {rol === 'cliente' && presupuestos.length > 0 && (
+              <TabsContent value="presupuesto" className="mt-4">
+                <PresupuestosClienteList
+                  presupuestos={presupuestos as any}
+                  onPresupuestoActualizado={() => cargarIncidente()}
+                />
               </TabsContent>
             )}
 

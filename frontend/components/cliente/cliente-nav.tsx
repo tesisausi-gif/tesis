@@ -15,7 +15,6 @@ type BadgeKey = keyof ClienteBadgeCounts
 const navItems: { title: string; icon: React.ElementType; href: string; badge?: BadgeKey }[] = [
   { title: 'Inicio', icon: Home, href: '/cliente' },
   { title: 'Incidentes', icon: AlertCircle, href: '/cliente/incidentes' },
-  { title: 'Presupuestos', icon: FileText, href: '/cliente/presupuestos', badge: 'presupuestos' },
   { title: 'Pagos', icon: DollarSign, href: '/cliente/pagos', badge: 'pagos' as BadgeKey },
   { title: 'Inmuebles', icon: Building2, href: '/cliente/propiedades' },
   { title: 'Perfil', icon: User, href: '/cliente/perfil' },

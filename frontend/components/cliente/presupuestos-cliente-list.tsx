@@ -177,6 +177,13 @@ export function PresupuestosClienteList({
                           </DialogHeader>
 
                           <div className="space-y-4">
+                            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800 flex items-start gap-2">
+                              <X className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="font-semibold">Atención: acción irreversible</p>
+                                <p>Si rechazás el presupuesto, el <strong>incidente quedará finalizado</strong> y no podrá ser reabierto.</p>
+                              </div>
+                            </div>
                             <div className="space-y-2">
                               <Label htmlFor="razon">
                                 ¿Por qué rechazas este presupuesto?
