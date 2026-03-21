@@ -18,6 +18,8 @@
 | 12 | Realtime en bandeja de incidentes: se actualiza automáticamente | `incidentes-content.client.tsx` |
 | 13 | Dashboard: badge "Re-asignaciones" cuando técnico rechaza | `badge-counts.service.ts`, `dashboard-content.client.tsx` |
 | 14 | Re-asignación proactiva: admin puede cambiar técnico en cualquier momento desde la bandeja | `asignaciones.service.ts`, `incidentes-content.client.tsx` |
+| 15 | Portal técnico: "Trabajos" → "Incidentes" + tabs En Proceso / Resueltos | `tecnico-nav.tsx`, `trabajos-content.client.tsx` |
+| 16 | Modal incidente (técnico): tab "Presupuesto" con formulario de creación y estados visuales | `incidente-detail-modal.tsx` |
 
 ---
 
@@ -130,3 +132,49 @@ El botón **Re-asignar** aparece en todos los rows de la bandeja, no solo en los
 ### Disponibilidad en modal
 1. Reportar un incidente con comentario de disponibilidad.
 2. Admin → Gestionar → Paso 1: debe aparecer el comentario de disponibilidad en cursiva dentro de la card azul.
+
+---
+
+## Cambios 15–16: Portal técnico mejorado
+
+### 15. Nombre "Trabajos" → "Incidentes" + tabs de estado
+El ítem de la barra inferior del técnico ahora se llama **Incidentes** (era "Trabajos"). La lista de incidentes del técnico está organizada en dos tabs:
+- **En Proceso** — asignaciones con estado `aceptada` o `en_curso`
+- **Resueltos** — asignaciones con estado `completada`
+
+Cada tab muestra un badge con el count. Cuando no hay asignaciones en ningún estado, se muestra un empty state global.
+
+### 16. Tab "Presupuesto" en el modal de incidente (técnico)
+El modal de detalle de incidente para el técnico ahora incluye una 4ª pestaña **Presupuesto**, visible solo cuando el técnico tiene una asignación activa (aceptada/en_curso/completada).
+
+**Si ya existe un presupuesto**, muestra cada uno con colores según estado:
+- Azul: enviado (pendiente de revisión del admin)
+- Ámbar: aprobado por admin, pendiente de aprobación del cliente
+- Verde: aprobado — listo para ejecutar
+- Rojo: rechazado
+- Gris: vencido
+
+**Si no existe presupuesto**, muestra un formulario de creación:
+- Descripción detallada (obligatoria)
+- Costo materiales + costo mano de obra (el total se calcula automáticamente)
+- Alternativas de reparación (opcional)
+- Selección de inspección relacionada (opcional, muestra las ya cargadas)
+- Si no hay inspecciones, se muestra un aviso informativo
+- Al enviar, el presupuesto queda en estado `enviado` y se notifica al cliente
+
+## Cómo probar los cambios 15–16
+
+### Nav del técnico
+1. Loguearse como técnico → verificar que el ícono central dice "Incidentes" (no "Trabajos").
+
+### Tabs de estado
+1. Técnico → sección Incidentes → verificar tabs "En Proceso" y "Resueltos".
+2. Aceptar una asignación → el incidente aparece en "En Proceso".
+3. Completar un trabajo → el incidente pasa a "Resueltos".
+
+### Tab Presupuesto
+1. Abrir el detalle de un incidente con asignación aceptada → verificar que aparece el tab "Presupuesto".
+2. Sin inspecciones: debe aparecer aviso informativo pero el formulario igual se muestra.
+3. Completar el formulario y enviar → presupuesto creado, tab muestra el presupuesto con badge azul "Enviado".
+4. Admin aprueba el presupuesto → badge cambia a ámbar.
+5. Cliente aprueba → badge cambia a verde.
