@@ -120,6 +120,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             <TableRow>
               <TableHead className="w-[80px]">ID</TableHead>
               <TableHead>Cliente</TableHead>
+              <TableHead>Inmueble</TableHead>
               <TableHead>Fecha Ingreso</TableHead>
               <TableHead className="w-[130px]">Acciones</TableHead>
             </TableRow>
@@ -136,6 +137,17 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                   {incidente.clientes
                     ? `${incidente.clientes.nombre} ${incidente.clientes.apellido}`
                     : '-'}
+                </TableCell>
+                <TableCell className="max-w-[200px]">
+                  {incidente.inmuebles ? (
+                    <Link
+                      href={`/inmueble/${incidente.id_propiedad}`}
+                      className="flex items-center gap-1 text-blue-600 hover:underline truncate"
+                    >
+                      <span className="truncate">{incidente.inmuebles.calle} {incidente.inmuebles.altura}, {incidente.inmuebles.localidad}</span>
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </Link>
+                  ) : '-'}
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
                   {format(new Date(incidente.fecha_registro), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
