@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle, Phone, Mail } from 'lucide-react'
 import { toast } from 'sonner'
-import { getPrioridadColor } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -176,11 +175,6 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales }: Disp
                     {asignacion.incidentes.categoria && (
                       <Badge className={getCategoriaColor(asignacion.incidentes.categoria)}>
                         {asignacion.incidentes.categoria}
-                      </Badge>
-                    )}
-                    {asignacion.incidentes.nivel_prioridad && (
-                      <Badge className={getPrioridadColor(asignacion.incidentes.nivel_prioridad)}>
-                        {asignacion.incidentes.nivel_prioridad}
                       </Badge>
                     )}
                   </div>

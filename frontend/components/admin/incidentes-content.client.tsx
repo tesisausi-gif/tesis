@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +14,7 @@ import { es } from 'date-fns/locale'
 import { AlertCircle, Search, Filter, Eye, Users, Clock, CheckCircle, Wrench, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { EstadoIncidente, CategoriaIncidente } from '@/shared/types'
-import { getEstadoIncidenteLabel, getPrioridadColor } from '@/shared/utils/colors'
+import { getEstadoIncidenteLabel } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { ModalAsignarTecnico } from '@/components/admin/modal-asignar-tecnico'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
@@ -26,6 +27,7 @@ const estados = Object.values(EstadoIncidente)
 const categorias = Object.values(CategoriaIncidente)
 
 export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentProps) {
+  const searchParams = useSearchParams()
   const [filtroEstado, setFiltroEstado] = useState<string>('todos')
   const [filtroCategoria, setFiltroCategoria] = useState<string>('todos')
   const [busqueda, setBusqueda] = useState('')
@@ -33,6 +35,23 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   const [modalOpen, setModalOpen] = useState(false)
   const [modalAsignarOpen, setModalAsignarOpen] = useState(false)
   const [incidenteParaAsignar, setIncidenteParaAsignar] = useState<IncidenteConCliente | null>(null)
+  const [tabActiva, setTabActiva] = useState('pendiente')
+  const [highlightId, setHighlightId] = useState<number | null>(null)
+  const highlightRef = useRef<HTMLTableRowElement | null>(null)
+
+  useEffect(() => {
+    const id = searchParams.get('highlight')
+    if (!id) return
+    const numId = parseInt(id)
+    const incidente = incidentes.find(i => i.id_incidente === numId)
+    if (!incidente) return
+    setTabActiva(incidente.estado_actual)
+    setHighlightId(numId)
+    setTimeout(() => {
+      highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setTimeout(() => setHighlightId(null), 2200)
+    }, 200)
+  }, [])
 
   const incidentesFiltrados = incidentes.filter((incidente) => {
     if (filtroEstado !== 'todos' && incidente.estado_actual !== filtroEstado) {
@@ -101,7 +120,6 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               <TableHead>Cliente</TableHead>
               <TableHead>Inmueble</TableHead>
               <TableHead>Categoría</TableHead>
-              <TableHead>Prioridad</TableHead>
               {mostrarTecnico && <TableHead>Técnico</TableHead>}
               <TableHead>Fecha</TableHead>
               <TableHead className="w-[150px]">Acciones</TableHead>
@@ -111,7 +129,8 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             {incidentesAMostrar.map((incidente) => (
               <TableRow
                 key={incidente.id_incidente}
-                className="hover:bg-gray-50"
+                ref={incidente.id_incidente === highlightId ? highlightRef : undefined}
+                className={`transition-colors duration-[1800ms] ${incidente.id_incidente === highlightId ? 'bg-amber-100' : 'hover:bg-gray-50'}`}
               >
                 <TableCell className="font-medium">
                   #{incidente.id_incidente}
@@ -134,15 +153,6 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 </TableCell>
                 <TableCell>
                   {incidente.categoria || '-'}
-                </TableCell>
-                <TableCell>
-                  {incidente.nivel_prioridad ? (
-                    <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
-                      {incidente.nivel_prioridad}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-gray-400">Sin asignar</Badge>
-                  )}
                 </TableCell>
                 {mostrarTecnico && (
                   <TableCell className="text-sm text-gray-700">
@@ -290,7 +300,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
 
       {/* Tabla de Incidentes por Estado */}
       <div className="space-y-4">
-        <Tabs defaultValue="pendiente" className="w-full">
+        <Tabs value={tabActiva} onValueChange={setTabActiva} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="pendiente" className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
@@ -388,7 +398,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             id_incidente: incidenteParaAsignar.id_incidente,
             descripcion_problema: incidenteParaAsignar.descripcion_problema,
             categoria: incidenteParaAsignar.categoria,
-            nivel_prioridad: incidenteParaAsignar.nivel_prioridad,
+
             nombre_cliente: incidenteParaAsignar.clientes?.nombre,
             apellido_cliente: incidenteParaAsignar.clientes?.apellido,
             calle: incidenteParaAsignar.inmuebles?.calle ?? undefined,

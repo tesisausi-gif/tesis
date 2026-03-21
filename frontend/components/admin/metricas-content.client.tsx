@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { BarChart2, Clock, TrendingUp, Users, AlertCircle, Tag, Filter, Loader2, FileSpreadsheet } from 'lucide-react'
+import { BarChart2, Clock, Users, AlertCircle, Tag, Filter, Loader2, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import type { MetricasDashboard } from '@/features/incidentes/incidentes.types'
@@ -25,20 +25,6 @@ function fechaDesde(periodo: Periodo): string | null {
   const dias: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '6m': 182, '1y': 365 }
   ahora.setDate(ahora.getDate() - dias[periodo])
   return ahora.toISOString().slice(0, 10)
-}
-
-const PRIORIDAD_COLORS: Record<string, string> = {
-  'alta': 'bg-red-500',
-  'media': 'bg-yellow-500',
-  'baja': 'bg-green-500',
-  'Sin prioridad': 'bg-gray-400',
-}
-
-const PRIORIDAD_BADGE: Record<string, string> = {
-  'alta': 'bg-red-100 text-red-800',
-  'media': 'bg-yellow-100 text-yellow-800',
-  'baja': 'bg-green-100 text-green-800',
-  'Sin prioridad': 'bg-gray-100 text-gray-800',
 }
 
 function BarraHorizontal({ valor, maximo, color = 'bg-blue-500' }: { valor: number; maximo: number; color?: string }) {
@@ -286,46 +272,6 @@ export function MetricasContent({ metricas: metricasIniciales }: MetricasContent
           </CardContent>
         </Card>
 
-        {/* Distribución por Prioridad */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-red-600" />
-              Por Prioridad
-            </CardTitle>
-            <CardDescription>Nivel de urgencia de los incidentes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {metricas.distribucionPrioridades.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Sin datos</p>
-            ) : (
-              <div className="space-y-4">
-                {metricas.distribucionPrioridades.map((item) => {
-                  const total = metricas.distribucionPrioridades.reduce((s, p) => s + p.count, 0)
-                  const pct = total > 0 ? Math.round((item.count / total) * 100) : 0
-                  return (
-                    <div key={item.prioridad} className="flex items-center justify-between gap-3">
-                      <Badge className={PRIORIDAD_BADGE[item.prioridad] || 'bg-gray-100 text-gray-800'}>
-                        {item.prioridad}
-                      </Badge>
-                      <div className="flex-1">
-                        <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${PRIORIDAD_COLORS[item.prioridad] || 'bg-gray-400'}`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-sm font-medium text-gray-700 w-12 text-right">
-                        {item.count} <span className="text-gray-400 text-xs">({pct}%)</span>
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {/* Ranking de Técnicos */}

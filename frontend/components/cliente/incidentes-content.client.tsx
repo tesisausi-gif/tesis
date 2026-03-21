@@ -9,7 +9,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Plus, AlertCircle, Eye, Clock } from 'lucide-react'
 import { EstadoIncidente } from '@/shared/types'
-import { getEstadoIncidenteColor, getPrioridadColor } from '@/shared/utils/colors'
+import { getEstadoIncidenteColor } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { Incidente } from '@/features/incidentes/incidentes.types'
 
@@ -22,8 +22,6 @@ export function IncidentesContent({ incidentes }: IncidentesContentProps) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const getEstadoBadgeColor = (estado: string) => getEstadoIncidenteColor(estado)
-
-  const getPrioridadBadgeColor = (prioridad: string) => getPrioridadColor(prioridad)
 
   const abrirModal = (id: number) => {
     setIncidenteSeleccionado(id)
@@ -125,11 +123,7 @@ export function IncidentesContent({ incidentes }: IncidentesContentProps) {
                       <Badge className={getEstadoBadgeColor(incidente.estado_actual)}>
                         {incidente.estado_actual}
                       </Badge>
-                      {incidente.nivel_prioridad && (
-                        <Badge className={getPrioridadBadgeColor(incidente.nivel_prioridad)}>
-                          {incidente.nivel_prioridad}
-                        </Badge>
-                      )}
+
                     </div>
                   </div>
                 </CardHeader>

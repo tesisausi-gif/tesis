@@ -19,7 +19,6 @@ interface IncidenteInfo {
   id_incidente: number
   descripcion_problema: string
   categoria: string | null
-  nivel_prioridad: string | null
   nombre_cliente?: string
   apellido_cliente?: string
   calle?: string
@@ -137,11 +136,7 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
                   <span>{incidente.calle} {incidente.altura}{incidente.localidad ? `, ${incidente.localidad}` : ''}</span>
                 </div>
               )}
-              {incidente.nivel_prioridad && (
-                <Badge variant="outline" className="w-fit text-xs">
-                  Prioridad: {incidente.nivel_prioridad}
-                </Badge>
-              )}
+
             </Card>
 
             {/* Selección de categoría - OBLIGATORIA */}

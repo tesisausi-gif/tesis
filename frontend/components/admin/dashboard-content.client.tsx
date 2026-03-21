@@ -310,15 +310,16 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
           </CardHeader>
           <CardContent>
             {incidentesRecientes.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-1">
                 {incidentesRecientes.map((incidente) => (
-                  <div
+                  <Link
                     key={incidente.id_incidente}
-                    className="flex items-start justify-between gap-4 pb-4 border-b last:border-0 last:pb-0"
+                    href={`/dashboard/incidentes?highlight=${incidente.id_incidente}`}
+                    className="flex items-start justify-between gap-4 py-3 px-2 -mx-2 rounded-md border-b last:border-0 hover:bg-blue-50/60 transition-colors cursor-pointer group"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">#{incidente.id_incidente}</span>
+                        <span className="font-medium text-sm group-hover:text-blue-700 transition-colors">#{incidente.id_incidente}</span>
                         {getEstadoBadge(incidente.estado_actual)}
                       </div>
                       <p className="text-sm text-gray-600 truncate">
@@ -339,7 +340,7 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
                         locale: es,
                       })}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (

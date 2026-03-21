@@ -25,7 +25,6 @@ import { toast } from 'sonner'
 import {
   getEstadoAsignacionColor,
   getEstadoAsignacionLabel,
-  getPrioridadColor,
 } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
@@ -276,11 +275,6 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
                         <Badge variant="outline" className={getEstadoAsignacionColor(estado)}>
                           {getEstadoAsignacionLabel(estado)}
                         </Badge>
-                        {incidente?.nivel_prioridad && (
-                          <Badge variant="outline" className={getPrioridadColor(incidente.nivel_prioridad)}>
-                            {incidente.nivel_prioridad}
-                          </Badge>
-                        )}
                       </div>
                     </div>
                   </CardHeader>

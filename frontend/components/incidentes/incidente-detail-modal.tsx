@@ -126,8 +126,6 @@ const ESTADO_COLORS: Record<string, string> = {
   'resuelto': 'bg-green-100 text-green-800',
 }
 
-const PRIORIDADES = ['Baja', 'Media', 'Alta', 'Urgente']
-
 const ESTADO_ASIGNACION_LABELS: Record<string, string> = {
   'pendiente': 'Pendiente',
   'aceptada': 'Aceptada',
@@ -136,12 +134,6 @@ const ESTADO_ASIGNACION_LABELS: Record<string, string> = {
   'completada': 'Completada',
 }
 
-const PRIORIDAD_COLORS: Record<string, string> = {
-  'Baja': 'bg-green-100 text-green-800',
-  'Media': 'bg-yellow-100 text-yellow-800',
-  'Alta': 'bg-orange-100 text-orange-800',
-  'Urgente': 'bg-red-100 text-red-800',
-}
 
 export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin' }: Props) {
   const [loading, setLoading] = useState(true)
@@ -154,7 +146,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
-  const [nuevaPrioridad, setNuevaPrioridad] = useState('')
   const [nuevaCategoria, setNuevaCategoria] = useState('')
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState('')
   const [observacionesAsignacion, setObservacionesAsignacion] = useState('')
@@ -189,8 +180,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       setIncidente(incidenteData as unknown as IncidenteCompleto)
       setNuevoEstado(incidenteData.estado_actual || '')
-      setNuevaPrioridad(incidenteData.nivel_prioridad || '')
-
       // Cargar asignaciones
       const asignacionesData = await getAsignacionesDelIncidente(incidenteId)
       setAsignaciones(asignacionesData as unknown as Asignacion[])
@@ -344,10 +333,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         updates.estado_actual = nuevoEstado
       }
 
-      if (nuevaPrioridad && nuevaPrioridad !== incidente?.nivel_prioridad) {
-        updates.nivel_prioridad = nuevaPrioridad
-      }
-
       if (nuevaCategoria && nuevaCategoria !== incidente?.categoria) {
         updates.categoria = nuevaCategoria === '__NONE__' ? null : nuevaCategoria
       }
@@ -418,10 +403,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     return ESTADO_COLORS[estado] || 'bg-gray-100 text-gray-800'
   }
 
-  const getPrioridadColor = (prioridad: string) => {
-    return PRIORIDAD_COLORS[prioridad] || 'bg-gray-100 text-gray-800'
-  }
-
   const getEstadoLabel = (estado: string) => {
     return ESTADOS_LABELS[estado] || estado
   }
@@ -457,16 +438,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
             {/* Tab Detalles */}
             <TabsContent value="detalles" className="space-y-4 mt-4">
-              {/* Estado y Prioridad */}
+              {/* Estado y Categoría */}
               <div className="flex flex-wrap gap-2">
                 <Badge className={getEstadoColor(incidente.estado_actual)}>
                   {getEstadoLabel(incidente.estado_actual)}
                 </Badge>
-                {incidente.nivel_prioridad && (
-                  <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
-                    Prioridad: {incidente.nivel_prioridad}
-                  </Badge>
-                )}
                 {incidente.categoria && (
                   <Badge variant="outline">{incidente.categoria}</Badge>
                 )}
@@ -624,14 +600,14 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             {/* Tab Gestión (solo admin) */}
             {rol === 'admin' && (
               <TabsContent value="gestion" className="space-y-6 mt-4">
-                {/* Cambiar Estado y Prioridad */}
+                {/* Cambiar Estado y Categoría */}
                 <div className="space-y-4">
                   <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
                     <Settings className="h-4 w-4" />
-                    Estado y Prioridad
+                    Estado
                   </h4>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Estado</Label>
                       <Select value={nuevoEstado} onValueChange={setNuevoEstado}>
@@ -642,22 +618,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           {ESTADOS_INCIDENTE.map((estado) => (
                             <SelectItem key={estado} value={estado}>
                               {ESTADOS_LABELS[estado] || estado}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Prioridad</Label>
-                      <Select value={nuevaPrioridad} onValueChange={setNuevaPrioridad}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar prioridad" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PRIORIDADES.map((prio) => (
-                            <SelectItem key={prio} value={prio}>
-                              {prio}
                             </SelectItem>
                           ))}
                         </SelectContent>
