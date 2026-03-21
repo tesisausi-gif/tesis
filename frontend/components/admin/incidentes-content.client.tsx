@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +17,7 @@ import { EstadoIncidente, CategoriaIncidente } from '@/shared/types'
 import { getEstadoIncidenteLabel } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { ModalAsignarTecnico } from '@/components/admin/modal-asignar-tecnico'
+import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-modal'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
 
 interface IncidentesAdminContentProps {
@@ -28,6 +29,7 @@ const categorias = Object.values(CategoriaIncidente)
 
 export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentProps) {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [filtroEstado, setFiltroEstado] = useState<string>('todos')
   const [filtroCategoria, setFiltroCategoria] = useState<string>('todos')
   const [busqueda, setBusqueda] = useState('')
@@ -35,6 +37,8 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   const [modalOpen, setModalOpen] = useState(false)
   const [modalAsignarOpen, setModalAsignarOpen] = useState(false)
   const [incidenteParaAsignar, setIncidenteParaAsignar] = useState<IncidenteConCliente | null>(null)
+  const [modalGestionarOpen, setModalGestionarOpen] = useState(false)
+  const [incidenteParaGestionar, setIncidenteParaGestionar] = useState<IncidenteConCliente | null>(null)
   const [tabActiva, setTabActiva] = useState('pendiente')
   const [highlightId, setHighlightId] = useState<number | null>(null)
   const highlightRef = useRef<HTMLTableRowElement | null>(null)
@@ -82,6 +86,11 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     setModalOpen(true)
   }
 
+  const abrirModalGestionar = (incidente: IncidenteConCliente) => {
+    setIncidenteParaGestionar(incidente)
+    setModalGestionarOpen(true)
+  }
+
   const abrirModalAsignar = (incidente: IncidenteConCliente) => {
     setIncidenteParaAsignar(incidente)
     setModalAsignarOpen(true)
@@ -94,6 +103,61 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     i.estado_actual === EstadoIncidente.EN_PROCESO
   ).length
   const resueltos = incidentes.filter(i => i.estado_actual === EstadoIncidente.RESUELTO).length
+
+  const renderTablaPendientes = (lista: IncidenteConCliente[]) => {
+    if (lista.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500">No hay incidentes pendientes</p>
+        </div>
+      )
+    }
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">ID</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Fecha Ingreso</TableHead>
+              <TableHead className="w-[130px]">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {lista.map((incidente) => (
+              <TableRow
+                key={incidente.id_incidente}
+                ref={incidente.id_incidente === highlightId ? highlightRef : undefined}
+                className={`transition-colors duration-[1800ms] ${incidente.id_incidente === highlightId ? 'bg-amber-100' : 'hover:bg-gray-50'}`}
+              >
+                <TableCell className="font-medium">#{incidente.id_incidente}</TableCell>
+                <TableCell>
+                  {incidente.clientes
+                    ? `${incidente.clientes.nombre} ${incidente.clientes.apellido}`
+                    : '-'}
+                </TableCell>
+                <TableCell className="text-sm text-gray-600">
+                  {format(new Date(incidente.fecha_registro), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => abrirModalGestionar(incidente)}
+                    className="gap-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Wrench className="h-3.5 w-3.5" />
+                    Gestionar
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    )
+  }
 
   const getTecnicoAsignado = (incidente: IncidenteConCliente) => {
     const asig = incidente.asignaciones_tecnico?.find(a => a.estado_asignacion === 'aceptada')
@@ -338,7 +402,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {renderTablaIncidentes(incidentesFiltrados.filter(i => i.estado_actual === 'pendiente'))}
+                {renderTablaPendientes(incidentesFiltrados.filter(i => i.estado_actual === 'pendiente'))}
               </CardContent>
             </Card>
           </TabsContent>
@@ -405,7 +469,17 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             altura: incidenteParaAsignar.inmuebles?.altura ?? undefined,
             localidad: incidenteParaAsignar.inmuebles?.localidad ?? undefined,
           }}
-          onAsignarExito={() => { setModalAsignarOpen(false); window.location.reload() }}
+          onAsignarExito={() => { setModalAsignarOpen(false); router.refresh() }}
+        />
+      )}
+
+      {/* Modal de Gestión de Pendientes */}
+      {incidenteParaGestionar && (
+        <GestionarPendienteModal
+          open={modalGestionarOpen}
+          onOpenChange={setModalGestionarOpen}
+          incidente={incidenteParaGestionar}
+          onGestionExito={() => { setModalGestionarOpen(false); router.refresh() }}
         />
       )}
     </div>
