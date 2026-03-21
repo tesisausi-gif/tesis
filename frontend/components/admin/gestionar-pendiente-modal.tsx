@@ -38,6 +38,7 @@ import {
   RefreshCw,
   ChevronLeft,
   Wrench,
+  Clock,
 } from 'lucide-react'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
@@ -130,12 +131,6 @@ function IncidenteInfoCard({ incidente, compact = false }: { incidente: Incident
             </span>
           )}
         </div>
-        {incidente.disponibilidad && (
-          <div className="mt-2 pt-2 border-t border-blue-200">
-            <p className="text-xs font-semibold text-blue-800 mb-0.5">Disponibilidad del cliente:</p>
-            <p className="text-xs text-blue-700 italic">&ldquo;{incidente.disponibilidad}&rdquo;</p>
-          </div>
-        )}
       </CardContent>
     </Card>
   )
@@ -332,6 +327,13 @@ export function GestionarPendienteModal({
         {paso === 2 && (
           <div className="space-y-4">
             <IncidenteInfoCard incidente={{ ...incidente, categoria }} compact />
+
+            {incidente.disponibilidad && (
+              <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                <Clock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span><strong>Disponibilidad del cliente:</strong> {incidente.disponibilidad}</span>
+              </div>
+            )}
 
             {cargandoTecnicos ? (
               <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
