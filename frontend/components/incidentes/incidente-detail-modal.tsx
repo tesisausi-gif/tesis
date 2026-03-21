@@ -421,7 +421,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     try {
       const result = await crearPresupuesto({
         id_incidente: incidenteId,
-        id_inspeccion: presInspeccionId ? parseInt(presInspeccionId) : null,
+        id_inspeccion: presInspeccionId && presInspeccionId !== '__none__' ? parseInt(presInspeccionId) : null,
         descripcion_detallada: presDescripcion.trim(),
         costo_materiales: materiales || undefined,
         costo_mano_obra: manoObra || undefined,
@@ -488,26 +488,23 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : incidente ? (
+        ) : incidente ? (() => {
+          const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))
+          const tabCount = 2
+            + (hasTecnicoTabs ? 2 : 0)
+            + (rol === 'admin' ? 1 : 0)
+            + (rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO ? 1 : 0)
+          const tabGridClass = tabCount === 3 ? 'grid-cols-3' : tabCount === 4 ? 'grid-cols-4' : 'grid-cols-2'
+          return (
           <Tabs defaultValue="detalles" className="w-full">
-            {(() => {
-              const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))
-              const tabCount = 2
-                + (hasTecnicoTabs ? 2 : 0)
-                + (rol === 'admin' ? 1 : 0)
-                + (rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO ? 1 : 0)
-              const gridClass = tabCount === 2 ? 'grid-cols-2' : tabCount === 3 ? 'grid-cols-3' : 'grid-cols-4'
-              return (
-                <TabsList className={`grid w-full ${gridClass}`}>
-                  <TabsTrigger value="detalles">Detalles</TabsTrigger>
-                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                  {hasTecnicoTabs && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
-                  {hasTecnicoTabs && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
-                  {rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
-                  {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
-                </TabsList>
-              )
-            })()}
+            <TabsList className={`grid w-full ${tabGridClass}`}>
+              <TabsTrigger value="detalles">Detalles</TabsTrigger>
+              <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              {hasTecnicoTabs && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
+              {hasTecnicoTabs && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
+              {rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
+              {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
+            </TabsList>
 
             {/* Tab Detalles */}
             <TabsContent value="detalles" className="space-y-4 mt-4">
@@ -946,7 +943,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                               <SelectValue placeholder="Seleccionar inspección" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">Sin inspección</SelectItem>
+                              <SelectItem value="__none__">Sin inspección</SelectItem>
                               {inspecciones.map((insp: any) => (
                                 <SelectItem key={insp.id_inspeccion} value={insp.id_inspeccion.toString()}>
                                   #{insp.id_inspeccion} — {format(new Date(insp.fecha_inspeccion), "dd/MM/yy", { locale: es })}
@@ -995,7 +992,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
               </TabsContent>
             )}
           </Tabs>
-        ) : (
+          )
+        })() : (
           <p className="text-center text-gray-500 py-8">
             No se pudo cargar el incidente
           </p>
