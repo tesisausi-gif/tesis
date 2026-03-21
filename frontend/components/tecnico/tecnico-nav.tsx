@@ -16,7 +16,6 @@ const navItems: { title: string; icon: React.ElementType; href: string; badge?: 
   { title: 'Inicio', icon: Home, href: '/tecnico' },
   { title: 'Asignación', icon: Search, href: '/tecnico/disponibles', badge: 'disponibles' },
   { title: 'Incidentes', icon: ClipboardList, href: '/tecnico/trabajos', badge: 'trabajos' },
-  { title: 'Presupuestos', icon: FileText, href: '/tecnico/presupuestos' },
   { title: 'Cobros', icon: DollarSign, href: '/tecnico/pagos', badge: 'pagos' as BadgeKey },
   { title: 'Perfil', icon: User, href: '/tecnico/perfil' },
 ]

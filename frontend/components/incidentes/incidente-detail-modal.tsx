@@ -876,14 +876,16 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       )
                     })}
                   </div>
+                ) : inspecciones.length === 0 ? (
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold mb-1">Inspección requerida</p>
+                      <p>Debés cargar al menos una inspección antes de poder crear un presupuesto. Andá al tab Inspecciones para registrarla.</p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-5">
-                    {inspecciones.length === 0 && (
-                      <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        <span>Antes de cargar un presupuesto, se recomienda realizar al menos una inspección del incidente.</span>
-                      </div>
-                    )}
                     <div className="space-y-3">
                       <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
                         <FileText className="h-4 w-4" />
