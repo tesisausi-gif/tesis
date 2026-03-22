@@ -838,41 +838,47 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           return (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
-            {!hideTabs && (hasTecnicoTabs ? (
+            {hasTecnicoTabs ? (
               <>
-                {/* ── Info tabs (Detalles / Timeline) ─────────────────── */}
-                <div className="mb-3">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {(['detalles', 'timeline'] as const).map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                          activeTab === tab
-                            ? 'bg-gray-900 text-white shadow-sm'
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                        }`}
-                      >
-                        {tab === 'detalles' ? 'Detalles' : 'Timeline'}
-                      </button>
-                    ))}
+                {/* ── Info tabs (Detalles / Timeline) — ocultos en modo enfocado ── */}
+                {!hideTabs && (
+                  <div className="mb-3">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(['detalles', 'timeline'] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          onClick={() => setActiveTab(tab)}
+                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                            activeTab === tab
+                              ? 'bg-gray-900 text-white shadow-sm'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {tab === 'detalles' ? 'Detalles' : 'Timeline'}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* ── Stepper como navegación principal del flujo ──────── */}
-                <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-                  <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
-                </div>
+                {/* ── Stepper — visible cuando no es info tab (detalles/timeline) ── */}
+                {(!hideTabs || !['detalles', 'timeline'].includes(activeTab)) && (
+                  <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                    <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
+                  </div>
+                )}
               </>
             ) : (
-              <TabsList className={`grid w-full ${tabGridClass}`}>
-                <TabsTrigger value="detalles">Detalles</TabsTrigger>
-                <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                {hasClientePresupuesto && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
-                {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
-                {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
-              </TabsList>
-            ))}
+              !hideTabs && (
+                <TabsList className={`grid w-full ${tabGridClass}`}>
+                  <TabsTrigger value="detalles">Detalles</TabsTrigger>
+                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                  {hasClientePresupuesto && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
+                  {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
+                  {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
+                </TabsList>
+              )
+            )}
 
             {/* Tab Detalles */}
             <TabsContent value="detalles" className="space-y-4 mt-4">
