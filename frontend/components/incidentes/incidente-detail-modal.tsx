@@ -231,57 +231,57 @@ function StepperTecnico({
   steps: StepDef[]
   onStepClick: (tab: string) => void
 }) {
+  const completedCount = steps.filter(s => s.status === 'completed').length
+  const activeStep = steps.find(s => s.status === 'active')
+  const progress = completedCount / steps.length
+
   return (
-    <div className="w-full overflow-x-auto pb-1">
-      <div className="flex items-start min-w-max">
+    <div className="space-y-2">
+      {/* Step track: circles + flex-1 connectors → fully responsive, zero overflow */}
+      <div className="flex items-center w-full">
         {steps.map((step, idx) => {
           const isLast = idx === steps.length - 1
+          const canClick = step.status !== 'locked'
           return (
-            <div key={step.id} className="flex items-start">
-              {/* Step circle + label */}
+            <div key={step.id} className={`flex items-center ${isLast ? '' : 'flex-1'}`}>
               <button
-                onClick={() => step.status !== 'locked' && onStepClick(step.tab)}
-                disabled={step.status === 'locked'}
-                className={`flex flex-col items-center gap-1 px-2 group transition-opacity ${
-                  step.status === 'locked' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
-                }`}
+                onClick={() => canClick && onStepClick(step.tab)}
+                disabled={!canClick}
+                title={`${step.label}: ${step.sublabel}`}
+                className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
+                  step.status === 'completed'
+                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : step.status === 'active'
+                    ? 'bg-amber-500 border-amber-500 text-white ring-4 ring-amber-100'
+                    : 'bg-gray-100 border-gray-200 text-gray-400'
+                } ${canClick ? 'cursor-pointer active:scale-95' : 'cursor-default'}`}
               >
-                {/* Circle */}
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors ${
-                    step.status === 'completed'
-                      ? 'border-green-500 bg-green-500 text-white'
-                      : step.status === 'active'
-                      ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-400'
-                  }`}
-                >
-                  {step.status === 'completed' ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    step.id
-                  )}
-                </div>
-                {/* Labels */}
-                <div className="text-center w-[80px]">
-                  <p className={`text-[11px] font-semibold leading-tight ${
-                    step.status === 'completed' ? 'text-green-600' :
-                    step.status === 'active' ? 'text-blue-700' : 'text-gray-400'
-                  }`}>
-                    {step.label}
-                  </p>
-                  <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{step.sublabel}</p>
-                </div>
+                {step.status === 'completed' ? <CheckCircle className="w-3.5 h-3.5" /> : step.id}
               </button>
-              {/* Connector line */}
               {!isLast && (
-                <div className={`mt-4 h-0.5 w-8 shrink-0 mx-1 transition-colors ${
-                  step.status === 'completed' ? 'bg-green-400' : 'bg-gray-200'
+                <div className={`flex-1 h-0.5 transition-colors duration-300 ${
+                  step.status === 'completed' ? 'bg-emerald-400' : 'bg-gray-200'
                 }`} />
               )}
             </div>
           )
         })}
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-amber-400 to-emerald-500 rounded-full transition-all duration-500"
+          style={{ width: `${progress * 100}%` }}
+        />
+      </div>
+
+      {/* Current step label */}
+      <div className="flex items-center justify-between">
+        <p className={`text-xs font-semibold ${activeStep ? 'text-amber-700' : 'text-emerald-700'}`}>
+          {activeStep ? `Paso ${activeStep.id}: ${activeStep.label}` : '✓ Todos los pasos completados'}
+        </p>
+        <span className="text-[10px] text-gray-400">{completedCount} de {steps.length}</span>
       </div>
     </div>
   )
@@ -806,23 +806,98 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             ]
           }
 
+          const steps = computeSteps()
+
           return (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            {hasTecnicoTabs && (
-              <div className="mb-4 rounded-xl border bg-gray-50 p-3">
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-3">Progreso del trabajo</p>
-                <StepperTecnico steps={computeSteps()} onStepClick={setActiveTab} />
-              </div>
+
+            {hasTecnicoTabs ? (
+              <>
+                {/* ── Stepper ─────────────────────────────────────────── */}
+                <div className="mb-4 rounded-xl border border-amber-100 bg-gradient-to-b from-amber-50/80 to-white p-3">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-amber-700/60 block mb-2.5">
+                    Progreso del trabajo
+                  </span>
+                  <StepperTecnico steps={steps} onStepClick={setActiveTab} />
+                </div>
+
+                {/* ── Navegación en dos grupos ─────────────────────────── */}
+                <div className="mb-4 space-y-2">
+                  {/* Grupo: Información */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="h-px flex-1 bg-gray-100" />
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Información</span>
+                      <div className="h-px flex-1 bg-gray-100" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(['detalles', 'timeline'] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          onClick={() => setActiveTab(tab)}
+                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                            activeTab === tab
+                              ? 'bg-gray-900 text-white shadow-sm'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+                          }`}
+                        >
+                          {tab === 'detalles' ? 'Detalles' : 'Timeline'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Grupo: Flujo de trabajo */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="h-px flex-1 bg-amber-200" />
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-amber-600">Flujo de trabajo</span>
+                      <div className="h-px flex-1 bg-amber-200" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {([
+                        { v: 'inspecciones', l: 'Inspección', stepIdx: 0 },
+                        { v: 'presupuesto',  l: 'Presupuesto', stepIdx: 1 },
+                      ] as const).map(({ v, l, stepIdx }) => {
+                        const stepStatus = steps[stepIdx].status
+                        const isActive = activeTab === v
+                        return (
+                          <button
+                            key={v}
+                            onClick={() => setActiveTab(v)}
+                            className={`relative py-2 text-xs font-semibold rounded-lg transition-all ${
+                              isActive
+                                ? 'bg-amber-500 text-white shadow-sm'
+                                : stepStatus === 'active'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+                                : stepStatus === 'completed'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-gray-100 text-gray-400 cursor-default'
+                            }`}
+                          >
+                            {stepStatus === 'completed' && !isActive && (
+                              <span className="absolute top-1 right-1.5 text-[8px] text-emerald-500 font-bold">✓</span>
+                            )}
+                            {stepStatus === 'active' && !isActive && (
+                              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            )}
+                            {l}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <TabsList className={`grid w-full ${tabGridClass}`}>
+                <TabsTrigger value="detalles">Detalles</TabsTrigger>
+                <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                {hasClientePresupuesto && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
+                {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
+                {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
+              </TabsList>
             )}
-            <TabsList className={`grid w-full ${tabGridClass}`}>
-              <TabsTrigger value="detalles">Detalles</TabsTrigger>
-              <TabsTrigger value="timeline">Timeline</TabsTrigger>
-              {hasTecnicoTabs && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
-              {hasTecnicoTabs && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
-              {hasClientePresupuesto && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
-              {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
-              {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
-            </TabsList>
 
             {/* Tab Detalles */}
             <TabsContent value="detalles" className="space-y-4 mt-4">
