@@ -108,18 +108,6 @@ export function NotificacionesPanel({ notificaciones: inicial, rol, onNotificaci
   const hoy = items.filter(n => isToday(new Date(n.fecha_creacion)))
   const anteriores = items.filter(n => !isToday(new Date(n.fecha_creacion)))
 
-  if (items.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 mb-4">
-          <Inbox className="h-8 w-8 text-gray-400" />
-        </div>
-        <p className="text-base font-semibold text-gray-700">Todo al día</p>
-        <p className="text-sm text-gray-400 mt-1">No tenés notificaciones pendientes</p>
-      </div>
-    )
-  }
-
   const renderNotif = (n: Notificacion) => {
     const cfg = getCategoriaConfig(n.tipo)
     const Icon = cfg.icon
@@ -186,17 +174,30 @@ export function NotificacionesPanel({ notificaciones: inicial, rol, onNotificaci
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5 text-gray-700" />
           <span className="text-sm font-semibold text-gray-700">
-            {items.length} sin leer
+            {items.length > 0 ? `${items.length} sin leer` : 'Notificaciones'}
           </span>
         </div>
-        <button
-          onClick={descartarTodas}
-          className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-        >
-          <CheckCheck className="h-3.5 w-3.5" />
-          Marcar todas como leídas
-        </button>
+        {items.length > 0 && (
+          <button
+            onClick={descartarTodas}
+            className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            <CheckCheck className="h-3.5 w-3.5" />
+            Marcar todas como leídas
+          </button>
+        )}
       </div>
+
+      {/* Estado vacío */}
+      {items.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 mb-3">
+            <Inbox className="h-7 w-7 text-gray-400" />
+          </div>
+          <p className="text-sm font-semibold text-gray-700">Todo al día</p>
+          <p className="text-xs text-gray-400 mt-1">No hay notificaciones pendientes</p>
+        </div>
+      )}
 
       {/* Grupo HOY */}
       {hoy.length > 0 && (
