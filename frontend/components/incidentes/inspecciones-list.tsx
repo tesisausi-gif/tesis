@@ -190,9 +190,14 @@ export function InspeccionesList({
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     <div className="space-y-2">
-                      <span className="text-xs text-gray-600 font-medium">
-                        {format(new Date(inspeccion.fecha_inspeccion || new Date()), 'dd MMM yyyy', { locale: es })}
-                      </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-0.5">
+                          Inspección #{inspeccion.id_inspeccion}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {format(new Date(inspeccion.fecha_inspeccion || new Date()), 'dd MMM yyyy', { locale: es })}
+                        </span>
+                      </div>
                       <p className="font-medium text-sm">{inspeccion.descripcion_inspeccion}</p>
                     </div>
 
