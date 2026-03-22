@@ -59,14 +59,20 @@ import { PresupuestosClienteList } from '@/components/cliente/presupuestos-clien
 import type { Presupuesto } from '@/features/presupuestos/presupuestos.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
 
+interface TimelineEventDetalle {
+  label: string
+  value: string
+}
+
 interface TimelineEvent {
   id: string
-  tipo: 'creacion' | 'asignacion' | 'inspeccion' | 'presupuesto' | 'pago' | 'conformidad' | 'calificacion' | 'estado'
+  tipo: 'creacion' | 'asignacion' | 'inspeccion' | 'presupuesto' | 'pago' | 'conformidad' | 'calificacion' | 'estado' | 'avance'
   titulo: string
   descripcion: string
   fecha: string
   icono: React.ReactNode
   color: string
+  detalleItems?: TimelineEventDetalle[]
 }
 
 interface IncidenteCompleto {
@@ -209,6 +215,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [saving, setSaving] = useState(false)
   const [incidente, setIncidente] = useState<IncidenteCompleto | null>(null)
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([])
   const [inspecciones, setInspecciones] = useState<any[]>([])
@@ -361,24 +368,61 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       })
     })
 
-    // Cargar inspecciones, presupuestos y pagos para timeline
-    const { inspecciones, presupuestos, pagos } = await getTimelineData(incidenteData.id_incidente)
+    // Cargar inspecciones, presupuestos, pagos y avances para timeline
+    const { inspecciones, presupuestos, pagos, avances } = await getTimelineData(incidenteData.id_incidente)
 
     inspecciones?.forEach((insp: any) => {
+      const tecnicoNombre = insp.tecnicos ? `${insp.tecnicos.nombre} ${insp.tecnicos.apellido}`.trim() : null
+      const detalle: TimelineEventDetalle[] = []
+      if (tecnicoNombre) detalle.push({ label: 'Técnico', value: tecnicoNombre })
+      if (insp.descripcion_inspeccion) detalle.push({ label: 'Descripción', value: insp.descripcion_inspeccion })
+      if (insp.causas_determinadas) detalle.push({ label: 'Causas', value: insp.causas_determinadas })
+      if (insp.danos_ocasionados) detalle.push({ label: 'Daños', value: insp.danos_ocasionados })
+      if (insp.dias_estimados_trabajo) detalle.push({ label: 'Días estimados', value: String(insp.dias_estimados_trabajo) })
+
       timelineEvents.push({
         id: `insp-${insp.id_inspeccion}`,
         tipo: 'inspeccion',
         titulo: 'Inspección Realizada',
-        descripcion: insp.descripcion_inspeccion || 'Sin descripción',
+        descripcion: tecnicoNombre ? `Por ${tecnicoNombre}` : (insp.descripcion_inspeccion || 'Sin descripción'),
         fecha: insp.fecha_inspeccion,
         icono: <ClipboardList className="h-4 w-4" />,
         color: 'bg-orange-500',
+        detalleItems: detalle.length > 0 ? detalle : undefined,
+      })
+    })
+
+    avances?.forEach((av: any) => {
+      if (rolActual === 'cliente') return // el cliente no ve avances técnicos
+      const tecnicoNombre = av.tecnicos ? `${av.tecnicos.nombre} ${av.tecnicos.apellido}`.trim() : null
+      const detalle: TimelineEventDetalle[] = []
+      if (tecnicoNombre) detalle.push({ label: 'Técnico', value: tecnicoNombre })
+      if (av.descripcion_avance) detalle.push({ label: 'Detalle', value: av.descripcion_avance })
+      if (av.porcentaje_completado != null) detalle.push({ label: 'Progreso', value: `${av.porcentaje_completado}%` })
+      if (av.observaciones) detalle.push({ label: 'Observaciones', value: av.observaciones })
+
+      timelineEvents.push({
+        id: `avance-${av.id_avance}`,
+        tipo: 'avance',
+        titulo: 'Avance de Reparación',
+        descripcion: av.porcentaje_completado != null ? `${av.porcentaje_completado}% completado` : (av.descripcion_avance || 'Sin descripción'),
+        fecha: av.fecha_avance,
+        icono: <Wrench className="h-4 w-4" />,
+        color: 'bg-indigo-500',
+        detalleItems: detalle.length > 0 ? detalle : undefined,
       })
     })
 
     presupuestos?.forEach((pres: any) => {
+      const detalleBase: TimelineEventDetalle[] = []
+      if (pres.descripcion_detallada) detalleBase.push({ label: 'Descripción', value: pres.descripcion_detallada })
+      if (pres.costo_materiales != null) detalleBase.push({ label: 'Materiales', value: `$${Number(pres.costo_materiales).toLocaleString()}` })
+      if (pres.costo_mano_obra != null) detalleBase.push({ label: 'Mano de obra', value: `$${Number(pres.costo_mano_obra).toLocaleString()}` })
+      if (pres.gastos_administrativos) detalleBase.push({ label: 'Gastos adm.', value: `$${Number(pres.gastos_administrativos).toLocaleString()}` })
+      detalleBase.push({ label: 'Total', value: `$${(pres.costo_total ?? 0).toLocaleString()}` })
+      if (pres.alternativas_reparacion) detalleBase.push({ label: 'Alternativas', value: pres.alternativas_reparacion })
+
       if (rolActual === 'cliente') {
-        // El cliente solo ve el presupuesto que la inmobiliaria le envía (aprobado_admin o aprobado)
         if (!['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto)) return
         timelineEvents.push({
           id: `pres-${pres.id_presupuesto}`,
@@ -388,6 +432,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           fecha: pres.fecha_modificacion || pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
           color: 'bg-cyan-500',
+          detalleItems: detalleBase,
         })
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
           timelineEvents.push({
@@ -410,6 +455,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           fecha: pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
           color: 'bg-cyan-500',
+          detalleItems: detalleBase,
         })
         if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
           timelineEvents.push({
@@ -420,6 +466,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             fecha: pres.fecha_modificacion,
             icono: <CheckCircle className="h-4 w-4" />,
             color: 'bg-amber-500',
+            detalleItems: detalleBase,
           })
         }
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
@@ -448,14 +495,22 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     })
 
     pagos?.forEach((pago: any) => {
+      const detalle: TimelineEventDetalle[] = [
+        { label: 'Monto', value: `$${(pago.monto_pagado ?? 0).toLocaleString()}` },
+      ]
+      if (pago.metodo_pago) detalle.push({ label: 'Método', value: pago.metodo_pago })
+      if (pago.referencia_pago) detalle.push({ label: 'Referencia', value: pago.referencia_pago })
+      if (pago.observaciones) detalle.push({ label: 'Observaciones', value: pago.observaciones })
+
       timelineEvents.push({
         id: `pago-${pago.id_pago}`,
         tipo: 'pago',
         titulo: `Pago Registrado`,
-        descripcion: `$${pago.monto_pagado?.toLocaleString() || 0} - ${pago.metodo_pago || ''}`,
+        descripcion: `$${(pago.monto_pagado ?? 0).toLocaleString()}${pago.metodo_pago ? ` — ${pago.metodo_pago}` : ''}`,
         fecha: pago.fecha_pago,
         icono: <DollarSign className="h-4 w-4" />,
         color: 'bg-green-500',
+        detalleItems: detalle,
       })
     })
 
@@ -779,22 +834,46 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   <div className="relative">
                     <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-gray-200" />
                     <div className="space-y-4">
-                      {timeline.map((event) => (
-                        <div key={event.id} className="relative flex gap-3">
-                          <div className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full ${event.color} text-white`}>
-                            {event.icono}
-                          </div>
-                          <div className="flex-1 pb-2">
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium">{event.titulo}</p>
-                              <span className="text-xs text-gray-500">
-                                {format(new Date(event.fecha), "dd/MM/yy HH:mm", { locale: es })}
-                              </span>
+                      {timeline.map((event) => {
+                        const isExpanded = expandedEventId === event.id
+                        const hasDetail = event.detalleItems && event.detalleItems.length > 0
+                        return (
+                          <div key={event.id} className="relative flex gap-3">
+                            <div className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${event.color} text-white`}>
+                              {event.icono}
                             </div>
-                            <p className="text-xs text-gray-600 mt-0.5">{event.descripcion}</p>
+                            <div className="flex-1 pb-2">
+                              <button
+                                onClick={() => setExpandedEventId(isExpanded ? null : event.id)}
+                                className={`w-full text-left ${hasDetail ? 'cursor-pointer' : 'cursor-default'}`}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-sm font-medium">{event.titulo}</p>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <span className="text-xs text-gray-500">
+                                      {format(new Date(event.fecha), "dd/MM/yy HH:mm", { locale: es })}
+                                    </span>
+                                    {hasDetail && (
+                                      <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                    )}
+                                  </div>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-0.5">{event.descripcion}</p>
+                              </button>
+                              {isExpanded && hasDetail && (
+                                <div className="mt-2 rounded-md border bg-gray-50 p-3 space-y-1.5">
+                                  {event.detalleItems!.map((item, i) => (
+                                    <div key={i} className="grid grid-cols-[100px_1fr] gap-2 text-xs">
+                                      <span className="font-medium text-gray-500">{item.label}</span>
+                                      <span className="text-gray-800">{item.value}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 ) : (

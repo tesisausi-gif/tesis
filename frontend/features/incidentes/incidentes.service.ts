@@ -161,7 +161,7 @@ export async function getAsignacionesDelIncidente(idIncidente: number) {
 export async function getTimelineData(idIncidente: number) {
   const supabase = await createClient()
 
-  const [inspecciones, presupuestos, pagos] = await Promise.all([
+  const [inspecciones, presupuestos, pagos, avances] = await Promise.all([
     supabase
       .from('inspecciones')
       .select('*, tecnicos(nombre, apellido)')
@@ -177,12 +177,18 @@ export async function getTimelineData(idIncidente: number) {
       .select('*')
       .eq('id_incidente', idIncidente)
       .order('fecha_pago', { ascending: true }),
+    supabase
+      .from('avances_reparacion')
+      .select('*, tecnicos(nombre, apellido)')
+      .eq('id_incidente', idIncidente)
+      .order('fecha_avance', { ascending: true }),
   ])
 
   return {
     inspecciones: inspecciones.data || [],
     presupuestos: presupuestos.data || [],
     pagos: pagos.data || [],
+    avances: avances.data || [],
   }
 }
 
