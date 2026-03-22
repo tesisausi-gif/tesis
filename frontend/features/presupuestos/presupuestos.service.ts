@@ -296,16 +296,20 @@ export async function rechazarPresupuesto(
   _razonRechazo?: string
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
     await requireAdminOrGestorId()
+    const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+    const supabase = createAdminClient()
 
     // Obtener id_incidente del presupuesto
-    const { data: pres } = await supabase
+    const { data: pres, error: errGet } = await supabase
       .from('presupuestos')
       .select('id_incidente')
       .eq('id_presupuesto', idPresupuesto)
       .single()
 
+    if (errGet || !pres) return { success: false, error: 'Presupuesto no encontrado' }
+
+    // Marcar presupuesto como rechazado
     const { error } = await supabase
       .from('presupuestos')
       .update({ estado_presupuesto: EstadoPresupuesto.RECHAZADO })
@@ -313,30 +317,28 @@ export async function rechazarPresupuesto(
 
     if (error) return { success: false, error: error.message }
 
-    if (pres?.id_incidente) {
-      // Desvincular técnico: marcar asignación activa como rechazada
-      const { data: asig } = await supabase
-        .from('asignaciones_tecnico')
-        .select('id_asignacion')
-        .eq('id_incidente', pres.id_incidente)
-        .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
-        .maybeSingle()
+    // Desvincular técnico: marcar asignación activa como rechazada
+    const { data: asig } = await supabase
+      .from('asignaciones_tecnico')
+      .select('id_asignacion')
+      .eq('id_incidente', pres.id_incidente)
+      .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
+      .maybeSingle()
 
-      if (asig) {
-        await supabase
-          .from('asignaciones_tecnico')
-          .update({ estado_asignacion: 'rechazada' })
-          .eq('id_asignacion', asig.id_asignacion)
-      }
-
-      // Volver incidente a pendiente para búsqueda de nuevo técnico
+    if (asig) {
       await supabase
-        .from('incidentes')
-        .update({ estado_actual: 'pendiente' })
-        .eq('id_incidente', pres.id_incidente)
+        .from('asignaciones_tecnico')
+        .update({ estado_asignacion: 'rechazada', fecha_rechazo: new Date().toISOString() })
+        .eq('id_asignacion', asig.id_asignacion)
     }
 
-    // Notificar al técnico que el presupuesto fue rechazado (fire-and-forget)
+    // Volver incidente a pendiente para nueva asignación
+    await supabase
+      .from('incidentes')
+      .update({ estado_actual: 'pendiente' })
+      .eq('id_incidente', pres.id_incidente)
+
+    // Notificar al técnico por email (fire-and-forget)
     const { notificarTecnicoPresupuestoRechazado } = await import('@/features/notificaciones/notificaciones.service')
     notificarTecnicoPresupuestoRechazado(idPresupuesto).catch(console.error)
 
