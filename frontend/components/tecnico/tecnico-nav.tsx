@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, ClipboardList, User, LogOut, Wrench, FileText, Search, DollarSign, Bell } from 'lucide-react'
+import { Home, ClipboardList, User, LogOut, Wrench, Search } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -16,7 +16,6 @@ const navItems: { title: string; icon: React.ElementType; href: string; badge?: 
   { title: 'Inicio', icon: Home, href: '/tecnico' },
   { title: 'Asignación', icon: Search, href: '/tecnico/disponibles', badge: 'disponibles' },
   { title: 'Incidentes', icon: ClipboardList, href: '/tecnico/trabajos', badge: 'trabajos' },
-  { title: 'Alertas', icon: Bell, href: '/tecnico/notificaciones', badge: 'notificaciones' as BadgeKey },
   { title: 'Perfil', icon: User, href: '/tecnico/perfil' },
 ]
 

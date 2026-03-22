@@ -1,9 +1,10 @@
 import { createClient } from '@/shared/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ClipboardList, CheckCircle2, Clock, Star, Bell } from 'lucide-react'
+import { ClipboardList, CheckCircle2, Clock, Star } from 'lucide-react'
 import Link from 'next/link'
 import { getTecnicoBadgeCounts } from '@/features/notificaciones/badge-counts.service'
-import { contarNotificacionesTecnico } from '@/features/notificaciones/notificaciones-inapp.service'
+import { getNotificacionesTecnico } from '@/features/notificaciones/notificaciones-inapp.service'
+import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,9 +27,9 @@ export default async function TecnicoDashboard() {
     .select('*, incidentes(*)')
     .eq('id_tecnico', tecnico?.id_tecnico)
 
-  const [badgeCounts, cantNotif] = await Promise.all([
+  const [badgeCounts, notificaciones] = await Promise.all([
     getTecnicoBadgeCounts().catch(() => ({ disponibles: 0, trabajos: 0, pagos: 0, notificaciones: 0 })),
-    contarNotificacionesTecnico().catch(() => 0),
+    getNotificacionesTecnico().catch(() => []),
   ])
 
   const trabajosActivos = asignaciones?.filter(a => a.estado_asignacion === 'en_curso').length || 0
@@ -121,25 +122,12 @@ export default async function TecnicoDashboard() {
         </Card>
       </div>
 
-      {/* Banner notificaciones no leídas */}
-      {cantNotif > 0 && (
-        <Link href="/tecnico/notificaciones" className="block">
-          <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 hover:bg-red-100 transition-colors">
-            <div className="relative flex-shrink-0">
-              <Bell className="h-5 w-5 text-red-600" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-                {cantNotif > 9 ? '9+' : cantNotif}
-              </span>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-red-800">
-                {cantNotif === 1 ? '1 notificación sin leer' : `${cantNotif} notificaciones sin leer`}
-              </p>
-              <p className="text-xs text-red-600">Tocá para ver →</p>
-            </div>
-          </div>
-        </Link>
-      )}
+      {/* Notificaciones */}
+      <Card className="border-2">
+        <CardContent className="pt-5">
+          <NotificacionesPanel notificaciones={notificaciones} rol="tecnico" />
+        </CardContent>
+      </Card>
     </div>
   )
 }
