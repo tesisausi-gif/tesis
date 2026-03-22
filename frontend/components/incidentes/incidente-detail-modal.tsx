@@ -350,7 +350,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         cargarTecnicos()
       }
     }
-  }, [open, incidenteId])
+  }, [open, incidenteId, initialTab])
 
   const cargarTecnicos = async () => {
     try {

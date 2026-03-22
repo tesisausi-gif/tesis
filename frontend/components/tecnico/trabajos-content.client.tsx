@@ -254,34 +254,46 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
             {incidente?.categoria && <span>{incidente.categoria}</span>}
           </div>
 
-          {/* 3 botones de navegación directa */}
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-gray-700"
+          {/* 3 acciones directas — touch-friendly */}
+          <div className="flex flex-col gap-1.5 pt-1">
+            <button
               onClick={() => abrirModal(asignacion.id_incidente, 'detalles')}
+              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 active:scale-[0.98] transition-all text-left"
             >
-              <FileText className="h-3.5 w-3.5" />
-              Detalles
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-gray-700"
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white border border-gray-200 flex-shrink-0">
+                <FileText className="h-4 w-4 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Detalles</p>
+                <p className="text-xs text-gray-400">Info del incidente y cliente</p>
+              </div>
+            </button>
+
+            <button
               onClick={() => abrirModal(asignacion.id_incidente, 'timeline')}
+              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 active:scale-[0.98] transition-all text-left"
             >
-              <Clock className="h-3.5 w-3.5" />
-              Timeline
-            </Button>
-            <Button
-              size="sm"
-              className="gap-1.5 bg-gray-900 hover:bg-gray-800 text-white"
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white border border-gray-200 flex-shrink-0">
+                <Clock className="h-4 w-4 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Timeline</p>
+                <p className="text-xs text-gray-400">Historial de eventos</p>
+              </div>
+            </button>
+
+            <button
               onClick={() => abrirModal(asignacion.id_incidente, 'inspecciones')}
+              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl bg-gray-900 hover:bg-gray-800 active:scale-[0.98] transition-all text-left"
             >
-              <Wrench className="h-3.5 w-3.5" />
-              Gestión
-            </Button>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 flex-shrink-0">
+                <Wrench className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">Gestión</p>
+                <p className="text-xs text-white/60">Inspección · Presupuesto · Ejecución</p>
+              </div>
+            </button>
           </div>
         </CardContent>
 
