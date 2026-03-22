@@ -247,12 +247,32 @@ export async function enviarPresupuesto(idPresupuesto: number): Promise<ActionRe
   try {
     const supabase = await createClient()
 
+    // Obtener id_incidente para la notificación
+    const { data: pres } = await supabase
+      .from('presupuestos')
+      .select('id_incidente')
+      .eq('id_presupuesto', idPresupuesto)
+      .single()
+
     const { error } = await supabase
       .from('presupuestos')
       .update({ estado_presupuesto: EstadoPresupuesto.ENVIADO })
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al admin que hay un presupuesto para revisar (fire-and-forget)
+    if (pres?.id_incidente) {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      crearNotificacionAdmin({
+        tipo: 'presupuesto_enviado_admin',
+        titulo: 'Presupuesto para revisar',
+        mensaje: `El técnico envió un presupuesto para el incidente #${pres.id_incidente}. Revisalo y aprobalo para continuar.`,
+        id_incidente: pres.id_incidente,
+        id_presupuesto: idPresupuesto,
+      }).catch(console.error)
+    }
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al enviar presupuesto' }
@@ -387,7 +407,7 @@ export async function rechazarPresupuesto(
           id_tecnico: asigConTecnico.id_tecnico,
           tipo: 'presupuesto_rechazado',
           titulo: 'Presupuesto rechazado',
-          mensaje: 'La inmobiliaria rechazó tu presupuesto. Tu asignación fue revocada.',
+          mensaje: `La administración rechazó tu presupuesto del incidente #${pres.id_incidente}. Tu asignación fue revocada.`,
           id_incidente: pres.id_incidente,
           id_presupuesto: idPresupuesto,
         }).catch(console.error)
@@ -476,7 +496,7 @@ export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<
           id_tecnico: asig.id_tecnico,
           tipo: 'presupuesto_aprobado_cliente',
           titulo: '¡Presupuesto aprobado!',
-          mensaje: 'El cliente aprobó tu presupuesto. Ya podés comenzar el trabajo.',
+          mensaje: `El cliente aprobó el presupuesto del incidente #${pres.id_incidente}. Ya podés comenzar el trabajo.`,
           id_incidente: pres.id_incidente,
           id_presupuesto: idPresupuesto,
         }).catch(console.error)

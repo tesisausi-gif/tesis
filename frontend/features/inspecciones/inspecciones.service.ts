@@ -116,6 +116,16 @@ export async function crearInspeccion(data: {
       .single()
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al admin que se realizó la inspección (fire-and-forget)
+    const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+    crearNotificacionAdmin({
+      tipo: 'inspeccion_realizada',
+      titulo: 'Inspección realizada',
+      mensaje: `El técnico completó la inspección del incidente #${data.id_incidente}. Ya puede cargar el presupuesto.`,
+      id_incidente: data.id_incidente,
+    }).catch(console.error)
+
     return { success: true, data: inspeccion as Inspeccion }
   } catch (error) {
     return { success: false, error: 'Error inesperado al crear inspección' }

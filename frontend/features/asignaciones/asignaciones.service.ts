@@ -245,7 +245,16 @@ export async function crearAsignacion(data: {
       .eq('id_incidente', data.id_incidente)
       .in('estado_actual', ['pendiente', 'asignacion_solicitada'])
 
-    // Notificar al técnico (fire-and-forget)
+    // Notificar al técnico: in-app + email (fire-and-forget)
+    const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+    crearNotificacion({
+      id_tecnico: data.id_tecnico,
+      tipo: 'nueva_asignacion',
+      titulo: 'Nueva asignación',
+      mensaje: `Se te asignó el incidente #${data.id_incidente}. Revisá los detalles y aceptá o rechazá la asignación.`,
+      id_incidente: data.id_incidente,
+    }).catch(console.error)
+
     const { notificarNuevaAsignacion } = await import('@/features/notificaciones/notificaciones.service')
     notificarNuevaAsignacion(data.id_incidente, data.id_tecnico).catch(console.error)
 

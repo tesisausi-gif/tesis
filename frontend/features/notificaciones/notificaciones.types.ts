@@ -38,6 +38,8 @@ export const TIPO_CATEGORIA: Record<string, TipoNotificacionCategoria> = {
   nueva_asignacion: 'informativo',
   nuevo_avance: 'informativo',
   nuevo_incidente: 'informativo',
+  inspeccion_realizada: 'informativo',
+  presupuesto_enviado_admin: 'pendiente',
 }
 
 // ─── Email ─────────────────────────────────────────────────────────────────

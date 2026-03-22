@@ -91,7 +91,7 @@ function getNavUrl(
   }
   if (rol === 'admin') {
     if (tipo === 'nueva_conformidad') return '/dashboard/conformidades'
-    if (['presupuesto_enviado', 'presupuesto_aprobado_cliente', 'presupuesto_rechazado_cliente'].includes(tipo))
+    if (['presupuesto_enviado', 'presupuesto_enviado_admin', 'presupuesto_aprobado_cliente', 'presupuesto_rechazado_cliente'].includes(tipo))
       return '/dashboard/presupuestos'
     if (tipo === 'solicitud_registro') return '/dashboard/tecnicos'
     if (idIncidente) return `/dashboard/incidentes?highlight=${idIncidente}`
