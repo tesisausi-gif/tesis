@@ -326,10 +326,30 @@ export async function rechazarPresupuesto(
       .maybeSingle()
 
     if (asig) {
+      // Obtener id_tecnico de la asignacion para crear notificacion
+      const { data: asigConTecnico } = await supabase
+        .from('asignaciones_tecnico')
+        .select('id_tecnico')
+        .eq('id_asignacion', asig.id_asignacion)
+        .single()
+
       await supabase
         .from('asignaciones_tecnico')
         .update({ estado_asignacion: 'rechazada', fecha_rechazo: new Date().toISOString() })
         .eq('id_asignacion', asig.id_asignacion)
+
+      // Crear notificación in-app para el técnico
+      if (asigConTecnico?.id_tecnico) {
+        const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        crearNotificacion({
+          id_tecnico: asigConTecnico.id_tecnico,
+          tipo: 'presupuesto_rechazado',
+          titulo: 'Presupuesto rechazado',
+          mensaje: 'La inmobiliaria rechazó tu presupuesto. Tu asignación fue revocada.',
+          id_incidente: pres.id_incidente,
+          id_presupuesto: idPresupuesto,
+        }).catch(console.error)
+      }
     }
 
     // Volver incidente a pendiente para nueva asignación
