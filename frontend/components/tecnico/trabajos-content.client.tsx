@@ -401,6 +401,7 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
         onOpenChange={setModalOpen}
         rol="tecnico"
         initialTab={modalTab}
+        hideTabs
       />
 
       {/* Dialog: Registrar Avance */}

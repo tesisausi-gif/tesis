@@ -127,6 +127,7 @@ interface Props {
   onUpdate?: () => void
   rol?: 'admin' | 'cliente' | 'tecnico'
   initialTab?: string
+  hideTabs?: boolean
 }
 
 // Estados simplificados
@@ -313,7 +314,7 @@ function StepperTecnico({
   )
 }
 
-export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin', initialTab }: Props) {
+export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin', initialTab, hideTabs = false }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('detalles')
@@ -837,7 +838,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           return (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
-            {hasTecnicoTabs ? (
+            {!hideTabs && (hasTecnicoTabs ? (
               <>
                 {/* ── Info tabs (Detalles / Timeline) ─────────────────── */}
                 <div className="mb-3">
@@ -871,7 +872,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
                 {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
               </TabsList>
-            )}
+            ))}
 
             {/* Tab Detalles */}
             <TabsContent value="detalles" className="space-y-4 mt-4">
