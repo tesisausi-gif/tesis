@@ -55,8 +55,10 @@ import {
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
 import { getPresupuestosDelIncidente, crearPresupuesto } from '@/features/presupuestos/presupuestos.service'
+import { getConformidadDelIncidente } from '@/features/conformidades/conformidades.service'
 import { PresupuestosClienteList } from '@/components/cliente/presupuestos-cliente-list'
 import type { Presupuesto } from '@/features/presupuestos/presupuestos.types'
+import type { Conformidad } from '@/features/conformidades/conformidades.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
 
 interface TimelineEventDetalle {
@@ -209,10 +211,86 @@ const ESTADO_ASIGNACION_LABELS: Record<string, string> = {
   'completada': 'Completada',
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Stepper de flujo de trabajo para el técnico
+// ─────────────────────────────────────────────────────────────────────────────
+type StepStatus = 'completed' | 'active' | 'locked'
+
+interface StepDef {
+  id: number
+  label: string
+  sublabel: string
+  tab: string
+  status: StepStatus
+}
+
+function StepperTecnico({
+  steps,
+  onStepClick,
+}: {
+  steps: StepDef[]
+  onStepClick: (tab: string) => void
+}) {
+  return (
+    <div className="w-full overflow-x-auto pb-1">
+      <div className="flex items-start min-w-max">
+        {steps.map((step, idx) => {
+          const isLast = idx === steps.length - 1
+          return (
+            <div key={step.id} className="flex items-start">
+              {/* Step circle + label */}
+              <button
+                onClick={() => step.status !== 'locked' && onStepClick(step.tab)}
+                disabled={step.status === 'locked'}
+                className={`flex flex-col items-center gap-1 px-2 group transition-opacity ${
+                  step.status === 'locked' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                }`}
+              >
+                {/* Circle */}
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors ${
+                    step.status === 'completed'
+                      ? 'border-green-500 bg-green-500 text-white'
+                      : step.status === 'active'
+                      ? 'border-blue-600 bg-blue-600 text-white'
+                      : 'border-gray-300 bg-white text-gray-400'
+                  }`}
+                >
+                  {step.status === 'completed' ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    step.id
+                  )}
+                </div>
+                {/* Labels */}
+                <div className="text-center w-[80px]">
+                  <p className={`text-[11px] font-semibold leading-tight ${
+                    step.status === 'completed' ? 'text-green-600' :
+                    step.status === 'active' ? 'text-blue-700' : 'text-gray-400'
+                  }`}>
+                    {step.label}
+                  </p>
+                  <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{step.sublabel}</p>
+                </div>
+              </button>
+              {/* Connector line */}
+              {!isLast && (
+                <div className={`mt-4 h-0.5 w-8 shrink-0 mx-1 transition-colors ${
+                  step.status === 'completed' ? 'bg-green-400' : 'bg-gray-200'
+                }`} />
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin' }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState('detalles')
   const [incidente, setIncidente] = useState<IncidenteCompleto | null>(null)
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
@@ -220,6 +298,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([])
   const [inspecciones, setInspecciones] = useState<any[]>([])
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([])
+  const [conformidad, setConformidad] = useState<Conformidad | null>(null)
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -239,6 +318,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
   useEffect(() => {
     if (open && incidenteId) {
+      setActiveTab('detalles')
       cargarIncidente()
       if (rol === 'admin') {
         cargarTecnicos()
@@ -272,12 +352,14 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       // Cargar datos específicos por rol
       if (rol === 'tecnico') {
         try {
-          const [inspeccionesData, presupuestosData] = await Promise.all([
+          const [inspeccionesData, presupuestosData, conformidadData] = await Promise.all([
             getInspeccionesDelIncidente(incidenteId),
             getPresupuestosDelIncidente(incidenteId),
+            getConformidadDelIncidente(incidenteId),
           ])
           setInspecciones(inspeccionesData)
           setPresupuestos(presupuestosData)
+          setConformidad(conformidadData)
         } catch (error) {
           console.error('Error al cargar datos del técnico:', error)
         }
@@ -694,8 +776,44 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             + (hasClientePresupuesto ? 1 : 0)
             + (hasCalificacion ? 1 : 0)
           const tabGridClass = tabCount === 3 ? 'grid-cols-3' : tabCount === 4 ? 'grid-cols-4' : 'grid-cols-2'
+
+          // ── Stepper steps computation (solo para técnico) ─────────────────
+          const inspeccionesActivas = inspecciones.filter(i => !i.esta_anulada)
+          const presupuestosActivos = presupuestos.filter(p => p.estado_presupuesto !== EstadoPresupuesto.RECHAZADO)
+          const tieneInspeccion = inspeccionesActivas.length > 0
+          const tienePresupuesto = presupuestosActivos.length > 0
+          const presupuestoAprobadoAdmin = presupuestosActivos.some(p =>
+            [EstadoPresupuesto.APROBADO_ADMIN, EstadoPresupuesto.APROBADO].includes(p.estado_presupuesto as EstadoPresupuesto)
+          )
+          const presupuestoAprobadoCliente = presupuestosActivos.some(p =>
+            p.estado_presupuesto === EstadoPresupuesto.APROBADO
+          )
+          const trabajoCompletado = asignaciones.some(a => a.estado_asignacion === 'completada')
+          const tieneConformidad = !!conformidad
+
+          const computeSteps = (): StepDef[] => {
+            const s1: StepStatus = tieneInspeccion ? 'completed' : 'active'
+            const s2: StepStatus = tienePresupuesto ? 'completed' : tieneInspeccion ? 'active' : 'locked'
+            const s3: StepStatus = presupuestoAprobadoAdmin ? 'completed' : tienePresupuesto ? 'active' : 'locked'
+            const s4: StepStatus = presupuestoAprobadoCliente ? 'completed' : presupuestoAprobadoAdmin ? 'active' : 'locked'
+            const s5: StepStatus = tieneConformidad ? 'completed' : trabajoCompletado ? 'completed' : presupuestoAprobadoCliente ? 'active' : 'locked'
+            return [
+              { id: 1, label: 'Inspección', sublabel: tieneInspeccion ? 'Realizada' : 'Pendiente', tab: 'inspecciones', status: s1 },
+              { id: 2, label: 'Presupuesto', sublabel: tienePresupuesto ? 'Enviado' : 'Pendiente', tab: 'presupuesto', status: s2 },
+              { id: 3, label: 'Aprob. Admin', sublabel: presupuestoAprobadoAdmin ? 'Aprobado' : 'En revisión', tab: 'presupuesto', status: s3 },
+              { id: 4, label: 'Aprob. Cliente', sublabel: presupuestoAprobadoCliente ? 'Aprobado' : 'En espera', tab: 'timeline', status: s4 },
+              { id: 5, label: 'Ejecución', sublabel: trabajoCompletado ? 'Completado' : 'Por iniciar', tab: 'detalles', status: s5 },
+            ]
+          }
+
           return (
-          <Tabs defaultValue="detalles" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {hasTecnicoTabs && (
+              <div className="mb-4 rounded-xl border bg-gray-50 p-3">
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-3">Progreso del trabajo</p>
+                <StepperTecnico steps={computeSteps()} onStepClick={setActiveTab} />
+              </div>
+            )}
             <TabsList className={`grid w-full ${tabGridClass}`}>
               <TabsTrigger value="detalles">Detalles</TabsTrigger>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -1019,37 +1137,23 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             )}
 
             {/* Tab Inspecciones (para técnicos con asignación confirmada) */}
-            {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
+            {hasTecnicoTabs && incidente && (
               <TabsContent value="inspecciones" className="mt-4">
-                {(() => {
-                  const idTecnicoActual = asignaciones.find(a =>
-                    ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
-                  )?.id_tecnico || 0
-                  const inspeccionesActuales = inspecciones.filter(i => !i.esta_anulada)
-                  return (
-                    <InspeccionesList
-                      incidenteId={incidente.id_incidente}
-                      idTecnico={idTecnicoActual}
-                      inspecciones={inspeccionesActuales}
-                      onInspeccionCreated={() => cargarIncidente()}
-                      onInspeccionDeleted={() => cargarIncidente()}
-                    />
-                  )
-                })()}
+                <InspeccionesList
+                  incidenteId={incidente.id_incidente}
+                  idTecnico={asignaciones.find(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))?.id_tecnico || 0}
+                  inspecciones={inspeccionesActivas}
+                  puedeCrearNueva={presupuestos.some(p => p.estado_presupuesto === EstadoPresupuesto.RECHAZADO)}
+                  onInspeccionCreated={() => cargarIncidente()}
+                  onInspeccionDeleted={() => cargarIncidente()}
+                />
               </TabsContent>
             )}
 
             {/* Tab Presupuesto (para técnicos con asignación confirmada) */}
-            {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
+            {hasTecnicoTabs && incidente && (
               <TabsContent value="presupuesto" className="mt-4 space-y-4">
                 {(() => {
-                  const idTecnicoActual = asignaciones.find(a =>
-                    ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
-                  )?.id_tecnico || 0
-                  const inspeccionesActuales = inspecciones.filter(i => !i.esta_anulada)
-                  const presupuestosActivos = presupuestos.filter(
-                    p => p.estado_presupuesto !== EstadoPresupuesto.RECHAZADO
-                  )
                   const tienePresupuestoActivo = presupuestosActivos.length > 0
                   return (
                     <>
@@ -1106,7 +1210,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           })}
                         </div>
                       )}
-                      {!tienePresupuestoActivo && (inspeccionesActuales.length === 0 ? (
+                      {!tienePresupuestoActivo && (inspeccionesActivas.length === 0 ? (
                         <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
                           <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
                           <div>
@@ -1171,7 +1275,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       <div className="space-y-2">
                         <Label>Inspección vinculada <span className="text-red-500">*</span></Label>
                         <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
-                          Inspección #{inspeccionesActuales[0]?.id_inspeccion} — {inspeccionesActuales[0] ? format(new Date(inspeccionesActuales[0].fecha_inspeccion), "dd/MM/yy", { locale: es }) : ''}
+                          Inspección #{inspeccionesActivas[0]?.id_inspeccion} — {inspeccionesActivas[0] ? format(new Date(inspeccionesActivas[0].fecha_inspeccion), "dd/MM/yy", { locale: es }) : ''}
                         </div>
                       </div>
                             <Button
