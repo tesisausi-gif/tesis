@@ -94,11 +94,12 @@ export default function NuevoPresupuestoTecnicoPage() {
                 return
             }
 
-            // Filtrar inspecciones que ya tienen presupuesto
+            // Filtrar inspecciones que ya tienen presupuesto activo (no rechazado)
             const inspeccionesConPresupuesto = await supabase
                 .from('presupuestos')
                 .select('id_inspeccion')
                 .not('id_inspeccion', 'is', null)
+                .neq('estado_presupuesto', 'rechazado')
 
             const idsConPresupuesto = new Set(
                 inspeccionesConPresupuesto.data?.map(p => p.id_inspeccion) || []

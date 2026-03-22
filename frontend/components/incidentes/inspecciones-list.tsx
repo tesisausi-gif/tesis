@@ -20,6 +20,7 @@ interface InspeccionsListProps {
   inspecciones: InspeccionConDetalle[]
   onInspeccionCreated?: () => void
   onInspeccionDeleted?: () => void
+  puedeCrearNueva?: boolean
 }
 
 export function InspeccionesList({
@@ -28,6 +29,7 @@ export function InspeccionesList({
   inspecciones,
   onInspeccionCreated,
   onInspeccionDeleted,
+  puedeCrearNueva = false,
 }: InspeccionsListProps) {
   const [openModal, setOpenModal] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -91,7 +93,7 @@ export function InspeccionesList({
           </div>
         </div>
 
-        {inspecciones.length === 0 ? (
+        {(inspecciones.length === 0 || puedeCrearNueva) ? (
           <Dialog open={openModal} onOpenChange={setOpenModal}>
           <DialogTrigger asChild>
             <Button onClick={() => resetForm()} className="gap-2">

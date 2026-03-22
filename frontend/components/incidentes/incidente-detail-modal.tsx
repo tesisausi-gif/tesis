@@ -920,6 +920,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   incidenteId={incidente.id_incidente}
                   idTecnico={asignaciones[0]?.id_tecnico || 0}
                   inspecciones={inspecciones}
+                  puedeCrearNueva={presupuestos.some(p => p.estado_presupuesto === EstadoPresupuesto.RECHAZADO)}
                   onInspeccionCreated={() => {
                     cargarIncidente()
                   }}
