@@ -934,9 +934,15 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             {/* Tab Presupuesto (para técnicos con asignación confirmada) */}
             {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
               <TabsContent value="presupuesto" className="mt-4 space-y-4">
-                {presupuestos.length > 0 ? (
-                  <div className="space-y-4">
-                    {presupuestos.map((pres) => {
+                {(() => {
+                  const tienePresupuestoActivo = presupuestos.some(
+                    p => p.estado_presupuesto !== EstadoPresupuesto.RECHAZADO
+                  )
+                  return (
+                    <>
+                      {presupuestos.length > 0 && (
+                        <div className="space-y-4">
+                          {presupuestos.map((pres) => {
                       const estado = pres.estado_presupuesto as EstadoPresupuesto
                       const estadoConfig: Record<string, { label: string; className: string }> = {
                         [EstadoPresupuesto.ENVIADO]: { label: 'Enviado — pendiente de revisión', className: 'bg-blue-50 border-blue-200 text-blue-800' },
@@ -984,23 +990,24 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           )}
                         </div>
                       )
-                    })}
-                  </div>
-                ) : inspecciones.length === 0 ? (
-                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold mb-1">Inspección requerida</p>
-                      <p>Debés cargar al menos una inspección antes de poder crear un presupuesto. Andá al tab Inspecciones para registrarla.</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-5">
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Nuevo Presupuesto
-                      </h4>
+                          })}
+                        </div>
+                      )}
+                      {!tienePresupuestoActivo && (inspecciones.length === 0 ? (
+                        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
+                          <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-semibold mb-1">Inspección requerida</p>
+                            <p>Debés cargar al menos una inspección antes de poder crear un presupuesto. Andá al tab Inspecciones para registrarla.</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-5">
+                          <div className="space-y-3">
+                            <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              Nuevo Presupuesto
+                            </h4>
                       <div className="space-y-2">
                         <Label>Descripción detallada <span className="text-red-500">*</span></Label>
                         <Textarea
@@ -1054,20 +1061,23 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           Inspección #{inspecciones[0]?.id_inspeccion} — {inspecciones[0] ? format(new Date(inspecciones[0].fecha_inspeccion), "dd/MM/yy", { locale: es }) : ''}
                         </div>
                       </div>
-                      <Button
-                        onClick={handleCrearPresupuesto}
-                        disabled={savingPresupuesto || !presDescripcion.trim()}
-                        className="w-full gap-2"
-                      >
-                        {savingPresupuesto ? (
-                          <><Loader2 className="h-4 w-4 animate-spin" />Enviando...</>
-                        ) : (
-                          <><Send className="h-4 w-4" />Enviar Presupuesto</>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                            <Button
+                              onClick={handleCrearPresupuesto}
+                              disabled={savingPresupuesto || !presDescripcion.trim()}
+                              className="w-full gap-2"
+                            >
+                              {savingPresupuesto ? (
+                                <><Loader2 className="h-4 w-4 animate-spin" />Enviando...</>
+                              ) : (
+                                <><Send className="h-4 w-4" />Enviar Presupuesto</>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )
+                })()}
               </TabsContent>
             )}
 
