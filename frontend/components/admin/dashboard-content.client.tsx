@@ -11,6 +11,8 @@ import { toast } from 'sonner'
 import { createClient } from '@/shared/lib/supabase/client'
 import { getDashboardStats, getDashboardActividad } from '@/features/incidentes/incidentes.service'
 import { getAdminBadgeCounts, AdminBadgeCounts } from '@/features/notificaciones/badge-counts.service'
+import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
+import type { Notificacion } from '@/features/notificaciones/notificaciones.types'
 
 interface Stats {
   incidentesPendientes: number
@@ -54,6 +56,7 @@ interface DashboardContentProps {
   stats: Stats
   incidentesRecientes: IncidenteReciente[]
   asignacionesRecientes: AsignacionReciente[]
+  notificaciones: Notificacion[]
 }
 
 const getEstadoBadge = (estado: string) => {
@@ -76,7 +79,7 @@ const getEstadoBadge = (estado: string) => {
   )
 }
 
-export function DashboardContent({ stats: initialStats, incidentesRecientes: initialIncidentes, asignacionesRecientes: initialAsignaciones }: DashboardContentProps) {
+export function DashboardContent({ stats: initialStats, incidentesRecientes: initialIncidentes, asignacionesRecientes: initialAsignaciones, notificaciones }: DashboardContentProps) {
   const [stats, setStats] = useState<Stats>(initialStats)
   const [incidentesRecientes, setIncidentesRecientes] = useState<IncidenteReciente[]>(initialIncidentes)
   const [asignacionesRecientes, setAsignacionesRecientes] = useState<AsignacionReciente[]>(initialAsignaciones)
@@ -291,6 +294,13 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
           </div>
         </div>
       )}
+
+      {/* Notificaciones */}
+      <Card className="border-2">
+        <CardContent className="pt-5">
+          <NotificacionesPanel notificaciones={notificaciones} rol="admin" />
+        </CardContent>
+      </Card>
 
       {/* Actividad Reciente */}
       <div className="grid gap-4 md:grid-cols-2">
