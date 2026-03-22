@@ -126,6 +126,7 @@ interface Props {
   onOpenChange: (open: boolean) => void
   onUpdate?: () => void
   rol?: 'admin' | 'cliente' | 'tecnico'
+  initialTab?: string
 }
 
 // Estados simplificados
@@ -312,7 +313,7 @@ function StepperTecnico({
   )
 }
 
-export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin' }: Props) {
+export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin', initialTab }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('detalles')
@@ -343,7 +344,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
   useEffect(() => {
     if (open && incidenteId) {
-      setActiveTab('detalles')
+      setActiveTab(initialTab ?? 'detalles')
       cargarIncidente()
       if (rol === 'admin') {
         cargarTecnicos()

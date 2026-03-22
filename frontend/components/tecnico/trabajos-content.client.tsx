@@ -18,7 +18,7 @@ import {
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  MapPin, Calendar, ClipboardList, Clock, CheckCircle2, Upload,
+  MapPin, Calendar, ClipboardList, Clock, CheckCircle2, Upload, Wrench,
   Plus, ImageIcon, Loader2, Phone, Mail, Home, FileText,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -80,6 +80,7 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
   }, [asignaciones, router])
 
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
+  const [modalTab, setModalTab] = useState('detalles')
   const [modalOpen, setModalOpen] = useState(false)
 
   // Dialog: Registrar avance
@@ -97,8 +98,9 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
   const [uploadingFoto, setUploadingFoto] = useState(false)
 
 
-  const abrirModal = (id: number) => {
+  const abrirModal = (id: number, tab = 'detalles') => {
     setIncidenteSeleccionado(id)
+    setModalTab(tab)
     setModalOpen(true)
   }
 
@@ -213,81 +215,77 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
     const puedeSubirConformidad = terminado && !confInfo
 
     return (
-      <Card key={asignacion.id_asignacion} className="hover:shadow-md transition-shadow">
-        <div className="cursor-pointer" onClick={() => abrirModal(asignacion.id_incidente)}>
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <ClipboardList className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  Incidente #{asignacion.id_incidente}
-                </CardTitle>
-                {direccionInmueble && (
-                  <CardDescription className="flex items-center gap-1 mt-1 text-xs">
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{direccionInmueble}</span>
-                  </CardDescription>
-                )}
-              </div>
-              <div className="flex flex-col gap-1 items-end flex-shrink-0">
-                <Badge variant="outline" className={getEstadoAsignacionColor(estado)}>
-                  {getEstadoAsignacionLabel(estado)}
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="pt-0 pb-3 space-y-3">
-            {incidente?.descripcion_problema && (
-              <div className="flex items-start gap-2 bg-slate-50 rounded-md p-2.5 border border-slate-200">
-                <FileText className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Descripción del problema</p>
-                  <p className="text-sm text-gray-700">{incidente.descripcion_problema}</p>
-                </div>
-              </div>
-            )}
-            {cliente && (
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-2.5 space-y-1.5">
-                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Contacto del cliente</p>
-                <p className="text-sm font-medium text-gray-800">{cliente.nombre} {cliente.apellido}</p>
-                {cliente.telefono && (
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <Phone className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                    <span>{cliente.telefono}</span>
-                  </div>
-                )}
-                {cliente.correo_electronico && (
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                    <span>{cliente.correo_electronico}</span>
-                  </div>
-                )}
-                {cliente.direccion && (
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <Home className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                    <span>{cliente.direccion}</span>
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yy', { locale: es })}
-              </span>
-              {asignacion.fecha_visita_programada && (
-                <span className="flex items-center gap-1 text-blue-600">
-                  <Clock className="h-3 w-3" />
-                  Visita: {format(new Date(asignacion.fecha_visita_programada), 'dd/MM HH:mm', { locale: es })}
-                </span>
+      <Card key={asignacion.id_asignacion} className="shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                Incidente #{asignacion.id_incidente}
+              </CardTitle>
+              {direccionInmueble && (
+                <CardDescription className="flex items-center gap-1 mt-1 text-xs">
+                  <MapPin className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{direccionInmueble}</span>
+                </CardDescription>
               )}
-              {incidente?.categoria && <span>{incidente.categoria}</span>}
             </div>
-          </CardContent>
-        </div>
+            <Badge variant="outline" className={`flex-shrink-0 ${getEstadoAsignacionColor(estado)}`}>
+              {getEstadoAsignacionLabel(estado)}
+            </Badge>
+          </div>
+        </CardHeader>
 
-        <div className="px-4 pb-4 space-y-2 border-t pt-3" onClick={(e) => e.stopPropagation()}>
+        <CardContent className="pt-0 pb-3 space-y-3">
+          {incidente?.descripcion_problema && (
+            <p className="text-sm text-gray-700 line-clamp-2">{incidente.descripcion_problema}</p>
+          )}
+          <div className="flex flex-wrap gap-3 text-xs text-gray-400">
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yy', { locale: es })}
+            </span>
+            {asignacion.fecha_visita_programada && (
+              <span className="flex items-center gap-1 text-blue-500">
+                <Clock className="h-3 w-3" />
+                Visita: {format(new Date(asignacion.fecha_visita_programada), 'dd/MM HH:mm', { locale: es })}
+              </span>
+            )}
+            {incidente?.categoria && <span>{incidente.categoria}</span>}
+          </div>
+
+          {/* 3 botones de navegación directa */}
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-gray-700"
+              onClick={() => abrirModal(asignacion.id_incidente, 'detalles')}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Detalles
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-gray-700"
+              onClick={() => abrirModal(asignacion.id_incidente, 'timeline')}
+            >
+              <Clock className="h-3.5 w-3.5" />
+              Timeline
+            </Button>
+            <Button
+              size="sm"
+              className="gap-1.5 bg-gray-900 hover:bg-gray-800 text-white"
+              onClick={() => abrirModal(asignacion.id_incidente, 'inspecciones')}
+            >
+              <Wrench className="h-3.5 w-3.5" />
+              Gestión
+            </Button>
+          </div>
+        </CardContent>
+
+        <div className="px-4 pb-4 space-y-2 border-t pt-3">
           {enTrabajo && (
             <div className="grid grid-cols-2 gap-2">
               <Button size="sm" variant="outline" className="gap-1.5 text-blue-700 border-blue-300 hover:bg-blue-50"
@@ -390,6 +388,7 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
         open={modalOpen}
         onOpenChange={setModalOpen}
         rol="tecnico"
+        initialTab={modalTab}
       />
 
       {/* Dialog: Registrar Avance */}
