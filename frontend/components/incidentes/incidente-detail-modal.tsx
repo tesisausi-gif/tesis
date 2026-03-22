@@ -41,6 +41,8 @@ import {
   Mail,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
+  Lock,
 } from 'lucide-react'
 import { CategoriaIncidente, EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { InspeccionesList } from './inspecciones-list'
@@ -226,63 +228,86 @@ interface StepDef {
 
 function StepperTecnico({
   steps,
+  activeTab,
   onStepClick,
 }: {
   steps: StepDef[]
+  activeTab: string
   onStepClick: (tab: string) => void
 }) {
   const completedCount = steps.filter(s => s.status === 'completed').length
-  const activeStep = steps.find(s => s.status === 'active')
-  const progress = completedCount / steps.length
 
   return (
-    <div className="space-y-2">
-      {/* Step track: circles + flex-1 connectors → fully responsive, zero overflow */}
-      <div className="flex items-center w-full">
-        {steps.map((step, idx) => {
-          const isLast = idx === steps.length - 1
-          const canClick = step.status !== 'locked'
-          return (
-            <div key={step.id} className={`flex items-center ${isLast ? '' : 'flex-1'}`}>
-              <button
-                onClick={() => canClick && onStepClick(step.tab)}
-                disabled={!canClick}
-                title={`${step.label}: ${step.sublabel}`}
-                className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                  step.status === 'completed'
-                    ? 'bg-emerald-500 border-emerald-500 text-white'
-                    : step.status === 'active'
-                    ? 'bg-amber-500 border-amber-500 text-white ring-4 ring-amber-100'
-                    : 'bg-gray-100 border-gray-200 text-gray-400'
-                } ${canClick ? 'cursor-pointer active:scale-95' : 'cursor-default'}`}
-              >
-                {step.status === 'completed' ? <CheckCircle className="w-3.5 h-3.5" /> : step.id}
-              </button>
-              {!isLast && (
-                <div className={`flex-1 h-0.5 transition-colors duration-300 ${
-                  step.status === 'completed' ? 'bg-emerald-400' : 'bg-gray-200'
-                }`} />
-              )}
+    <div className="space-y-1">
+      {/* Progress header */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Flujo de trabajo</span>
+        <span className="text-[10px] text-gray-400 font-medium">{completedCount}/{steps.length} completados</span>
+      </div>
+
+      {/* Step rows — each is a full-width nav item */}
+      {steps.map((step) => {
+        // Highlight the step whose tab is active AND is the "most relevant" for that tab
+        // (when multiple steps share a tab, highlight the active/last-completed one)
+        const stepsForTab = steps.filter(s => s.tab === step.tab)
+        const relevantStep = stepsForTab.find(s => s.status === 'active') ??
+          stepsForTab.filter(s => s.status === 'completed').at(-1) ??
+          stepsForTab[0]
+        const isSelected = activeTab === step.tab && relevantStep?.id === step.id
+        const canClick = step.status !== 'locked'
+
+        return (
+          <button
+            key={step.id}
+            onClick={() => canClick && onStepClick(step.tab)}
+            disabled={!canClick}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${
+              isSelected
+                ? step.status === 'completed'
+                  ? 'bg-emerald-50 border border-emerald-200'
+                  : 'bg-amber-50 border border-amber-200'
+                : canClick
+                ? 'bg-gray-50 border border-gray-100 hover:bg-gray-100 active:scale-[0.98]'
+                : 'bg-gray-50 border border-gray-100 opacity-40 cursor-not-allowed'
+            }`}
+          >
+            {/* Status circle */}
+            <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+              step.status === 'completed'
+                ? 'bg-emerald-500 text-white'
+                : step.status === 'active'
+                ? 'bg-amber-500 text-white'
+                : 'bg-gray-200 text-gray-400'
+            }`}>
+              {step.status === 'completed' ? <CheckCircle className="w-3.5 h-3.5" /> : step.id}
             </div>
-          )
-        })}
-      </div>
 
-      {/* Progress bar */}
-      <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-amber-400 to-emerald-500 rounded-full transition-all duration-500"
-          style={{ width: `${progress * 100}%` }}
-        />
-      </div>
+            {/* Label + sublabel */}
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs font-semibold leading-tight ${
+                step.status === 'completed' ? 'text-emerald-700' :
+                step.status === 'active' ? 'text-amber-700' : 'text-gray-400'
+              }`}>
+                {step.label}
+              </p>
+              <p className={`text-[10px] leading-tight mt-0.5 ${
+                step.status === 'completed' ? 'text-emerald-500' :
+                step.status === 'active' ? 'text-amber-500' : 'text-gray-300'
+              }`}>
+                {step.sublabel}
+              </p>
+            </div>
 
-      {/* Current step label */}
-      <div className="flex items-center justify-between">
-        <p className={`text-xs font-semibold ${activeStep ? 'text-amber-700' : 'text-emerald-700'}`}>
-          {activeStep ? `Paso ${activeStep.id}: ${activeStep.label}` : '✓ Todos los pasos completados'}
-        </p>
-        <span className="text-[10px] text-gray-400">{completedCount} de {steps.length}</span>
-      </div>
+            {/* Right icon */}
+            {canClick
+              ? <ChevronRight className={`w-4 h-4 flex-shrink-0 ${
+                  step.status === 'completed' ? 'text-emerald-400' : 'text-amber-400'
+                }`} />
+              : <Lock className="w-3.5 h-3.5 flex-shrink-0 text-gray-300" />
+            }
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -813,80 +838,28 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
             {hasTecnicoTabs ? (
               <>
-                {/* ── Stepper ─────────────────────────────────────────── */}
-                <div className="mb-4 rounded-xl border border-amber-100 bg-gradient-to-b from-amber-50/80 to-white p-3">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-amber-700/60 block mb-2.5">
-                    Progreso del trabajo
-                  </span>
-                  <StepperTecnico steps={steps} onStepClick={setActiveTab} />
+                {/* ── Info tabs (Detalles / Timeline) ─────────────────── */}
+                <div className="mb-3">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {(['detalles', 'timeline'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                          activeTab === tab
+                            ? 'bg-gray-900 text-white shadow-sm'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        {tab === 'detalles' ? 'Detalles' : 'Timeline'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* ── Navegación en dos grupos ─────────────────────────── */}
-                <div className="mb-4 space-y-2">
-                  {/* Grupo: Información */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="h-px flex-1 bg-gray-100" />
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Información</span>
-                      <div className="h-px flex-1 bg-gray-100" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {(['detalles', 'timeline'] as const).map((tab) => (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                            activeTab === tab
-                              ? 'bg-gray-900 text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
-                          }`}
-                        >
-                          {tab === 'detalles' ? 'Detalles' : 'Timeline'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Grupo: Flujo de trabajo */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="h-px flex-1 bg-amber-200" />
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-amber-600">Flujo de trabajo</span>
-                      <div className="h-px flex-1 bg-amber-200" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {([
-                        { v: 'inspecciones', l: 'Inspección', stepIdx: 0 },
-                        { v: 'presupuesto',  l: 'Presupuesto', stepIdx: 1 },
-                      ] as const).map(({ v, l, stepIdx }) => {
-                        const stepStatus = steps[stepIdx].status
-                        const isActive = activeTab === v
-                        return (
-                          <button
-                            key={v}
-                            onClick={() => setActiveTab(v)}
-                            className={`relative py-2 text-xs font-semibold rounded-lg transition-all ${
-                              isActive
-                                ? 'bg-amber-500 text-white shadow-sm'
-                                : stepStatus === 'active'
-                                ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-                                : stepStatus === 'completed'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                                : 'bg-gray-100 text-gray-400 cursor-default'
-                            }`}
-                          >
-                            {stepStatus === 'completed' && !isActive && (
-                              <span className="absolute top-1 right-1.5 text-[8px] text-emerald-500 font-bold">✓</span>
-                            )}
-                            {stepStatus === 'active' && !isActive && (
-                              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                            )}
-                            {l}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
+                {/* ── Stepper como navegación principal del flujo ──────── */}
+                <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                  <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
                 </div>
               </>
             ) : (
