@@ -411,6 +411,28 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           icono: <FileText className="h-4 w-4" />,
           color: 'bg-cyan-500',
         })
+        if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-admin-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto aprobado por administración',
+            descripcion: `Costo final: $${(pres.costo_total ?? 0).toLocaleString()}`,
+            fecha: pres.fecha_modificacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-amber-500',
+          })
+        }
+        if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-cliente-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto aprobado por el cliente',
+            descripcion: 'El cliente autorizó el trabajo — incidente en proceso',
+            fecha: pres.fecha_aprobacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-green-500',
+          })
+        }
         if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
           timelineEvents.push({
             id: `pres-rechazado-${pres.id_presupuesto}`,

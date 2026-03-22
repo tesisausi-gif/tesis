@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -52,6 +52,32 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Realtime: notificar cuando el cliente aprueba un presupuesto
+  useEffect(() => {
+    const supabase = createClient()
+    const idIncidentes = asignaciones.map(a => a.id_incidente)
+
+    const channel = supabase
+      .channel('presupuestos-tecnico-realtime')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'presupuestos' }, (payload) => {
+        const next = payload.new as any
+        const prev = payload.old as any
+        if (
+          next?.estado_presupuesto === 'aprobado' &&
+          prev?.estado_presupuesto !== 'aprobado' &&
+          idIncidentes.includes(next.id_incidente)
+        ) {
+          toast.success('¡Presupuesto aprobado por el cliente!', {
+            description: `Incidente #${next.id_incidente} — ya podés comenzar el trabajo`,
+          })
+          router.refresh()
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [asignaciones, router])
 
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)

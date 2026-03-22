@@ -436,12 +436,34 @@ export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<
 
     if (error) return { success: false, error: error.message }
 
-    // Poner incidente en_proceso y notificar al técnico (fire-and-forget)
+    // Poner incidente en_proceso
     const supabaseAdmin = (await import('@/shared/lib/supabase/admin')).createAdminClient()
     const { data: pres } = await supabase.from('presupuestos').select('id_incidente').eq('id_presupuesto', idPresupuesto).single()
     if (pres?.id_incidente) {
       await supabaseAdmin.from('incidentes').update({ estado_actual: 'en_proceso' }).eq('id_incidente', pres.id_incidente)
+
+      // Obtener técnico asignado para notificación in-app
+      const { data: asig } = await supabaseAdmin
+        .from('asignaciones_tecnico')
+        .select('id_tecnico')
+        .eq('id_incidente', pres.id_incidente)
+        .in('estado_asignacion', ['aceptada', 'en_curso'])
+        .maybeSingle()
+
+      if (asig?.id_tecnico) {
+        const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        crearNotificacion({
+          id_tecnico: asig.id_tecnico,
+          tipo: 'presupuesto_aprobado_cliente',
+          titulo: '¡Presupuesto aprobado!',
+          mensaje: 'El cliente aprobó tu presupuesto. Ya podés comenzar el trabajo.',
+          id_incidente: pres.id_incidente,
+          id_presupuesto: idPresupuesto,
+        }).catch(console.error)
+      }
     }
+
+    // Email al técnico (fire-and-forget)
     const { notificarTecnicoPresupuestoAprobado } = await import('@/features/notificaciones/notificaciones.service')
     notificarTecnicoPresupuestoAprobado(idPresupuesto).catch(console.error)
 
