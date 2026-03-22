@@ -534,9 +534,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
     setSavingPresupuesto(true)
     try {
+      const idTecnicoActual = asignaciones.find(a =>
+        ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+      )?.id_tecnico
+      const inspeccionDelTecnico = inspecciones.find(i => i.id_tecnico === idTecnicoActual)
       const result = await crearPresupuesto({
         id_incidente: incidenteId,
-        id_inspeccion: inspecciones[0]?.id_inspeccion ?? null,
+        id_inspeccion: inspeccionDelTecnico?.id_inspeccion ?? null,
         descripcion_detallada: presDescripcion.trim(),
         costo_materiales: materiales || undefined,
         costo_mano_obra: manoObra || undefined,
@@ -916,18 +920,21 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             {/* Tab Inspecciones (para técnicos con asignación confirmada) */}
             {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
               <TabsContent value="inspecciones" className="mt-4">
-                <InspeccionesList
-                  incidenteId={incidente.id_incidente}
-                  idTecnico={asignaciones[0]?.id_tecnico || 0}
-                  inspecciones={inspecciones}
-                  puedeCrearNueva={presupuestos.some(p => p.estado_presupuesto === EstadoPresupuesto.RECHAZADO)}
-                  onInspeccionCreated={() => {
-                    cargarIncidente()
-                  }}
-                  onInspeccionDeleted={() => {
-                    cargarIncidente()
-                  }}
-                />
+                {(() => {
+                  const idTecnicoActual = asignaciones.find(a =>
+                    ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+                  )?.id_tecnico || 0
+                  const inspeccionesActuales = inspecciones.filter(i => i.id_tecnico === idTecnicoActual)
+                  return (
+                    <InspeccionesList
+                      incidenteId={incidente.id_incidente}
+                      idTecnico={idTecnicoActual}
+                      inspecciones={inspeccionesActuales}
+                      onInspeccionCreated={() => cargarIncidente()}
+                      onInspeccionDeleted={() => cargarIncidente()}
+                    />
+                  )
+                })()}
               </TabsContent>
             )}
 
@@ -935,14 +942,19 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
               <TabsContent value="presupuesto" className="mt-4 space-y-4">
                 {(() => {
-                  const tienePresupuestoActivo = presupuestos.some(
+                  const idTecnicoActual = asignaciones.find(a =>
+                    ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+                  )?.id_tecnico || 0
+                  const inspeccionesActuales = inspecciones.filter(i => i.id_tecnico === idTecnicoActual)
+                  const presupuestosActivos = presupuestos.filter(
                     p => p.estado_presupuesto !== EstadoPresupuesto.RECHAZADO
                   )
+                  const tienePresupuestoActivo = presupuestosActivos.length > 0
                   return (
                     <>
-                      {presupuestos.length > 0 && (
+                      {presupuestosActivos.length > 0 && (
                         <div className="space-y-4">
-                          {presupuestos.map((pres) => {
+                          {presupuestosActivos.map((pres) => {
                       const estado = pres.estado_presupuesto as EstadoPresupuesto
                       const estadoConfig: Record<string, { label: string; className: string }> = {
                         [EstadoPresupuesto.ENVIADO]: { label: 'Enviado — pendiente de revisión', className: 'bg-blue-50 border-blue-200 text-blue-800' },
@@ -993,7 +1005,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           })}
                         </div>
                       )}
-                      {!tienePresupuestoActivo && (inspecciones.length === 0 ? (
+                      {!tienePresupuestoActivo && (inspeccionesActuales.length === 0 ? (
                         <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
                           <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
                           <div>
@@ -1058,7 +1070,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       <div className="space-y-2">
                         <Label>Inspección vinculada <span className="text-red-500">*</span></Label>
                         <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
-                          Inspección #{inspecciones[0]?.id_inspeccion} — {inspecciones[0] ? format(new Date(inspecciones[0].fecha_inspeccion), "dd/MM/yy", { locale: es }) : ''}
+                          Inspección #{inspeccionesActuales[0]?.id_inspeccion} — {inspeccionesActuales[0] ? format(new Date(inspeccionesActuales[0].fecha_inspeccion), "dd/MM/yy", { locale: es }) : ''}
                         </div>
                       </div>
                             <Button
