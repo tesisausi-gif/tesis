@@ -40,11 +40,14 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   const [incidenteParaAsignar, setIncidenteParaAsignar] = useState<IncidenteConCliente | null>(null)
   const [modalGestionarOpen, setModalGestionarOpen] = useState(false)
   const [incidenteParaGestionar, setIncidenteParaGestionar] = useState<IncidenteConCliente | null>(null)
-  const [tabActiva, setTabActiva] = useState('pendiente')
+  const [tabActiva, setTabActiva] = useState(() => searchParams.get('tab') || 'pendiente')
   const [highlightId, setHighlightId] = useState<number | null>(null)
   const highlightRef = useRef<HTMLTableRowElement | null>(null)
 
   useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab) setTabActiva(tab)
+
     const id = searchParams.get('highlight')
     if (!id) return
     const numId = parseInt(id)
@@ -510,7 +513,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       {/* Tabla de Incidentes por Estado */}
       <div className="space-y-4">
         <Tabs value={tabActiva} onValueChange={setTabActiva} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="pendiente" className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               Pendientes
@@ -550,6 +553,13 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               Resueltos
               <Badge variant="secondary" className="ml-2">
                 {incidentesFiltrados.filter(i => i.estado_actual === 'resuelto').length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="todos" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Total
+              <Badge variant="secondary" className="ml-2">
+                {incidentesFiltrados.length}
               </Badge>
             </TabsTrigger>
           </TabsList>
@@ -622,6 +632,24 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               </CardHeader>
               <CardContent>
                 {renderTablaIncidentes(incidentesFiltrados.filter(i => i.estado_actual === 'resuelto'))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Total */}
+          <TabsContent value="todos">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-gray-600" />
+                  Todos los Incidentes
+                </CardTitle>
+                <CardDescription>
+                  Vista consolidada de todos los incidentes.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderTablaIncidentes(incidentesFiltrados)}
               </CardContent>
             </Card>
           </TabsContent>

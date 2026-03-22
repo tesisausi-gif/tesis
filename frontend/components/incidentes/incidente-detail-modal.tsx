@@ -37,6 +37,10 @@ import {
   Loader2,
   Send,
   XCircle,
+  Phone,
+  Mail,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { CategoriaIncidente, EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { InspeccionesList } from './inspecciones-list'
@@ -131,6 +135,64 @@ const ESTADO_COLORS: Record<string, string> = {
   'pendiente': 'bg-yellow-100 text-yellow-800',
   'en_proceso': 'bg-blue-100 text-blue-800',
   'resuelto': 'bg-green-100 text-green-800',
+}
+
+function TecnicoAsignadoCard({ nombre, especialidad, telefono, email, estado }: {
+  nombre: string
+  especialidad?: string
+  telefono?: string
+  email?: string
+  estado: string
+}) {
+  const [contactoVisible, setContactoVisible] = useState(false)
+  const tieneContacto = telefono || email
+
+  return (
+    <div className="space-y-2">
+      <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+        <Wrench className="h-4 w-4" />
+        Técnico Asignado
+      </h4>
+      <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">{nombre}</p>
+            {especialidad && <p className="text-xs text-gray-500">{especialidad}</p>}
+          </div>
+          <Badge variant="outline">{ESTADO_ASIGNACION_LABELS[estado] || estado}</Badge>
+        </div>
+        {tieneContacto && (
+          <div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 -ml-2"
+              onClick={() => setContactoVisible(v => !v)}
+            >
+              {contactoVisible ? <ChevronUp className="h-3 w-3 mr-1" /> : <ChevronDown className="h-3 w-3 mr-1" />}
+              {contactoVisible ? 'Ocultar datos' : 'Ver datos de contacto'}
+            </Button>
+            {contactoVisible && (
+              <div className="mt-1 space-y-1 border-t pt-2">
+                {telefono && (
+                  <p className="text-xs text-gray-600 flex items-center gap-1.5">
+                    <Phone className="h-3 w-3 text-gray-400" />
+                    {telefono}
+                  </p>
+                )}
+                {email && (
+                  <p className="text-xs text-gray-600 flex items-center gap-1.5">
+                    <Mail className="h-3 w-3 text-gray-400" />
+                    {email}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 const ESTADO_ASIGNACION_LABELS: Record<string, string> = {
@@ -606,30 +668,23 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 </div>
               )}
 
-              {/* Técnicos Asignados */}
-              {asignaciones.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
-                    <Wrench className="h-4 w-4" />
-                    Técnicos Asignados
-                  </h4>
-                  <div className="space-y-2">
-                    {asignaciones.map((asig) => (
-                      <div key={asig.id_asignacion} className="bg-gray-50 p-3 rounded-lg flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">
-                            {asig.tecnicos?.nombre} {asig.tecnicos?.apellido}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {asig.tecnicos?.especialidad || 'Sin especialidad'}
-                          </p>
-                        </div>
-                        <Badge variant="outline">{ESTADO_ASIGNACION_LABELS[asig.estado_asignacion] || asig.estado_asignacion}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Técnico Asignado */}
+              {(() => {
+                const asigActiva = asignaciones.find(a =>
+                  ['pendiente', 'aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+                )
+                if (!asigActiva) return null
+                const tec = asigActiva.tecnicos
+                return (
+                  <TecnicoAsignadoCard
+                    nombre={tec ? `${tec.nombre} ${tec.apellido}` : 'Sin nombre'}
+                    especialidad={(tec as any)?.especialidad}
+                    telefono={(tec as any)?.telefono}
+                    email={(tec as any)?.correo_electronico}
+                    estado={asigActiva.estado_asignacion}
+                  />
+                )
+              })()}
 
               {/* Fechas */}
               <div className="grid grid-cols-2 gap-4">

@@ -145,7 +145,7 @@ export async function getAsignacionesDelIncidente(idIncidente: number) {
 
   const { data, error } = await supabase
     .from('asignaciones_tecnico')
-    .select('*, tecnicos(nombre, apellido, especialidad)')
+    .select('*, tecnicos(nombre, apellido, especialidad, telefono, correo_electronico)')
     .eq('id_incidente', idIncidente)
     .order('fecha_asignacion', { ascending: false })
 
