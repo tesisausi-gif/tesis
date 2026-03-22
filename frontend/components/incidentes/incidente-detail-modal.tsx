@@ -279,7 +279,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       if (rol === 'cliente') {
         try {
           const presupuestosData = await getPresupuestosDelIncidente(incidenteId)
-          setPresupuestos(presupuestosData)
+          // El cliente solo ve presupuestos que la inmobiliaria ya aprobó y ajustó.
+          // No ve: 'enviado' (precio original del técnico) ni 'rechazado' por admin (decisión interna).
+          const visiblesParaCliente = presupuestosData.filter(p =>
+            [EstadoPresupuesto.APROBADO_ADMIN, EstadoPresupuesto.APROBADO].includes(p.estado_presupuesto as EstadoPresupuesto)
+          )
+          setPresupuestos(visiblesParaCliente)
         } catch (error) {
           console.error('Error al cargar presupuestos del cliente:', error)
         }
