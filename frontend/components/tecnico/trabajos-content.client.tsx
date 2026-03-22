@@ -1,25 +1,13 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  MapPin, Calendar, ClipboardList, Clock, CheckCircle2, Upload, Wrench,
-  Plus, ImageIcon, Loader2, Phone, Mail, Home, FileText,
+  MapPin, Calendar, ClipboardList, Clock, Wrench, FileText,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -29,9 +17,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
-import { completarAsignacion } from '@/features/asignaciones/asignaciones.service'
-import { crearAvance } from '@/features/avances/avances.service'
-import { crearConformidadPorTecnico } from '@/features/conformidades/conformidades.service'
 import { createClient } from '@/shared/lib/supabase/client'
 
 interface ConformidadInfo {
@@ -50,8 +35,6 @@ interface TrabajosContentProps {
 
 export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, conformidadesPorIncidente, idTecnico }: TrabajosContentProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Realtime: notificar cuando el cliente aprueba un presupuesto
   useEffect(() => {
@@ -83,105 +66,11 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
   const [modalTab, setModalTab] = useState('detalles')
   const [modalOpen, setModalOpen] = useState(false)
 
-  // Dialog: Registrar avance
-  const [avanceDialog, setAvanceDialog] = useState<{ open: boolean; idAsignacion: number; idIncidente: number } | null>(null)
-  const [avanceDesc, setAvanceDesc] = useState('')
-  const [avancePct, setAvancePct] = useState('')
-
-  // Dialog: Completar trabajo
-  const [completarDialog, setCompletarDialog] = useState<{ open: boolean; idAsignacion: number } | null>(null)
-
-  // Dialog: Subir conformidad (foto)
-  const [conformidadDialog, setConformidadDialog] = useState<{ open: boolean; idIncidente: number } | null>(null)
-  const [fotoFile, setFotoFile] = useState<File | null>(null)
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null)
-  const [uploadingFoto, setUploadingFoto] = useState(false)
-
-
   const abrirModal = (id: number, tab = 'detalles') => {
     setIncidenteSeleccionado(id)
     setModalTab(tab)
     setModalOpen(true)
   }
-
-  const handleCompletar = () => {
-    if (!completarDialog) return
-    startTransition(async () => {
-      const res = await completarAsignacion(completarDialog.idAsignacion)
-      if (res.success) {
-        toast.success('Trabajo marcado como completado')
-        setCompletarDialog(null)
-        router.refresh()
-      } else {
-        toast.error(res.error ?? 'Error al completar')
-      }
-    })
-  }
-
-  const handleAvance = () => {
-    if (!avanceDialog || !avanceDesc.trim()) return
-    startTransition(async () => {
-      const res = await crearAvance({
-        id_incidente: avanceDialog.idIncidente,
-        descripcion_avance: avanceDesc.trim(),
-        porcentaje_completado: avancePct ? parseInt(avancePct) : null,
-      })
-      if (res.success) {
-        toast.success('Avance registrado')
-        setAvanceDialog(null)
-        setAvanceDesc('')
-        setAvancePct('')
-      } else {
-        toast.error(res.error ?? 'Error al registrar avance')
-      }
-    })
-  }
-
-  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setFotoFile(file)
-    setFotoPreview(URL.createObjectURL(file))
-  }
-
-  const handleSubirConformidad = async () => {
-    if (!conformidadDialog || !fotoFile) return
-    setUploadingFoto(true)
-    try {
-      const supabase = createClient()
-      const ext = fotoFile.name.split('.').pop() || 'jpg'
-      const path = `tecnico/${conformidadDialog.idIncidente}/${Date.now()}.${ext}`
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('conformidades')
-        .upload(path, fotoFile, { upsert: false })
-
-      if (uploadError) {
-        toast.error('Error al subir la foto: ' + uploadError.message)
-        return
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('conformidades')
-        .getPublicUrl(uploadData.path)
-
-      const res = await crearConformidadPorTecnico(conformidadDialog.idIncidente, publicUrl)
-      if (res.success) {
-        toast.success('Conformidad enviada', { description: 'La administración revisará la foto y te notificará.' })
-        setConformidadDialog(null)
-        setFotoFile(null)
-        setFotoPreview(null)
-        router.refresh()
-      } else {
-        toast.error(res.error ?? 'Error al enviar conformidad')
-      }
-    } catch {
-      toast.error('Error inesperado al subir la foto')
-    } finally {
-      setUploadingFoto(false)
-    }
-  }
-
 
   // Stats
   const totalTrabajos = asignaciones.length
@@ -195,7 +84,6 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
   const renderCard = (asignacion: AsignacionTecnico) => {
     const incidente = asignacion.incidentes
     const inmueble = incidente?.inmuebles
-    const cliente = incidente?.clientes
 
     const direccionPartes = inmueble
       ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
@@ -204,15 +92,6 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
     const direccionInmueble = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
 
     const estado = asignacion.estado_asignacion
-    const estadoPres = estadoPresupuestoPorIncidente[asignacion.id_incidente]
-    const presupuestoAprobado = estadoPres === 'aprobado'
-    const enTrabajo = (estado === 'aceptada' || estado === 'en_curso') && presupuestoAprobado
-    const terminado = estado === 'completada'
-
-    const confInfo = conformidadesPorIncidente[asignacion.id_incidente]
-    const conformidadPendiente = confInfo && !confInfo.esta_firmada && confInfo.url_documento
-    const conformidadAprobada = confInfo && (confInfo.esta_firmada === 1 || confInfo.esta_firmada === true)
-    const puedeSubirConformidad = terminado && !confInfo
 
     return (
       <Card key={asignacion.id_asignacion} className="shadow-sm">
@@ -296,37 +175,6 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
             </button>
           </div>
         </CardContent>
-
-        <div className="px-4 pb-4 space-y-2 border-t pt-3">
-          {enTrabajo && (
-            <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" variant="outline" className="gap-1.5 text-blue-700 border-blue-300 hover:bg-blue-50"
-                onClick={() => { setAvanceDesc(''); setAvancePct(''); setAvanceDialog({ open: true, idAsignacion: asignacion.id_asignacion, idIncidente: asignacion.id_incidente }) }}>
-                <Plus className="h-3.5 w-3.5" />Registrar avance
-              </Button>
-              <Button size="sm" variant="outline" className="gap-1.5 text-green-700 border-green-300 hover:bg-green-50"
-                onClick={() => setCompletarDialog({ open: true, idAsignacion: asignacion.id_asignacion })}>
-                <CheckCircle2 className="h-3.5 w-3.5" />Completar
-              </Button>
-            </div>
-          )}
-          {puedeSubirConformidad && (
-            <Button size="sm" variant="outline" className="w-full gap-1.5 text-purple-700 border-purple-300 hover:bg-purple-50"
-              onClick={() => { setFotoFile(null); setFotoPreview(null); setConformidadDialog({ open: true, idIncidente: asignacion.id_incidente }) }}>
-              <Upload className="h-3.5 w-3.5" />Subir conformidad firmada
-            </Button>
-          )}
-          {conformidadPendiente && (
-            <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              <Loader2 className="h-3 w-3 animate-spin flex-shrink-0" />Conformidad en revisión por la administración
-            </div>
-          )}
-          {conformidadAprobada && (
-            <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <CheckCircle2 className="h-3 w-3 flex-shrink-0" />Conformidad aprobada — incidente resuelto
-            </div>
-          )}
-        </div>
       </Card>
     )
   }
@@ -402,144 +250,8 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
         rol="tecnico"
         initialTab={modalTab}
         hideTabs
+        onUpdate={() => router.refresh()}
       />
-
-      {/* Dialog: Registrar Avance */}
-      <Dialog open={avanceDialog?.open ?? false} onOpenChange={(o) => !o && setAvanceDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar Avance</DialogTitle>
-            <DialogDescription>Describe el progreso realizado en el trabajo.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="avance-desc">Descripción del avance *</Label>
-              <Textarea
-                id="avance-desc"
-                value={avanceDesc}
-                onChange={(e) => setAvanceDesc(e.target.value)}
-                placeholder="Describe qué trabajo se realizó..."
-                rows={4}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="avance-pct">Porcentaje completado (opcional)</Label>
-              <input
-                id="avance-pct"
-                type="number"
-                min={0}
-                max={100}
-                value={avancePct}
-                onChange={(e) => setAvancePct(e.target.value)}
-                placeholder="0-100"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAvanceDialog(null)} disabled={isPending}>Cancelar</Button>
-            <Button onClick={handleAvance} disabled={isPending || !avanceDesc.trim()}>
-              {isPending ? 'Guardando...' : 'Guardar Avance'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog: Completar Trabajo */}
-      <Dialog open={completarDialog?.open ?? false} onOpenChange={(o) => !o && setCompletarDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Completar Trabajo</DialogTitle>
-            <DialogDescription>
-              ¿Confirmas que el trabajo fue finalizado? El estado de la asignación pasará a &quot;Completada&quot;.
-              Después podrás subir la conformidad firmada por el cliente.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCompletarDialog(null)} disabled={isPending}>Cancelar</Button>
-            <Button onClick={handleCompletar} disabled={isPending}>
-              {isPending ? 'Procesando...' : 'Sí, completar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog: Subir Conformidad Firmada */}
-      <Dialog
-        open={conformidadDialog?.open ?? false}
-        onOpenChange={(o) => {
-          if (!o) {
-            setConformidadDialog(null)
-            setFotoFile(null)
-            setFotoPreview(null)
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Subir Conformidad Firmada</DialogTitle>
-            <DialogDescription>
-              Tomá una foto de la conformidad física firmada por el cliente y subila aquí.
-              La administración la revisará y aprobará para cerrar el incidente.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Foto de la conformidad *</Label>
-              <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {fotoPreview ? (
-                  <img src={fotoPreview} alt="Preview" className="max-h-48 mx-auto rounded-md object-contain" />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-500">
-                    <ImageIcon className="h-10 w-10 text-gray-400" />
-                    <p className="text-sm font-medium">Tocá para seleccionar una foto</p>
-                    <p className="text-xs text-gray-400">JPG, PNG, HEIC — máx. 10 MB</p>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFotoChange}
-              />
-              {fotoFile && (
-                <p className="text-xs text-gray-500">
-                  {fotoFile.name} ({(fotoFile.size / 1024 / 1024).toFixed(1)} MB)
-                </p>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConformidadDialog(null)
-                setFotoFile(null)
-                setFotoPreview(null)
-              }}
-              disabled={uploadingFoto}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSubirConformidad}
-              disabled={uploadingFoto || !fotoFile}
-              className="gap-2"
-            >
-              {uploadingFoto ? (
-                <><Loader2 className="h-4 w-4 animate-spin" />Subiendo...</>
-              ) : (
-                <><Upload className="h-4 w-4" />Enviar Conformidad</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
@@ -43,6 +43,10 @@ import {
   ChevronUp,
   ChevronRight,
   Lock,
+  Plus,
+  CheckCircle2,
+  Upload,
+  ImageIcon,
 } from 'lucide-react'
 import { CategoriaIncidente, EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { InspeccionesList } from './inspecciones-list'
@@ -54,10 +58,12 @@ import {
   getTimelineData,
   actualizarIncidente,
 } from '@/features/incidentes/incidentes.service'
-import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
+import { crearAsignacion, completarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
 import { getPresupuestosDelIncidente, crearPresupuesto } from '@/features/presupuestos/presupuestos.service'
-import { getConformidadDelIncidente } from '@/features/conformidades/conformidades.service'
+import { getConformidadDelIncidente, crearConformidadPorTecnico } from '@/features/conformidades/conformidades.service'
+import { crearAvance } from '@/features/avances/avances.service'
+import { createClient } from '@/shared/lib/supabase/client'
 import { PresupuestosClienteList } from '@/components/cliente/presupuestos-cliente-list'
 import type { Presupuesto } from '@/features/presupuestos/presupuestos.types'
 import type { Conformidad } from '@/features/conformidades/conformidades.types'
@@ -340,6 +346,17 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [presAlternativas, setPresAlternativas] = useState('')
   const [presInspeccionId, setPresInspeccionId] = useState('')
   const [savingPresupuesto, setSavingPresupuesto] = useState(false)
+
+  // State para acciones de ejecución (solo técnico)
+  const [avanceDesc, setAvanceDesc] = useState('')
+  const [avancePct, setAvancePct] = useState('')
+  const [savingAvance, setSavingAvance] = useState(false)
+  const [savingCompletar, setSavingCompletar] = useState(false)
+  const [confirmandoCompletar, setConfirmandoCompletar] = useState(false)
+  const [fotoFile, setFotoFile] = useState<File | null>(null)
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null)
+  const [uploadingFoto, setUploadingFoto] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const CATEGORIAS = Object.values(CategoriaIncidente) as string[]
 
@@ -708,6 +725,93 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     }
   }
 
+  const handleAvance = async () => {
+    if (!incidenteId || !avanceDesc.trim()) return
+    setSavingAvance(true)
+    try {
+      const res = await crearAvance({
+        id_incidente: incidenteId,
+        descripcion_avance: avanceDesc.trim(),
+        porcentaje_completado: avancePct ? parseInt(avancePct) : null,
+      })
+      if (res.success) {
+        toast.success('Avance registrado')
+        setAvanceDesc('')
+        setAvancePct('')
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al registrar avance')
+      }
+    } finally {
+      setSavingAvance(false)
+    }
+  }
+
+  const handleCompletar = async () => {
+    if (!incidenteId) return
+    const asig = asignaciones.find(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion))
+    if (!asig) return
+    setSavingCompletar(true)
+    try {
+      const res = await completarAsignacion(asig.id_asignacion)
+      if (res.success) {
+        toast.success('Trabajo marcado como completado')
+        setConfirmandoCompletar(false)
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al completar')
+      }
+    } finally {
+      setSavingCompletar(false)
+    }
+  }
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFotoFile(file)
+    setFotoPreview(URL.createObjectURL(file))
+  }
+
+  const handleSubirConformidad = async () => {
+    if (!incidenteId || !fotoFile) return
+    setUploadingFoto(true)
+    try {
+      const supabase = createClient()
+      const ext = fotoFile.name.split('.').pop() || 'jpg'
+      const path = `tecnico/${incidenteId}/${Date.now()}.${ext}`
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('conformidades')
+        .upload(path, fotoFile, { upsert: false })
+
+      if (uploadError) {
+        toast.error('Error al subir la foto: ' + uploadError.message)
+        return
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('conformidades')
+        .getPublicUrl(uploadData.path)
+
+      const res = await crearConformidadPorTecnico(incidenteId, publicUrl)
+      if (res.success) {
+        toast.success('Conformidad enviada', { description: 'La administración revisará la foto y te notificará.' })
+        setFotoFile(null)
+        setFotoPreview(null)
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al enviar conformidad')
+      }
+    } catch {
+      toast.error('Error inesperado al subir la foto')
+    } finally {
+      setUploadingFoto(false)
+    }
+  }
+
   const handleCrearPresupuesto = async () => {
     if (!incidenteId || !presDescripcion.trim()) {
       toast.error('La descripción es obligatoria')
@@ -823,13 +927,15 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             const s2: StepStatus = tienePresupuesto ? 'completed' : tieneInspeccion ? 'active' : 'locked'
             const s3: StepStatus = presupuestoAprobadoAdmin ? 'completed' : tienePresupuesto ? 'active' : 'locked'
             const s4: StepStatus = presupuestoAprobadoCliente ? 'completed' : presupuestoAprobadoAdmin ? 'active' : 'locked'
-            const s5: StepStatus = tieneConformidad ? 'completed' : trabajoCompletado ? 'completed' : presupuestoAprobadoCliente ? 'active' : 'locked'
+            const s5: StepStatus = trabajoCompletado ? 'completed' : presupuestoAprobadoCliente ? 'active' : 'locked'
+            const s6: StepStatus = tieneConformidad ? 'completed' : trabajoCompletado ? 'active' : 'locked'
             return [
               { id: 1, label: 'Inspección', sublabel: tieneInspeccion ? 'Realizada' : 'Pendiente', tab: 'inspecciones', status: s1 },
               { id: 2, label: 'Presupuesto', sublabel: tienePresupuesto ? 'Enviado' : 'Pendiente', tab: 'presupuesto', status: s2 },
               { id: 3, label: 'Aprob. Admin', sublabel: presupuestoAprobadoAdmin ? 'Aprobado' : 'En revisión', tab: 'presupuesto', status: s3 },
               { id: 4, label: 'Aprob. Cliente', sublabel: presupuestoAprobadoCliente ? 'Aprobado' : 'En espera', tab: 'timeline', status: s4 },
-              { id: 5, label: 'Ejecución', sublabel: trabajoCompletado ? 'Completado' : 'Por iniciar', tab: 'detalles', status: s5 },
+              { id: 5, label: 'Ejecución', sublabel: trabajoCompletado ? 'Completado' : 'Por iniciar', tab: 'ejecucion', status: s5 },
+              { id: 6, label: 'Conformidad', sublabel: tieneConformidad ? 'Enviada' : trabajoCompletado ? 'Pendiente' : 'Bloqueada', tab: 'conformidad', status: s6 },
             ]
           }
 
@@ -862,7 +968,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 )}
 
                 {/* ── Stepper — visible cuando no es info tab (detalles/timeline) ── */}
-                {(!hideTabs || !['detalles', 'timeline'].includes(activeTab)) && (
+                {(!hideTabs || ['inspecciones', 'presupuesto', 'ejecucion', 'conformidad'].includes(activeTab)) && (
                   <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
                     <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
                   </div>
@@ -1351,6 +1457,207 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </>
                   )
                 })()}
+              </TabsContent>
+            )}
+
+            {/* Tab Ejecución (para técnicos con presupuesto aprobado) */}
+            {hasTecnicoTabs && incidente && (
+              <TabsContent value="ejecucion" className="mt-4 space-y-5">
+                {!presupuestoAprobadoCliente ? (
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
+                    <Lock className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold mb-1">Presupuesto pendiente de aprobación</p>
+                      <p>El cliente debe aprobar el presupuesto antes de que puedas iniciar el trabajo.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Estado del trabajo */}
+                    {trabajoCompletado ? (
+                      <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-emerald-800">Trabajo completado</p>
+                          <p className="text-xs text-emerald-600">Procedé a cargar la conformidad firmada en el siguiente paso.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Registrar avance */}
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-sm text-gray-600 flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            Registrar Avance
+                          </h4>
+                          <div className="space-y-3">
+                            <div className="space-y-1.5">
+                              <Label htmlFor="modal-avance-desc">Descripción del avance <span className="text-red-500">*</span></Label>
+                              <Textarea
+                                id="modal-avance-desc"
+                                value={avanceDesc}
+                                onChange={(e) => setAvanceDesc(e.target.value)}
+                                placeholder="Describe qué trabajo se realizó..."
+                                rows={3}
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label htmlFor="modal-avance-pct">Porcentaje completado (opcional)</Label>
+                              <input
+                                id="modal-avance-pct"
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={avancePct}
+                                onChange={(e) => setAvancePct(e.target.value)}
+                                placeholder="0–100"
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                              />
+                            </div>
+                            <Button
+                              onClick={handleAvance}
+                              disabled={savingAvance || !avanceDesc.trim()}
+                              className="w-full gap-2"
+                            >
+                              {savingAvance ? <><Loader2 className="h-4 w-4 animate-spin" />Guardando...</> : <><Plus className="h-4 w-4" />Guardar Avance</>}
+                            </Button>
+                          </div>
+                        </div>
+
+                        <Separator />
+
+                        {/* Completar trabajo */}
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-sm text-gray-600 flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Completar Trabajo
+                          </h4>
+                          {!confirmandoCompletar ? (
+                            <Button
+                              variant="outline"
+                              className="w-full gap-2 text-green-700 border-green-300 hover:bg-green-50"
+                              onClick={() => setConfirmandoCompletar(true)}
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              Marcar como completado
+                            </Button>
+                          ) : (
+                            <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-3">
+                              <p className="text-sm text-green-800">
+                                ¿Confirmás que el trabajo fue finalizado? Después deberás subir la conformidad firmada por el cliente.
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setConfirmandoCompletar(false)}
+                                  disabled={savingCompletar}
+                                >
+                                  Cancelar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="flex-1 gap-2"
+                                  onClick={handleCompletar}
+                                  disabled={savingCompletar}
+                                >
+                                  {savingCompletar ? <><Loader2 className="h-4 w-4 animate-spin" />Procesando...</> : 'Sí, completar'}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              </TabsContent>
+            )}
+
+            {/* Tab Conformidad (para técnicos con trabajo completado) */}
+            {hasTecnicoTabs && incidente && (
+              <TabsContent value="conformidad" className="mt-4 space-y-4">
+                {!trabajoCompletado ? (
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
+                    <Lock className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold mb-1">Trabajo no completado</p>
+                      <p>Debés completar el trabajo antes de poder cargar la conformidad.</p>
+                    </div>
+                  </div>
+                ) : conformidad ? (
+                  <div className={`rounded-lg border p-4 space-y-3 ${
+                    (conformidad.esta_firmada === true || conformidad.esta_firmada === 1)
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : 'bg-amber-50 border-amber-200'
+                  }`}>
+                    {(conformidad.esta_firmada === true || conformidad.esta_firmada === 1) ? (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        <p className="text-sm font-semibold text-emerald-800">Conformidad aprobada — incidente resuelto</p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin text-amber-600" />
+                        <p className="text-sm font-semibold text-amber-800">Conformidad en revisión por la administración</p>
+                      </div>
+                    )}
+                    {conformidad.url_documento && (
+                      <a
+                        href={conformidad.url_documento}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 underline"
+                      >
+                        Ver documento subido
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                      Tomá una foto de la conformidad física firmada por el cliente y subila aquí. La administración la revisará para cerrar el incidente.
+                    </p>
+                    <div className="space-y-2">
+                      <Label>Foto de la conformidad <span className="text-red-500">*</span></Label>
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {fotoPreview ? (
+                          <img src={fotoPreview} alt="Preview" className="max-h-48 mx-auto rounded-md object-contain" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 text-gray-500">
+                            <ImageIcon className="h-10 w-10 text-gray-400" />
+                            <p className="text-sm font-medium">Tocá para seleccionar una foto</p>
+                            <p className="text-xs text-gray-400">JPG, PNG, HEIC — máx. 10 MB</p>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFotoChange}
+                      />
+                      {fotoFile && (
+                        <p className="text-xs text-gray-500">{fotoFile.name} ({(fotoFile.size / 1024 / 1024).toFixed(1)} MB)</p>
+                      )}
+                    </div>
+                    <Button
+                      onClick={handleSubirConformidad}
+                      disabled={uploadingFoto || !fotoFile}
+                      className="w-full gap-2"
+                    >
+                      {uploadingFoto ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" />Subiendo...</>
+                      ) : (
+                        <><Upload className="h-4 w-4" />Enviar Conformidad</>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
             )}
 
