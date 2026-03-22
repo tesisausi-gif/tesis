@@ -924,7 +924,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   const idTecnicoActual = asignaciones.find(a =>
                     ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
                   )?.id_tecnico || 0
-                  const inspeccionesActuales = inspecciones.filter(i => i.id_tecnico === idTecnicoActual)
+                  const inspeccionesActuales = inspecciones.filter(i => !i.esta_anulada)
                   return (
                     <InspeccionesList
                       incidenteId={incidente.id_incidente}
@@ -945,7 +945,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   const idTecnicoActual = asignaciones.find(a =>
                     ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
                   )?.id_tecnico || 0
-                  const inspeccionesActuales = inspecciones.filter(i => i.id_tecnico === idTecnicoActual)
+                  const inspeccionesActuales = inspecciones.filter(i => !i.esta_anulada)
                   const presupuestosActivos = presupuestos.filter(
                     p => p.estado_presupuesto !== EstadoPresupuesto.RECHAZADO
                   )

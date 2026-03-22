@@ -326,7 +326,7 @@ export async function rechazarPresupuesto(
       .maybeSingle()
 
     if (asig) {
-      // Obtener id_tecnico de la asignacion para crear notificacion
+      // Obtener id_tecnico de la asignacion para anular inspecciones y crear notificacion
       const { data: asigConTecnico } = await supabase
         .from('asignaciones_tecnico')
         .select('id_tecnico')
@@ -338,8 +338,16 @@ export async function rechazarPresupuesto(
         .update({ estado_asignacion: 'rechazada', fecha_rechazo: new Date().toISOString() })
         .eq('id_asignacion', asig.id_asignacion)
 
-      // Crear notificación in-app para el técnico
       if (asigConTecnico?.id_tecnico) {
+        // Anular inspecciones del técnico para este incidente
+        await supabase
+          .from('inspecciones')
+          .update({ esta_anulada: true })
+          .eq('id_incidente', pres.id_incidente)
+          .eq('id_tecnico', asigConTecnico.id_tecnico)
+          .eq('esta_anulada', false)
+
+        // Crear notificación in-app para el técnico
         const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
         crearNotificacion({
           id_tecnico: asigConTecnico.id_tecnico,
