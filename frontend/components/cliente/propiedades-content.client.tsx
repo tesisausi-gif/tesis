@@ -364,7 +364,7 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
 
       {/* Dialog para registrar/editar inmueble */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl md:text-2xl">
               {editingInmueble ? 'Editar Inmueble' : 'Registrar Inmueble'}

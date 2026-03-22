@@ -287,33 +287,33 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
           </CardContent>
         </div>
 
-        <div className="px-6 pb-4 flex flex-wrap gap-2 border-t pt-3" onClick={(e) => e.stopPropagation()}>
+        <div className="px-4 pb-4 space-y-2 border-t pt-3" onClick={(e) => e.stopPropagation()}>
           {enTrabajo && (
-            <>
-              <Button size="sm" variant="outline" className="gap-1 text-blue-700 border-blue-300 hover:bg-blue-50"
+            <div className="grid grid-cols-2 gap-2">
+              <Button size="sm" variant="outline" className="gap-1.5 text-blue-700 border-blue-300 hover:bg-blue-50"
                 onClick={() => { setAvanceDesc(''); setAvancePct(''); setAvanceDialog({ open: true, idAsignacion: asignacion.id_asignacion, idIncidente: asignacion.id_incidente }) }}>
-                <Plus className="h-3 w-3" />Registrar Avance
+                <Plus className="h-3.5 w-3.5" />Registrar avance
               </Button>
-              <Button size="sm" variant="outline" className="gap-1 text-green-700 border-green-300 hover:bg-green-50"
+              <Button size="sm" variant="outline" className="gap-1.5 text-green-700 border-green-300 hover:bg-green-50"
                 onClick={() => setCompletarDialog({ open: true, idAsignacion: asignacion.id_asignacion })}>
-                <CheckCircle2 className="h-3 w-3" />Completar Trabajo
+                <CheckCircle2 className="h-3.5 w-3.5" />Completar
               </Button>
-            </>
+            </div>
           )}
           {puedeSubirConformidad && (
-            <Button size="sm" variant="outline" className="gap-1 text-purple-700 border-purple-300 hover:bg-purple-50"
+            <Button size="sm" variant="outline" className="w-full gap-1.5 text-purple-700 border-purple-300 hover:bg-purple-50"
               onClick={() => { setFotoFile(null); setFotoPreview(null); setConformidadDialog({ open: true, idIncidente: asignacion.id_incidente }) }}>
-              <Upload className="h-3 w-3" />Subir Conformidad Firmada
+              <Upload className="h-3.5 w-3.5" />Subir conformidad firmada
             </Button>
           )}
           {conformidadPendiente && (
-            <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-              <Loader2 className="h-3 w-3 animate-spin" />Conformidad en revisión por la administración
+            <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <Loader2 className="h-3 w-3 animate-spin flex-shrink-0" />Conformidad en revisión por la administración
             </div>
           )}
           {conformidadAprobada && (
-            <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-              <CheckCircle2 className="h-3 w-3" />Conformidad aprobada — incidente resuelto
+            <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+              <CheckCircle2 className="h-3 w-3 flex-shrink-0" />Conformidad aprobada — incidente resuelto
             </div>
           )}
         </div>
@@ -342,31 +342,18 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
       </div>
 
       {asignaciones.length > 0 && (
-        <div className="grid gap-3 grid-cols-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardContent className="p-3 text-center">
-              <div className="text-xl font-bold text-blue-700">{totalTrabajos}</div>
-              <p className="text-xs text-blue-600">Total</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardContent className="p-3 text-center">
-              <div className="text-xl font-bold text-blue-700">{aceptados}</div>
-              <p className="text-xs text-blue-600">Aceptados</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-            <CardContent className="p-3 text-center">
-              <div className="text-xl font-bold text-orange-700">{enCurso}</div>
-              <p className="text-xs text-orange-600">En Curso</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-            <CardContent className="p-3 text-center">
-              <div className="text-xl font-bold text-green-700">{completados}</div>
-              <p className="text-xs text-green-600">Completados</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-4 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          {[
+            { label: 'Total',      count: totalTrabajos, color: 'text-blue-600' },
+            { label: 'Aceptados',  count: aceptados,     color: 'text-blue-500' },
+            { label: 'En curso',   count: enCurso,       color: 'text-orange-500' },
+            { label: 'Completos',  count: completados,   color: 'text-green-500' },
+          ].map(s => (
+            <div key={s.label} className="flex flex-col items-center justify-center py-3 border-r border-gray-100 last:border-0">
+              <span className={`text-xl font-bold ${s.color}`}>{s.count}</span>
+              <span className="text-[9px] text-gray-400 font-medium leading-tight text-center mt-0.5">{s.label}</span>
+            </div>
+          ))}
         </div>
       )}
 
