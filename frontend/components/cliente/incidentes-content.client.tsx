@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -8,22 +8,56 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Plus, AlertCircle, Eye, Clock, Send, Wrench, CheckCircle } from 'lucide-react'
+import { Plus, AlertCircle, Eye, Clock, Send, Wrench, CheckCircle, Bell } from 'lucide-react'
 import { getEstadoIncidenteColor, getEstadoIncidenteLabel } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
+import { createClient } from '@/shared/lib/supabase/client'
 import type { Incidente } from '@/features/incidentes/incidentes.types'
 
 interface IncidentesContentProps {
   incidentes: Incidente[]
+  incidentesConPresupuestoPendiente: number[]
 }
 
-export function IncidentesContent({ incidentes }: IncidentesContentProps) {
+export function IncidentesContent({ incidentes, incidentesConPresupuestoPendiente }: IncidentesContentProps) {
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [pendientesPresupuesto, setPendientesPresupuesto] = useState<Set<number>>(
+    new Set(incidentesConPresupuestoPendiente)
+  )
+
+  // Realtime: escuchar cambios en presupuestos
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('presupuestos-cliente-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'presupuestos' },
+        (payload) => {
+          const next = payload.new as any
+          const prev = payload.old as any
+          const idIncidente: number | undefined = next?.id_incidente ?? prev?.id_incidente
+
+          if (!idIncidente) return
+
+          if (next?.estado_presupuesto === 'aprobado_admin') {
+            setPendientesPresupuesto(s => new Set([...s, idIncidente]))
+          } else if (prev?.estado_presupuesto === 'aprobado_admin') {
+            setPendientesPresupuesto(s => { const n = new Set(s); n.delete(idIncidente); return n })
+          }
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [])
 
   const abrirModal = (id: number) => {
     setIncidenteSeleccionado(id)
     setModalOpen(true)
+    // Limpiar badge al abrir el modal
+    setPendientesPresupuesto(s => { const n = new Set(s); n.delete(id); return n })
   }
 
   const pendientes = incidentes.filter(i => i.estado_actual === 'pendiente')
@@ -48,13 +82,20 @@ export function IncidentesContent({ incidentes }: IncidentesContentProps) {
             : ''
           const ubicacion = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
           const direccion = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
+          const tienePresupuestoPendiente = pendientesPresupuesto.has(incidente.id_incidente)
 
           return (
             <Card
               key={incidente.id_incidente}
-              className="hover:shadow-md transition-shadow cursor-pointer"
+              className={`hover:shadow-md transition-shadow cursor-pointer relative ${tienePresupuestoPendiente ? 'border-amber-400 border-2' : ''}`}
               onClick={() => abrirModal(incidente.id_incidente)}
             >
+              {tienePresupuestoPendiente && (
+                <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-md animate-pulse">
+                  <Bell className="h-3 w-3" />
+                  Presupuesto listo
+                </div>
+              )}
               <CardHeader className="pb-3">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                   <div className="space-y-1 flex-1">

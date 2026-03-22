@@ -97,6 +97,20 @@ export async function getPresupuestosDeTecnico(): Promise<PresupuestoConDetalle[
 }
 
 /**
+ * IDs de incidentes del cliente con presupuesto pendiente de aprobación (aprobado_admin)
+ */
+export async function getIncidentesConPresupuestoPendiente(): Promise<number[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('presupuestos')
+    .select('id_incidente')
+    .eq('estado_presupuesto', EstadoPresupuesto.APROBADO_ADMIN)
+
+  return (data ?? []).map((p: any) => p.id_incidente).filter(Boolean) as number[]
+}
+
+/**
  * Obtener presupuestos de los incidentes de un cliente
  */
 export async function getPresupuestosDelCliente(idCliente: number): Promise<PresupuestoConDetalle[]> {
