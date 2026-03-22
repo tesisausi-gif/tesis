@@ -263,12 +263,34 @@ export async function completarAsignacion(idAsignacion: number): Promise<ActionR
     const supabase = await createClient()
     await requireTecnicoId()
 
+    // Obtener id_incidente antes de actualizar para notificar al admin
+    const { data: asig } = await supabase
+      .from('asignaciones_tecnico')
+      .select('id_incidente, tecnicos(nombre, apellido)')
+      .eq('id_asignacion', idAsignacion)
+      .single()
+
     const { error } = await supabase
       .from('asignaciones_tecnico')
       .update({ estado_asignacion: 'completada' })
       .eq('id_asignacion', idAsignacion)
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al admin que el trabajo fue completado (fire-and-forget)
+    if (asig?.id_incidente) {
+      const tecNombre = asig.tecnicos
+        ? `${(asig.tecnicos as any).nombre} ${(asig.tecnicos as any).apellido}`
+        : 'El técnico'
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      crearNotificacionAdmin({
+        tipo: 'trabajo_completado',
+        titulo: 'Trabajo completado',
+        mensaje: `${tecNombre} marcó el incidente #${asig.id_incidente} como completado. Pendiente de conformidad.`,
+        id_incidente: asig.id_incidente,
+      }).catch(console.error)
+    }
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al completar asignación' }

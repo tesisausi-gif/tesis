@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -73,15 +74,41 @@ function formatFecha(fecha: string): string {
   return format(d, "d MMM 'a las' HH:mm", { locale: es })
 }
 
+function getNavUrl(
+  tipo: string,
+  rol: 'tecnico' | 'cliente' | 'admin',
+  idIncidente: number | null,
+  idPresupuesto: number | null,
+): string | null {
+  if (rol === 'tecnico') {
+    if (idIncidente) return '/tecnico/trabajos'
+    return null
+  }
+  if (rol === 'cliente') {
+    if (idIncidente) return '/cliente/incidentes'
+    if (idPresupuesto) return '/cliente/incidentes'
+    return null
+  }
+  if (rol === 'admin') {
+    if (tipo === 'nueva_conformidad') return '/dashboard/conformidades'
+    if (['presupuesto_enviado', 'presupuesto_aprobado_cliente', 'presupuesto_rechazado_cliente'].includes(tipo))
+      return '/dashboard/presupuestos'
+    if (tipo === 'solicitud_registro') return '/dashboard/tecnicos'
+    if (idIncidente) return `/dashboard/incidentes?highlight=${idIncidente}`
+    return null
+  }
+  return null
+}
+
 interface Props {
   notificaciones: Notificacion[]
   rol: 'tecnico' | 'cliente' | 'admin'
-  onNotificacionClick?: (n: Notificacion) => void
 }
 
-export function NotificacionesPanel({ notificaciones: inicial, rol, onNotificacionClick }: Props) {
+export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
   const [items, setItems] = useState<Notificacion[]>(inicial)
   const [, startTransition] = useTransition()
+  const router = useRouter()
 
   const descartar = (e: React.MouseEvent, id: number) => {
     e.stopPropagation()
@@ -108,10 +135,20 @@ export function NotificacionesPanel({ notificaciones: inicial, rol, onNotificaci
   const hoy = items.filter(n => isToday(new Date(n.fecha_creacion)))
   const anteriores = items.filter(n => !isToday(new Date(n.fecha_creacion)))
 
+  const handleClick = (n: Notificacion) => {
+    const url = getNavUrl(n.tipo, rol, n.id_incidente, n.id_presupuesto)
+    if (!url) return
+    // Marcar como leída y sacar de la lista (fire-and-forget)
+    setItems(prev => prev.filter(x => x.id_notificacion !== n.id_notificacion))
+    marcarNotificacionLeida(n.id_notificacion).catch(() => {})
+    router.push(url)
+  }
+
   const renderNotif = (n: Notificacion) => {
     const cfg = getCategoriaConfig(n.tipo)
     const Icon = cfg.icon
-    const esClickeable = !!n.id_incidente && !!onNotificacionClick
+    const navUrl = getNavUrl(n.tipo, rol, n.id_incidente, n.id_presupuesto)
+    const esClickeable = !!navUrl
 
     return (
       <motion.div
@@ -123,7 +160,7 @@ export function NotificacionesPanel({ notificaciones: inicial, rol, onNotificaci
         transition={{ duration: 0.18 }}
       >
         <div
-          onClick={() => esClickeable && onNotificacionClick?.(n)}
+          onClick={() => esClickeable && handleClick(n)}
           className={`relative flex items-start gap-3 rounded-xl border p-3.5 transition-all ${cfg.bg} ${cfg.border} ${
             esClickeable ? 'cursor-pointer hover:brightness-95 active:scale-[0.99]' : ''
           }`}
@@ -147,7 +184,7 @@ export function NotificacionesPanel({ notificaciones: inicial, rol, onNotificaci
                 <>
                   <span className="text-gray-300">·</span>
                   <span className={`text-[10px] font-medium flex items-center gap-0.5 ${cfg.iconColor}`}>
-                    Ver incidente <ExternalLink className="h-2.5 w-2.5" />
+                    Ver más <ExternalLink className="h-2.5 w-2.5" />
                   </span>
                 </>
               )}

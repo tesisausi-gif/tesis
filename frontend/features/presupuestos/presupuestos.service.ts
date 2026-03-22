@@ -483,6 +483,18 @@ export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<
       }
     }
 
+    // Notificar al admin que el cliente aprobó el presupuesto (fire-and-forget)
+    if (pres?.id_incidente) {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      crearNotificacionAdmin({
+        tipo: 'presupuesto_aprobado_cliente',
+        titulo: 'Presupuesto aprobado por el cliente',
+        mensaje: `El cliente aprobó el presupuesto del incidente #${pres.id_incidente}. El técnico puede comenzar el trabajo.`,
+        id_incidente: pres.id_incidente,
+        id_presupuesto: idPresupuesto,
+      }).catch(console.error)
+    }
+
     // Email al técnico (fire-and-forget)
     const { notificarTecnicoPresupuestoAprobado } = await import('@/features/notificaciones/notificaciones.service')
     notificarTecnicoPresupuestoAprobado(idPresupuesto).catch(console.error)
@@ -534,6 +546,16 @@ export async function rechazarPresupuestoCliente(
       }
       // Finalizar incidente
       await supabaseAdmin.from('incidentes').update({ estado_actual: 'resuelto' }).eq('id_incidente', presupuesto.id_incidente)
+
+      // Notificar al admin (fire-and-forget)
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      crearNotificacionAdmin({
+        tipo: 'presupuesto_rechazado_cliente',
+        titulo: 'Presupuesto rechazado por el cliente',
+        mensaje: `El cliente rechazó el presupuesto del incidente #${presupuesto.id_incidente}.`,
+        id_incidente: presupuesto.id_incidente,
+        id_presupuesto: idPresupuesto,
+      }).catch(console.error)
     }
 
     return { success: true, data: undefined }

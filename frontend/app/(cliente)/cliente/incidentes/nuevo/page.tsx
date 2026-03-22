@@ -169,6 +169,16 @@ export default function NuevoIncidentePage() {
         description: `Tu incidente #${data.id_incidente} ha sido registrado`
       })
 
+      // Notificar al admin del nuevo incidente (fire-and-forget)
+      import('@/features/notificaciones/notificaciones-inapp.service').then(({ crearNotificacionAdmin }) => {
+        crearNotificacionAdmin({
+          tipo: 'nuevo_incidente',
+          titulo: 'Nuevo incidente reportado',
+          mensaje: `Se registró el incidente #${data.id_incidente}: "${descripcion.trim().slice(0, 80)}${descripcion.trim().length > 80 ? '...' : ''}"`,
+          id_incidente: data.id_incidente,
+        }).catch(() => {})
+      }).catch(() => {})
+
       router.push('/cliente/incidentes')
     } catch (error) {
       console.error('Error:', error)
