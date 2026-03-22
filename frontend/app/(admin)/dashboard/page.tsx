@@ -1,6 +1,8 @@
 import { getDashboardStats, getDashboardActividad } from '@/features/incidentes/incidentes.service'
 import { DashboardContent } from '@/components/admin/dashboard-content.client'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const [stats, actividad] = await Promise.all([
     getDashboardStats(),
