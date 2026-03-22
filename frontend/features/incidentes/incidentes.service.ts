@@ -141,7 +141,9 @@ export async function getIncidenteCompleto(idIncidente: number) {
  * Obtener asignaciones de un incidente con datos del técnico
  */
 export async function getAsignacionesDelIncidente(idIncidente: number) {
-  const supabase = await createClient()
+  // Usa adminClient para garantizar el join con tecnicos sin importar el rol del usuario
+  const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('asignaciones_tecnico')

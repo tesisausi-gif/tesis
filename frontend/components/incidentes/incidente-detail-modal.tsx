@@ -291,7 +291,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       }
 
       // Construir timeline
-      await construirTimeline(incidenteData, asignacionesData)
+      await construirTimeline(incidenteData, asignacionesData, rol)
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -299,7 +299,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     }
   }
 
-  const construirTimeline = async (incidenteData: any, asignacionesData: any[]) => {
+  const construirTimeline = async (incidenteData: any, asignacionesData: any[], rolActual: string = 'admin') => {
     const timelineEvents: TimelineEvent[] = []
 
     // Evento de creación
@@ -377,26 +377,51 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     })
 
     presupuestos?.forEach((pres: any) => {
-      timelineEvents.push({
-        id: `pres-${pres.id_presupuesto}`,
-        tipo: 'presupuesto',
-        titulo: 'Presupuesto Enviado',
-        descripcion: `Total: $${pres.costo_total?.toLocaleString() || 0}`,
-        fecha: pres.fecha_creacion,
-        icono: <FileText className="h-4 w-4" />,
-        color: 'bg-cyan-500',
-      })
-
-      if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
+      if (rolActual === 'cliente') {
+        // El cliente solo ve el presupuesto que la inmobiliaria le envía (aprobado_admin o aprobado)
+        if (!['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto)) return
         timelineEvents.push({
-          id: `pres-rechazado-${pres.id_presupuesto}`,
+          id: `pres-${pres.id_presupuesto}`,
           tipo: 'presupuesto',
-          titulo: 'Presupuesto Rechazado',
-          descripcion: 'El incidente volvió a estado Pendiente',
-          fecha: pres.fecha_modificacion,
-          icono: <XCircle className="h-4 w-4" />,
-          color: 'bg-red-500',
+          titulo: 'Presupuesto Recibido',
+          descripcion: `La inmobiliaria te envió un presupuesto por $${(pres.costo_total ?? 0).toLocaleString()}`,
+          fecha: pres.fecha_modificacion || pres.fecha_creacion,
+          icono: <FileText className="h-4 w-4" />,
+          color: 'bg-cyan-500',
         })
+        if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto Aprobado',
+            descripcion: `Aprobaste el presupuesto por $${(pres.costo_total ?? 0).toLocaleString()}`,
+            fecha: pres.fecha_aprobacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-green-500',
+          })
+        }
+      } else {
+        // Admin y técnico ven todo
+        timelineEvents.push({
+          id: `pres-${pres.id_presupuesto}`,
+          tipo: 'presupuesto',
+          titulo: 'Presupuesto Enviado',
+          descripcion: `Total: $${(pres.costo_total ?? 0).toLocaleString()}`,
+          fecha: pres.fecha_creacion,
+          icono: <FileText className="h-4 w-4" />,
+          color: 'bg-cyan-500',
+        })
+        if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
+          timelineEvents.push({
+            id: `pres-rechazado-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto Rechazado',
+            descripcion: 'El incidente volvió a estado Pendiente',
+            fecha: pres.fecha_modificacion,
+            icono: <XCircle className="h-4 w-4" />,
+            color: 'bg-red-500',
+          })
+        }
       }
     })
 
