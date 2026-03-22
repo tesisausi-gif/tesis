@@ -14,6 +14,7 @@ const INSPECCION_SELECT = `
   id_inspeccion,
   id_incidente,
   id_tecnico,
+  esta_anulada,
   fecha_inspeccion,
   descripcion_inspeccion,
   causas_determinadas,

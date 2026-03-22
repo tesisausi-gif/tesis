@@ -7,6 +7,7 @@ export interface InspeccionBase {
   id_inspeccion?: number
   id_incidente: number
   id_tecnico: number
+  esta_anulada?: boolean
   fecha_inspeccion?: string
   descripcion_inspeccion: string
   causas_determinadas?: string | null
