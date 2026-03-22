@@ -694,7 +694,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     setSavingPresupuesto(true)
     try {
       const idTecnicoActual = asignaciones.find(a =>
-        ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+        a.estado_asignacion !== 'rechazada'
       )?.id_tecnico
       const inspeccionDelTecnico = inspecciones.find(i => i.id_tecnico === idTecnicoActual)
       const result = await crearPresupuesto({
@@ -767,7 +767,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : incidente ? (() => {
-          const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))
+          const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => a.estado_asignacion !== 'rechazada')
           const hasClientePresupuesto = rol === 'cliente' && presupuestos.length > 0
           const hasCalificacion = rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO
           const tabCount = 2
@@ -1216,7 +1216,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
               <TabsContent value="inspecciones" className="mt-4">
                 <InspeccionesList
                   incidenteId={incidente.id_incidente}
-                  idTecnico={asignaciones.find(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))?.id_tecnico || 0}
+                  idTecnico={asignaciones.find(a => a.estado_asignacion !== 'rechazada')?.id_tecnico || 0}
                   inspecciones={inspeccionesActivas}
                   puedeCrearNueva={presupuestos.some(p => p.estado_presupuesto === EstadoPresupuesto.RECHAZADO)}
                   onInspeccionCreated={() => cargarIncidente()}
