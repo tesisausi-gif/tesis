@@ -407,34 +407,12 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalIncidentes}</div>
-            <p className="text-xs text-muted-foreground">incidentes registrados</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{pendientes}</div>
             <p className="text-xs text-muted-foreground">requieren atención</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">En Proceso</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{enProceso}</div>
-            <p className="text-xs text-muted-foreground">siendo atendidos</p>
           </CardContent>
         </Card>
 
@@ -451,12 +429,34 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">En Proceso</CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{enProceso}</div>
+            <p className="text-xs text-muted-foreground">siendo atendidos</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Resueltos</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{resueltos}</div>
             <p className="text-xs text-muted-foreground">finalizados</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalIncidentes}</div>
+            <p className="text-xs text-muted-foreground">incidentes registrados</p>
           </CardContent>
         </Card>
       </div>
@@ -513,7 +513,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       {/* Tabla de Incidentes por Estado */}
       <div className="space-y-4">
         <Tabs value={tabActiva} onValueChange={setTabActiva} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="pendiente" className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               Pendientes
@@ -553,13 +553,6 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               Resueltos
               <Badge variant="secondary" className="ml-2">
                 {incidentesFiltrados.filter(i => i.estado_actual === 'resuelto').length}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger value="todos" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Total
-              <Badge variant="secondary" className="ml-2">
-                {incidentesFiltrados.length}
               </Badge>
             </TabsTrigger>
           </TabsList>
@@ -636,23 +629,6 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             </Card>
           </TabsContent>
 
-          {/* Tab: Total */}
-          <TabsContent value="todos">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-gray-600" />
-                  Todos los Incidentes
-                </CardTitle>
-                <CardDescription>
-                  Vista consolidada de todos los incidentes.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {renderTablaIncidentes(incidentesFiltrados)}
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
 
