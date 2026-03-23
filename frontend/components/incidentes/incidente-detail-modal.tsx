@@ -580,8 +580,41 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             color: 'bg-green-500',
           })
         }
+      } else if (rolActual === 'tecnico') {
+        // Técnico: ve el presupuesto que él envió y si fue aprobado/rechazado por la inmobiliaria
+        timelineEvents.push({
+          id: `pres-${pres.id_presupuesto}`,
+          tipo: 'presupuesto',
+          titulo: 'Presupuesto enviado a la inmobiliaria',
+          descripcion: `Total: $${(pres.costo_total ?? 0).toLocaleString()}`,
+          fecha: pres.fecha_creacion,
+          icono: <FileText className="h-4 w-4" />,
+          color: 'bg-cyan-500',
+        })
+        if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-admin-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto aprobado por la inmobiliaria',
+            descripcion: `Total: $${(pres.costo_total ?? 0).toLocaleString()}`,
+            fecha: pres.fecha_modificacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-green-500',
+          })
+        }
+        if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
+          timelineEvents.push({
+            id: `pres-rechazado-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto rechazado por la inmobiliaria',
+            descripcion: 'Deberás enviar un nuevo presupuesto',
+            fecha: pres.fecha_modificacion,
+            icono: <XCircle className="h-4 w-4" />,
+            color: 'bg-red-500',
+          })
+        }
       } else {
-        // Admin y técnico
+        // Admin: ve el flujo completo
         timelineEvents.push({
           id: `pres-${pres.id_presupuesto}`,
           tipo: 'presupuesto',
