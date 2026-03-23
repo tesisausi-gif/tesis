@@ -602,6 +602,17 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             color: 'bg-green-500',
           })
         }
+        if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-cliente-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Cliente aprobó el presupuesto',
+            descripcion: 'Ya podés comenzar el trabajo',
+            fecha: pres.fecha_aprobacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-green-500',
+          })
+        }
         if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
           timelineEvents.push({
             id: `pres-rechazado-${pres.id_presupuesto}`,
