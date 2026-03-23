@@ -7,7 +7,7 @@ import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Bell, CheckCheck, XCircle, CheckCircle2, Clock,
-  AlertTriangle, Info, X, ExternalLink, Inbox,
+  AlertTriangle, Info, X, ExternalLink, Inbox, ChevronDown, Hash,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/lib/supabase/client'
@@ -24,6 +24,7 @@ const CATEGORIA_CONFIG: Record<TipoNotificacionCategoria, {
   titleColor: string
   msgColor: string
   dot: string
+  badge: string
 }> = {
   urgente: {
     icon: XCircle,
@@ -33,6 +34,7 @@ const CATEGORIA_CONFIG: Record<TipoNotificacionCategoria, {
     titleColor: 'text-red-900',
     msgColor: 'text-red-700',
     dot: 'bg-red-500',
+    badge: 'bg-red-100 text-red-700 border-red-200',
   },
   positivo: {
     icon: CheckCircle2,
@@ -42,6 +44,7 @@ const CATEGORIA_CONFIG: Record<TipoNotificacionCategoria, {
     titleColor: 'text-emerald-900',
     msgColor: 'text-emerald-700',
     dot: 'bg-emerald-500',
+    badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   },
   pendiente: {
     icon: AlertTriangle,
@@ -51,6 +54,7 @@ const CATEGORIA_CONFIG: Record<TipoNotificacionCategoria, {
     titleColor: 'text-amber-900',
     msgColor: 'text-amber-700',
     dot: 'bg-amber-500',
+    badge: 'bg-amber-100 text-amber-700 border-amber-200',
   },
   informativo: {
     icon: Info,
@@ -60,7 +64,16 @@ const CATEGORIA_CONFIG: Record<TipoNotificacionCategoria, {
     titleColor: 'text-blue-900',
     msgColor: 'text-blue-700',
     dot: 'bg-blue-500',
+    badge: 'bg-blue-100 text-blue-700 border-blue-200',
   },
+}
+
+// Prioridad para determinar la categoría "más urgente" de un grupo
+const CATEGORIA_PRIORIDAD: Record<TipoNotificacionCategoria, number> = {
+  urgente: 3,
+  pendiente: 2,
+  positivo: 1,
+  informativo: 0,
 }
 
 function getCategoriaConfig(tipo: string) {
@@ -68,11 +81,20 @@ function getCategoriaConfig(tipo: string) {
   return CATEGORIA_CONFIG[cat]
 }
 
+function getCategoriaMaxGrupo(notifs: Notificacion[]): TipoNotificacionCategoria {
+  let max: TipoNotificacionCategoria = 'informativo'
+  for (const n of notifs) {
+    const cat = TIPO_CATEGORIA[n.tipo] ?? 'informativo'
+    if (CATEGORIA_PRIORIDAD[cat] > CATEGORIA_PRIORIDAD[max]) max = cat
+  }
+  return max
+}
+
 function formatFecha(fecha: string): string {
   const d = new Date(fecha)
   if (isToday(d)) return formatDistanceToNow(d, { addSuffix: true, locale: es })
-  if (isYesterday(d)) return `Ayer a las ${format(d, 'HH:mm', { locale: es })}`
-  return format(d, "d MMM 'a las' HH:mm", { locale: es })
+  if (isYesterday(d)) return `Ayer ${format(d, 'HH:mm', { locale: es })}`
+  return format(d, "d MMM HH:mm", { locale: es })
 }
 
 function getNavUrl(
@@ -107,33 +129,151 @@ interface Props {
   rol: 'tecnico' | 'cliente' | 'admin'
 }
 
+// ─── Componente de grupo por incidente (solo admin) ───────────────────────────
+function GrupoIncidente({
+  idIncidente,
+  notifs,
+  onDescartar,
+  onDescartarGrupo,
+  router,
+}: {
+  idIncidente: number | null
+  notifs: Notificacion[]
+  onDescartar: (e: React.MouseEvent, id: number) => void
+  onDescartarGrupo: (ids: number[]) => void
+  router: ReturnType<typeof useRouter>
+}) {
+  const [abierto, setAbierto] = useState(true)
+
+  const categoriaMax = getCategoriaMaxGrupo(notifs)
+  const cfg = CATEGORIA_CONFIG[categoriaMax]
+  const Icon = cfg.icon
+  const masReciente = notifs[0]?.fecha_creacion
+
+  const handleClickNotif = (n: Notificacion) => {
+    const url = getNavUrl(n.tipo, 'admin', n.id_incidente, n.id_presupuesto)
+    if (!url) return
+    onDescartar({ stopPropagation: () => {} } as React.MouseEvent, n.id_notificacion)
+    router.push(url)
+  }
+
+  const irAlIncidente = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (idIncidente) router.push(`/dashboard/incidentes?highlight=${idIncidente}`)
+  }
+
+  return (
+    <div className={`rounded-xl border overflow-hidden ${cfg.border}`}>
+      {/* Cabecera del grupo */}
+      <button
+        onClick={() => setAbierto(v => !v)}
+        className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 ${cfg.bg} transition-all hover:brightness-95`}
+      >
+        <Icon className={`h-4 w-4 flex-shrink-0 ${cfg.iconColor}`} />
+
+        <div className="flex-1 flex items-center gap-2 min-w-0 text-left">
+          {idIncidente ? (
+            <span
+              onClick={irAlIncidente}
+              className={`text-xs font-bold flex items-center gap-0.5 hover:underline ${cfg.titleColor}`}
+            >
+              <Hash className="h-3 w-3" />
+              Incidente {idIncidente}
+              <ExternalLink className="h-2.5 w-2.5 ml-0.5" />
+            </span>
+          ) : (
+            <span className={`text-xs font-bold ${cfg.titleColor}`}>General</span>
+          )}
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${cfg.badge}`}>
+            {notifs.length}
+          </span>
+        </div>
+
+        {masReciente && (
+          <span className="text-[10px] text-gray-400 shrink-0">{formatFecha(masReciente)}</span>
+        )}
+
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={e => { e.stopPropagation(); onDescartarGrupo(notifs.map(n => n.id_notificacion)) }}
+            className="p-1 rounded hover:bg-black/10 transition-colors"
+            title="Descartar todas"
+          >
+            <CheckCheck className="h-3.5 w-3.5 text-gray-500" />
+          </button>
+          <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+
+      {/* Notificaciones del grupo */}
+      <AnimatePresence initial={false}>
+        {abierto && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <div className="divide-y divide-gray-100">
+              {notifs.map(n => {
+                const ncfg = getCategoriaConfig(n.tipo)
+                const NIcon = ncfg.icon
+                return (
+                  <motion.div
+                    key={n.id_notificacion}
+                    layout
+                    exit={{ opacity: 0, x: 16 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => handleClickNotif(n)}
+                    className="flex items-start gap-3 px-3.5 py-2.5 bg-white hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <NIcon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${ncfg.iconColor}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-semibold leading-tight ${ncfg.titleColor}`}>{n.titulo}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{n.mensaje}</p>
+                      <span className="text-[10px] text-gray-400">{formatFecha(n.fecha_creacion)}</span>
+                    </div>
+                    <button
+                      onClick={e => onDescartar(e, n.id_notificacion)}
+                      className="flex-shrink-0 p-1 rounded hover:bg-black/10 transition-colors mt-0.5"
+                      title="Descartar"
+                    >
+                      <X className="h-3 w-3 text-gray-400" />
+                    </button>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── Panel principal ──────────────────────────────────────────────────────────
 export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
   const [items, setItems] = useState<Notificacion[]>(inicial)
   const [, startTransition] = useTransition()
   const router = useRouter()
 
-  // Suscripción realtime para recibir notificaciones nuevas sin recargar
+  // Suscripción realtime
   useEffect(() => {
     const supabase = createClient()
     const channel = supabase
       .channel(`notificaciones-panel-${rol}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notificaciones' },
-        (payload) => {
-          const nueva = payload.new as Notificacion
-          // Solo agregar si corresponde al rol actual y no está leída
-          if (nueva.fecha_leida) return
-          const esParaEsteRol =
-            (rol === 'admin' && nueva.para_admin) ||
-            (rol === 'tecnico' && nueva.id_tecnico != null && !nueva.para_admin) ||
-            (rol === 'cliente' && nueva.id_cliente != null && !nueva.para_admin)
-          if (!esParaEsteRol) return
-          setItems(prev => [nueva, ...prev])
-        }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, (payload) => {
+        const nueva = payload.new as Notificacion
+        if (nueva.fecha_leida) return
+        const esParaEsteRol =
+          (rol === 'admin' && nueva.para_admin) ||
+          (rol === 'tecnico' && nueva.id_tecnico != null && !nueva.para_admin) ||
+          (rol === 'cliente' && nueva.id_cliente != null && !nueva.para_admin)
+        if (!esParaEsteRol) return
+        setItems(prev => [nueva, ...prev])
+      })
       .subscribe()
-
     return () => { supabase.removeChannel(channel) }
   }, [rol])
 
@@ -146,31 +286,30 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     })
   }
 
-  const descartarTodas = () => {
-    const ids = items.map(n => n.id_notificacion)
-    setItems([])
+  const descartarGrupo = (ids: number[]) => {
+    setItems(prev => prev.filter(n => !ids.includes(n.id_notificacion)))
     startTransition(async () => {
-      const res = await marcarTodasLeidas(rol)
-      if (!res.success) {
-        toast.error('No se pudieron marcar como leídas')
-        // No restauramos el estado para evitar confusión
-      }
+      await Promise.all(ids.map(id => marcarNotificacionLeida(id)))
     })
   }
 
-  // Separar en hoy vs anteriores
-  const hoy = items.filter(n => isToday(new Date(n.fecha_creacion)))
-  const anteriores = items.filter(n => !isToday(new Date(n.fecha_creacion)))
+  const descartarTodas = () => {
+    setItems([])
+    startTransition(async () => {
+      const res = await marcarTodasLeidas(rol)
+      if (!res.success) toast.error('No se pudieron marcar como leídas')
+    })
+  }
 
   const handleClick = (n: Notificacion) => {
     const url = getNavUrl(n.tipo, rol, n.id_incidente, n.id_presupuesto)
     if (!url) return
-    // Marcar como leída y sacar de la lista (fire-and-forget)
     setItems(prev => prev.filter(x => x.id_notificacion !== n.id_notificacion))
     marcarNotificacionLeida(n.id_notificacion).catch(() => {})
     router.push(url)
   }
 
+  // ── Render notificación individual (tecnico / cliente) ──
   const renderNotif = (n: Notificacion) => {
     const cfg = getCategoriaConfig(n.tipo)
     const Icon = cfg.icon
@@ -192,15 +331,10 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
             esClickeable ? 'cursor-pointer hover:brightness-95 active:scale-[0.99]' : ''
           }`}
         >
-          {/* Dot indicador de no leída */}
           <span className={`absolute top-3 right-9 h-2 w-2 rounded-full ${cfg.dot}`} />
-
-          {/* Icono */}
           <div className={`flex-shrink-0 mt-0.5 ${cfg.iconColor}`}>
             <Icon className="h-5 w-5" />
           </div>
-
-          {/* Contenido */}
           <div className="flex-1 min-w-0">
             <p className={`text-sm font-semibold leading-tight ${cfg.titleColor}`}>{n.titulo}</p>
             <p className={`text-xs mt-0.5 leading-relaxed ${cfg.msgColor}`}>{n.mensaje}</p>
@@ -217,8 +351,6 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
               )}
             </div>
           </div>
-
-          {/* Botón descartar */}
           <button
             onClick={e => descartar(e, n.id_notificacion)}
             className="flex-shrink-0 p-1 rounded-lg hover:bg-black/10 transition-colors"
@@ -231,9 +363,77 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     )
   }
 
+  // ── Agrupación por incidente (solo admin) ──
+  const renderAdmin = () => {
+    // Agrupar por id_incidente (null → grupo "General")
+    const grupos = new Map<number | null, Notificacion[]>()
+    for (const n of items) {
+      const key = n.id_incidente ?? null
+      if (!grupos.has(key)) grupos.set(key, [])
+      grupos.get(key)!.push(n)
+    }
+
+    // Ordenar grupos: primero por prioridad máxima, luego por notificación más reciente
+    const gruposOrdenados = Array.from(grupos.entries()).sort(([, a], [, b]) => {
+      const prioA = CATEGORIA_PRIORIDAD[getCategoriaMaxGrupo(a)]
+      const prioB = CATEGORIA_PRIORIDAD[getCategoriaMaxGrupo(b)]
+      if (prioB !== prioA) return prioB - prioA
+      return new Date(b[0].fecha_creacion).getTime() - new Date(a[0].fecha_creacion).getTime()
+    })
+
+    return (
+      <AnimatePresence mode="popLayout">
+        {gruposOrdenados.map(([idIncidente, notifs]) => (
+          <motion.div
+            key={idIncidente ?? 'general'}
+            layout
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.18 }}
+          >
+            <GrupoIncidente
+              idIncidente={idIncidente}
+              notifs={notifs}
+              onDescartar={descartar}
+              onDescartarGrupo={descartarGrupo}
+              router={router}
+            />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    )
+  }
+
+  // ── Agrupación Hoy/Anteriores (tecnico / cliente) ──
+  const renderHoyAnteriores = () => {
+    const hoy = items.filter(n => isToday(new Date(n.fecha_creacion)))
+    const anteriores = items.filter(n => !isToday(new Date(n.fecha_creacion)))
+    return (
+      <>
+        {hoy.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1">Hoy</p>
+            <AnimatePresence mode="popLayout">
+              {hoy.map(n => renderNotif(n))}
+            </AnimatePresence>
+          </div>
+        )}
+        {anteriores.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1">Anteriores</p>
+            <AnimatePresence mode="popLayout">
+              {anteriores.map(n => renderNotif(n))}
+            </AnimatePresence>
+          </div>
+        )}
+      </>
+    )
+  }
+
   return (
-    <div className="space-y-5">
-      {/* Header con acción "marcar todas" */}
+    <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5 text-gray-700" />
@@ -263,23 +463,10 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
         </div>
       )}
 
-      {/* Grupo HOY */}
-      {hoy.length > 0 && (
+      {/* Contenido agrupado */}
+      {items.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1">Hoy</p>
-          <AnimatePresence mode="popLayout">
-            {hoy.map(n => renderNotif(n))}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Grupo ANTERIORES */}
-      {anteriores.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1">Anteriores</p>
-          <AnimatePresence mode="popLayout">
-            {anteriores.map(n => renderNotif(n))}
-          </AnimatePresence>
+          {rol === 'admin' ? renderAdmin() : renderHoyAnteriores()}
         </div>
       )}
     </div>
