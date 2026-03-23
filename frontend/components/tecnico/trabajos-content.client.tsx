@@ -78,8 +78,13 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
   const enCurso = asignaciones.filter(a => a.estado_asignacion === 'en_curso').length
   const completados = asignaciones.filter(a => a.estado_asignacion === 'completada').length
 
-  const enProceso = asignaciones.filter(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion))
-  const resueltas = asignaciones.filter(a => a.estado_asignacion === 'completada')
+  const enProceso = asignaciones.filter(a =>
+    ['aceptada', 'en_curso'].includes(a.estado_asignacion) ||
+    (a.estado_asignacion === 'completada' && !['finalizado', 'resuelto'].includes(a.incidentes?.estado_actual ?? ''))
+  )
+  const resueltas = asignaciones.filter(a =>
+    a.estado_asignacion === 'completada' && ['finalizado', 'resuelto'].includes(a.incidentes?.estado_actual ?? '')
+  )
 
   const renderCard = (asignacion: AsignacionTecnico) => {
     const incidente = asignacion.incidentes
@@ -223,7 +228,7 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
               <Badge variant="secondary">{enProceso.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="resueltos" className="gap-2">
-              Pendiente conformidad
+              Resueltos
               <Badge variant="secondary">{resueltas.length}</Badge>
             </TabsTrigger>
           </TabsList>
