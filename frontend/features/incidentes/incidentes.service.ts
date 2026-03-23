@@ -159,13 +159,16 @@ export async function getAsignacionesDelIncidente(idIncidente: number) {
  * Obtener datos de timeline (inspecciones, presupuestos, pagos) de un incidente
  */
 export async function getTimelineData(idIncidente: number) {
-  const supabase = await createClient()
+  // Usa adminClient para bypassear RLS y poder leer datos de todos los roles
+  const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+  const supabase = createAdminClient()
 
   const [inspecciones, presupuestos, pagos, avances] = await Promise.all([
     supabase
       .from('inspecciones')
       .select('*, tecnicos(nombre, apellido)')
       .eq('id_incidente', idIncidente)
+      .eq('esta_anulada', false)
       .order('fecha_inspeccion', { ascending: true }),
     supabase
       .from('presupuestos')
