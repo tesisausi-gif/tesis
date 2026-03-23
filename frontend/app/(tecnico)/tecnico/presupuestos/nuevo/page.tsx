@@ -149,7 +149,7 @@ export default function NuevoPresupuestoTecnicoPage() {
         costo_mano_obra: parseFloat(costoManoObra),
         gastos_administrativos: 0,
         costo_total: calcularTotal(),
-        alternativas_reparacion: alternativas.trim() || null,
+        alternativas_reparacion: alternativas.trim() || undefined,
       })
 
       if (!result.success) {
