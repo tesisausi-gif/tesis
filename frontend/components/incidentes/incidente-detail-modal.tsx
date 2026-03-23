@@ -558,14 +558,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     })
 
     presupuestos?.forEach((pres: any) => {
-      const detalleBase: TimelineEventDetalle[] = []
-      if (pres.descripcion_detallada) detalleBase.push({ label: 'Descripción', value: pres.descripcion_detallada })
-      if (pres.costo_materiales != null) detalleBase.push({ label: 'Materiales', value: `$${Number(pres.costo_materiales).toLocaleString()}` })
-      if (pres.costo_mano_obra != null) detalleBase.push({ label: 'Mano de obra', value: `$${Number(pres.costo_mano_obra).toLocaleString()}` })
-      if (pres.gastos_administrativos) detalleBase.push({ label: 'Gastos adm.', value: `$${Number(pres.gastos_administrativos).toLocaleString()}` })
-      detalleBase.push({ label: 'Total', value: `$${(pres.costo_total ?? 0).toLocaleString()}` })
-      if (pres.alternativas_reparacion) detalleBase.push({ label: 'Alternativas', value: pres.alternativas_reparacion })
-
       if (rolActual === 'cliente') {
         if (!['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto)) return
         timelineEvents.push({
@@ -576,7 +568,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           fecha: pres.fecha_modificacion || pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
           color: 'bg-cyan-500',
-          detalleItems: detalleBase,
         })
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
           timelineEvents.push({
@@ -590,7 +581,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           })
         }
       } else {
-        // Admin y técnico ven todo
+        // Admin y técnico
         timelineEvents.push({
           id: `pres-${pres.id_presupuesto}`,
           tipo: 'presupuesto',
@@ -599,7 +590,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           fecha: pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
           color: 'bg-cyan-500',
-          detalleItems: detalleBase,
         })
         if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
           timelineEvents.push({
@@ -610,7 +600,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             fecha: pres.fecha_modificacion,
             icono: <CheckCircle className="h-4 w-4" />,
             color: 'bg-amber-500',
-            detalleItems: detalleBase,
           })
         }
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
