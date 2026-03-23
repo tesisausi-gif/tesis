@@ -170,7 +170,9 @@ export function TrabajosContent({
               <span className="truncate">{direccion}</span>
             </div>
             <span className="text-xs text-gray-400 shrink-0">
-              {format(new Date(asig.fecha_asignacion + (asig.fecha_asignacion.endsWith('Z') ? '' : 'Z')), 'dd MMM yy', { locale: es })}
+              {asig.fecha_asignacion
+                ? format(new Date(asig.fecha_asignacion.endsWith('Z') ? asig.fecha_asignacion : asig.fecha_asignacion + 'Z'), 'dd MMM yy', { locale: es })
+                : ''}
             </span>
           </div>
 
