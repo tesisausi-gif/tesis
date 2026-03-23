@@ -189,13 +189,15 @@ export async function crearConformidadPorTecnico(idIncidente: number, fotoUrl: s
     if (error) return { success: false, error: error.message }
 
     // Notificar al admin que hay una nueva conformidad para revisar
-    const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
-    crearNotificacionAdmin({
-      tipo: 'nueva_conformidad',
-      titulo: 'Nueva conformidad para revisar',
-      mensaje: `El técnico subió una foto de conformidad para el incidente #${idIncidente}. Revisala en el módulo de Conformidades.`,
-      id_incidente: idIncidente,
-    }).catch(console.error)
+    try {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacionAdmin({
+        tipo: 'nueva_conformidad',
+        titulo: 'Nueva conformidad para revisar',
+        mensaje: `El técnico subió una foto de conformidad para el incidente #${idIncidente}. Revisala en el módulo de Conformidades.`,
+        id_incidente: idIncidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
 
     return { success: true, data: undefined }
   } catch {
@@ -272,16 +274,18 @@ export async function aprobarConformidad(
     const { notificarIncidenteResuelto } = await import('@/features/notificaciones/notificaciones.service')
     notificarIncidenteResuelto(idIncidente).catch(console.error)
 
-    // 5. Notificar al cliente: in-app (fire-and-forget)
+    // 5. Notificar al cliente: in-app
     if (conf.id_cliente) {
-      const { crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
-      crearNotificacionCliente({
-        id_cliente: conf.id_cliente,
-        tipo: 'incidente_resuelto',
-        titulo: '¡Tu incidente fue resuelto!',
-        mensaje: `El incidente #${idIncidente} fue marcado como resuelto por la administración. Podés calificar al técnico desde el módulo de Incidentes.`,
-        id_incidente: idIncidente,
-      }).catch(console.error)
+      try {
+        const { crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionCliente({
+          id_cliente: conf.id_cliente,
+          tipo: 'incidente_resuelto',
+          titulo: '¡Tu incidente fue resuelto!',
+          mensaje: `El incidente #${idIncidente} fue marcado como resuelto por la administración. Podés calificar al técnico desde el módulo de Incidentes.`,
+          id_incidente: idIncidente,
+        })
+      } catch { /* no bloquear la operación principal */ }
     }
 
     return { success: true, data: undefined }
@@ -323,16 +327,18 @@ export async function rechazarConformidad(idConformidad: number): Promise<Action
     const { notificarTecnicoConformidadRechazada } = await import('@/features/notificaciones/notificaciones.service')
     notificarTecnicoConformidadRechazada(conf.id_incidente).catch(console.error)
 
-    // Notificar al técnico: in-app (fire-and-forget)
+    // Notificar al técnico: in-app
     if (idTecnico) {
-      const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
-      crearNotificacion({
-        id_tecnico: idTecnico,
-        tipo: 'conformidad_rechazada',
-        titulo: 'Conformidad rechazada',
-        mensaje: `La foto de conformidad del incidente #${conf.id_incidente} fue rechazada. Por favor subí una nueva foto clara de la conformidad firmada por el cliente.`,
-        id_incidente: conf.id_incidente,
-      }).catch(console.error)
+      try {
+        const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacion({
+          id_tecnico: idTecnico,
+          tipo: 'conformidad_rechazada',
+          titulo: 'Conformidad rechazada',
+          mensaje: `La foto de conformidad del incidente #${conf.id_incidente} fue rechazada. Por favor subí una nueva foto clara de la conformidad firmada por el cliente.`,
+          id_incidente: conf.id_incidente,
+        })
+      } catch { /* no bloquear la operación principal */ }
     }
 
     // Marcar como rechazada (sin eliminar, para conservar historial en timeline)

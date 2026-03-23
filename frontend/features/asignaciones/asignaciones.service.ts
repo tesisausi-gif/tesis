@@ -187,27 +187,31 @@ export async function aceptarAsignacion(
 
     if (errorIncidente) return { success: false, error: errorIncidente.message }
 
-    // Notificar al admin y al cliente (fire-and-forget)
+    // Notificar al admin y al cliente
     const tec = asig?.tecnicos as any
     const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
     const { crearNotificacionAdmin, crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
 
-    crearNotificacionAdmin({
-      tipo: 'asignacion_aceptada',
-      titulo: 'Técnico aceptó la asignación',
-      mensaje: `${tecNombre} aceptó el incidente #${idIncidente} y comenzó a trabajar en él.`,
-      id_incidente: idIncidente,
-    }).catch(console.error)
+    try {
+      await crearNotificacionAdmin({
+        tipo: 'asignacion_aceptada',
+        titulo: 'Técnico aceptó la asignación',
+        mensaje: `${tecNombre} aceptó el incidente #${idIncidente} y comenzó a trabajar en él.`,
+        id_incidente: idIncidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
 
     const idCliente = (inc?.clientes as any)?.id_cliente
     if (idCliente) {
-      crearNotificacionCliente({
-        id_cliente: idCliente,
-        tipo: 'asignacion_aceptada',
-        titulo: 'Técnico asignado a tu incidente',
-        mensaje: `${tecNombre} fue asignado y aceptó atender tu incidente #${idIncidente}. Ya está en proceso.`,
-        id_incidente: idIncidente,
-      }).catch(console.error)
+      try {
+        await crearNotificacionCliente({
+          id_cliente: idCliente,
+          tipo: 'asignacion_aceptada',
+          titulo: 'Técnico asignado a tu incidente',
+          mensaje: `${tecNombre} fue asignado y aceptó atender tu incidente #${idIncidente}. Ya está en proceso.`,
+          id_incidente: idIncidente,
+        })
+      } catch { /* no bloquear la operación principal */ }
     }
 
     return { success: true, data: undefined }
@@ -248,16 +252,18 @@ export async function rechazarAsignacion(
 
     if (errorIncidente) return { success: false, error: errorIncidente.message }
 
-    // Notificar al admin (fire-and-forget)
+    // Notificar al admin
     const tec = asig?.tecnicos as any
     const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
-    const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
-    crearNotificacionAdmin({
-      tipo: 'asignacion_rechazada',
-      titulo: 'Técnico rechazó la asignación',
-      mensaje: `${tecNombre} rechazó el incidente #${idIncidente}. Requiere reasignación.`,
-      id_incidente: idIncidente,
-    }).catch(console.error)
+    try {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacionAdmin({
+        tipo: 'asignacion_rechazada',
+        titulo: 'Técnico rechazó la asignación',
+        mensaje: `${tecNombre} rechazó el incidente #${idIncidente}. Requiere reasignación.`,
+        id_incidente: idIncidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
 
     return { success: true, data: undefined }
   } catch (error) {
@@ -297,15 +303,17 @@ export async function crearAsignacion(data: {
       .eq('id_incidente', data.id_incidente)
       .in('estado_actual', ['pendiente', 'asignacion_solicitada'])
 
-    // Notificar al técnico: in-app + email (fire-and-forget)
-    const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
-    crearNotificacion({
-      id_tecnico: data.id_tecnico,
-      tipo: 'nueva_asignacion',
-      titulo: 'Nueva asignación',
-      mensaje: `Se te asignó el incidente #${data.id_incidente}. Revisá los detalles y aceptá o rechazá la asignación.`,
-      id_incidente: data.id_incidente,
-    }).catch(console.error)
+    // Notificar al técnico: in-app + email
+    try {
+      const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacion({
+        id_tecnico: data.id_tecnico,
+        tipo: 'nueva_asignacion',
+        titulo: 'Nueva asignación',
+        mensaje: `Se te asignó el incidente #${data.id_incidente}. Revisá los detalles y aceptá o rechazá la asignación.`,
+        id_incidente: data.id_incidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
 
     const { notificarNuevaAsignacion } = await import('@/features/notificaciones/notificaciones.service')
     notificarNuevaAsignacion(data.id_incidente, data.id_tecnico).catch(console.error)
@@ -338,18 +346,20 @@ export async function completarAsignacion(idAsignacion: number): Promise<ActionR
 
     if (error) return { success: false, error: error.message }
 
-    // Notificar al admin que el trabajo fue completado (fire-and-forget)
+    // Notificar al admin que el trabajo fue completado
     if (asig?.id_incidente) {
       const tecNombre = asig.tecnicos
         ? `${(asig.tecnicos as any).nombre} ${(asig.tecnicos as any).apellido}`
         : 'El técnico'
-      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
-      crearNotificacionAdmin({
-        tipo: 'trabajo_completado',
-        titulo: 'Trabajo completado',
-        mensaje: `${tecNombre} marcó el incidente #${asig.id_incidente} como completado. Pendiente de conformidad.`,
-        id_incidente: asig.id_incidente,
-      }).catch(console.error)
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionAdmin({
+          tipo: 'trabajo_completado',
+          titulo: 'Trabajo completado',
+          mensaje: `${tecNombre} marcó el incidente #${asig.id_incidente} como completado. Pendiente de conformidad.`,
+          id_incidente: asig.id_incidente,
+        })
+      } catch { /* no bloquear la operación principal */ }
     }
 
     return { success: true, data: undefined }

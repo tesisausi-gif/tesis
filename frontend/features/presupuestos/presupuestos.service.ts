@@ -261,16 +261,18 @@ export async function enviarPresupuesto(idPresupuesto: number): Promise<ActionRe
 
     if (error) return { success: false, error: error.message }
 
-    // Notificar al admin que hay un presupuesto para revisar (fire-and-forget)
+    // Notificar al admin que hay un presupuesto para revisar
     if (pres?.id_incidente) {
-      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
-      crearNotificacionAdmin({
-        tipo: 'presupuesto_enviado_admin',
-        titulo: 'Presupuesto para revisar',
-        mensaje: `El técnico envió un presupuesto para el incidente #${pres.id_incidente}. Revisalo y aprobalo para continuar.`,
-        id_incidente: pres.id_incidente,
-        id_presupuesto: idPresupuesto,
-      }).catch(console.error)
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionAdmin({
+          tipo: 'presupuesto_enviado_admin',
+          titulo: 'Presupuesto para revisar',
+          mensaje: `El técnico envió un presupuesto para el incidente #${pres.id_incidente}. Revisalo y aprobalo para continuar.`,
+          id_incidente: pres.id_incidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear la operación principal */ }
     }
 
     return { success: true, data: undefined }
@@ -316,7 +318,7 @@ export async function aprobarPresupuesto(
     const { notificarPresupuestoAprobadoAdmin } = await import('@/features/notificaciones/notificaciones.service')
     notificarPresupuestoAprobadoAdmin(idPresupuesto).catch(console.error)
 
-    // Notificar al cliente in-app (fire-and-forget)
+    // Notificar al cliente in-app
     const supabaseAdmin = (await import('@/shared/lib/supabase/admin')).createAdminClient()
     const { data: presConInc } = await supabaseAdmin
       .from('presupuestos')
@@ -325,15 +327,17 @@ export async function aprobarPresupuesto(
       .single()
     const idClienteNotif = (presConInc?.incidentes as any)?.id_cliente_reporta
     if (idClienteNotif) {
-      const { crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
-      crearNotificacionCliente({
-        id_cliente: idClienteNotif,
-        tipo: 'presupuesto_aprobado_admin',
-        titulo: 'Presupuesto listo para revisar',
-        mensaje: `La administración revisó y aprobó el presupuesto del incidente #${presConInc?.id_incidente}. Por favor revisalo y aprobalo para que el técnico pueda comenzar el trabajo.`,
-        id_incidente: presConInc?.id_incidente,
-        id_presupuesto: idPresupuesto,
-      }).catch(console.error)
+      try {
+        const { crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionCliente({
+          id_cliente: idClienteNotif,
+          tipo: 'presupuesto_aprobado_admin',
+          titulo: 'Presupuesto listo para revisar',
+          mensaje: `La administración revisó y aprobó el presupuesto del incidente #${presConInc?.id_incidente}. Por favor revisalo y aprobalo para que el técnico pueda comenzar el trabajo.`,
+          id_incidente: presConInc?.id_incidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear la operación principal */ }
     }
 
     return { success: true, data: undefined }
@@ -402,15 +406,17 @@ export async function rechazarPresupuesto(
           .eq('esta_anulada', false)
 
         // Crear notificación in-app para el técnico
-        const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
-        crearNotificacion({
-          id_tecnico: asigConTecnico.id_tecnico,
-          tipo: 'presupuesto_rechazado',
-          titulo: 'Presupuesto rechazado',
-          mensaje: `La administración rechazó tu presupuesto del incidente #${pres.id_incidente}. Tu asignación fue revocada.`,
-          id_incidente: pres.id_incidente,
-          id_presupuesto: idPresupuesto,
-        }).catch(console.error)
+        try {
+          const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+          await crearNotificacion({
+            id_tecnico: asigConTecnico.id_tecnico,
+            tipo: 'presupuesto_rechazado',
+            titulo: 'Presupuesto rechazado',
+            mensaje: `La administración rechazó tu presupuesto del incidente #${pres.id_incidente}. Tu asignación fue revocada.`,
+            id_incidente: pres.id_incidente,
+            id_presupuesto: idPresupuesto,
+          })
+        } catch { /* no bloquear la operación principal */ }
       }
     }
 
@@ -491,28 +497,32 @@ export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<
         .maybeSingle()
 
       if (asig?.id_tecnico) {
-        const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
-        crearNotificacion({
-          id_tecnico: asig.id_tecnico,
-          tipo: 'presupuesto_aprobado_cliente',
-          titulo: '¡Presupuesto aprobado!',
-          mensaje: `El cliente aprobó el presupuesto del incidente #${pres.id_incidente}. Ya podés comenzar el trabajo.`,
-          id_incidente: pres.id_incidente,
-          id_presupuesto: idPresupuesto,
-        }).catch(console.error)
+        try {
+          const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+          await crearNotificacion({
+            id_tecnico: asig.id_tecnico,
+            tipo: 'presupuesto_aprobado_cliente',
+            titulo: '¡Presupuesto aprobado!',
+            mensaje: `El cliente aprobó el presupuesto del incidente #${pres.id_incidente}. Ya podés comenzar el trabajo.`,
+            id_incidente: pres.id_incidente,
+            id_presupuesto: idPresupuesto,
+          })
+        } catch { /* no bloquear la operación principal */ }
       }
     }
 
-    // Notificar al admin que el cliente aprobó el presupuesto (fire-and-forget)
+    // Notificar al admin que el cliente aprobó el presupuesto
     if (pres?.id_incidente) {
-      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
-      crearNotificacionAdmin({
-        tipo: 'presupuesto_aprobado_cliente',
-        titulo: 'Presupuesto aprobado por el cliente',
-        mensaje: `El cliente aprobó el presupuesto del incidente #${pres.id_incidente}. El técnico puede comenzar el trabajo.`,
-        id_incidente: pres.id_incidente,
-        id_presupuesto: idPresupuesto,
-      }).catch(console.error)
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionAdmin({
+          tipo: 'presupuesto_aprobado_cliente',
+          titulo: 'Presupuesto aprobado por el cliente',
+          mensaje: `El cliente aprobó el presupuesto del incidente #${pres.id_incidente}. El técnico puede comenzar el trabajo.`,
+          id_incidente: pres.id_incidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear la operación principal */ }
     }
 
     // Email al técnico (fire-and-forget)
@@ -567,15 +577,17 @@ export async function rechazarPresupuestoCliente(
       // Volver incidente a pendiente (el cliente rechazó el presupuesto — no resuelto aún)
       await supabaseAdmin.from('incidentes').update({ estado_actual: 'pendiente' }).eq('id_incidente', presupuesto.id_incidente)
 
-      // Notificar al admin (fire-and-forget)
-      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
-      crearNotificacionAdmin({
-        tipo: 'presupuesto_rechazado_cliente',
-        titulo: 'Presupuesto rechazado por el cliente',
-        mensaje: `El cliente rechazó el presupuesto del incidente #${presupuesto.id_incidente}.`,
-        id_incidente: presupuesto.id_incidente,
-        id_presupuesto: idPresupuesto,
-      }).catch(console.error)
+      // Notificar al admin
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionAdmin({
+          tipo: 'presupuesto_rechazado_cliente',
+          titulo: 'Presupuesto rechazado por el cliente',
+          mensaje: `El cliente rechazó el presupuesto del incidente #${presupuesto.id_incidente}.`,
+          id_incidente: presupuesto.id_incidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear la operación principal */ }
     }
 
     return { success: true, data: undefined }

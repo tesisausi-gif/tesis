@@ -3,14 +3,13 @@
 import { useEffect, useState, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Users, Building2, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight, Wifi, WifiOff, FileText, ClipboardCheck, DollarSign, Send } from 'lucide-react'
+import { Users, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight, Wifi, WifiOff } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/lib/supabase/client'
 import { getDashboardStats, getDashboardActividad } from '@/features/incidentes/incidentes.service'
-import { getAdminBadgeCounts, AdminBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
 import type { Notificacion } from '@/features/notificaciones/notificaciones.types'
 
@@ -87,7 +86,6 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
   const [asignacionesRecientes, setAsignacionesRecientes] = useState<AsignacionReciente[]>(initialAsignaciones)
   const [conectado, setConectado] = useState(false)
   const refreshingRef = useRef(false)
-  const [pendientes, setPendientes] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0, reasignaciones: 0, notificaciones: 0 })
 
   const refrescarDatos = async () => {
     if (refreshingRef.current) return
@@ -106,10 +104,6 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
       refreshingRef.current = false
     }
   }
-
-  useEffect(() => {
-    getAdminBadgeCounts().then(setPendientes).catch(() => {})
-  }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -228,74 +222,6 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
           </CardContent>
         </Card>
       </div>
-
-      {/* Acciones Pendientes */}
-      {(pendientes.conformidades > 0 || pendientes.presupuestos > 0 || pendientes.pagos > 0 || pendientes.reasignaciones > 0) && (
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-            <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-            Requieren atención
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {pendientes.conformidades > 0 && (
-              <Link href="/dashboard/conformidades">
-                <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="flex items-center justify-between pt-4 pb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Conformidades</p>
-                      <p className="text-xl font-bold text-orange-600">{pendientes.conformidades}</p>
-                      <p className="text-xs text-gray-500">fotos a revisar</p>
-                    </div>
-                    <ClipboardCheck className="h-8 w-8 text-orange-400" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-            {pendientes.presupuestos > 0 && (
-              <Link href="/dashboard/presupuestos">
-                <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="flex items-center justify-between pt-4 pb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Presupuestos</p>
-                      <p className="text-xl font-bold text-blue-600">{pendientes.presupuestos}</p>
-                      <p className="text-xs text-gray-500">esperan aprobación</p>
-                    </div>
-                    <FileText className="h-8 w-8 text-blue-400" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-            {pendientes.pagos > 0 && (
-              <Link href="/dashboard/pagos">
-                <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="flex items-center justify-between pt-4 pb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Pagos</p>
-                      <p className="text-xl font-bold text-green-600">{pendientes.pagos}</p>
-                      <p className="text-xs text-gray-500">pendientes de cobro/pago</p>
-                    </div>
-                    <DollarSign className="h-8 w-8 text-green-400" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-            {pendientes.reasignaciones > 0 && (
-              <Link href="/dashboard/incidentes?tab=asignacion_solicitada">
-                <Card className="border-l-4 border-l-red-500 hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="flex items-center justify-between pt-4 pb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Re-asignaciones</p>
-                      <p className="text-xl font-bold text-red-600">{pendientes.reasignaciones}</p>
-                      <p className="text-xs text-gray-500">técnicos rechazaron</p>
-                    </div>
-                    <Send className="h-8 w-8 text-red-400" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Notificaciones */}
       <Card className="border-2">
