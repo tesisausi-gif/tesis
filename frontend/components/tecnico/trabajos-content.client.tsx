@@ -28,6 +28,20 @@ interface TrabajosContentProps {
   idTecnico: number
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatFecha(raw: string | null | undefined): string {
+  if (!raw) return ''
+  try {
+    const normalized = raw.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(raw) ? raw : raw + 'Z'
+    const d = new Date(normalized)
+    if (isNaN(d.getTime())) return ''
+    return format(d, 'dd MMM yy', { locale: es })
+  } catch {
+    return ''
+  }
+}
+
 // ── Mapa de estado visual (mismo patrón que cliente) ─────────────────────────
 
 const STATUS_CONFIG: Record<string, {
@@ -170,9 +184,7 @@ export function TrabajosContent({
               <span className="truncate">{direccion}</span>
             </div>
             <span className="text-xs text-gray-400 shrink-0">
-              {asig.fecha_asignacion
-                ? format(new Date(asig.fecha_asignacion.endsWith('Z') ? asig.fecha_asignacion : asig.fecha_asignacion + 'Z'), 'dd MMM yy', { locale: es })
-                : ''}
+              {formatFecha(asig.fecha_asignacion)}
             </span>
           </div>
 
