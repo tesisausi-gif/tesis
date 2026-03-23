@@ -81,6 +81,7 @@ function getNavUrl(
   idPresupuesto: number | null,
 ): string | null {
   if (rol === 'tecnico') {
+    if (tipo === 'nueva_asignacion') return '/tecnico/disponibles'
     if (idIncidente) return '/tecnico/trabajos'
     return null
   }
