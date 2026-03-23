@@ -130,7 +130,7 @@ export default async function ClienteDashboard() {
                 <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
                 {incidentesCerrados}
               </div>
-              <p className="text-xs md:text-sm text-green-700 mt-1">Resueltos</p>
+              <p className="text-xs md:text-sm text-green-700 mt-1">Finalizados</p>
             </div>
           </div>
 

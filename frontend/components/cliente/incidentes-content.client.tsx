@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Plus, AlertCircle, Clock, Send, Wrench, CheckCircle,
-  Bell, MapPin, ChevronRight, ClipboardList,
+  Bell, MapPin, ClipboardList, FileText,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { createClient } from '@/shared/lib/supabase/client'
@@ -27,13 +27,14 @@ const STATUS_CONFIG: Record<string, {
   pendiente:             { label: 'Pendiente',  borderColor: 'border-l-amber-400',  pillBg: 'bg-amber-100',  pillText: 'text-amber-700',  Icon: Clock },
   asignacion_solicitada: { label: 'Asignado',   borderColor: 'border-l-blue-400',   pillBg: 'bg-blue-100',   pillText: 'text-blue-700',   Icon: Send },
   en_proceso:            { label: 'En proceso', borderColor: 'border-l-orange-400', pillBg: 'bg-orange-100', pillText: 'text-orange-700', Icon: Wrench },
-  resuelto:              { label: 'Resuelto',    borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
+  resuelto:              { label: 'Finalizado',  borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
   finalizado:            { label: 'Finalizado',  borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
 }
 
 export function IncidentesContent({ incidentes, incidentesConPresupuestoPendiente }: IncidentesContentProps) {
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [modalTab, setModalTab] = useState<string>('detalles')
   const [pendientesPresupuesto, setPendientesPresupuesto] = useState<Set<number>>(
     new Set(incidentesConPresupuestoPendiente)
   )
@@ -59,8 +60,9 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const abrirModal = (id: number) => {
+  const abrirModal = (id: number, tab = 'detalles') => {
     setIncidenteSeleccionado(id)
+    setModalTab(tab)
     setModalOpen(true)
     setPendientesPresupuesto(s => { const n = new Set(s); n.delete(id); return n })
   }
@@ -79,11 +81,10 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
       : incidentes.filter(i => i.estado_actual === filtro)
 
   const filtros = [
-    { id: 'todos',                 label: 'Todos',       count: incidentes.length,                   Icon: ClipboardList },
-    { id: 'pendiente',             label: 'Pendiente',   count: porEstado.pendiente.length,             Icon: Clock },
-    { id: 'asignacion_solicitada', label: 'Asignado',    count: porEstado.asignacion_solicitada.length, Icon: Send },
-    { id: 'en_proceso',            label: 'En proceso',  count: porEstado.en_proceso.length,            Icon: Wrench },
-    { id: 'resuelto',              label: 'Finalizados', count: porEstado.resuelto.length,              Icon: CheckCircle },
+    { id: 'todos',      label: 'Todos',       count: incidentes.length,           Icon: ClipboardList },
+    { id: 'pendiente',  label: 'Pendiente',   count: porEstado.pendiente.length,  Icon: Clock },
+    { id: 'en_proceso', label: 'En proceso',  count: porEstado.en_proceso.length, Icon: Wrench },
+    { id: 'resuelto',   label: 'Finalizados', count: porEstado.resuelto.length,   Icon: CheckCircle },
   ]
 
   return (
@@ -121,7 +122,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
               { label: 'Pendientes', count: porEstado.pendiente.length,             color: 'text-amber-500' },
               { label: 'Asignados',  count: porEstado.asignacion_solicitada.length, color: 'text-blue-500' },
               { label: 'En proceso', count: porEstado.en_proceso.length,            color: 'text-orange-500' },
-              { label: 'Resueltos',  count: porEstado.resuelto.length,              color: 'text-green-500' },
+              { label: 'Finaliz.',   count: porEstado.resuelto.length,              color: 'text-green-500' },
             ].map(stat => (
               <div key={stat.label} className="flex flex-col items-center justify-center py-3 border-r border-gray-100 last:border-0">
                 <span className={`text-xl font-bold ${stat.color}`}>{stat.count}</span>
@@ -175,10 +176,9 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                 const tienePresupuestoPendiente = pendientesPresupuesto.has(incidente.id_incidente)
 
                 return (
-                  <button
+                  <div
                     key={incidente.id_incidente}
-                    onClick={() => abrirModal(incidente.id_incidente)}
-                    className={`w-full text-left bg-white rounded-2xl border-l-4 shadow-sm active:scale-[0.98] transition-transform overflow-hidden ${cfg.borderColor}`}
+                    className={`bg-white rounded-2xl border-l-4 shadow-sm overflow-hidden ${cfg.borderColor}`}
                   >
                     {/* Presupuesto listo banner */}
                     {tienePresupuestoPendiente && (
@@ -189,16 +189,13 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                     )}
 
                     <div className="px-4 py-4">
-                      {/* Row 1: ID + status + chevron */}
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-gray-900">Incidente #{incidente.id_incidente}</span>
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.pillBg} ${cfg.pillText}`}>
-                            <Icon className="w-2.5 h-2.5" />
-                            {cfg.label}
-                          </span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                      {/* Row 1: ID + status */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-bold text-gray-900">Incidente #{incidente.id_incidente}</span>
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.pillBg} ${cfg.pillText}`}>
+                          <Icon className="w-2.5 h-2.5" />
+                          {cfg.label}
+                        </span>
                       </div>
 
                       {/* Row 2: Description */}
@@ -217,7 +214,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                         </span>
                       </div>
 
-                      {/* Row 4: Category pill (optional) */}
+                      {/* Row 4: Category pill */}
                       {incidente.categoria && (
                         <div className="mt-2">
                           <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
@@ -226,7 +223,39 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                         </div>
                       )}
                     </div>
-                  </button>
+
+                    {/* ── Acciones — 3 chips ─────────────── */}
+                    <div className="flex border-t border-gray-100">
+                      <button
+                        onClick={() => abrirModal(incidente.id_incidente, 'detalles')}
+                        className="flex-1 flex flex-col items-center gap-0.5 py-3 active:bg-gray-50 transition-colors border-r border-gray-100"
+                      >
+                        <FileText className="w-4 h-4 text-gray-600" />
+                        <span className="text-[10px] font-semibold text-gray-600">Detalles</span>
+                      </button>
+                      <button
+                        onClick={() => abrirModal(incidente.id_incidente, 'timeline')}
+                        className="flex-1 flex flex-col items-center gap-0.5 py-3 active:bg-gray-50 transition-colors border-r border-gray-100"
+                      >
+                        <Clock className="w-4 h-4 text-blue-500" />
+                        <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
+                      </button>
+                      <button
+                        onClick={() => tienePresupuestoPendiente && abrirModal(incidente.id_incidente, 'presupuesto')}
+                        disabled={!tienePresupuestoPendiente}
+                        className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
+                          tienePresupuestoPendiente
+                            ? 'active:bg-amber-50 text-amber-500'
+                            : 'opacity-30 cursor-not-allowed text-gray-400'
+                        }`}
+                      >
+                        <Bell className={`w-4 h-4 ${tienePresupuestoPendiente ? 'animate-pulse' : ''}`} />
+                        <span className="text-[10px] font-semibold">
+                          {tienePresupuestoPendiente ? 'Presupuesto' : 'Gestión'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                 )
               })
             )}
@@ -239,6 +268,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
         open={modalOpen}
         onOpenChange={setModalOpen}
         rol="cliente"
+        initialTab={modalTab}
       />
     </div>
   )

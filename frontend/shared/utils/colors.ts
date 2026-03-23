@@ -15,7 +15,8 @@ export const ESTADO_INCIDENTE_LABELS: Record<string, string> = {
   pendiente: 'Pendiente',
   asignacion_solicitada: 'Asignación Solicitada',
   en_proceso: 'En Proceso',
-  resuelto: 'Resuelto',
+  resuelto: 'Finalizado',
+  finalizado: 'Finalizado',
 }
 
 // 2. Prioridades

@@ -130,7 +130,7 @@ export function TrabajosContent({
   const filtros = [
     { id: 'todos',      label: 'Todos',       count: asignaciones.length, Icon: ClipboardList },
     { id: 'en_proceso', label: 'En proceso',  count: enProceso.length,    Icon: Wrench },
-    { id: 'resueltos',  label: 'Resueltos',   count: resueltas.length,    Icon: CheckCircle },
+    { id: 'resueltos',  label: 'Finalizados', count: resueltas.length,    Icon: CheckCircle },
   ]
 
   const listaFiltrada =

@@ -737,7 +737,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         id: 'cierre',
         tipo: 'estado',
         titulo: 'Incidente Cerrado',
-        descripcion: incidenteData.fue_resuelto ? 'Resuelto satisfactoriamente' : 'Cerrado sin resolución',
+        descripcion: incidenteData.fue_resuelto ? 'Finalizado satisfactoriamente' : 'Cerrado sin resolución',
         fecha: incidenteData.fecha_cierre,
         icono: <CheckCircle className="h-4 w-4" />,
         color: incidenteData.fue_resuelto ? 'bg-green-500' : 'bg-gray-500',

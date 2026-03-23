@@ -248,7 +248,7 @@ function TabR1() {
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <KpiCard label="Total" valor={String(resultado.total)} />
-            <KpiCard label="% Resueltos" valor={fmtPct(resultado.porcentajeCerrados)} sub="del total" />
+            <KpiCard label="% Finalizados" valor={fmtPct(resultado.porcentajeCerrados)} sub="del total" />
             <KpiCard label="% En proceso" valor={fmtPct(resultado.porcentajeEnCurso)} sub="del total" />
             <KpiCard label="% Pendientes" valor={fmtPct(resultado.porcentajePendientes)} sub="del total" />
           </div>
@@ -1025,7 +1025,7 @@ function TabR12() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <KpiCard label="Total incidentes" valor={String(resultado.totalIncidentes)} />
             <KpiCard label="Abiertos" valor={String(resultado.incidentesAbiertos)} />
-            <KpiCard label="Resueltos" valor={String(resultado.incidentesCerrados)} />
+            <KpiCard label="Finalizados" valor={String(resultado.incidentesCerrados)} />
             <KpiCard label="Días prom. resolución" valor={fmtN(resultado.promedioResolucionDias)} />
             <KpiCard label="Ingresos totales" valor={fmt$(resultado.totalIngresos)} />
             <KpiCard label="Costos totales" valor={fmt$(resultado.totalCostos)} />
