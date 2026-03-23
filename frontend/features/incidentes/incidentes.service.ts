@@ -8,7 +8,7 @@
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireClienteId } from '@/features/auth/auth.service'
-import type { Incidente, IncidenteConCliente, IncidenteConDetalles, MetricasDashboard, FiltrosMetricas } from './incidentes.types'
+import type { Incidente, IncidenteConCliente, IncidenteConClienteAdmin, IncidenteConDetalles, MetricasDashboard, FiltrosMetricas } from './incidentes.types'
 import type { ActionResult } from '@/shared/types'
 
 // Select base para incidentes
@@ -35,10 +35,10 @@ const INCIDENTE_SELECT = `
 `
 
 /**
- * Obtener todos los incidentes (admin)
+ * Obtener todos los incidentes (admin) — incluye presupuestos y conformidades para acciones contextuales
  */
-export async function getIncidentesForAdmin(): Promise<IncidenteConCliente[]> {
-  const supabase = await createClient()
+export async function getIncidentesForAdmin(): Promise<IncidenteConClienteAdmin[]> {
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('incidentes')
@@ -55,12 +55,22 @@ export async function getIncidentesForAdmin(): Promise<IncidenteConCliente[]> {
           nombre,
           apellido
         )
+      ),
+      presupuestos (
+        id_presupuesto,
+        estado_presupuesto
+      ),
+      conformidades (
+        id_conformidad,
+        url_documento,
+        esta_firmada,
+        esta_rechazada
       )
     `)
     .order('fecha_registro', { ascending: false })
 
   if (error) throw error
-  return data as unknown as IncidenteConCliente[]
+  return data as unknown as IncidenteConClienteAdmin[]
 }
 
 /**

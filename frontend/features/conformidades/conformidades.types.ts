@@ -10,7 +10,9 @@ export interface Conformidad {
   id_cliente: number
   tipo_conformidad: string       // CHECK: 'final' | 'intermedia'
   esta_firmada: number | boolean  // INTEGER 0/1 en DB
+  esta_rechazada?: boolean
   fecha_conformidad: string | null
+  fecha_rechazo?: string | null
   observaciones: string | null
   url_documento?: string | null
   fecha_creacion: string

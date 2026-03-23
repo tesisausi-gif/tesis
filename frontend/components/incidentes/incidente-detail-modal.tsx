@@ -60,8 +60,8 @@ import {
 } from '@/features/incidentes/incidentes.service'
 import { crearAsignacion, completarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
-import { getPresupuestosDelIncidente, crearPresupuesto } from '@/features/presupuestos/presupuestos.service'
-import { getConformidadDelIncidente, crearConformidadPorTecnico } from '@/features/conformidades/conformidades.service'
+import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rechazarPresupuesto } from '@/features/presupuestos/presupuestos.service'
+import { getConformidadDelIncidente, crearConformidadPorTecnico, aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
 import { crearAvance } from '@/features/avances/avances.service'
 import { createClient } from '@/shared/lib/supabase/client'
 import { PresupuestosClienteList } from '@/components/cliente/presupuestos-cliente-list'
@@ -351,6 +351,14 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [presInspeccionId, setPresInspeccionId] = useState('')
   const [savingPresupuesto, setSavingPresupuesto] = useState(false)
 
+  // State para acciones de admin (aprobar/rechazar presupuesto y conformidad)
+  const [gastosAdmin, setGastosAdmin] = useState('')
+  const [puntuacionAdmin, setPuntuacionAdmin] = useState(5)
+  const [comentariosAdmin, setComentariosAdmin] = useState('')
+  const [resolvioProbAdmin, setResolvioProbAdmin] = useState(true)
+  const [savingPresupuestoAdmin, setSavingPresupuestoAdmin] = useState(false)
+  const [savingConformidadAdmin, setSavingConformidadAdmin] = useState(false)
+
   // State para acciones de ejecución (solo técnico)
   const [avanceDesc, setAvanceDesc] = useState('')
   const [avancePct, setAvancePct] = useState('')
@@ -398,7 +406,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       setAsignaciones(asignacionesData as unknown as Asignacion[])
 
       // Cargar datos específicos por rol
-      if (rol === 'tecnico') {
+      if (rol === 'tecnico' || rol === 'admin') {
         try {
           const [inspeccionesData, presupuestosData, conformidadData] = await Promise.all([
             getInspeccionesDelIncidente(incidenteId),
@@ -409,7 +417,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           setPresupuestos(presupuestosData)
           setConformidad(conformidadData)
         } catch (error) {
-          console.error('Error al cargar datos del técnico:', error)
+          console.error('Error al cargar datos:', error)
         }
       }
 
@@ -954,6 +962,79 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     }
   }
 
+  const handleAprobarPresupuesto = async (idPresupuesto: number) => {
+    setSavingPresupuestoAdmin(true)
+    try {
+      const gastos = parseFloat(gastosAdmin) || 0
+      const res = await aprobarPresupuesto(idPresupuesto, gastos)
+      if (res.success) {
+        toast.success('Presupuesto aprobado — el cliente recibirá notificación')
+        setGastosAdmin('')
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al aprobar presupuesto')
+      }
+    } finally {
+      setSavingPresupuestoAdmin(false)
+    }
+  }
+
+  const handleRechazarPresupuesto = async (idPresupuesto: number) => {
+    setSavingPresupuestoAdmin(true)
+    try {
+      const res = await rechazarPresupuesto(idPresupuesto)
+      if (res.success) {
+        toast.success('Presupuesto rechazado — el incidente volvió a Pendiente')
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al rechazar presupuesto')
+      }
+    } finally {
+      setSavingPresupuestoAdmin(false)
+    }
+  }
+
+  const handleAprobarConformidad = async (idConformidad: number) => {
+    if (puntuacionAdmin < 1 || puntuacionAdmin > 5) {
+      toast.error('La calificación debe ser entre 1 y 5')
+      return
+    }
+    setSavingConformidadAdmin(true)
+    try {
+      const res = await aprobarConformidad(idConformidad, puntuacionAdmin, comentariosAdmin || null, resolvioProbAdmin)
+      if (res.success) {
+        toast.success('Conformidad aprobada — incidente finalizado')
+        setComentariosAdmin('')
+        setPuntuacionAdmin(5)
+        setResolvioProbAdmin(true)
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al aprobar conformidad')
+      }
+    } finally {
+      setSavingConformidadAdmin(false)
+    }
+  }
+
+  const handleRechazarConformidad = async (idConformidad: number) => {
+    setSavingConformidadAdmin(true)
+    try {
+      const res = await rechazarConformidad(idConformidad)
+      if (res.success) {
+        toast.success('Conformidad rechazada — el técnico debe resubir')
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al rechazar conformidad')
+      }
+    } finally {
+      setSavingConformidadAdmin(false)
+    }
+  }
+
   const formatDireccion = () => {
     if (!incidente?.inmuebles) return 'Sin dirección'
     const i = incidente.inmuebles
@@ -995,14 +1076,17 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => a.estado_asignacion !== 'rechazada')
           const hasClientePresupuesto = rol === 'cliente' && presupuestos.length > 0
           const hasCalificacion = rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO
+          const hasAdminStepperTabs = rol === 'admin' && asignaciones.some(a =>
+            ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+          )
           const tabCount = 2
             + (hasTecnicoTabs ? 2 : 0)
-            + (rol === 'admin' ? 1 : 0)
+            + (rol === 'admin' && !hasAdminStepperTabs ? 1 : 0)
             + (hasClientePresupuesto ? 1 : 0)
             + (hasCalificacion ? 1 : 0)
           const tabGridClass = tabCount === 3 ? 'grid-cols-3' : tabCount === 4 ? 'grid-cols-4' : 'grid-cols-2'
 
-          // ── Stepper steps computation (solo para técnico) ─────────────────
+          // ── Stepper steps computation ─────────────────────────────────────
           const inspeccionesActivas = inspecciones.filter(i => !i.esta_anulada)
           const presupuestosActivos = presupuestos.filter(p => p.estado_presupuesto !== EstadoPresupuesto.RECHAZADO)
           const tieneInspeccion = inspeccionesActivas.length > 0
@@ -1035,10 +1119,57 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
           const steps = computeSteps()
 
+          const conformidadAprobada = conformidad && (conformidad.esta_firmada === 1 || conformidad.esta_firmada === true)
+          const asigAceptadaAdmin = asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))
+          const computeAdminSteps = (): StepDef[] => {
+            const sa1: StepStatus = asigAceptadaAdmin ? 'completed' : 'active'
+            const sa2: StepStatus = tieneInspeccion ? 'completed' : asigAceptadaAdmin ? 'active' : 'locked'
+            const sa3: StepStatus = presupuestoAprobadoAdmin ? 'completed' : tienePresupuesto ? 'active' : 'locked'
+            const sa4: StepStatus = trabajoCompletado ? 'completed' : presupuestoAprobadoCliente ? 'active' : 'locked'
+            const sa5: StepStatus = conformidadAprobada ? 'completed' : (tieneConformidad || trabajoCompletado) ? 'active' : 'locked'
+            return [
+              { id: 1, label: 'Asignación',  sublabel: asigAceptadaAdmin ? 'Técnico asignado' : 'Sin asignar',              tab: 'gestion',           status: sa1 },
+              { id: 2, label: 'Inspección',  sublabel: tieneInspeccion ? 'Realizada' : 'Pendiente',                          tab: 'timeline',          status: sa2 },
+              { id: 3, label: 'Presupuesto', sublabel: presupuestoAprobadoAdmin ? 'Aprobado' : tienePresupuesto ? 'Para aprobar' : 'Sin envío', tab: 'presupuesto_admin', status: sa3 },
+              { id: 4, label: 'Ejecución',   sublabel: trabajoCompletado ? 'Completado' : 'Por iniciar',                     tab: 'timeline',          status: sa4 },
+              { id: 5, label: 'Conformidad', sublabel: conformidadAprobada ? 'Aprobada' : tieneConformidad ? 'Para revisar' : 'Pendiente', tab: 'conformidad_admin', status: sa5 },
+            ]
+          }
+          const adminSteps = computeAdminSteps()
+
           return (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
-            {hasTecnicoTabs ? (
+            {hasAdminStepperTabs ? (
+              <>
+                {/* Info/action tabs for admin */}
+                {!hideTabs && (
+                  <div className="mb-3">
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['detalles', 'timeline', 'gestion'] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          onClick={() => setActiveTab(tab)}
+                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                            activeTab === tab
+                              ? 'bg-gray-900 text-white shadow-sm'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {tab === 'detalles' ? 'Detalles' : tab === 'timeline' ? 'Timeline' : 'Gestión'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Admin Stepper */}
+                {(!hideTabs || ['presupuesto_admin', 'conformidad_admin'].includes(activeTab)) && (
+                  <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                    <StepperTecnico steps={adminSteps} activeTab={activeTab} onStepClick={setActiveTab} />
+                  </div>
+                )}
+              </>
+            ) : hasTecnicoTabs ? (
               <>
                 {/* ── Info tabs (Detalles / Timeline) — ocultos en modo enfocado ── */}
                 {!hideTabs && (
@@ -1750,6 +1881,228 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                         <><Upload className="h-4 w-4" />Enviar Conformidad</>
                       )}
                     </Button>
+                  </div>
+                )}
+              </TabsContent>
+            )}
+
+            {/* Tab Presupuesto Admin — revisar y aprobar/rechazar */}
+            {rol === 'admin' && (
+              <TabsContent value="presupuesto_admin" className="mt-4 space-y-4">
+                {presupuestosActivos.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <FileText className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No hay presupuesto enviado aún</p>
+                    <p className="text-xs mt-1">El técnico debe enviarlo desde su portal</p>
+                  </div>
+                ) : (
+                  presupuestosActivos.map(pres => (
+                    <div key={pres.id_presupuesto} className="space-y-4">
+                      {/* Detalle del presupuesto */}
+                      <div className="rounded-lg border bg-gray-50 p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold text-gray-700">Presupuesto #{pres.id_presupuesto}</span>
+                          <Badge variant="outline" className="text-xs">{pres.estado_presupuesto}</Badge>
+                        </div>
+                        {pres.descripcion_detallada && (
+                          <p className="text-sm text-gray-700">{pres.descripcion_detallada}</p>
+                        )}
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          {pres.costo_materiales != null && (
+                            <div className="bg-white rounded p-2 border">
+                              <p className="text-[10px] text-gray-500">Materiales</p>
+                              <p className="text-sm font-semibold">${(pres.costo_materiales ?? 0).toLocaleString()}</p>
+                            </div>
+                          )}
+                          {pres.costo_mano_obra != null && (
+                            <div className="bg-white rounded p-2 border">
+                              <p className="text-[10px] text-gray-500">Mano de obra</p>
+                              <p className="text-sm font-semibold">${(pres.costo_mano_obra ?? 0).toLocaleString()}</p>
+                            </div>
+                          )}
+                          <div className="bg-white rounded p-2 border">
+                            <p className="text-[10px] text-gray-500">Total técnico</p>
+                            <p className="text-sm font-bold">${(pres.costo_total ?? 0).toLocaleString()}</p>
+                          </div>
+                        </div>
+                        {pres.alternativas_reparacion && (
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 mb-1">Alternativas</p>
+                            <p className="text-xs text-gray-600">{pres.alternativas_reparacion}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Aprobar / Rechazar — solo cuando enviado */}
+                      {pres.estado_presupuesto === 'enviado' && (
+                        <div className="space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4">
+                          <h4 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            Revisión del presupuesto
+                          </h4>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Gastos administrativos ($) — opcional</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={gastosAdmin}
+                              onChange={(e) => setGastosAdmin(e.target.value)}
+                              placeholder="0"
+                              className="bg-white"
+                            />
+                            {(parseFloat(gastosAdmin) || 0) > 0 && (
+                              <p className="text-xs text-blue-700 font-medium">
+                                Total final al cliente: ${((pres.costo_materiales || 0) + (pres.costo_mano_obra || 0) + (parseFloat(gastosAdmin) || 0)).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex gap-2 pt-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
+                              onClick={() => handleRechazarPresupuesto(pres.id_presupuesto)}
+                              disabled={savingPresupuestoAdmin}
+                            >
+                              <XCircle className="h-3.5 w-3.5" />
+                              Rechazar
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700"
+                              onClick={() => handleAprobarPresupuesto(pres.id_presupuesto)}
+                              disabled={savingPresupuestoAdmin}
+                            >
+                              {savingPresupuestoAdmin
+                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                : <CheckCircle className="h-3.5 w-3.5" />
+                              }
+                              Aprobar
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto ?? '') && (
+                        <div className="rounded-lg bg-green-50 border border-green-200 p-3 flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          <p className="text-sm text-green-800">
+                            {pres.estado_presupuesto === 'aprobado'
+                              ? 'Aprobado por el cliente — trabajo en curso'
+                              : 'Aprobado por administración — pendiente de aprobación del cliente'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </TabsContent>
+            )}
+
+            {/* Tab Conformidad Admin — ver foto y aprobar/rechazar */}
+            {rol === 'admin' && (
+              <TabsContent value="conformidad_admin" className="mt-4 space-y-4">
+                {!tieneConformidad ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <ClipboardList className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No hay conformidad subida aún</p>
+                    <p className="text-xs mt-1">El técnico debe completar el trabajo y subir la foto</p>
+                  </div>
+                ) : conformidad?.esta_rechazada ? (
+                  <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-center gap-2">
+                    <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                    <p className="text-sm text-red-800">Conformidad rechazada — el técnico debe resubir la foto</p>
+                  </div>
+                ) : (conformidad?.esta_firmada === 1 || conformidad?.esta_firmada === true) ? (
+                  <div className="rounded-lg bg-green-50 border border-green-200 p-4 flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <p className="text-sm text-green-800">Conformidad aprobada — incidente finalizado</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Foto de conformidad */}
+                    {conformidad?.url_documento && (
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                          <ImageIcon className="h-3.5 w-3.5" />
+                          Foto de conformidad subida por el técnico
+                        </Label>
+                        <a href={conformidad.url_documento} target="_blank" rel="noopener noreferrer" className="block">
+                          <img
+                            src={conformidad.url_documento}
+                            alt="Conformidad"
+                            className="w-full max-h-72 object-contain rounded-lg border border-gray-200 bg-gray-50 cursor-zoom-in hover:opacity-90 transition-opacity"
+                          />
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Calificación del técnico */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-500">Calificación del técnico</Label>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setPuntuacionAdmin(n)}
+                            className="p-0.5 transition-transform active:scale-90"
+                          >
+                            <CheckCircle
+                              className={`h-7 w-7 transition-colors ${n <= puntuacionAdmin ? 'text-amber-400' : 'text-gray-200'}`}
+                              fill={n <= puntuacionAdmin ? '#fbbf24' : 'none'}
+                            />
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm text-gray-500">{puntuacionAdmin}/5</span>
+                      </div>
+                    </div>
+
+                    {/* Comentario */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-500">Comentario (opcional)</Label>
+                      <Textarea
+                        value={comentariosAdmin}
+                        onChange={(e) => setComentariosAdmin(e.target.value)}
+                        placeholder="Observaciones sobre el trabajo realizado..."
+                        rows={2}
+                      />
+                    </div>
+
+                    {/* Resolvió el problema */}
+                    <label className="flex items-center gap-2.5 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={resolvioProbAdmin}
+                        onChange={(e) => setResolvioProbAdmin(e.target.checked)}
+                        className="w-4 h-4 rounded accent-blue-600"
+                      />
+                      <span className="text-sm text-gray-700 group-hover:text-gray-900">El técnico resolvió el problema satisfactoriamente</span>
+                    </label>
+
+                    {/* Botones */}
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
+                        onClick={() => handleRechazarConformidad(conformidad!.id_conformidad)}
+                        disabled={savingConformidadAdmin}
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Rechazar
+                      </Button>
+                      <Button
+                        className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700"
+                        onClick={() => handleAprobarConformidad(conformidad!.id_conformidad)}
+                        disabled={savingConformidadAdmin}
+                      >
+                        {savingConformidadAdmin
+                          ? <Loader2 className="h-4 w-4 animate-spin" />
+                          : <CheckCircle2 className="h-4 w-4" />
+                        }
+                        Aprobar y cerrar incidente
+                      </Button>
+                    </div>
                   </div>
                 )}
               </TabsContent>

@@ -61,6 +61,26 @@ export interface UpdateIncidenteDTO {
   categoria?: string | null
 }
 
+// Resumen de presupuesto para la lista de incidentes del admin
+export interface PresupuestoResumen {
+  id_presupuesto: number
+  estado_presupuesto: string
+}
+
+// Resumen de conformidad para la lista de incidentes del admin
+export interface ConformidadResumen {
+  id_conformidad: number
+  url_documento: string | null
+  esta_firmada: number | boolean
+  esta_rechazada: boolean
+}
+
+// Incidente con datos de cliente + presupuestos/conformidades (para admin)
+export interface IncidenteConClienteAdmin extends IncidenteConCliente {
+  presupuestos?: PresupuestoResumen[]
+  conformidades?: ConformidadResumen[]
+}
+
 // Filtros para métricas y reportes
 export interface FiltrosMetricas {
   fechaDesde?: string | null
