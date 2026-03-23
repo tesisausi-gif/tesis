@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns'
@@ -10,6 +10,7 @@ import {
   AlertTriangle, Info, X, ExternalLink, Inbox,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from '@/shared/lib/supabase/client'
 import { marcarNotificacionLeida, marcarTodasLeidas } from '@/features/notificaciones/notificaciones-inapp.service'
 import { TIPO_CATEGORIA } from '@/features/notificaciones/notificaciones.types'
 import type { Notificacion, TipoNotificacionCategoria } from '@/features/notificaciones/notificaciones.types'
@@ -110,6 +111,31 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
   const [items, setItems] = useState<Notificacion[]>(inicial)
   const [, startTransition] = useTransition()
   const router = useRouter()
+
+  // Suscripción realtime para recibir notificaciones nuevas sin recargar
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`notificaciones-panel-${rol}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notificaciones' },
+        (payload) => {
+          const nueva = payload.new as Notificacion
+          // Solo agregar si corresponde al rol actual y no está leída
+          if (nueva.fecha_leida) return
+          const esParaEsteRol =
+            (rol === 'admin' && nueva.para_admin) ||
+            (rol === 'tecnico' && nueva.id_tecnico != null && !nueva.para_admin) ||
+            (rol === 'cliente' && nueva.id_cliente != null && !nueva.para_admin)
+          if (!esParaEsteRol) return
+          setItems(prev => [nueva, ...prev])
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [rol])
 
   const descartar = (e: React.MouseEvent, id: number) => {
     e.stopPropagation()
