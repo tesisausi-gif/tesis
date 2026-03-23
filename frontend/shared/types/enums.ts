@@ -35,6 +35,7 @@ export enum EstadoIncidente {
   ASIGNACION_SOLICITADA = 'asignacion_solicitada',
   EN_PROCESO = 'en_proceso',
   RESUELTO = 'resuelto',
+  FINALIZADO = 'finalizado',
 }
 
 export enum EstadoAsignacion {

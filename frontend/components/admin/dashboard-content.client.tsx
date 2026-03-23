@@ -65,12 +65,14 @@ const getEstadoBadge = (estado: string) => {
     'asignacion_solicitada': 'bg-orange-100 text-orange-800',
     'en_proceso': 'bg-blue-100 text-blue-800',
     'resuelto': 'bg-green-100 text-green-800',
+    'finalizado': 'bg-green-100 text-green-800',
   }
   const labels: Record<string, string> = {
     'pendiente': 'Pendiente',
     'asignacion_solicitada': 'Asig. Solicitada',
     'en_proceso': 'En Proceso',
     'resuelto': 'Resuelto',
+    'finalizado': 'Finalizado',
   }
   return (
     <Badge className={estilos[estado] || 'bg-gray-100 text-gray-800'}>

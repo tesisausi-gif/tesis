@@ -65,7 +65,7 @@ export async function getPendientesPagoTecnico(): Promise<PendientePagoTecnico[]
       )
     `)
     .in('estado_presupuesto', ['aprobado'])
-    .eq('incidentes.estado_actual', 'resuelto')
+    .in('incidentes.estado_actual', ['finalizado', 'resuelto'])
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error

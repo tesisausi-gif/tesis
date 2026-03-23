@@ -265,7 +265,7 @@ export async function aprobarConformidad(
     // 3. Marcar incidente como resuelto con fecha de cierre
     await supabase
       .from('incidentes')
-      .update({ estado_actual: 'resuelto', fue_resuelto: 1, fecha_cierre: new Date().toISOString() })
+      .update({ estado_actual: 'finalizado', fue_resuelto: 1, fecha_cierre: new Date().toISOString() })
       .eq('id_incidente', idIncidente)
 
     // 4. Notificar al cliente: email (fire-and-forget)

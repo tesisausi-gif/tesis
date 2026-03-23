@@ -217,7 +217,7 @@ export async function getR1IncidentesPorTipoEstado(filtros: {
     estadosMap[est] = (estadosMap[est] || 0) + 1
   }
 
-  const cerrados = estadosMap['resuelto'] || 0
+  const cerrados = (estadosMap['finalizado'] || 0) + (estadosMap['resuelto'] || 0)
   const enCurso = estadosMap['en_proceso'] || 0
   const pendientesCount = estadosMap['pendiente'] || 0
 
@@ -471,7 +471,7 @@ export async function getR4PropiedadesMasIncidentes(filtros: {
     }
     inmuebleMap[id].incidentes.push(inc.categoria || '')
     inmuebleMap[id].costoTotal += pagosPorIncidente[inc.id_incidente] || 0
-    if (inc.estado_actual !== 'resuelto') inmuebleMap[id].incidentesAbiertos++
+    if (inc.estado_actual !== 'finalizado' && inc.estado_actual !== 'resuelto') inmuebleMap[id].incidentesAbiertos++
   }
 
   const topN = filtros.topN || 10
@@ -751,7 +751,7 @@ export async function getR9EficienciaCostos(filtros: {
   const incIdsResueltos = (presupuestos || [])
     .filter((p: any) => {
       const inc = Array.isArray(p.incidentes) ? p.incidentes[0] : p.incidentes
-      if (inc?.estado_actual !== 'resuelto') return false
+      if (inc?.estado_actual !== 'finalizado' && inc?.estado_actual !== 'resuelto') return false
       if (filtros.fechaDesde && inc?.fecha_registro && inc.fecha_registro < filtros.fechaDesde) return false
       if (filtros.fechaHasta && inc?.fecha_registro && inc.fecha_registro > filtros.fechaHasta) return false
       return true
@@ -952,7 +952,7 @@ export async function getR11ComparativoDesempenio(filtros: {
     const pagos = pagosRes.data || []
     const cals = calRes.data || []
 
-    const resueltos = incs.filter(i => i.estado_actual === 'resuelto')
+    const resueltos = incs.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto')
     const dias = resueltos
       .filter(i => i.fecha_registro && i.fecha_cierre)
       .map(i => diasEntre(i.fecha_registro, i.fecha_cierre))
@@ -1028,7 +1028,7 @@ export async function getR12IndicadoresGlobales(filtros: {
   ])
 
   const incs = incRes.data || []
-  const cerrados = incs.filter(i => i.estado_actual === 'resuelto')
+  const cerrados = incs.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto')
   const diasList = cerrados
     .filter(i => i.fecha_registro && i.fecha_cierre)
     .map(i => diasEntre(i.fecha_registro, i.fecha_cierre))

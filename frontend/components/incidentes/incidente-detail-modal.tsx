@@ -148,6 +148,7 @@ const ESTADOS_LABELS: Record<string, string> = {
   'en_proceso': 'En Proceso',
   'asignacion_solicitada': 'Asignación solicitada',
   'resuelto': 'Resuelto',
+  'finalizado': 'Finalizado',
 }
 
 const ESTADO_COLORS: Record<string, string> = {
@@ -155,6 +156,7 @@ const ESTADO_COLORS: Record<string, string> = {
   'en_proceso': 'bg-blue-100 text-blue-800',
   'asignacion_solicitada': 'bg-purple-100 text-purple-800',
   'resuelto': 'bg-green-100 text-green-800',
+  'finalizado': 'bg-green-100 text-green-800',
 }
 
 function TecnicoAsignadoCard({ nombre, especialidad, telefono, email, estado }: {

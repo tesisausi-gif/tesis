@@ -120,7 +120,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   const pendientes = incidentes.filter(i => i.estado_actual === EstadoIncidente.PENDIENTE).length
   const asignacionSolicitada = incidentes.filter(i => i.estado_actual === EstadoIncidente.ASIGNACION_SOLICITADA).length
   const enProceso = incidentes.filter(i => i.estado_actual === EstadoIncidente.EN_PROCESO).length
-  const resueltos = incidentes.filter(i => i.estado_actual === EstadoIncidente.RESUELTO).length
+  const resueltos = incidentes.filter(i => i.estado_actual === EstadoIncidente.FINALIZADO || i.estado_actual === EstadoIncidente.RESUELTO).length
 
   const renderTablaPendientes = (lista: IncidenteConCliente[]) => {
     if (lista.length === 0) {
@@ -550,9 +550,9 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             </TabsTrigger>
             <TabsTrigger value="resuelto" className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />
-              Resueltos
+              Finalizados
               <Badge variant="secondary" className="ml-2">
-                {incidentesFiltrados.filter(i => i.estado_actual === 'resuelto').length}
+                {incidentesFiltrados.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto').length}
               </Badge>
             </TabsTrigger>
           </TabsList>
@@ -611,20 +611,20 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             </Card>
           </TabsContent>
 
-          {/* Tab: Resueltos */}
+          {/* Tab: Finalizados */}
           <TabsContent value="resuelto">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  Incidentes Resueltos
+                  Incidentes Finalizados
                 </CardTitle>
                 <CardDescription>
-                  Incidentes completados y cerrados.
+                  Incidentes con conformidad aprobada y cerrados.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {renderTablaIncidentes(incidentesFiltrados.filter(i => i.estado_actual === 'resuelto'))}
+                {renderTablaIncidentes(incidentesFiltrados.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto'))}
               </CardContent>
             </Card>
           </TabsContent>

@@ -220,7 +220,7 @@ export async function getDashboardStats() {
   return {
     incidentesPendientes: incidentesData.filter(i => i.estado_actual === 'pendiente').length,
     incidentesEnProceso: incidentesData.filter(i => i.estado_actual === 'en_proceso').length,
-    incidentesResueltos: incidentesData.filter(i => i.estado_actual === 'resuelto').length,
+    incidentesResueltos: incidentesData.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto').length,
     propiedades: propiedades.count || 0,
     clientes: clientes.count || 0,
     tecnicos: tecnicos.count || 0,
@@ -303,9 +303,9 @@ export async function actualizarIncidente(
   }
 ): Promise<ActionResult> {
   try {
-    // 'resuelto' solo se puede alcanzar vía aprobación de conformidad
-    if (updates.estado_actual === 'resuelto') {
-      return { success: false, error: 'El incidente no puede marcarse como resuelto manualmente. Debe aprobarse una conformidad primero.' }
+    // 'finalizado' y 'resuelto' solo se alcanzan vía aprobación de conformidad
+    if (updates.estado_actual === 'finalizado' || updates.estado_actual === 'resuelto') {
+      return { success: false, error: 'El incidente no puede marcarse como finalizado manualmente. Debe aprobarse una conformidad primero.' }
     }
 
     const supabase = await createClient()

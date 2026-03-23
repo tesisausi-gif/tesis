@@ -96,7 +96,7 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
       supabase.from('pagos_tecnicos').select('id_presupuesto'),
       supabase.from('presupuestos').select('id_presupuesto, incidentes!inner(estado_actual)')
         .eq('estado_presupuesto', 'aprobado')
-        .eq('incidentes.estado_actual', 'resuelto'),
+        .in('incidentes.estado_actual', ['finalizado', 'resuelto']),
     ])
     const cobradosIds = new Set((cobrosResp.data || []).map((r: any) => r.id_presupuesto))
     const pagadosIds = new Set((pagosResp.data || []).map((r: any) => r.id_presupuesto))

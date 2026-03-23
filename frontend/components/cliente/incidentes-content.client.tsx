@@ -27,7 +27,8 @@ const STATUS_CONFIG: Record<string, {
   pendiente:             { label: 'Pendiente',  borderColor: 'border-l-amber-400',  pillBg: 'bg-amber-100',  pillText: 'text-amber-700',  Icon: Clock },
   asignacion_solicitada: { label: 'Asignado',   borderColor: 'border-l-blue-400',   pillBg: 'bg-blue-100',   pillText: 'text-blue-700',   Icon: Send },
   en_proceso:            { label: 'En proceso', borderColor: 'border-l-orange-400', pillBg: 'bg-orange-100', pillText: 'text-orange-700', Icon: Wrench },
-  resuelto:              { label: 'Resuelto',   borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
+  resuelto:              { label: 'Resuelto',    borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
+  finalizado:            { label: 'Finalizado',  borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
 }
 
 export function IncidentesContent({ incidentes, incidentesConPresupuestoPendiente }: IncidentesContentProps) {
@@ -68,19 +69,21 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     pendiente:             incidentes.filter(i => i.estado_actual === 'pendiente'),
     asignacion_solicitada: incidentes.filter(i => i.estado_actual === 'asignacion_solicitada'),
     en_proceso:            incidentes.filter(i => i.estado_actual === 'en_proceso'),
-    resuelto:              incidentes.filter(i => i.estado_actual === 'resuelto'),
+    resuelto:              incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado'),
   }
 
   const incidentesFiltrados = filtro === 'todos'
     ? incidentes
-    : incidentes.filter(i => i.estado_actual === filtro)
+    : filtro === 'resuelto'
+      ? incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado')
+      : incidentes.filter(i => i.estado_actual === filtro)
 
   const filtros = [
-    { id: 'todos',                 label: 'Todos',      count: incidentes.length,                   Icon: ClipboardList },
-    { id: 'pendiente',             label: 'Pendiente',  count: porEstado.pendiente.length,             Icon: Clock },
-    { id: 'asignacion_solicitada', label: 'Asignado',   count: porEstado.asignacion_solicitada.length, Icon: Send },
-    { id: 'en_proceso',            label: 'En proceso', count: porEstado.en_proceso.length,            Icon: Wrench },
-    { id: 'resuelto',              label: 'Resuelto',   count: porEstado.resuelto.length,              Icon: CheckCircle },
+    { id: 'todos',                 label: 'Todos',       count: incidentes.length,                   Icon: ClipboardList },
+    { id: 'pendiente',             label: 'Pendiente',   count: porEstado.pendiente.length,             Icon: Clock },
+    { id: 'asignacion_solicitada', label: 'Asignado',    count: porEstado.asignacion_solicitada.length, Icon: Send },
+    { id: 'en_proceso',            label: 'En proceso',  count: porEstado.en_proceso.length,            Icon: Wrench },
+    { id: 'resuelto',              label: 'Finalizados', count: porEstado.resuelto.length,              Icon: CheckCircle },
   ]
 
   return (
