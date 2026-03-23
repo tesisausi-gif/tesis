@@ -446,52 +446,60 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       color: 'bg-blue-500',
     })
 
-    // Asignaciones
+    // Asignaciones — cada estado genera su propio evento con la fecha correcta
     asignacionesData?.forEach((asig: any) => {
       const tecnicoNombre = `${asig.tecnicos?.nombre || ''} ${asig.tecnicos?.apellido || ''}`.trim()
+      const desc = tecnicoNombre || 'Sin técnico'
 
-      let titulo: string
-      let color: string
-
-      switch (asig.estado_asignacion) {
-        case 'pendiente':
-          titulo = 'Solicitud de Asignación'
-          color = 'bg-orange-400'
-          break
-        case 'aceptada':
-          titulo = 'Técnico Aceptó la Asignación'
-          color = 'bg-purple-500'
-          break
-        case 'rechazada':
-          titulo = 'Técnico Rechazó la Asignación'
-          color = 'bg-red-500'
-          break
-        case 'en_curso':
-          titulo = 'Trabajo en Curso'
-          color = 'bg-blue-500'
-          break
-        case 'completada':
-          titulo = 'Trabajo Completado'
-          color = 'bg-green-500'
-          break
-        default:
-          titulo = 'Asignación de Técnico'
-          color = 'bg-purple-500'
-      }
-
-      const descripcion = asig.observaciones
-        ? `${tecnicoNombre} — ${asig.observaciones}`
-        : tecnicoNombre
-
+      // Evento de asignación (siempre)
       timelineEvents.push({
-        id: `asig-${asig.id_asignacion}`,
+        id: `asig-pendiente-${asig.id_asignacion}`,
         tipo: 'asignacion',
-        titulo,
-        descripcion,
+        titulo: 'Técnico asignado',
+        descripcion: desc,
         fecha: asig.fecha_asignacion,
         icono: <Wrench className="h-4 w-4" />,
-        color,
+        color: 'bg-orange-400',
       })
+
+      // Evento de aceptación
+      if (asig.fecha_aceptacion) {
+        timelineEvents.push({
+          id: `asig-aceptada-${asig.id_asignacion}`,
+          tipo: 'asignacion',
+          titulo: 'Técnico aceptó la asignación',
+          descripcion: desc,
+          fecha: asig.fecha_aceptacion,
+          icono: <Wrench className="h-4 w-4" />,
+          color: 'bg-purple-500',
+        })
+      }
+
+      // Evento de rechazo (solo visible para admin/técnico)
+      if (asig.fecha_rechazo && rolActual !== 'cliente') {
+        timelineEvents.push({
+          id: `asig-rechazada-${asig.id_asignacion}`,
+          tipo: 'asignacion',
+          titulo: 'Técnico rechazó la asignación',
+          descripcion: desc,
+          fecha: asig.fecha_rechazo,
+          icono: <Wrench className="h-4 w-4" />,
+          color: 'bg-red-500',
+        })
+      }
+
+      // Evento de trabajo completado
+      if (asig.estado_asignacion === 'completada') {
+        timelineEvents.push({
+          id: `asig-completada-${asig.id_asignacion}`,
+          tipo: 'asignacion',
+          titulo: 'Trabajo completado',
+          descripcion: desc,
+          fecha: asig.fecha_completado || asig.fecha_aceptacion || asig.fecha_asignacion,
+          icono: <Wrench className="h-4 w-4" />,
+          color: 'bg-green-500',
+        })
+      }
     })
 
     // Cargar inspecciones, presupuestos, pagos y avances para timeline

@@ -34,6 +34,10 @@ export const TIPO_CATEGORIA: Record<string, TipoNotificacionCategoria> = {
   nueva_conformidad: 'pendiente',
   presupuesto_enviado: 'pendiente',
   trabajo_completado: 'pendiente',
+  // Positivo
+  asignacion_aceptada: 'positivo',
+  // Urgente (admin)
+  asignacion_rechazada: 'urgente',
   // Informativo
   nueva_asignacion: 'informativo',
   nuevo_avance: 'informativo',
