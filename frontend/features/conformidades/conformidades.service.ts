@@ -56,6 +56,7 @@ export async function getConformidadesPendientes() {
     `)
     .not('url_documento', 'is', null)
     .eq('esta_firmada', 0)
+    .eq('esta_rechazada', false)
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
@@ -150,11 +151,12 @@ export async function crearConformidadPorTecnico(idIncidente: number, fotoUrl: s
   try {
     const supabase = createAdminClient()
 
-    // Verificar que no exista ya una conformidad pendiente
+    // Verificar que no exista ya una conformidad pendiente (no rechazada, no aprobada)
     const { data: existing } = await supabase
       .from('conformidades')
-      .select('id_conformidad, esta_firmada')
+      .select('id_conformidad, esta_firmada, esta_rechazada')
       .eq('id_incidente', idIncidente)
+      .eq('esta_rechazada', false)
       .maybeSingle()
 
     if (existing) {
@@ -260,10 +262,10 @@ export async function aprobarConformidad(
         })
     }
 
-    // 3. Marcar incidente como resuelto
+    // 3. Marcar incidente como resuelto con fecha de cierre
     await supabase
       .from('incidentes')
-      .update({ estado_actual: 'resuelto', fue_resuelto: 1 })
+      .update({ estado_actual: 'resuelto', fue_resuelto: 1, fecha_cierre: new Date().toISOString() })
       .eq('id_incidente', idIncidente)
 
     // 4. Notificar al cliente: email (fire-and-forget)
@@ -333,10 +335,13 @@ export async function rechazarConformidad(idConformidad: number): Promise<Action
       }).catch(console.error)
     }
 
-    // Eliminar la conformidad para que el técnico pueda volver a subir
+    // Marcar como rechazada (sin eliminar, para conservar historial en timeline)
     const { error } = await supabase
       .from('conformidades')
-      .delete()
+      .update({
+        esta_rechazada: true,
+        fecha_rechazo: new Date().toISOString(),
+      })
       .eq('id_conformidad', idConformidad)
 
     if (error) return { success: false, error: error.message }

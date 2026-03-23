@@ -333,7 +333,7 @@ export async function completarAsignacion(idAsignacion: number): Promise<ActionR
 
     const { error } = await supabase
       .from('asignaciones_tecnico')
-      .update({ estado_asignacion: 'completada' })
+      .update({ estado_asignacion: 'completada', fecha_completado: new Date().toISOString() })
       .eq('id_asignacion', idAsignacion)
 
     if (error) return { success: false, error: error.message }

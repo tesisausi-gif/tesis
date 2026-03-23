@@ -502,8 +502,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       }
     })
 
-    // Cargar inspecciones, presupuestos, pagos y avances para timeline
-    const { inspecciones, presupuestos, pagos, avances } = await getTimelineData(incidenteData.id_incidente)
+    // Cargar inspecciones, presupuestos, pagos, avances y conformidades para timeline
+    const { inspecciones, presupuestos, pagos, avances, conformidades } = await getTimelineData(incidenteData.id_incidente)
 
     inspecciones?.forEach((insp: any) => {
       const tecnicoNombre = insp.tecnicos ? `${insp.tecnicos.nombre} ${insp.tecnicos.apellido}`.trim() : null
@@ -646,6 +646,46 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         color: 'bg-green-500',
         detalleItems: detalle,
       })
+    })
+
+    // Conformidades
+    conformidades?.forEach((conf: any) => {
+      // Subida de foto
+      timelineEvents.push({
+        id: `conf-subida-${conf.id_conformidad}`,
+        tipo: 'conformidad',
+        titulo: 'Conformidad subida',
+        descripcion: 'El técnico subió la foto de conformidad para revisión',
+        fecha: conf.fecha_creacion,
+        icono: <ClipboardList className="h-4 w-4" />,
+        color: 'bg-amber-500',
+      })
+
+      // Rechazada
+      if (conf.esta_rechazada && conf.fecha_rechazo) {
+        timelineEvents.push({
+          id: `conf-rechazada-${conf.id_conformidad}`,
+          tipo: 'conformidad',
+          titulo: 'Conformidad rechazada',
+          descripcion: rolActual === 'cliente' ? 'La administración solicitó una nueva foto' : 'La conformidad fue rechazada — técnico debe resubir',
+          fecha: conf.fecha_rechazo,
+          icono: <XCircle className="h-4 w-4" />,
+          color: 'bg-red-500',
+        })
+      }
+
+      // Aprobada
+      if ((conf.esta_firmada === 1 || conf.esta_firmada === true) && conf.fecha_conformidad) {
+        timelineEvents.push({
+          id: `conf-aprobada-${conf.id_conformidad}`,
+          tipo: 'conformidad',
+          titulo: 'Conformidad aprobada',
+          descripcion: 'La administración aprobó la conformidad — incidente resuelto',
+          fecha: conf.fecha_conformidad,
+          icono: <CheckCircle className="h-4 w-4" />,
+          color: 'bg-green-500',
+        })
+      }
     })
 
     // Evento de cierre si existe

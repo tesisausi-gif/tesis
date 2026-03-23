@@ -163,7 +163,7 @@ export async function getTimelineData(idIncidente: number) {
   const { createAdminClient } = await import('@/shared/lib/supabase/admin')
   const supabase = createAdminClient()
 
-  const [inspecciones, presupuestos, pagos, avances] = await Promise.all([
+  const [inspecciones, presupuestos, pagos, avances, conformidades] = await Promise.all([
     supabase
       .from('inspecciones')
       .select('*, tecnicos(nombre, apellido)')
@@ -185,6 +185,11 @@ export async function getTimelineData(idIncidente: number) {
       .select('*, tecnicos(nombre, apellido)')
       .eq('id_incidente', idIncidente)
       .order('fecha_avance', { ascending: true }),
+    supabase
+      .from('conformidades')
+      .select('id_conformidad, fecha_creacion, fecha_conformidad, fecha_rechazo, esta_firmada, esta_rechazada, url_documento')
+      .eq('id_incidente', idIncidente)
+      .order('fecha_creacion', { ascending: true }),
   ])
 
   return {
@@ -192,6 +197,7 @@ export async function getTimelineData(idIncidente: number) {
     presupuestos: presupuestos.data || [],
     pagos: pagos.data || [],
     avances: avances.data || [],
+    conformidades: conformidades.data || [],
   }
 }
 
