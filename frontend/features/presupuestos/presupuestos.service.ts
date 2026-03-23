@@ -564,8 +564,8 @@ export async function rechazarPresupuestoCliente(
       if (asig) {
         await supabaseAdmin.from('asignaciones_tecnico').update({ estado_asignacion: 'rechazada' }).eq('id_asignacion', asig.id_asignacion)
       }
-      // Finalizar incidente
-      await supabaseAdmin.from('incidentes').update({ estado_actual: 'resuelto' }).eq('id_incidente', presupuesto.id_incidente)
+      // Volver incidente a pendiente (el cliente rechazó el presupuesto — no resuelto aún)
+      await supabaseAdmin.from('incidentes').update({ estado_actual: 'pendiente' }).eq('id_incidente', presupuesto.id_incidente)
 
       // Notificar al admin (fire-and-forget)
       const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')

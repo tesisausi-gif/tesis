@@ -136,22 +136,24 @@ interface Props {
   hideTabs?: boolean
 }
 
-// Estados simplificados
+// Estados que el admin puede asignar manualmente.
+// 'resuelto' NO está incluido — solo se alcanza via aprobación de conformidad.
 const ESTADOS_INCIDENTE = [
   'pendiente',
   'en_proceso',
-  'resuelto',
 ]
 
 const ESTADOS_LABELS: Record<string, string> = {
   'pendiente': 'Pendiente',
   'en_proceso': 'En Proceso',
+  'asignacion_solicitada': 'Asignación solicitada',
   'resuelto': 'Resuelto',
 }
 
 const ESTADO_COLORS: Record<string, string> = {
   'pendiente': 'bg-yellow-100 text-yellow-800',
   'en_proceso': 'bg-blue-100 text-blue-800',
+  'asignacion_solicitada': 'bg-purple-100 text-purple-800',
   'resuelto': 'bg-green-100 text-green-800',
 }
 

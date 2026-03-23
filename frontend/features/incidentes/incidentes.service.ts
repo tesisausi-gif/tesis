@@ -303,6 +303,11 @@ export async function actualizarIncidente(
   }
 ): Promise<ActionResult> {
   try {
+    // 'resuelto' solo se puede alcanzar vía aprobación de conformidad
+    if (updates.estado_actual === 'resuelto') {
+      return { success: false, error: 'El incidente no puede marcarse como resuelto manualmente. Debe aprobarse una conformidad primero.' }
+    }
+
     const supabase = await createClient()
 
     const { error } = await supabase
@@ -311,13 +316,6 @@ export async function actualizarIncidente(
       .eq('id_incidente', idIncidente)
 
     if (error) return { success: false, error: error.message }
-
-    // Notificar al cliente si el incidente fue marcado como resuelto (fire-and-forget)
-    if (updates.estado_actual === 'resuelto') {
-      const { notificarIncidenteResuelto } = await import('@/features/notificaciones/notificaciones.service')
-      notificarIncidenteResuelto(idIncidente).catch(console.error)
-    }
-
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar incidente' }
