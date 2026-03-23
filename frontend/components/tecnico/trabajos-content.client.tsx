@@ -223,7 +223,7 @@ export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, c
               <Badge variant="secondary">{enProceso.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="resueltos" className="gap-2">
-              Resueltos
+              Pendiente conformidad
               <Badge variant="secondary">{resueltas.length}</Badge>
             </TabsTrigger>
           </TabsList>
