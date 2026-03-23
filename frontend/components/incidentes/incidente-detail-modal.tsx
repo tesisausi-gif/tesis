@@ -437,6 +437,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   }
 
   const construirTimeline = async (incidenteData: any, asignacionesData: any[], rolActual: string = 'admin') => {
+    // Normaliza fechas sin info de timezone a UTC (columnas timestamp sin timestamptz)
+    const toUTC = (d: string | null | undefined): string | undefined => {
+      if (!d) return undefined
+      if (d.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(d)) return d
+      return d + 'Z'
+    }
     const timelineEvents: TimelineEvent[] = []
 
     // Evento de creación
@@ -704,6 +710,9 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         color: incidenteData.fue_resuelto ? 'bg-green-500' : 'bg-gray-500',
       })
     }
+
+    // Normalizar todas las fechas a UTC antes de ordenar
+    timelineEvents.forEach(e => { e.fecha = toUTC(e.fecha) as string })
 
     // Ordenar timeline por fecha
     timelineEvents.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
