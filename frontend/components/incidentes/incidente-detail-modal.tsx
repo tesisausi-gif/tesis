@@ -1239,7 +1239,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             )}
 
             {/* Tab Detalles */}
-            <TabsContent value="detalles" className="space-y-4 mt-4">
+            {activeTab === 'detalles' && (<div className="space-y-4 mt-4">
               {/* Estado y Categoría */}
               <div className="flex flex-wrap gap-2">
                 <Badge className={getEstadoColor(incidente.estado_actual)}>
@@ -1352,10 +1352,10 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </div>
                 )}
               </div>
-            </TabsContent>
+            </div>)}
 
             {/* Tab Timeline */}
-            <TabsContent value="timeline" className="mt-4">
+            {activeTab === 'timeline' && (<div className="mt-4">
               <div className="space-y-3">
                 <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
@@ -1414,7 +1414,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </p>
                 )}
               </div>
-            </TabsContent>
+            </div>)}
 
             {/* Tab Gestión legacy — eliminado, ahora el stepper admin maneja esto */}
             {false && rol === 'admin' && (
@@ -1551,8 +1551,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             )}
 
             {/* Tab Inspecciones (para técnicos con asignación confirmada) */}
-            {hasTecnicoTabs && incidente && (
-              <TabsContent value="inspecciones" className="mt-4">
+            {hasTecnicoTabs && incidente && activeTab === 'inspecciones' && (
+              <div className="mt-4">
                 <InspeccionesList
                   incidenteId={incidente.id_incidente}
                   idTecnico={asignaciones.find(a => a.estado_asignacion !== 'rechazada')?.id_tecnico || 0}
@@ -1561,12 +1561,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   onInspeccionCreated={() => cargarIncidente()}
                   onInspeccionDeleted={() => cargarIncidente()}
                 />
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Presupuesto (para técnicos con asignación confirmada) */}
-            {hasTecnicoTabs && incidente && (
-              <TabsContent value="presupuesto" className="mt-4 space-y-4">
+            {hasTecnicoTabs && incidente && activeTab === 'presupuesto' && (
+              <div className="mt-4 space-y-4">
                 {(() => {
                   const tienePresupuestoActivo = presupuestosActivos.length > 0
                   return (
@@ -1709,12 +1709,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </>
                   )
                 })()}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Ejecución (para técnicos con presupuesto aprobado) */}
-            {hasTecnicoTabs && incidente && (
-              <TabsContent value="ejecucion" className="mt-4 space-y-5">
+            {hasTecnicoTabs && incidente && activeTab === 'ejecucion' && (
+              <div className="mt-4 space-y-5">
                 {!presupuestoAprobadoCliente ? (
                   <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
                     <Lock className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -1823,12 +1823,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     )}
                   </>
                 )}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Conformidad (para técnicos con trabajo completado) */}
-            {hasTecnicoTabs && incidente && (
-              <TabsContent value="conformidad" className="mt-4 space-y-4">
+            {hasTecnicoTabs && incidente && activeTab === 'conformidad' && (
+              <div className="mt-4 space-y-4">
                 {!trabajoCompletado ? (
                   <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
                     <Lock className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -1910,12 +1910,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </Button>
                   </div>
                 )}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Presupuesto Admin — revisar y aprobar/rechazar */}
-            {rol === 'admin' && (
-              <TabsContent value="presupuesto_admin" className="mt-4 space-y-4">
+            {rol === 'admin' && activeTab === 'presupuesto_admin' && (
+              <div className="mt-4 space-y-4">
                 {presupuestosActivos.length === 0 ? (
                   <div className="text-center py-8 text-gray-400">
                     <FileText className="h-10 w-10 mx-auto mb-2 text-gray-300" />
@@ -2023,12 +2023,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </div>
                   ))
                 )}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Conformidad Admin — ver foto y aprobar/rechazar */}
-            {rol === 'admin' && (
-              <TabsContent value="conformidad_admin" className="mt-4 space-y-4">
+            {rol === 'admin' && activeTab === 'conformidad_admin' && (
+              <div className="mt-4 space-y-4">
                 {!tieneConformidad ? (
                   <div className="text-center py-8 text-gray-400">
                     <ClipboardList className="h-10 w-10 mx-auto mb-2 text-gray-300" />
@@ -2132,22 +2132,22 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </div>
                   </div>
                 )}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Presupuesto (para clientes con presupuestos) */}
-            {rol === 'cliente' && presupuestos.length > 0 && (
-              <TabsContent value="presupuesto" className="mt-4">
+            {rol === 'cliente' && presupuestos.length > 0 && activeTab === 'presupuesto' && (
+              <div className="mt-4">
                 <PresupuestosClienteList
                   presupuestos={presupuestos as any}
                   onPresupuestoActualizado={() => cargarIncidente()}
                 />
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Calificación (para clientes cuando está resuelto) */}
-            {rol === 'cliente' && incidente && incidente.estado_actual === EstadoIncidente.RESUELTO && asignaciones.length > 0 && (
-              <TabsContent value="calificacion" className="mt-4">
+            {rol === 'cliente' && incidente && incidente.estado_actual === EstadoIncidente.RESUELTO && asignaciones.length > 0 && activeTab === 'calificacion' && (
+              <div className="mt-4">
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600">
                     Califica al técnico que resolvió tu incidente
@@ -2164,7 +2164,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     />
                   ))}
                 </div>
-              </TabsContent>
+              </div>
             )}
           </Tabs>
           )
