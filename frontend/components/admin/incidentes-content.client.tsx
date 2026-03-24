@@ -107,7 +107,9 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     const supabase = createClient()
     const canal = supabase
       .channel('incidentes-admin-cards')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'incidentes' }, () => router.refresh())
+      // notificaciones: el admin siempre puede leer esta tabla → dispara refresh cuando llega un nuevo incidente
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, () => router.refresh())
+      // cambios en tablas relacionadas que el admin puede leer vía RLS
       .on('postgres_changes', { event: '*', schema: 'public', table: 'asignaciones_tecnico' }, () => router.refresh())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, () => router.refresh())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conformidades' }, () => router.refresh())
