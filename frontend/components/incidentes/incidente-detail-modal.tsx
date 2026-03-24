@@ -1208,13 +1208,33 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
               </>
             ) : (
               !hideTabs && (
-                <TabsList className={`grid w-full ${tabGridClass}`}>
-                  <TabsTrigger value="detalles">Detalles</TabsTrigger>
-                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                  {hasClientePresupuesto && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
-                  {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
-                  {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
-                </TabsList>
+                rol === 'admin' ? (
+                  /* Admin sin técnico aceptado: solo Detalles y Timeline */
+                  <div className="mb-3">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(['detalles', 'timeline'] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          onClick={() => setActiveTab(tab)}
+                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                            activeTab === tab
+                              ? 'bg-gray-900 text-white shadow-sm'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {tab === 'detalles' ? 'Detalles' : 'Timeline'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <TabsList className={`grid w-full ${tabGridClass}`}>
+                    <TabsTrigger value="detalles">Detalles</TabsTrigger>
+                    <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                    {hasClientePresupuesto && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
+                    {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
+                  </TabsList>
+                )
               )
             )}
 
@@ -1396,8 +1416,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
               </div>
             </TabsContent>
 
-            {/* Tab Gestión (solo admin) */}
-            {rol === 'admin' && (
+            {/* Tab Gestión legacy — eliminado, ahora el stepper admin maneja esto */}
+            {false && rol === 'admin' && (
               <TabsContent value="gestion" className="space-y-6 mt-4">
                 {/* Cambiar Estado y Categoría */}
                 <div className="space-y-4">

@@ -256,7 +256,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {incidentesFiltrados.map(inc => {
             const cfg = STATUS_CONFIG[inc.estado_actual] ?? STATUS_CONFIG.pendiente
             const { Icon } = cfg
