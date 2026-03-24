@@ -1079,13 +1079,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           const hasAdminStepperTabs = rol === 'admin' && asignaciones.some(a =>
             ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
           )
-          const tabCount = 2
-            + (hasTecnicoTabs ? 2 : 0)
-            + (rol === 'admin' && !hasAdminStepperTabs ? 1 : 0)
-            + (hasClientePresupuesto ? 1 : 0)
-            + (hasCalificacion ? 1 : 0)
-          const tabGridClass = tabCount === 3 ? 'grid-cols-3' : tabCount === 4 ? 'grid-cols-4' : 'grid-cols-2'
-
           // ── Stepper steps computation ─────────────────────────────────────
           const inspeccionesActivas = inspecciones.filter(i => !i.esta_anulada)
           const presupuestosActivos = presupuestos.filter(p => p.estado_presupuesto !== EstadoPresupuesto.RECHAZADO)
@@ -1120,16 +1113,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           const steps = computeSteps()
 
           const conformidadAprobada = conformidad && (conformidad.esta_firmada === 1 || conformidad.esta_firmada === true)
-          const asigAceptadaAdmin = asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))
-          // Stepper admin: solo los 3 pasos que el admin gestiona directamente
+          // Stepper admin: 2 pasos — Presupuesto y Conformidad
           const computeAdminSteps = (): StepDef[] => {
-            const sa1: StepStatus = asigAceptadaAdmin ? 'completed' : 'active'
-            const sa2: StepStatus = presupuestoAprobadoAdmin ? 'completed' : tienePresupuesto ? 'active' : 'locked'
-            const sa3: StepStatus = conformidadAprobada ? 'completed' : (tieneConformidad || trabajoCompletado) ? 'active' : 'locked'
+            const sa1: StepStatus = presupuestoAprobadoAdmin ? 'completed' : tienePresupuesto ? 'active' : 'locked'
+            const sa2: StepStatus = conformidadAprobada ? 'completed' : (tieneConformidad || trabajoCompletado) ? 'active' : 'locked'
             return [
-              { id: 1, label: 'Asignación',  sublabel: asigAceptadaAdmin ? 'Técnico asignado' : 'Sin asignar',                                                          tab: 'gestion',           status: sa1 },
-              { id: 2, label: 'Presupuesto', sublabel: presupuestoAprobadoAdmin ? 'Aprobado' : tienePresupuesto ? 'Para aprobar' : 'Sin envío',                          tab: 'presupuesto_admin', status: sa2 },
-              { id: 3, label: 'Conformidad', sublabel: conformidadAprobada ? 'Aprobada' : tieneConformidad ? 'Para revisar' : trabajoCompletado ? 'Pendiente' : 'Bloqueada', tab: 'conformidad_admin', status: sa3 },
+              { id: 1, label: 'Presupuesto', sublabel: presupuestoAprobadoAdmin ? 'Aprobado' : tienePresupuesto ? 'Para aprobar' : 'Sin envío',                          tab: 'presupuesto_admin', status: sa1 },
+              { id: 2, label: 'Conformidad', sublabel: conformidadAprobada ? 'Aprobada' : tieneConformidad ? 'Para revisar' : trabajoCompletado ? 'Pendiente' : 'Bloqueada', tab: 'conformidad_admin', status: sa2 },
             ]
           }
           const adminSteps = computeAdminSteps()
@@ -1137,122 +1127,18 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           return (
           <div className="w-full">
 
-            {hasAdminStepperTabs ? (
-              <>
-                {/* 3 pills exclusivos: Detalles | Timeline | Gestión */}
-                {!hideTabs && (
-                  <div className="mb-3">
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {[
-                        { id: 'detalles', label: 'Detalles' },
-                        { id: 'timeline', label: 'Timeline' },
-                        { id: 'gestion',  label: 'Gestión'  },
-                      ].map(({ id, label }) => {
-                        const GESTION_TABS = ['gestion', 'presupuesto_admin', 'conformidad_admin']
-                        const isActive = id === 'gestion'
-                          ? GESTION_TABS.includes(activeTab)
-                          : activeTab === id
-                        return (
-                          <button
-                            key={id}
-                            onClick={() => setActiveTab(id)}
-                            className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                              isActive
-                                ? 'bg-gray-900 text-white shadow-sm'
-                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                            }`}
-                          >
-                            {label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-                {/* Stepper admin — solo visible cuando el área activa es Gestión */}
-                {['gestion', 'presupuesto_admin', 'conformidad_admin'].includes(activeTab) && (
-                  <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-                    <StepperTecnico steps={adminSteps} activeTab={activeTab} onStepClick={setActiveTab} />
-                  </div>
-                )}
-              </>
-            ) : hasTecnicoTabs ? (
-              <>
-                {/* ── Info tabs (Detalles / Timeline) — ocultos en modo enfocado ── */}
-                {!hideTabs && (
-                  <div className="mb-3">
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {(['detalles', 'timeline'] as const).map((tab) => (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                            activeTab === tab
-                              ? 'bg-gray-900 text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                          }`}
-                        >
-                          {tab === 'detalles' ? 'Detalles' : 'Timeline'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+            {/* Stepper admin — solo en área de gestión, sin pills de navegación */}
+            {hasAdminStepperTabs && ['presupuesto_admin', 'conformidad_admin'].includes(activeTab) && !hideTabs && (
+              <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                <StepperTecnico steps={adminSteps} activeTab={activeTab} onStepClick={setActiveTab} />
+              </div>
+            )}
 
-                {/* ── Stepper — visible cuando no es info tab (detalles/timeline) ── */}
-                {(!hideTabs || ['inspecciones', 'presupuesto', 'ejecucion', 'conformidad'].includes(activeTab)) && (
-                  <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-                    <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
-                  </div>
-                )}
-              </>
-            ) : (
-              !hideTabs && (
-                rol === 'admin' ? (
-                  /* Admin sin técnico aceptado: solo Detalles y Timeline */
-                  <div className="mb-3">
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {(['detalles', 'timeline'] as const).map((tab) => (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                            activeTab === tab
-                              ? 'bg-gray-900 text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                          }`}
-                        >
-                          {tab === 'detalles' ? 'Detalles' : 'Timeline'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  /* Cliente: pills custom igual que admin/tecnico */
-                  <div className="mb-3">
-                    <div className={`grid ${tabGridClass} gap-1.5`}>
-                      {[
-                        { id: 'detalles',    label: 'Detalles',    show: true },
-                        { id: 'timeline',    label: 'Timeline',    show: true },
-                        { id: 'presupuesto', label: 'Presupuesto', show: hasClientePresupuesto },
-                        { id: 'calificacion',label: 'Calificar',   show: hasCalificacion },
-                      ].filter(t => t.show).map(({ id, label }) => (
-                        <button
-                          key={id}
-                          onClick={() => setActiveTab(id)}
-                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                            activeTab === id
-                              ? 'bg-gray-900 text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )
-              )
+            {/* Stepper técnico — siempre visible en su área de trabajo */}
+            {hasTecnicoTabs && !hideTabs && (
+              <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
+              </div>
             )}
 
             {/* ── Content area: key=activeTab garantiza que solo un tab se renderiza ── */}
