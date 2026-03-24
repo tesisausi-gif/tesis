@@ -1255,6 +1255,9 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
               )
             )}
 
+            {/* ── Content area: key=activeTab garantiza que solo un tab se renderiza ── */}
+            <div key={activeTab}>
+
             {/* Tab Detalles */}
             {activeTab === 'detalles' && (<div className="space-y-4 mt-4">
               {/* Estado y Categoría */}
@@ -2183,6 +2186,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 </div>
               </div>
             )}
+
+            </div>{/* end key={activeTab} content area */}
           </div>
           )
         })() : (
