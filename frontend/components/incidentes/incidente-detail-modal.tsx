@@ -1135,7 +1135,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           const adminSteps = computeAdminSteps()
 
           return (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="w-full">
 
             {hasAdminStepperTabs ? (
               <>
@@ -1228,12 +1228,29 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </div>
                   </div>
                 ) : (
-                  <TabsList className={`grid w-full ${tabGridClass}`}>
-                    <TabsTrigger value="detalles">Detalles</TabsTrigger>
-                    <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                    {hasClientePresupuesto && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
-                    {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
-                  </TabsList>
+                  /* Cliente: pills custom igual que admin/tecnico */
+                  <div className="mb-3">
+                    <div className={`grid ${tabGridClass} gap-1.5`}>
+                      {[
+                        { id: 'detalles',    label: 'Detalles',    show: true },
+                        { id: 'timeline',    label: 'Timeline',    show: true },
+                        { id: 'presupuesto', label: 'Presupuesto', show: hasClientePresupuesto },
+                        { id: 'calificacion',label: 'Calificar',   show: hasCalificacion },
+                      ].filter(t => t.show).map(({ id, label }) => (
+                        <button
+                          key={id}
+                          onClick={() => setActiveTab(id)}
+                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                            activeTab === id
+                              ? 'bg-gray-900 text-white shadow-sm'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )
               )
             )}
@@ -2166,7 +2183,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 </div>
               </div>
             )}
-          </Tabs>
+          </div>
           )
         })() : (
           <p className="text-center text-gray-500 py-8">
