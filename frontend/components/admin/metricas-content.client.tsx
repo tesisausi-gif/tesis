@@ -7,14 +7,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { BarChart2, Clock, Users, AlertCircle, Tag, Filter, Loader2, FileSpreadsheet } from 'lucide-react'
+import { BarChart2, Clock, TrendingUp, Users, AlertCircle, Tag, Filter, Loader2, FileSpreadsheet, LineChart } from 'lucide-react'
 import { toast } from 'sonner'
 import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import type { MetricasDashboard } from '@/features/incidentes/incidentes.types'
 import { ExportarContent } from '@/components/admin/exportar-content.client'
+import { ReportesContent } from '@/components/admin/reportes-content.client'
+import type { ReportesData } from '@/features/reportes/reportes.service'
 
 interface MetricasContentProps {
   metricas: MetricasDashboard
+  reportes: ReportesData
 }
 
 type Periodo = '7d' | '30d' | '90d' | '6m' | '1y' | 'custom' | 'todo'
@@ -42,7 +45,7 @@ function BarraHorizontal({ valor, maximo, color = 'bg-blue-500' }: { valor: numb
   )
 }
 
-export function MetricasContent({ metricas: metricasIniciales }: MetricasContentProps) {
+export function MetricasContent({ metricas: metricasIniciales, reportes }: MetricasContentProps) {
   const [metricas, setMetricas] = useState(metricasIniciales)
   const [periodo, setPeriodo] = useState<Periodo>('todo')
   const [customDesde, setCustomDesde] = useState('')
@@ -106,11 +109,16 @@ export function MetricasContent({ metricas: metricasIniciales }: MetricasContent
     <Tabs defaultValue="metricas">
       <TabsList className="mb-4">
         <TabsTrigger value="metricas" className="gap-2"><BarChart2 className="h-4 w-4" />Métricas</TabsTrigger>
+        <TabsTrigger value="reportes" className="gap-2"><LineChart className="h-4 w-4" />Reportes</TabsTrigger>
         <TabsTrigger value="informes" className="gap-2"><FileSpreadsheet className="h-4 w-4" />Informes</TabsTrigger>
       </TabsList>
 
       <TabsContent value="informes">
         <ExportarContent />
+      </TabsContent>
+
+      <TabsContent value="reportes">
+        <ReportesContent data={reportes} />
       </TabsContent>
 
       <TabsContent value="metricas" className="space-y-6">
