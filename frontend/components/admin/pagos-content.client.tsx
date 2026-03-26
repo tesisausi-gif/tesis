@@ -417,6 +417,21 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
               <div className="flex justify-between"><span className="text-gray-600">Mano de obra</span><span>{fmt$(pagarDialog?.costo_mano_obra??0)}</span></div>
               <div className="flex justify-between border-t pt-1"><span className="font-semibold">Total</span><span className="font-bold text-green-700">{fmt$(pagarDialog?.monto_a_pagar??0)}</span></div>
             </div>
+            {pagarDialog?.url_comprobante_compras && (
+              <div className="border rounded-lg p-3 space-y-2">
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Comprobante de compras del técnico</p>
+                <a href={pagarDialog.url_comprobante_compras} target="_blank" rel="noopener noreferrer" className="block">
+                  <img
+                    src={pagarDialog.url_comprobante_compras}
+                    alt="Comprobante de compras"
+                    className="max-h-48 w-full object-contain rounded-md border bg-gray-50"
+                  />
+                </a>
+                <p className="text-xs text-blue-600 underline text-center">
+                  <a href={pagarDialog.url_comprobante_compras} target="_blank" rel="noopener noreferrer">Ver en tamaño completo</a>
+                </p>
+              </div>
+            )}
             <MetodoPagoForm data={formPago} onChange={setFormPago}/>
           </div>
           <DialogFooter>

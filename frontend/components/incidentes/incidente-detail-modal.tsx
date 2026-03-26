@@ -367,8 +367,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [confirmandoCompletar, setConfirmandoCompletar] = useState(false)
   const [fotoFile, setFotoFile] = useState<File | null>(null)
   const [fotoPreview, setFotoPreview] = useState<string | null>(null)
+  const [comprobanteFile, setComprobanteFile] = useState<File | null>(null)
+  const [comprobantePreview, setComprobantePreview] = useState<string | null>(null)
   const [uploadingFoto, setUploadingFoto] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const comprobanteInputRef = useRef<HTMLInputElement>(null)
 
   const CATEGORIAS = Object.values(CategoriaIncidente) as string[]
 
@@ -877,38 +880,44 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   }
 
   const handleSubirConformidad = async () => {
-    if (!incidenteId || !fotoFile) return
+    if (!incidenteId || !fotoFile || !comprobanteFile) return
     setUploadingFoto(true)
     try {
       const supabase = createClient()
-      const ext = fotoFile.name.split('.').pop() || 'jpg'
-      const path = `tecnico/${incidenteId}/${Date.now()}.${ext}`
+      const ts = Date.now()
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      // Subir foto de conformidad
+      const extFoto = fotoFile.name.split('.').pop() || 'jpg'
+      const pathFoto = `tecnico/${incidenteId}/${ts}_conformidad.${extFoto}`
+      const { data: uploadFoto, error: errFoto } = await supabase.storage
         .from('conformidades')
-        .upload(path, fotoFile, { upsert: false })
+        .upload(pathFoto, fotoFile, { upsert: false })
+      if (errFoto) { toast.error('Error al subir la foto: ' + errFoto.message); return }
+      const { data: { publicUrl: fotoUrl } } = supabase.storage.from('conformidades').getPublicUrl(uploadFoto.path)
 
-      if (uploadError) {
-        toast.error('Error al subir la foto: ' + uploadError.message)
-        return
-      }
-
-      const { data: { publicUrl } } = supabase.storage
+      // Subir comprobante de compras
+      const extComp = comprobanteFile.name.split('.').pop() || 'jpg'
+      const pathComp = `tecnico/${incidenteId}/${ts}_comprobante.${extComp}`
+      const { data: uploadComp, error: errComp } = await supabase.storage
         .from('conformidades')
-        .getPublicUrl(uploadData.path)
+        .upload(pathComp, comprobanteFile, { upsert: false })
+      if (errComp) { toast.error('Error al subir el comprobante: ' + errComp.message); return }
+      const { data: { publicUrl: comprobanteUrl } } = supabase.storage.from('conformidades').getPublicUrl(uploadComp.path)
 
-      const res = await crearConformidadPorTecnico(incidenteId, publicUrl)
+      const res = await crearConformidadPorTecnico(incidenteId, fotoUrl, comprobanteUrl)
       if (res.success) {
         toast.success('Conformidad enviada', { description: 'La administración revisará la foto y te notificará.' })
         setFotoFile(null)
         setFotoPreview(null)
+        setComprobanteFile(null)
+        setComprobantePreview(null)
         await cargarIncidente()
         onUpdate?.()
       } else {
         toast.error(res.error ?? 'Error al enviar conformidad')
       }
     } catch {
-      toast.error('Error inesperado al subir la foto')
+      toast.error('Error inesperado al subir los archivos')
     } finally {
       setUploadingFoto(false)
     }
@@ -1777,7 +1786,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       Tomá una foto de la conformidad física firmada por el cliente y subila aquí. La administración la revisará para cerrar el incidente.
                     </p>
                     <div className="space-y-2">
-                      <Label>Foto de la conformidad <span className="text-red-500">*</span></Label>
+                      <Label>Foto de la conformidad firmada por el cliente <span className="text-red-500">*</span></Label>
                       <div
                         className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
                         onClick={() => fileInputRef.current?.click()}
@@ -1803,9 +1812,46 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                         <p className="text-xs text-gray-500">{fotoFile.name} ({(fotoFile.size / 1024 / 1024).toFixed(1)} MB)</p>
                       )}
                     </div>
+
+                    <div className="space-y-2">
+                      <Label>Comprobante de compras de materiales <span className="text-red-500">*</span></Label>
+                      <p className="text-xs text-gray-500">Subí la foto o foto del ticket/factura de los materiales comprados.</p>
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors"
+                        onClick={() => comprobanteInputRef.current?.click()}
+                      >
+                        {comprobantePreview ? (
+                          <img src={comprobantePreview} alt="Comprobante" className="max-h-48 mx-auto rounded-md object-contain" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 text-gray-500">
+                            <ImageIcon className="h-10 w-10 text-amber-400" />
+                            <p className="text-sm font-medium">Tocá para seleccionar el comprobante</p>
+                            <p className="text-xs text-gray-400">JPG, PNG, HEIC — máx. 10 MB</p>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        ref={comprobanteInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          setComprobanteFile(file)
+                          const reader = new FileReader()
+                          reader.onload = (ev) => setComprobantePreview(ev.target?.result as string)
+                          reader.readAsDataURL(file)
+                        }}
+                      />
+                      {comprobanteFile && (
+                        <p className="text-xs text-gray-500">{comprobanteFile.name} ({(comprobanteFile.size / 1024 / 1024).toFixed(1)} MB)</p>
+                      )}
+                    </div>
+
                     <Button
                       onClick={handleSubirConformidad}
-                      disabled={uploadingFoto || !fotoFile}
+                      disabled={uploadingFoto || !fotoFile || !comprobanteFile}
                       className="w-full gap-2"
                     >
                       {uploadingFoto ? (

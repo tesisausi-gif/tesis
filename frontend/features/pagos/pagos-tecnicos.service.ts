@@ -23,6 +23,7 @@ export interface PendientePagoTecnico {
   costo_mano_obra: number
   monto_a_pagar: number
   fecha_presupuesto: string
+  url_comprobante_compras: string | null
 }
 
 export interface PagoTecnicoRegistrado {
@@ -80,7 +81,19 @@ export async function getPendientesPagoTecnico(): Promise<PendientePagoTecnico[]
 
   const pagadosSet = new Set((pagosYaHechos || []).map((p: any) => p.id_presupuesto))
 
-  // 3. Filtrar los pendientes
+  // 3. Traer comprobantes de conformidades para los incidentes involucrados
+  const idIncidentes = presupuestos.map(p => p.id_incidente)
+  const { data: conformidades } = await supabase
+    .from('conformidades')
+    .select('id_incidente, url_comprobante_compras')
+    .in('id_incidente', idIncidentes)
+    .eq('esta_firmada', 1)
+
+  const comprobanteMap = new Map<number, string | null>(
+    (conformidades || []).map((c: any) => [c.id_incidente, c.url_comprobante_compras ?? null])
+  )
+
+  // 4. Filtrar los pendientes
   const pendientes: PendientePagoTecnico[] = []
   for (const pres of presupuestos) {
     if (pagadosSet.has(pres.id_presupuesto)) continue
@@ -106,6 +119,7 @@ export async function getPendientesPagoTecnico(): Promise<PendientePagoTecnico[]
       costo_mano_obra: mdo,
       monto_a_pagar: mat + mdo,
       fecha_presupuesto: pres.fecha_creacion,
+      url_comprobante_compras: comprobanteMap.get(pres.id_incidente) ?? null,
     })
   }
 
