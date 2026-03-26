@@ -237,7 +237,7 @@ export async function aprobarConformidad(
 
     if (errUpd) return { success: false, error: errUpd.message }
 
-    // 2. Crear calificación si tenemos técnico
+    // 2. Crear calificación si tenemos técnico y actualizar stats del técnico
     if (idTecnico) {
       await supabase
         .from('calificaciones')
@@ -249,6 +249,23 @@ export async function aprobarConformidad(
           resolvio_problema: resolvioPrblema ? 1 : 0,
           fecha_calificacion: new Date().toISOString(),
         })
+
+      // Recalcular promedio y cantidad de trabajos del técnico
+      const { data: cals } = await supabase
+        .from('calificaciones')
+        .select('puntuacion')
+        .eq('id_tecnico', idTecnico)
+
+      if (cals && cals.length > 0) {
+        const avg = cals.reduce((s: number, c: any) => s + c.puntuacion, 0) / cals.length
+        await supabase
+          .from('tecnicos')
+          .update({
+            calificacion_promedio: parseFloat(avg.toFixed(2)),
+            cantidad_trabajos_realizados: cals.length,
+          })
+          .eq('id_tecnico', idTecnico)
+      }
     }
 
     // 3. Marcar incidente como resuelto

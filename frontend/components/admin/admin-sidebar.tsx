@@ -87,6 +87,9 @@ export function AdminSidebar() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes_registro' }, () => {
         getAdminBadgeCounts().then(setCounts).catch(() => {})
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incidentes' }, () => {
+        getAdminBadgeCounts().then(setCounts).catch(() => {})
+      })
       .subscribe()
 
     return () => {
