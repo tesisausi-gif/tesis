@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, AlertCircle, Building2, MapPin, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import { crearNotificacionAdmin } from '@/features/notificaciones/notificaciones-inapp.service'
 
 interface TipoInmueble {
   nombre: string
@@ -170,13 +171,11 @@ export default function NuevoIncidentePage() {
       })
 
       // Notificar al admin del nuevo incidente (fire-and-forget)
-      import('@/features/notificaciones/notificaciones-inapp.service').then(({ crearNotificacionAdmin }) => {
-        crearNotificacionAdmin({
-          tipo: 'nuevo_incidente',
-          titulo: 'Nuevo incidente reportado',
-          mensaje: `Se registró el incidente #${data.id_incidente}: "${descripcion.trim().slice(0, 80)}${descripcion.trim().length > 80 ? '...' : ''}"`,
-          id_incidente: data.id_incidente,
-        }).catch(() => {})
+      crearNotificacionAdmin({
+        tipo: 'nuevo_incidente',
+        titulo: 'Nuevo incidente reportado',
+        mensaje: `Se registró el incidente #${data.id_incidente}: "${descripcion.trim().slice(0, 80)}${descripcion.trim().length > 80 ? '...' : ''}"`,
+        id_incidente: data.id_incidente,
       }).catch(() => {})
 
       router.push('/cliente/incidentes')

@@ -38,6 +38,8 @@ const INCIDENTE_SELECT = `
  * Obtener todos los incidentes (admin) — incluye presupuestos y conformidades para acciones contextuales
  */
 export async function getIncidentesForAdmin(): Promise<IncidenteConClienteAdmin[]> {
+  const { requireAdminOrGestorId } = await import('@/features/auth/auth.service')
+  await requireAdminOrGestorId()
   const supabase = createAdminClient()
 
   const { data, error } = await supabase
