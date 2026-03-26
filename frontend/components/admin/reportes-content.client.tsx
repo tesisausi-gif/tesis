@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   Users, TrendingDown, Clock, DollarSign, FileText,
   Building2, Star, BarChart2, HelpCircle, CheckCircle,
-  AlertTriangle, ArrowRight, Wrench, ShieldCheck,
+  AlertTriangle, Wrench, ShieldCheck, Timer, RefreshCcw, TrendingUp,
 } from 'lucide-react'
 import type { ReportesData } from '@/features/reportes/reportes.service'
 
@@ -98,10 +98,15 @@ export function ReportesContent({ data }: ReportesContentProps) {
     incidentesPorTipoInmueble,
     satisfaccionCliente,
     kpisAdministrativos,
+    tiempoResolucionPorCategoria,
+    reincidenciaPorPropiedad,
+    rentabilidadTecnicos,
   } = data
 
   const maxTec = Math.max(...rendimientoTecnicos.map(t => t.totalAsignaciones), 1)
   const maxTipoInm = Math.max(...incidentesPorTipoInmueble.map(t => t.totalIncidentes), 1)
+  const maxDiasResolucion = Math.max(...tiempoResolucionPorCategoria.map(c => c.diasPromedio), 1)
+  const maxRentabilidad = Math.max(...rentabilidadTecnicos.map(t => t.totalCobradoCliente), 1)
   const agingCriticos = agingIncidentes.filter(i => i.diasDesdeCreacion >= 7)
   return (
     <div className="space-y-8">
@@ -496,6 +501,122 @@ export function ReportesContent({ data }: ReportesContentProps) {
                   <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-blue-400 inline-block" /> En proceso</span>
                   <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-400 inline-block" /> Pendientes</span>
                 </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* ── Tiempo de Resolución por Categoría + Reincidencia en grid ── */}
+      <div className="grid gap-6 lg:grid-cols-2">
+
+        {/* ── Tiempo de Resolución por Categoría ── */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Timer className="h-5 w-5 text-cyan-600" />
+            <h3 className="text-lg font-semibold">Tiempo de Resolución por Categoría</h3>
+            <InfoTooltip texto="Revela qué tipos de problemas tardan más en cerrarse. Permite ajustar SLAs por categoría y asignar técnicos especializados donde el cuello de botella es mayor." />
+          </div>
+          <Card>
+            <CardContent className="pt-6">
+              {tiempoResolucionPorCategoria.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Sin datos de resolución</p>
+              ) : (
+                <div className="space-y-4">
+                  {tiempoResolucionPorCategoria.map(cat => (
+                    <div key={cat.categoria}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-700 truncate max-w-[55%]">{cat.categoria}</span>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="text-cyan-600 font-semibold">{cat.diasPromedio}d prom.</span>
+                          <span className="text-gray-400">({cat.diasMinimo}–{cat.diasMaximo}d)</span>
+                          <span className="text-gray-400">{cat.cantidadResueltos} casos</span>
+                        </div>
+                      </div>
+                      <Barra valor={cat.diasPromedio} maximo={maxDiasResolucion} color="bg-cyan-400" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* ── Reincidencia por Propiedad ── */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <RefreshCcw className="h-5 w-5 text-rose-600" />
+            <h3 className="text-lg font-semibold">Reincidencia por Propiedad</h3>
+            <InfoTooltip texto="Propiedades con múltiples incidentes del mismo tipo indican un problema estructural sin resolver. Permite pasar de mantenimiento reactivo a preventivo." />
+          </div>
+          <Card>
+            <CardContent className="pt-6">
+              {reincidenciaPorPropiedad.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Sin propiedades con reincidencias</p>
+              ) : (
+                <div className="space-y-3 max-h-72 overflow-y-auto">
+                  {reincidenciaPorPropiedad.map(prop => (
+                    <div key={prop.id_propiedad} className="flex items-start justify-between gap-3 p-2.5 rounded-lg bg-gray-50 border">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{prop.direccion}</p>
+                        {prop.categoriaMasFrecuente && (
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Categoría más frecuente:{' '}
+                            <span className="font-medium text-rose-600">{prop.categoriaMasFrecuente}</span>
+                            {' '}({prop.cantCategoriaMasFrecuente}x)
+                          </p>
+                        )}
+                      </div>
+                      <Badge className="bg-rose-100 text-rose-700 text-xs whitespace-nowrap">
+                        {prop.totalIncidentes} incidentes
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      </div>
+
+      {/* ── Rentabilidad por Técnico ── */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp className="h-5 w-5 text-violet-600" />
+          <h3 className="text-lg font-semibold">Rentabilidad por Técnico</h3>
+          <InfoTooltip texto="Cruza lo cobrado al cliente con lo pagado al técnico por cada trabajo. Muestra el margen real generado por técnico — clave para decisiones de asignación basadas en negocio, no solo en disponibilidad." />
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            {rentabilidadTecnicos.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Sin datos de pagos cruzados</p>
+            ) : (
+              <div className="space-y-3">
+                {rentabilidadTecnicos.map((tec, idx) => (
+                  <div key={tec.id_tecnico}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold w-4 text-center ${idx === 0 ? 'text-yellow-500' : 'text-gray-400'}`}>#{idx + 1}</span>
+                        <span className="text-sm font-medium text-gray-800">{tec.nombre} {tec.apellido}</span>
+                        <span className="text-xs text-gray-400">{tec.cantidadTrabajos} trabajos</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-green-600 font-medium">{AR.format(tec.totalCobradoCliente)} cobrado</span>
+                        <span className="text-red-400">{AR.format(tec.totalPagadoTecnico)} pagado</span>
+                        <span className={`font-bold ${tec.margen >= 0 ? 'text-violet-600' : 'text-red-600'}`}>
+                          margen: {AR.format(tec.margen)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-0.5 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-violet-400 transition-all"
+                        style={{ width: `${Math.round((tec.totalCobradoCliente / maxRentabilidad) * 100)}%` }}
+                        title={`Cobrado: ${AR.format(tec.totalCobradoCliente)}`}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>

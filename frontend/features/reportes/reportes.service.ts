@@ -434,6 +434,179 @@ export async function getKpisAdministrativos(): Promise<KpisAdmin> {
   }
 }
 
+// ─── 9. Tiempo de Resolución por Categoría ───────────────────────────────────
+
+export interface TiempoResolucionCategoria {
+  categoria: string
+  cantidadResueltos: number
+  diasPromedio: number
+  diasMinimo: number
+  diasMaximo: number
+}
+
+export async function getTiempoResolucionPorCategoria(): Promise<TiempoResolucionCategoria[]> {
+  const supabase = createAdminClient()
+
+  const { data } = await supabase
+    .from('incidentes')
+    .select('categoria, fecha_registro, fecha_cierre, fue_resuelto')
+    .not('fecha_cierre', 'is', null)
+
+  const resueltos = (data || []).filter((i: any) => i.fue_resuelto && i.fecha_cierre && i.fecha_registro)
+
+  const map: Record<string, number[]> = {}
+  for (const inc of resueltos as any[]) {
+    const cat = inc.categoria || 'Sin categoría'
+    const dias = Math.max(0, Math.round(
+      (new Date(inc.fecha_cierre).getTime() - new Date(inc.fecha_registro).getTime()) / 86400000
+    ))
+    if (!map[cat]) map[cat] = []
+    map[cat].push(dias)
+  }
+
+  return Object.entries(map)
+    .map(([categoria, dias]) => ({
+      categoria,
+      cantidadResueltos: dias.length,
+      diasPromedio: Math.round(dias.reduce((a, b) => a + b, 0) / dias.length),
+      diasMinimo: Math.min(...dias),
+      diasMaximo: Math.max(...dias),
+    }))
+    .sort((a, b) => b.diasPromedio - a.diasPromedio)
+}
+
+// ─── 10. Reincidencia por Propiedad ──────────────────────────────────────────
+
+export interface ReincidenciaPropiedad {
+  id_propiedad: number
+  direccion: string
+  totalIncidentes: number
+  categoriaMasFrecuente: string | null
+  cantCategoriaMasFrecuente: number
+}
+
+export async function getReincidenciaPorPropiedad(): Promise<ReincidenciaPropiedad[]> {
+  const supabase = createAdminClient()
+
+  const { data } = await supabase
+    .from('incidentes')
+    .select(`
+      id_propiedad,
+      categoria,
+      inmuebles:id_propiedad (calle, altura, barrio)
+    `)
+    .not('id_propiedad', 'is', null)
+
+  const map: Record<number, { direccion: string; categorias: string[] }> = {}
+
+  for (const inc of (data || []) as any[]) {
+    const id = inc.id_propiedad
+    if (!map[id]) {
+      const inm = Array.isArray(inc.inmuebles) ? inc.inmuebles[0] : inc.inmuebles
+      const dir = inm
+        ? [inm.calle, inm.altura, inm.barrio].filter(Boolean).join(' ')
+        : `Propiedad #${id}`
+      map[id] = { direccion: dir || `Propiedad #${id}`, categorias: [] }
+    }
+    if (inc.categoria) map[id].categorias.push(inc.categoria)
+  }
+
+  return Object.entries(map)
+    .filter(([, v]) => v.categorias.length >= 2)
+    .map(([id, v]) => {
+      const freq: Record<string, number> = {}
+      for (const c of v.categorias) freq[c] = (freq[c] || 0) + 1
+      const [catMasFrecuente, cantCat] = Object.entries(freq).sort((a, b) => b[1] - a[1])[0] ?? [null, 0]
+      return {
+        id_propiedad: Number(id),
+        direccion: v.direccion,
+        totalIncidentes: v.categorias.length,
+        categoriaMasFrecuente: catMasFrecuente,
+        cantCategoriaMasFrecuente: cantCat,
+      }
+    })
+    .sort((a, b) => b.totalIncidentes - a.totalIncidentes)
+    .slice(0, 10)
+}
+
+// ─── 11. Rentabilidad por Técnico ─────────────────────────────────────────────
+
+export interface RentabilidadTecnico {
+  id_tecnico: number
+  nombre: string
+  apellido: string
+  totalCobradoCliente: number
+  totalPagadoTecnico: number
+  margen: number
+  cantidadTrabajos: number
+}
+
+export async function getRentabilidadTecnicos(): Promise<RentabilidadTecnico[]> {
+  const supabase = createAdminClient()
+
+  const [asigRes, cobrosRes, pagosRes, tecRes] = await Promise.all([
+    supabase
+      .from('asignaciones_tecnico')
+      .select('id_tecnico, id_incidente')
+      .in('estado_asignacion', ['completada', 'en_curso', 'aceptada']),
+    supabase
+      .from('cobros_clientes')
+      .select('id_incidente, monto_cobro'),
+    supabase
+      .from('pagos_tecnicos')
+      .select('id_incidente, monto_pago'),
+    supabase
+      .from('tecnicos')
+      .select('id_tecnico, nombre, apellido'),
+  ])
+
+  const tecMap = new Map<number, { nombre: string; apellido: string }>(
+    (tecRes.data || []).map((t: any) => [t.id_tecnico, { nombre: t.nombre, apellido: t.apellido }])
+  )
+
+  // Mapa incidente → tecnico (tomar primera asignación completada)
+  const incToTec = new Map<number, number>()
+  for (const a of (asigRes.data || []) as any[]) {
+    if (!incToTec.has(a.id_incidente)) incToTec.set(a.id_incidente, a.id_tecnico)
+  }
+
+  const cobros = new Map<number, number>()
+  for (const c of (cobrosRes.data || []) as any[]) {
+    cobros.set(c.id_incidente, (cobros.get(c.id_incidente) || 0) + (c.monto_cobro || 0))
+  }
+  const pagos = new Map<number, number>()
+  for (const p of (pagosRes.data || []) as any[]) {
+    pagos.set(p.id_incidente, (pagos.get(p.id_incidente) || 0) + (p.monto_pago || 0))
+  }
+
+  const result: Record<number, RentabilidadTecnico> = {}
+
+  for (const [idInc, idTec] of incToTec.entries()) {
+    const tec = tecMap.get(idTec)
+    if (!tec) continue
+    if (!result[idTec]) {
+      result[idTec] = {
+        id_tecnico: idTec,
+        nombre: tec.nombre,
+        apellido: tec.apellido,
+        totalCobradoCliente: 0,
+        totalPagadoTecnico: 0,
+        margen: 0,
+        cantidadTrabajos: 0,
+      }
+    }
+    result[idTec].totalCobradoCliente += cobros.get(idInc) || 0
+    result[idTec].totalPagadoTecnico += pagos.get(idInc) || 0
+    result[idTec].cantidadTrabajos++
+  }
+
+  for (const r of Object.values(result)) {
+    r.margen = r.totalCobradoCliente - r.totalPagadoTecnico
+  }
+
+  return Object.values(result).sort((a, b) => b.totalCobradoCliente - a.totalCobradoCliente)
+}
+
 // ─── Carga conjunta ───────────────────────────────────────────────────────────
 
 export async function getReportesCompletos() {
@@ -446,6 +619,9 @@ export async function getReportesCompletos() {
     incidentesPorTipoInmueble,
     satisfaccionCliente,
     kpisAdministrativos,
+    tiempoResolucionPorCategoria,
+    reincidenciaPorPropiedad,
+    rentabilidadTecnicos,
   ] = await Promise.all([
     getRendimientoTecnicos(),
     getEmbudoConversion(),
@@ -455,6 +631,9 @@ export async function getReportesCompletos() {
     getIncidentesPorTipoInmueble(),
     getSatisfaccionCliente(),
     getKpisAdministrativos(),
+    getTiempoResolucionPorCategoria(),
+    getReincidenciaPorPropiedad(),
+    getRentabilidadTecnicos(),
   ])
 
   return {
@@ -466,6 +645,9 @@ export async function getReportesCompletos() {
     incidentesPorTipoInmueble,
     satisfaccionCliente,
     kpisAdministrativos,
+    tiempoResolucionPorCategoria,
+    reincidenciaPorPropiedad,
+    rentabilidadTecnicos,
   }
 }
 
