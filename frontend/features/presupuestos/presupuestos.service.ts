@@ -97,6 +97,20 @@ export async function getPresupuestosDeTecnico(): Promise<PresupuestoConDetalle[
 }
 
 /**
+ * IDs de incidentes del cliente con presupuesto pendiente de aprobación (aprobado_admin)
+ */
+export async function getIncidentesConPresupuestoPendiente(): Promise<number[]> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('presupuestos')
+    .select('id_incidente')
+    .eq('estado_presupuesto', EstadoPresupuesto.APROBADO_ADMIN)
+
+  return (data ?? []).map((p: any) => p.id_incidente).filter(Boolean) as number[]
+}
+
+/**
  * Obtener presupuestos de los incidentes de un cliente
  */
 export async function getPresupuestosDelCliente(idCliente: number): Promise<PresupuestoConDetalle[]> {
@@ -233,12 +247,34 @@ export async function enviarPresupuesto(idPresupuesto: number): Promise<ActionRe
   try {
     const supabase = await createClient()
 
+    // Obtener id_incidente para la notificación
+    const { data: pres } = await supabase
+      .from('presupuestos')
+      .select('id_incidente')
+      .eq('id_presupuesto', idPresupuesto)
+      .single()
+
     const { error } = await supabase
       .from('presupuestos')
       .update({ estado_presupuesto: EstadoPresupuesto.ENVIADO })
       .eq('id_presupuesto', idPresupuesto)
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al admin que hay un presupuesto para revisar
+    if (pres?.id_incidente) {
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionAdmin({
+          tipo: 'presupuesto_enviado_admin',
+          titulo: 'Presupuesto para revisar',
+          mensaje: `El técnico envió un presupuesto para el incidente #${pres.id_incidente}. Revisalo y aprobalo para continuar.`,
+          id_incidente: pres.id_incidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear la operación principal */ }
+    }
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al enviar presupuesto' }
@@ -278,9 +314,31 @@ export async function aprobarPresupuesto(
 
     if (error) return { success: false, error: error.message }
 
-    // Notificar al cliente para que revise y apruebe (fire-and-forget)
+    // Notificar al cliente para que revise y apruebe (email, fire-and-forget)
     const { notificarPresupuestoAprobadoAdmin } = await import('@/features/notificaciones/notificaciones.service')
     notificarPresupuestoAprobadoAdmin(idPresupuesto).catch(console.error)
+
+    // Notificar al cliente in-app
+    const supabaseAdmin = (await import('@/shared/lib/supabase/admin')).createAdminClient()
+    const { data: presConInc } = await supabaseAdmin
+      .from('presupuestos')
+      .select('id_incidente, incidentes!inner(id_cliente_reporta)')
+      .eq('id_presupuesto', idPresupuesto)
+      .single()
+    const idClienteNotif = (presConInc?.incidentes as any)?.id_cliente_reporta
+    if (idClienteNotif) {
+      try {
+        const { crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionCliente({
+          id_cliente: idClienteNotif,
+          tipo: 'presupuesto_aprobado_admin',
+          titulo: 'Presupuesto listo para revisar',
+          mensaje: `La administración revisó y aprobó el presupuesto del incidente #${presConInc?.id_incidente}. Por favor revisalo y aprobalo para que el técnico pueda comenzar el trabajo.`,
+          id_incidente: presConInc?.id_incidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear la operación principal */ }
+    }
 
     return { success: true, data: undefined }
   } catch (error) {
@@ -296,16 +354,20 @@ export async function rechazarPresupuesto(
   _razonRechazo?: string
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
     await requireAdminOrGestorId()
+    const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+    const supabase = createAdminClient()
 
     // Obtener id_incidente del presupuesto
-    const { data: pres } = await supabase
+    const { data: pres, error: errGet } = await supabase
       .from('presupuestos')
       .select('id_incidente')
       .eq('id_presupuesto', idPresupuesto)
       .single()
 
+    if (errGet || !pres) return { success: false, error: 'Presupuesto no encontrado' }
+
+    // Marcar presupuesto como rechazado
     const { error } = await supabase
       .from('presupuestos')
       .update({ estado_presupuesto: EstadoPresupuesto.RECHAZADO })
@@ -313,30 +375,58 @@ export async function rechazarPresupuesto(
 
     if (error) return { success: false, error: error.message }
 
-    if (pres?.id_incidente) {
-      // Desvincular técnico: marcar asignación activa como rechazada
-      const { data: asig } = await supabase
+    // Desvincular técnico: marcar asignación activa como rechazada
+    const { data: asig } = await supabase
+      .from('asignaciones_tecnico')
+      .select('id_asignacion')
+      .eq('id_incidente', pres.id_incidente)
+      .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
+      .maybeSingle()
+
+    if (asig) {
+      // Obtener id_tecnico de la asignacion para anular inspecciones y crear notificacion
+      const { data: asigConTecnico } = await supabase
         .from('asignaciones_tecnico')
-        .select('id_asignacion')
-        .eq('id_incidente', pres.id_incidente)
-        .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
-        .maybeSingle()
+        .select('id_tecnico')
+        .eq('id_asignacion', asig.id_asignacion)
+        .single()
 
-      if (asig) {
-        await supabase
-          .from('asignaciones_tecnico')
-          .update({ estado_asignacion: 'rechazada' })
-          .eq('id_asignacion', asig.id_asignacion)
-      }
-
-      // Volver incidente a pendiente para búsqueda de nuevo técnico
       await supabase
-        .from('incidentes')
-        .update({ estado_actual: 'pendiente' })
-        .eq('id_incidente', pres.id_incidente)
+        .from('asignaciones_tecnico')
+        .update({ estado_asignacion: 'rechazada', fecha_rechazo: new Date().toISOString() })
+        .eq('id_asignacion', asig.id_asignacion)
+
+      if (asigConTecnico?.id_tecnico) {
+        // Anular inspecciones del técnico para este incidente
+        await supabase
+          .from('inspecciones')
+          .update({ esta_anulada: true })
+          .eq('id_incidente', pres.id_incidente)
+          .eq('id_tecnico', asigConTecnico.id_tecnico)
+          .eq('esta_anulada', false)
+
+        // Crear notificación in-app para el técnico
+        try {
+          const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+          await crearNotificacion({
+            id_tecnico: asigConTecnico.id_tecnico,
+            tipo: 'presupuesto_rechazado',
+            titulo: 'Presupuesto rechazado',
+            mensaje: `La administración rechazó tu presupuesto del incidente #${pres.id_incidente}. Tu asignación fue revocada.`,
+            id_incidente: pres.id_incidente,
+            id_presupuesto: idPresupuesto,
+          })
+        } catch { /* no bloquear la operación principal */ }
+      }
     }
 
-    // Notificar al técnico que el presupuesto fue rechazado (fire-and-forget)
+    // Volver incidente a pendiente para nueva asignación
+    await supabase
+      .from('incidentes')
+      .update({ estado_actual: 'pendiente' })
+      .eq('id_incidente', pres.id_incidente)
+
+    // Notificar al técnico por email (fire-and-forget)
     const { notificarTecnicoPresupuestoRechazado } = await import('@/features/notificaciones/notificaciones.service')
     notificarTecnicoPresupuestoRechazado(idPresupuesto).catch(console.error)
 
@@ -392,12 +482,50 @@ export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<
 
     if (error) return { success: false, error: error.message }
 
-    // Poner incidente en_proceso y notificar al técnico (fire-and-forget)
+    // Poner incidente en_proceso
     const supabaseAdmin = (await import('@/shared/lib/supabase/admin')).createAdminClient()
     const { data: pres } = await supabase.from('presupuestos').select('id_incidente').eq('id_presupuesto', idPresupuesto).single()
     if (pres?.id_incidente) {
       await supabaseAdmin.from('incidentes').update({ estado_actual: 'en_proceso' }).eq('id_incidente', pres.id_incidente)
+
+      // Obtener técnico asignado para notificación in-app
+      const { data: asig } = await supabaseAdmin
+        .from('asignaciones_tecnico')
+        .select('id_tecnico')
+        .eq('id_incidente', pres.id_incidente)
+        .in('estado_asignacion', ['aceptada', 'en_curso'])
+        .maybeSingle()
+
+      if (asig?.id_tecnico) {
+        try {
+          const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+          await crearNotificacion({
+            id_tecnico: asig.id_tecnico,
+            tipo: 'presupuesto_aprobado_cliente',
+            titulo: '¡Presupuesto aprobado!',
+            mensaje: `El cliente aprobó el presupuesto del incidente #${pres.id_incidente}. Ya podés comenzar el trabajo.`,
+            id_incidente: pres.id_incidente,
+            id_presupuesto: idPresupuesto,
+          })
+        } catch { /* no bloquear la operación principal */ }
+      }
     }
+
+    // Notificar al admin que el cliente aprobó el presupuesto
+    if (pres?.id_incidente) {
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionAdmin({
+          tipo: 'presupuesto_aprobado_cliente',
+          titulo: 'Presupuesto aprobado por el cliente',
+          mensaje: `El cliente aprobó el presupuesto del incidente #${pres.id_incidente}. El técnico puede comenzar el trabajo.`,
+          id_incidente: pres.id_incidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear la operación principal */ }
+    }
+
+    // Email al técnico (fire-and-forget)
     const { notificarTecnicoPresupuestoAprobado } = await import('@/features/notificaciones/notificaciones.service')
     notificarTecnicoPresupuestoAprobado(idPresupuesto).catch(console.error)
 
@@ -446,8 +574,20 @@ export async function rechazarPresupuestoCliente(
       if (asig) {
         await supabaseAdmin.from('asignaciones_tecnico').update({ estado_asignacion: 'rechazada' }).eq('id_asignacion', asig.id_asignacion)
       }
-      // Finalizar incidente
-      await supabaseAdmin.from('incidentes').update({ estado_actual: 'resuelto' }).eq('id_incidente', presupuesto.id_incidente)
+      // Volver incidente a pendiente (el cliente rechazó el presupuesto — no resuelto aún)
+      await supabaseAdmin.from('incidentes').update({ estado_actual: 'pendiente' }).eq('id_incidente', presupuesto.id_incidente)
+
+      // Notificar al admin
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionAdmin({
+          tipo: 'presupuesto_rechazado_cliente',
+          titulo: 'Presupuesto rechazado por el cliente',
+          mensaje: `El cliente rechazó el presupuesto del incidente #${presupuesto.id_incidente}.`,
+          id_incidente: presupuesto.id_incidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear la operación principal */ }
     }
 
     return { success: true, data: undefined }

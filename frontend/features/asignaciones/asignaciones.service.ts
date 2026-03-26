@@ -157,6 +157,19 @@ export async function aceptarAsignacion(
   try {
     const supabase = await createClient()
 
+    // Obtener nombre del técnico e id_cliente del incidente para notificaciones
+    const { data: asig } = await supabase
+      .from('asignaciones_tecnico')
+      .select('tecnicos(nombre, apellido)')
+      .eq('id_asignacion', idAsignacion)
+      .single()
+
+    const { data: inc } = await supabase
+      .from('incidentes')
+      .select('id_cliente_reporta, clientes(id_cliente)')
+      .eq('id_incidente', idIncidente)
+      .single()
+
     const { error: errorAsignacion } = await supabase
       .from('asignaciones_tecnico')
       .update({
@@ -167,14 +180,39 @@ export async function aceptarAsignacion(
 
     if (errorAsignacion) return { success: false, error: errorAsignacion.message }
 
-    // El incidente ya debería estar en 'en_proceso' cuando se crea la asignación
-    // No es necesario cambiar el estado aquí, pero si se requiere, usar 'en_proceso'
     const { error: errorIncidente } = await supabase
       .from('incidentes')
       .update({ estado_actual: 'en_proceso' })
       .eq('id_incidente', idIncidente)
 
     if (errorIncidente) return { success: false, error: errorIncidente.message }
+
+    // Notificar al admin y al cliente
+    const tec = asig?.tecnicos as any
+    const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
+    const { crearNotificacionAdmin, crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
+
+    try {
+      await crearNotificacionAdmin({
+        tipo: 'asignacion_aceptada',
+        titulo: 'Técnico aceptó la asignación',
+        mensaje: `${tecNombre} aceptó el incidente #${idIncidente} y comenzó a trabajar en él.`,
+        id_incidente: idIncidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
+
+    const idCliente = (inc?.clientes as any)?.id_cliente
+    if (idCliente) {
+      try {
+        await crearNotificacionCliente({
+          id_cliente: idCliente,
+          tipo: 'asignacion_aceptada',
+          titulo: 'Técnico asignado a tu incidente',
+          mensaje: `${tecNombre} fue asignado y aceptó atender tu incidente #${idIncidente}. Ya está en proceso.`,
+          id_incidente: idIncidente,
+        })
+      } catch { /* no bloquear la operación principal */ }
+    }
 
     return { success: true, data: undefined }
   } catch (error) {
@@ -189,6 +227,13 @@ export async function rechazarAsignacion(
   try {
     const supabase = await createClient()
 
+    // Obtener nombre del técnico para la notificación al admin
+    const { data: asig } = await supabase
+      .from('asignaciones_tecnico')
+      .select('tecnicos(nombre, apellido)')
+      .eq('id_asignacion', idAsignacion)
+      .single()
+
     const { error: errorAsignacion } = await supabase
       .from('asignaciones_tecnico')
       .update({
@@ -199,13 +244,26 @@ export async function rechazarAsignacion(
 
     if (errorAsignacion) return { success: false, error: errorAsignacion.message }
 
-    // Al rechazar, volver a 'pendiente' para que pueda ser reasignado
+    // Al rechazar, el incidente queda en 'asignacion_solicitada' para que el admin pueda re-asignar
     const { error: errorIncidente } = await supabase
       .from('incidentes')
-      .update({ estado_actual: 'pendiente' })
+      .update({ estado_actual: 'asignacion_solicitada' })
       .eq('id_incidente', idIncidente)
 
     if (errorIncidente) return { success: false, error: errorIncidente.message }
+
+    // Notificar al admin
+    const tec = asig?.tecnicos as any
+    const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
+    try {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacionAdmin({
+        tipo: 'asignacion_rechazada',
+        titulo: 'Técnico rechazó la asignación',
+        mensaje: `${tecNombre} rechazó el incidente #${idIncidente}. Requiere reasignación.`,
+        id_incidente: idIncidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
 
     return { success: true, data: undefined }
   } catch (error) {
@@ -222,6 +280,13 @@ export async function crearAsignacion(data: {
     const { createAdminClient } = await import('@/shared/lib/supabase/admin')
     const supabase = createAdminClient()
 
+    // Cancelar asignaciones pendientes anteriores (re-asignación por parte del admin)
+    await supabase
+      .from('asignaciones_tecnico')
+      .update({ estado_asignacion: 'rechazada', fecha_rechazo: new Date().toISOString() })
+      .eq('id_incidente', data.id_incidente)
+      .eq('estado_asignacion', 'pendiente')
+
     const { error } = await supabase
       .from('asignaciones_tecnico')
       .insert({
@@ -231,14 +296,25 @@ export async function crearAsignacion(data: {
 
     if (error) return { success: false, error: error.message }
 
-    // Actualizar estado del incidente a "en_proceso" si está en "pendiente"
+    // Actualizar estado del incidente a "asignacion_solicitada" para indicar solicitud enviada
     await supabase
       .from('incidentes')
-      .update({ estado_actual: 'en_proceso' })
+      .update({ estado_actual: 'asignacion_solicitada' })
       .eq('id_incidente', data.id_incidente)
-      .eq('estado_actual', 'pendiente')
+      .in('estado_actual', ['pendiente', 'asignacion_solicitada'])
 
-    // Notificar al técnico (fire-and-forget)
+    // Notificar al técnico: in-app + email
+    try {
+      const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacion({
+        id_tecnico: data.id_tecnico,
+        tipo: 'nueva_asignacion',
+        titulo: 'Nueva asignación',
+        mensaje: `Se te asignó el incidente #${data.id_incidente}. Revisá los detalles y aceptá o rechazá la asignación.`,
+        id_incidente: data.id_incidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
+
     const { notificarNuevaAsignacion } = await import('@/features/notificaciones/notificaciones.service')
     notificarNuevaAsignacion(data.id_incidente, data.id_tecnico).catch(console.error)
 
@@ -256,12 +332,36 @@ export async function completarAsignacion(idAsignacion: number): Promise<ActionR
     const supabase = await createClient()
     await requireTecnicoId()
 
+    // Obtener id_incidente antes de actualizar para notificar al admin
+    const { data: asig } = await supabase
+      .from('asignaciones_tecnico')
+      .select('id_incidente, tecnicos(nombre, apellido)')
+      .eq('id_asignacion', idAsignacion)
+      .single()
+
     const { error } = await supabase
       .from('asignaciones_tecnico')
-      .update({ estado_asignacion: 'completada' })
+      .update({ estado_asignacion: 'completada', fecha_completado: new Date().toISOString() })
       .eq('id_asignacion', idAsignacion)
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al admin que el trabajo fue completado
+    if (asig?.id_incidente) {
+      const tecNombre = asig.tecnicos
+        ? `${(asig.tecnicos as any).nombre} ${(asig.tecnicos as any).apellido}`
+        : 'El técnico'
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionAdmin({
+          tipo: 'trabajo_completado',
+          titulo: 'Trabajo completado',
+          mensaje: `${tecNombre} marcó el incidente #${asig.id_incidente} como completado. Pendiente de conformidad.`,
+          id_incidente: asig.id_incidente,
+        })
+      } catch { /* no bloquear la operación principal */ }
+    }
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al completar asignación' }

@@ -14,17 +14,21 @@ export interface AdminBadgeCounts {
   presupuestos: number   // presupuestos enviados esperando aprobación admin
   pagos: number          // cobros a clientes + pagos a técnicos pendientes
   solicitudes: number    // solicitudes de registro de técnicos pendientes
+  reasignaciones: number // incidentes en asignacion_solicitada con asignacion rechazada
+  notificaciones: number // notificaciones no leídas para admin
 }
 
 export interface ClienteBadgeCounts {
   presupuestos: number   // presupuestos aprobados por admin esperando aprobación cliente
   pagos: number          // cobros pendientes de pagar
+  notificaciones: number // notificaciones no leídas para el cliente
 }
 
 export interface TecnicoBadgeCounts {
   disponibles: number    // asignaciones pendientes de aceptar
   trabajos: number       // trabajos con presupuesto aprobado sin conformidad subida
   pagos: number          // presupuestos aprobados sin pago recibido
+  notificaciones: number // notificaciones no leídas para el técnico
 }
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
@@ -32,7 +36,7 @@ export interface TecnicoBadgeCounts {
 export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
   const supabase = createAdminClient()
 
-  const [confResult, presResult, cobrosPendResult, pagosTecResult, solResult] = await Promise.all([
+  const [confResult, presResult, cobrosPendResult, pagosTecResult, solResult, reasigResult, notifResult] = await Promise.all([
     // Conformidades con foto subida esperando revisión
     supabase
       .from('conformidades')
@@ -65,6 +69,19 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
       .from('solicitudes_registro')
       .select('id_solicitud', { count: 'exact', head: true })
       .eq('estado_solicitud', 'pendiente'),
+
+    // Incidentes en asignacion_solicitada con técnico rechazado (necesitan re-asignación)
+    supabase
+      .from('asignaciones_tecnico')
+      .select('id_incidente', { count: 'exact', head: false })
+      .eq('estado_asignacion', 'rechazada'),
+
+    // Notificaciones no leídas para admin
+    supabase
+      .from('notificaciones')
+      .select('id_notificacion', { count: 'exact', head: true })
+      .eq('para_admin', true)
+      .is('fecha_leida', null),
   ])
 
   // Supabase PostgREST no soporta subqueries nativas, fallback a conteo manual
@@ -79,7 +96,7 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
       supabase.from('pagos_tecnicos').select('id_presupuesto'),
       supabase.from('presupuestos').select('id_presupuesto, incidentes!inner(estado_actual)')
         .eq('estado_presupuesto', 'aprobado')
-        .eq('incidentes.estado_actual', 'resuelto'),
+        .in('incidentes.estado_actual', ['finalizado', 'resuelto']),
     ])
     const cobradosIds = new Set((cobrosResp.data || []).map((r: any) => r.id_presupuesto))
     const pagadosIds = new Set((pagosResp.data || []).map((r: any) => r.id_presupuesto))
@@ -91,11 +108,25 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
     pendientesPagos = pagosTecResult.count ?? 0
   }
 
+  // Calcular reasignaciones: incidentes en asignacion_solicitada con al menos una asignacion rechazada
+  let reasignaciones = 0
+  if (!reasigResult.error && reasigResult.data?.length) {
+    const idsConRechazo = [...new Set(reasigResult.data.map((r: any) => r.id_incidente))]
+    const { count } = await supabase
+      .from('incidentes')
+      .select('id_incidente', { count: 'exact', head: true })
+      .in('id_incidente', idsConRechazo)
+      .eq('estado_actual', 'asignacion_solicitada')
+    reasignaciones = count ?? 0
+  }
+
   return {
     conformidades: confResult.count ?? 0,
     presupuestos: presResult.count ?? 0,
     pagos: pendientesCobros + pendientesPagos,
     solicitudes: solResult.count ?? 0,
+    reasignaciones,
+    notificaciones: notifResult.count ?? 0,
   }
 }
 
@@ -113,12 +144,12 @@ export async function getClienteBadgeCounts(): Promise<ClienteBadgeCounts> {
       .select('id_incidente')
       .eq('id_cliente_reporta', idCliente)
 
-    if (!incidentes?.length) return { presupuestos: 0, pagos: 0 }
+    if (!incidentes?.length) return { presupuestos: 0, pagos: 0, notificaciones: 0 }
 
     const ids = incidentes.map((i: any) => i.id_incidente)
 
-    // En paralelo: presupuestos pendientes de aprobación y cobros pendientes de pago
-    const [presResult, presAprobResult] = await Promise.all([
+    // En paralelo: presupuestos pendientes de aprobación, cobros pendientes y notificaciones
+    const [presResult, presAprobResult, notifResult] = await Promise.all([
       supabase
         .from('presupuestos')
         .select('id_presupuesto', { count: 'exact', head: true })
@@ -129,6 +160,13 @@ export async function getClienteBadgeCounts(): Promise<ClienteBadgeCounts> {
         .select('id_presupuesto')
         .in('id_incidente', ids)
         .eq('estado_presupuesto', 'aprobado'),
+
+      // Notificaciones no leídas del cliente
+      supabase
+        .from('notificaciones')
+        .select('id_notificacion', { count: 'exact', head: true })
+        .eq('id_cliente', idCliente)
+        .is('fecha_leida', null),
     ])
 
     let pagosPendientes = 0
@@ -142,9 +180,9 @@ export async function getClienteBadgeCounts(): Promise<ClienteBadgeCounts> {
       pagosPendientes = idsPres.filter((id: number) => !cobradosSet.has(id)).length
     }
 
-    return { presupuestos: presResult.count ?? 0, pagos: pagosPendientes }
+    return { presupuestos: presResult.count ?? 0, pagos: pagosPendientes, notificaciones: notifResult.count ?? 0 }
   } catch {
-    return { presupuestos: 0, pagos: 0 }
+    return { presupuestos: 0, pagos: 0, notificaciones: 0 }
   }
 }
 
@@ -176,7 +214,7 @@ export async function getTecnicoBadgeCounts(): Promise<TecnicoBadgeCounts> {
       .map((a: any) => a.id_incidente)
       .filter(Boolean) as number[]
 
-    if (!idIncidentes.length) return { disponibles, trabajos: 0, pagos: 0 }
+    if (!idIncidentes.length) return { disponibles, trabajos: 0, pagos: 0, notificaciones: 0 }
 
     // Presupuestos aprobados para esos incidentes (con id_presupuesto también)
     const { data: presAprobados } = await supabase
@@ -186,12 +224,12 @@ export async function getTecnicoBadgeCounts(): Promise<TecnicoBadgeCounts> {
       .eq('estado_presupuesto', 'aprobado')
 
     const incidentesConPresupuesto = new Set((presAprobados || []).map((p: any) => p.id_incidente))
-    if (!incidentesConPresupuesto.size) return { disponibles, trabajos: 0, pagos: 0 }
+    if (!incidentesConPresupuesto.size) return { disponibles, trabajos: 0, pagos: 0, notificaciones: 0 }
 
     const idPresupuestosAprobados = (presAprobados || []).map((p: any) => p.id_presupuesto)
 
-    // Conformidades ya subidas y pagos ya recibidos (en paralelo)
-    const [conformidadesRes, pagosRecibidosRes] = await Promise.all([
+    // Conformidades ya subidas, pagos ya recibidos y notificaciones no leídas (en paralelo)
+    const [conformidadesRes, pagosRecibidosRes, notifRes] = await Promise.all([
       supabase
         .from('conformidades')
         .select('id_incidente')
@@ -201,6 +239,13 @@ export async function getTecnicoBadgeCounts(): Promise<TecnicoBadgeCounts> {
         .from('pagos_tecnicos')
         .select('id_presupuesto')
         .in('id_presupuesto', idPresupuestosAprobados),
+
+      // Notificaciones no leídas del técnico
+      supabase
+        .from('notificaciones')
+        .select('id_notificacion', { count: 'exact', head: true })
+        .eq('id_tecnico', idTecnico)
+        .is('fecha_leida', null),
     ])
 
     const incidentesConConformidad = new Set((conformidadesRes.data || []).map((c: any) => c.id_incidente))
@@ -213,8 +258,8 @@ export async function getTecnicoBadgeCounts(): Promise<TecnicoBadgeCounts> {
     // Pagos = presupuestos aprobados sin pago técnico recibido
     const pagos = idPresupuestosAprobados.filter((id: number) => !presupuestosConPago.has(id)).length
 
-    return { disponibles, trabajos, pagos }
+    return { disponibles, trabajos, pagos, notificaciones: notifRes.count ?? 0 }
   } catch {
-    return { disponibles: 0, trabajos: 0, pagos: 0 }
+    return { disponibles: 0, trabajos: 0, pagos: 0, notificaciones: 0 }
   }
 }

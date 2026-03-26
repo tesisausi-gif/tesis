@@ -30,20 +30,6 @@ function fechaDesde(periodo: Periodo): string | null {
   return ahora.toISOString().slice(0, 10)
 }
 
-const PRIORIDAD_COLORS: Record<string, string> = {
-  'alta': 'bg-red-500',
-  'media': 'bg-yellow-500',
-  'baja': 'bg-green-500',
-  'Sin prioridad': 'bg-gray-400',
-}
-
-const PRIORIDAD_BADGE: Record<string, string> = {
-  'alta': 'bg-red-100 text-red-800',
-  'media': 'bg-yellow-100 text-yellow-800',
-  'baja': 'bg-green-100 text-green-800',
-  'Sin prioridad': 'bg-gray-100 text-gray-800',
-}
-
 function BarraHorizontal({ valor, maximo, color = 'bg-blue-500' }: { valor: number; maximo: number; color?: string }) {
   const pct = maximo > 0 ? Math.round((valor / maximo) * 100) : 0
   return (
@@ -294,46 +280,6 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
           </CardContent>
         </Card>
 
-        {/* Distribución por Prioridad */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-red-600" />
-              Por Prioridad
-            </CardTitle>
-            <CardDescription>Nivel de urgencia de los incidentes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {metricas.distribucionPrioridades.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Sin datos</p>
-            ) : (
-              <div className="space-y-4">
-                {metricas.distribucionPrioridades.map((item) => {
-                  const total = metricas.distribucionPrioridades.reduce((s, p) => s + p.count, 0)
-                  const pct = total > 0 ? Math.round((item.count / total) * 100) : 0
-                  return (
-                    <div key={item.prioridad} className="flex items-center justify-between gap-3">
-                      <Badge className={PRIORIDAD_BADGE[item.prioridad] || 'bg-gray-100 text-gray-800'}>
-                        {item.prioridad}
-                      </Badge>
-                      <div className="flex-1">
-                        <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${PRIORIDAD_COLORS[item.prioridad] || 'bg-gray-400'}`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-sm font-medium text-gray-700 w-12 text-right">
-                        {item.count} <span className="text-gray-400 text-xs">({pct}%)</span>
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {/* Ranking de Técnicos */}

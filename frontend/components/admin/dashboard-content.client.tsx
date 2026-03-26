@@ -3,14 +3,15 @@
 import { useEffect, useState, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Users, Building2, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight, Wifi, WifiOff, FileText, ClipboardCheck, DollarSign } from 'lucide-react'
+import { Users, Wrench, Clock, AlertCircle, CheckCircle, Activity, ArrowRight, Wifi, WifiOff } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/lib/supabase/client'
 import { getDashboardStats, getDashboardActividad } from '@/features/incidentes/incidentes.service'
-import { getAdminBadgeCounts, AdminBadgeCounts } from '@/features/notificaciones/badge-counts.service'
+import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
+import type { Notificacion } from '@/features/notificaciones/notificaciones.types'
 
 interface Stats {
   incidentesPendientes: number
@@ -54,18 +55,23 @@ interface DashboardContentProps {
   stats: Stats
   incidentesRecientes: IncidenteReciente[]
   asignacionesRecientes: AsignacionReciente[]
+  notificaciones: Notificacion[]
 }
 
 const getEstadoBadge = (estado: string) => {
   const estilos: Record<string, string> = {
     'pendiente': 'bg-yellow-100 text-yellow-800',
+    'asignacion_solicitada': 'bg-orange-100 text-orange-800',
     'en_proceso': 'bg-blue-100 text-blue-800',
     'resuelto': 'bg-green-100 text-green-800',
+    'finalizado': 'bg-green-100 text-green-800',
   }
   const labels: Record<string, string> = {
     'pendiente': 'Pendiente',
+    'asignacion_solicitada': 'Asig. Solicitada',
     'en_proceso': 'En Proceso',
-    'resuelto': 'Resuelto',
+    'resuelto': 'Finalizado',
+    'finalizado': 'Finalizado',
   }
   return (
     <Badge className={estilos[estado] || 'bg-gray-100 text-gray-800'}>
@@ -74,13 +80,12 @@ const getEstadoBadge = (estado: string) => {
   )
 }
 
-export function DashboardContent({ stats: initialStats, incidentesRecientes: initialIncidentes, asignacionesRecientes: initialAsignaciones }: DashboardContentProps) {
+export function DashboardContent({ stats: initialStats, incidentesRecientes: initialIncidentes, asignacionesRecientes: initialAsignaciones, notificaciones }: DashboardContentProps) {
   const [stats, setStats] = useState<Stats>(initialStats)
   const [incidentesRecientes, setIncidentesRecientes] = useState<IncidenteReciente[]>(initialIncidentes)
   const [asignacionesRecientes, setAsignacionesRecientes] = useState<AsignacionReciente[]>(initialAsignaciones)
   const [conectado, setConectado] = useState(false)
   const refreshingRef = useRef(false)
-  const [pendientes, setPendientes] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0 })
 
   const refrescarDatos = async () => {
     if (refreshingRef.current) return
@@ -99,10 +104,6 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
       refreshingRef.current = false
     }
   }
-
-  useEffect(() => {
-    getAdminBadgeCounts().then(setPendientes).catch(() => {})
-  }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -187,7 +188,7 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
 
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Incidentes Resueltos</CardTitle>
+            <CardTitle className="text-sm font-medium">Incidentes Finalizados</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -198,18 +199,7 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
       </div>
 
       {/* Stats Cards - Segunda fila: Entidades */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Propiedades</CardTitle>
-            <Building2 className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.propiedades}</div>
-            <p className="text-xs text-muted-foreground">Inmuebles registrados</p>
-          </CardContent>
-        </Card>
-
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Clientes</CardTitle>
@@ -233,59 +223,12 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
         </Card>
       </div>
 
-      {/* Acciones Pendientes */}
-      {(pendientes.conformidades > 0 || pendientes.presupuestos > 0 || pendientes.pagos > 0) && (
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-            <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-            Requieren atención
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {pendientes.conformidades > 0 && (
-              <Link href="/dashboard/conformidades">
-                <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="flex items-center justify-between pt-4 pb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Conformidades</p>
-                      <p className="text-xl font-bold text-orange-600">{pendientes.conformidades}</p>
-                      <p className="text-xs text-gray-500">fotos a revisar</p>
-                    </div>
-                    <ClipboardCheck className="h-8 w-8 text-orange-400" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-            {pendientes.presupuestos > 0 && (
-              <Link href="/dashboard/presupuestos">
-                <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="flex items-center justify-between pt-4 pb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Presupuestos</p>
-                      <p className="text-xl font-bold text-blue-600">{pendientes.presupuestos}</p>
-                      <p className="text-xs text-gray-500">esperan aprobación</p>
-                    </div>
-                    <FileText className="h-8 w-8 text-blue-400" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-            {pendientes.pagos > 0 && (
-              <Link href="/dashboard/pagos">
-                <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="flex items-center justify-between pt-4 pb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Pagos</p>
-                      <p className="text-xl font-bold text-green-600">{pendientes.pagos}</p>
-                      <p className="text-xs text-gray-500">pendientes de cobro/pago</p>
-                    </div>
-                    <DollarSign className="h-8 w-8 text-green-400" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Notificaciones */}
+      <Card className="border-2">
+        <CardContent className="pt-5">
+          <NotificacionesPanel notificaciones={notificaciones} rol="admin" />
+        </CardContent>
+      </Card>
 
       {/* Actividad Reciente */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -310,15 +253,16 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
           </CardHeader>
           <CardContent>
             {incidentesRecientes.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-1">
                 {incidentesRecientes.map((incidente) => (
-                  <div
+                  <Link
                     key={incidente.id_incidente}
-                    className="flex items-start justify-between gap-4 pb-4 border-b last:border-0 last:pb-0"
+                    href={`/dashboard/incidentes?highlight=${incidente.id_incidente}`}
+                    className="flex items-start justify-between gap-4 py-3 px-2 -mx-2 rounded-md border-b last:border-0 hover:bg-blue-50/60 transition-colors cursor-pointer group"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">#{incidente.id_incidente}</span>
+                        <span className="font-medium text-sm group-hover:text-blue-700 transition-colors">#{incidente.id_incidente}</span>
                         {getEstadoBadge(incidente.estado_actual)}
                       </div>
                       <p className="text-sm text-gray-600 truncate">
@@ -339,7 +283,7 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
                         locale: es,
                       })}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (

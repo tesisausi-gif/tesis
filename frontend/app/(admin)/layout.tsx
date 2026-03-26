@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AdminSidebar } from '@/components/admin/admin-sidebar'
+import { RealtimeNotificacionesAdmin } from '@/components/admin/realtime-notificaciones.client'
 
 export default function AdminLayout({
   children,
@@ -8,6 +9,7 @@ export default function AdminLayout({
 }) {
   return (
     <SidebarProvider>
+      <RealtimeNotificacionesAdmin />
       <div className="min-h-screen w-full flex">
         <AdminSidebar />
         <main className="flex-1 flex flex-col">

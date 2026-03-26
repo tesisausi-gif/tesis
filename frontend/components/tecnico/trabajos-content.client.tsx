@@ -1,39 +1,18 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
-  MapPin, Calendar, ClipboardList, Clock, CheckCircle2, Upload,
-  Plus, ImageIcon, Loader2, Phone, Mail, Home, FileText, Wrench,
+  MapPin, ClipboardList, Clock, Wrench, FileText, CheckCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  getEstadoAsignacionColor,
-  getEstadoAsignacionLabel,
-  getPrioridadColor,
-} from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
-import { completarAsignacion } from '@/features/asignaciones/asignaciones.service'
-import { crearAvance } from '@/features/avances/avances.service'
-import { crearConformidadPorTecnico } from '@/features/conformidades/conformidades.service'
-import { crearInspeccion } from '@/features/inspecciones/inspecciones.service'
 import { createClient } from '@/shared/lib/supabase/client'
+
+// ── Tipos ────────────────────────────────────────────────────────────────────
 
 interface ConformidadInfo {
   id_conformidad: number
@@ -49,601 +28,286 @@ interface TrabajosContentProps {
   idTecnico: number
 }
 
-export function TrabajosContent({ asignaciones, estadoPresupuestoPorIncidente, conformidadesPorIncidente, idTecnico }: TrabajosContentProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
+function formatFecha(raw: string | null | undefined): string {
+  if (!raw) return ''
+  try {
+    const normalized = raw.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(raw) ? raw : raw + 'Z'
+    const d = new Date(normalized)
+    if (isNaN(d.getTime())) return ''
+    return format(d, 'dd MMM yy', { locale: es })
+  } catch {
+    return ''
+  }
+}
+
+// ── Mapa de estado visual (mismo patrón que cliente) ─────────────────────────
+
+const STATUS_CONFIG: Record<string, {
+  label: string
+  borderColor: string
+  pillBg: string
+  pillText: string
+  Icon: React.ElementType
+}> = {
+  aceptada:            { label: 'Aceptado',       borderColor: 'border-l-blue-400',   pillBg: 'bg-blue-100',   pillText: 'text-blue-700',   Icon: ClipboardList },
+  en_curso:            { label: 'En curso',        borderColor: 'border-l-orange-400', pillBg: 'bg-orange-100', pillText: 'text-orange-700', Icon: Wrench },
+  completada_pendiente:{ label: 'Pend. revisión',  borderColor: 'border-l-amber-400',  pillBg: 'bg-amber-100',  pillText: 'text-amber-700',  Icon: Clock },
+  finalizado:          { label: 'Finalizado',      borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
+}
+
+function getStatusKey(a: AsignacionTecnico): string {
+  if (a.estado_asignacion === 'completada') {
+    return ['finalizado', 'resuelto'].includes(a.incidentes?.estado_actual ?? '')
+      ? 'finalizado'
+      : 'completada_pendiente'
+  }
+  return a.estado_asignacion
+}
+
+// ── Componente ───────────────────────────────────────────────────────────────
+
+export function TrabajosContent({
+  asignaciones,
+  estadoPresupuestoPorIncidente,
+  conformidadesPorIncidente,
+  idTecnico,
+}: TrabajosContentProps) {
+  const router = useRouter()
+  const [filtro, setFiltro] = useState<string>('en_proceso')
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
+  const [modalTab, setModalTab] = useState('detalles')
   const [modalOpen, setModalOpen] = useState(false)
 
-  // Dialog: Registrar avance
-  const [avanceDialog, setAvanceDialog] = useState<{ open: boolean; idAsignacion: number; idIncidente: number } | null>(null)
-  const [avanceDesc, setAvanceDesc] = useState('')
-  const [avancePct, setAvancePct] = useState('')
-
-  // Dialog: Completar trabajo
-  const [completarDialog, setCompletarDialog] = useState<{ open: boolean; idAsignacion: number } | null>(null)
-
-  // Dialog: Subir conformidad (foto)
-  const [conformidadDialog, setConformidadDialog] = useState<{ open: boolean; idIncidente: number } | null>(null)
-  const [fotoFile, setFotoFile] = useState<File | null>(null)
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null)
-  const [uploadingFoto, setUploadingFoto] = useState(false)
-
-  // Dialog: Cargar inspección
-  const [inspeccionDialog, setInspeccionDialog] = useState<{ open: boolean; idIncidente: number } | null>(null)
-  const [inspeccionDesc, setInspeccionDesc] = useState('')
-  const [inspeccionCausas, setInspeccionCausas] = useState('')
-  const [loadingInspeccion, setLoadingInspeccion] = useState(false)
-
-  const abrirModal = (id: number) => {
+  const abrirModal = (id: number, tab = 'detalles') => {
     setIncidenteSeleccionado(id)
+    setModalTab(tab)
     setModalOpen(true)
   }
 
-  const handleCompletar = () => {
-    if (!completarDialog) return
-    startTransition(async () => {
-      const res = await completarAsignacion(completarDialog.idAsignacion)
-      if (res.success) {
-        toast.success('Trabajo marcado como completado')
-        setCompletarDialog(null)
-        router.refresh()
-      } else {
-        toast.error(res.error ?? 'Error al completar')
-      }
-    })
-  }
+  // Realtime: presupuesto aprobado por cliente
+  useEffect(() => {
+    const supabase = createClient()
+    const idIncidentes = asignaciones.map(a => a.id_incidente)
 
-  const handleAvance = () => {
-    if (!avanceDialog || !avanceDesc.trim()) return
-    startTransition(async () => {
-      const res = await crearAvance({
-        id_incidente: avanceDialog.idIncidente,
-        descripcion_avance: avanceDesc.trim(),
-        porcentaje_completado: avancePct ? parseInt(avancePct) : null,
+    const channel = supabase
+      .channel('presupuestos-tecnico-realtime')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'presupuestos' }, (payload) => {
+        const next = payload.new as any
+        const prev = payload.old as any
+        if (
+          next?.estado_presupuesto === 'aprobado' &&
+          prev?.estado_presupuesto !== 'aprobado' &&
+          idIncidentes.includes(next.id_incidente)
+        ) {
+          toast.success('¡Presupuesto aprobado por el cliente!', {
+            description: `Incidente #${next.id_incidente} — ya podés comenzar el trabajo`,
+          })
+          router.refresh()
+        }
       })
-      if (res.success) {
-        toast.success('Avance registrado')
-        setAvanceDialog(null)
-        setAvanceDesc('')
-        setAvancePct('')
-      } else {
-        toast.error(res.error ?? 'Error al registrar avance')
-      }
-    })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [asignaciones, router])
+
+  // ── Filtros ─────────────────────────────────────────────────────────────
+
+  const enProceso = asignaciones.filter(a =>
+    ['aceptada', 'en_curso', 'completada_pendiente'].includes(getStatusKey(a))
+  )
+  const resueltas = asignaciones.filter(a => getStatusKey(a) === 'finalizado')
+
+  // Stats por categoría
+  const counts = {
+    aceptada: asignaciones.filter(a => getStatusKey(a) === 'aceptada').length,
+    en_curso: asignaciones.filter(a => getStatusKey(a) === 'en_curso').length,
+    pendiente: asignaciones.filter(a => getStatusKey(a) === 'completada_pendiente').length,
+    finalizado: asignaciones.filter(a => getStatusKey(a) === 'finalizado').length,
   }
 
-  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setFotoFile(file)
-    setFotoPreview(URL.createObjectURL(file))
+  const filtros = [
+    { id: 'todos',      label: 'Todos',       count: asignaciones.length, Icon: ClipboardList },
+    { id: 'en_proceso', label: 'En proceso',  count: enProceso.length,    Icon: Wrench },
+    { id: 'resueltos',  label: 'Finalizados', count: resueltas.length,    Icon: CheckCircle },
+  ]
+
+  const listaFiltrada =
+    filtro === 'resueltos' ? resueltas :
+    filtro === 'en_proceso' ? enProceso :
+    asignaciones
+
+  // ── Card ────────────────────────────────────────────────────────────────
+
+  const renderCard = (asig: AsignacionTecnico) => {
+    const incidente = asig.incidentes
+    const inmueble = incidente?.inmuebles
+    const key = getStatusKey(asig)
+    const cfg = STATUS_CONFIG[key] ?? STATUS_CONFIG.aceptada
+    const { Icon } = cfg
+
+    const direccionPartes = inmueble
+      ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
+      : ''
+    const ubicacion = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
+    const direccion = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
+
+    return (
+      <div
+        key={asig.id_asignacion}
+        className={`bg-white rounded-2xl border-l-4 shadow-sm overflow-hidden ${cfg.borderColor}`}
+      >
+        <div className="px-4 py-4">
+          {/* Fila 1: ID + estado + flecha */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-bold text-gray-900 shrink-0">Incidente #{asig.id_incidente}</span>
+              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.pillBg} ${cfg.pillText}`}>
+                <Icon className="w-2.5 h-2.5" />
+                {cfg.label}
+              </span>
+            </div>
+          </div>
+
+          {/* Fila 2: Descripción */}
+          {incidente?.descripcion_problema && (
+            <p className="text-sm text-gray-700 line-clamp-2 mb-3 leading-snug">
+              {incidente.descripcion_problema}
+            </p>
+          )}
+
+          {/* Fila 3: Dirección + fecha */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1 text-xs text-gray-400 min-w-0">
+              <MapPin className="w-3 h-3 shrink-0" />
+              <span className="truncate">{direccion}</span>
+            </div>
+            <span className="text-xs text-gray-400 shrink-0">
+              {formatFecha(asig.fecha_asignacion)}
+            </span>
+          </div>
+
+          {/* Fila 4: Categoría */}
+          {incidente?.categoria && (
+            <div className="mt-2">
+              <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                {incidente.categoria}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Acciones — 3 chips en fila */}
+        <div className="flex border-t border-gray-100">
+          {[
+            { label: 'Detalles',  icon: FileText,      tab: 'detalles',    className: 'text-gray-600' },
+            { label: 'Timeline',  icon: Clock,         tab: 'timeline',    className: 'text-blue-500' },
+            { label: 'Gestión',   icon: Wrench,        tab: 'inspecciones',className: 'text-gray-900' },
+          ].map(({ label, icon: IcoComp, tab, className }, i) => (
+            <button
+              key={tab}
+              onClick={() => abrirModal(asig.id_incidente, tab)}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-3 active:bg-gray-50 transition-colors ${i < 2 ? 'border-r border-gray-100' : ''}`}
+            >
+              <IcoComp className={`w-4 h-4 ${className}`} />
+              <span className={`text-[10px] font-semibold ${className}`}>{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    )
   }
 
-  const handleSubirConformidad = async () => {
-    if (!conformidadDialog || !fotoFile) return
-    setUploadingFoto(true)
-    try {
-      const supabase = createClient()
-      const ext = fotoFile.name.split('.').pop() || 'jpg'
-      const path = `tecnico/${conformidadDialog.idIncidente}/${Date.now()}.${ext}`
+  // ── Empty state ─────────────────────────────────────────────────────────
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('conformidades')
-        .upload(path, fotoFile, { upsert: false })
+  const EmptyState = ({ mensaje }: { mensaje: string }) => (
+    <div className="px-5 pt-8 text-center">
+      <div className="mx-auto w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+        <ClipboardList className="h-7 w-7 text-gray-400" />
+      </div>
+      <p className="text-sm text-gray-400">{mensaje}</p>
+    </div>
+  )
 
-      if (uploadError) {
-        toast.error('Error al subir la foto: ' + uploadError.message)
-        return
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('conformidades')
-        .getPublicUrl(uploadData.path)
-
-      const res = await crearConformidadPorTecnico(conformidadDialog.idIncidente, publicUrl)
-      if (res.success) {
-        toast.success('Conformidad enviada', { description: 'La administración revisará la foto y te notificará.' })
-        setConformidadDialog(null)
-        setFotoFile(null)
-        setFotoPreview(null)
-        router.refresh()
-      } else {
-        toast.error(res.error ?? 'Error al enviar conformidad')
-      }
-    } catch {
-      toast.error('Error inesperado al subir la foto')
-    } finally {
-      setUploadingFoto(false)
-    }
-  }
-
-  const handleCargarInspeccion = async () => {
-    if (!inspeccionDialog || !inspeccionDesc.trim()) return
-    if (inspeccionDesc.trim().length < 10) {
-      toast.error('La descripción debe tener al menos 10 caracteres')
-      return
-    }
-    setLoadingInspeccion(true)
-    try {
-      const result = await crearInspeccion({
-        id_incidente: inspeccionDialog.idIncidente,
-        id_tecnico: idTecnico,
-        descripcion_inspeccion: inspeccionDesc.trim(),
-        causas_determinadas: inspeccionCausas.trim() || undefined,
-      })
-      if (result.success) {
-        toast.success('Inspección registrada', { description: 'Se ha guardado el reporte de inspección.' })
-        setInspeccionDialog(null)
-        setInspeccionDesc('')
-        setInspeccionCausas('')
-        router.refresh()
-      } else {
-        toast.error('Error', { description: result.error })
-      }
-    } finally {
-      setLoadingInspeccion(false)
-    }
-  }
-
-  // Stats
-  const totalTrabajos = asignaciones.length
-  const aceptados = asignaciones.filter(a => a.estado_asignacion === 'aceptada').length
-  const enCurso = asignaciones.filter(a => a.estado_asignacion === 'en_curso').length
-  const completados = asignaciones.filter(a => a.estado_asignacion === 'completada').length
+  // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-4 px-4 py-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Mis Trabajos</h1>
-        <p className="text-gray-600 text-sm mt-1">Trabajos asignados y su estado</p>
+    <div className="min-h-screen bg-gray-50 pb-8">
+
+      {/* Header */}
+      <div className="bg-white px-5 pt-6 pb-5 border-b border-gray-100">
+        <h1 className="text-2xl font-bold text-gray-900 mb-0.5">Mis Trabajos</h1>
+        <p className="text-sm text-gray-400">Incidentes asignados a vos</p>
       </div>
 
-      {asignaciones.length > 0 && (
-        <div className="grid gap-3 grid-cols-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardContent className="p-3 text-center">
-              <div className="text-xl font-bold text-blue-700">{totalTrabajos}</div>
-              <p className="text-xs text-blue-600">Total</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardContent className="p-3 text-center">
-              <div className="text-xl font-bold text-blue-700">{aceptados}</div>
-              <p className="text-xs text-blue-600">Aceptados</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-            <CardContent className="p-3 text-center">
-              <div className="text-xl font-bold text-orange-700">{enCurso}</div>
-              <p className="text-xs text-orange-600">En Curso</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-            <CardContent className="p-3 text-center">
-              <div className="text-xl font-bold text-green-700">{completados}</div>
-              <p className="text-xs text-green-600">Completados</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {asignaciones.length > 0 ? (
-        <div className="space-y-3">
-          {asignaciones.map((asignacion) => {
-            const incidente = asignacion.incidentes
-            const inmueble = incidente?.inmuebles
-            const cliente = incidente?.clientes
-
-            const direccionPartes = inmueble
-              ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
-              : ''
-            const ubicacion = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
-            const direccionInmueble = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
-
-            const estado = asignacion.estado_asignacion
-            const estadoPres = estadoPresupuestoPorIncidente[asignacion.id_incidente]
-            const presupuestoAprobado = estadoPres === 'aprobado'
-            const enTrabajo = (estado === 'aceptada' || estado === 'en_curso') && presupuestoAprobado
-            const terminado = estado === 'completada'
-
-            const confInfo = conformidadesPorIncidente[asignacion.id_incidente]
-            const conformidadPendiente = confInfo && !confInfo.esta_firmada && confInfo.url_documento
-            const conformidadAprobada = confInfo && (confInfo.esta_firmada === 1 || confInfo.esta_firmada === true)
-            const puedeSubirConformidad = terminado && !confInfo
-
-            return (
-              <Card key={asignacion.id_asignacion} className="hover:shadow-md transition-shadow">
-                {/* Zona clickable para abrir modal */}
-                <div className="cursor-pointer" onClick={() => abrirModal(asignacion.id_incidente)}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <ClipboardList className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                          Incidente #{asignacion.id_incidente}
-                        </CardTitle>
-                        {direccionInmueble && (
-                          <CardDescription className="flex items-center gap-1 mt-1 text-xs">
-                            <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{direccionInmueble}</span>
-                          </CardDescription>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-1 items-end flex-shrink-0">
-                        <Badge variant="outline" className={getEstadoAsignacionColor(estado)}>
-                          {getEstadoAsignacionLabel(estado)}
-                        </Badge>
-                        {incidente?.nivel_prioridad && (
-                          <Badge variant="outline" className={getPrioridadColor(incidente.nivel_prioridad)}>
-                            {incidente.nivel_prioridad}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="pt-0 pb-3 space-y-3">
-                    {/* Descripción del problema */}
-                    {incidente?.descripcion_problema && (
-                      <div className="flex items-start gap-2 bg-slate-50 rounded-md p-2.5 border border-slate-200">
-                        <FileText className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Descripción del problema</p>
-                          <p className="text-sm text-gray-700">{incidente.descripcion_problema}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Contacto del cliente */}
-                    {cliente && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-md p-2.5 space-y-1.5">
-                        <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Contacto del cliente</p>
-                        <p className="text-sm font-medium text-gray-800">{cliente.nombre} {cliente.apellido}</p>
-                        {cliente.telefono && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <Phone className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                            <span>{cliente.telefono}</span>
-                          </div>
-                        )}
-                        {cliente.correo_electronico && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                            <span>{cliente.correo_electronico}</span>
-                          </div>
-                        )}
-                        {cliente.direccion && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <Home className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                            <span>{cliente.direccion}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Fechas y categoría */}
-                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yy', { locale: es })}
-                      </span>
-                      {asignacion.fecha_visita_programada && (
-                        <span className="flex items-center gap-1 text-blue-600">
-                          <Clock className="h-3 w-3" />
-                          Visita: {format(new Date(asignacion.fecha_visita_programada), 'dd/MM HH:mm', { locale: es })}
-                        </span>
-                      )}
-                      {incidente?.categoria && <span>{incidente.categoria}</span>}
-                    </div>
-                  </CardContent>
-                </div>
-
-                {/* Botones de acción (no abren el modal) */}
-                <div
-                  className="px-6 pb-4 flex flex-wrap gap-2 border-t pt-3"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Botón de inspección — siempre visible si hay incidente */}
-                  {incidente && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 text-indigo-700 border-indigo-300 hover:bg-indigo-50"
-                      onClick={() => {
-                        setInspeccionDesc('')
-                        setInspeccionCausas('')
-                        setInspeccionDialog({ open: true, idIncidente: asignacion.id_incidente })
-                      }}
-                    >
-                      <Wrench className="h-3 w-3" />
-                      Cargar Inspección
-                    </Button>
-                  )}
-
-                  {enTrabajo && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1 text-blue-700 border-blue-300 hover:bg-blue-50"
-                        onClick={() => {
-                          setAvanceDesc('')
-                          setAvancePct('')
-                          setAvanceDialog({ open: true, idAsignacion: asignacion.id_asignacion, idIncidente: asignacion.id_incidente })
-                        }}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Registrar Avance
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1 text-green-700 border-green-300 hover:bg-green-50"
-                        onClick={() => setCompletarDialog({ open: true, idAsignacion: asignacion.id_asignacion })}
-                      >
-                        <CheckCircle2 className="h-3 w-3" />
-                        Completar Trabajo
-                      </Button>
-                    </>
-                  )}
-                  {puedeSubirConformidad && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 text-purple-700 border-purple-300 hover:bg-purple-50"
-                      onClick={() => {
-                        setFotoFile(null)
-                        setFotoPreview(null)
-                        setConformidadDialog({ open: true, idIncidente: asignacion.id_incidente })
-                      }}
-                    >
-                      <Upload className="h-3 w-3" />
-                      Subir Conformidad Firmada
-                    </Button>
-                  )}
-                  {conformidadPendiente && (
-                    <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Conformidad en revisión por la administración
-                    </div>
-                  )}
-                  {conformidadAprobada && (
-                    <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Conformidad aprobada — incidente resuelto
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )
-          })}
-        </div>
+      {asignaciones.length === 0 ? (
+        <EmptyState mensaje="Cuando aceptes una asignación, aparecerá aquí." />
       ) : (
-        <Card className="border-dashed border-2 border-gray-300 bg-gradient-to-br from-slate-50 to-slate-100">
-          <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
-            <div className="rounded-full bg-slate-200 p-4 mb-6">
-              <ClipboardList className="h-12 w-12 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No tienes trabajos asignados</h3>
-            <p className="text-sm text-gray-600 max-w-md">Cuando te asignen un nuevo trabajo, aparecerá aquí.</p>
-          </CardContent>
-        </Card>
+        <>
+          {/* Stats strip */}
+          <div className="grid grid-cols-4 bg-white border-b border-gray-100">
+            {[
+              { label: 'Aceptados',  count: counts.aceptada,   color: 'text-blue-500' },
+              { label: 'En curso',   count: counts.en_curso,   color: 'text-orange-500' },
+              { label: 'Revisión',   count: counts.pendiente,  color: 'text-amber-500' },
+              { label: 'Finaliz.',   count: counts.finalizado, color: 'text-green-500' },
+            ].map(stat => (
+              <div key={stat.label} className="flex flex-col items-center justify-center py-3 border-r border-gray-100 last:border-0">
+                <span className={`text-xl font-bold ${stat.color}`}>{stat.count}</span>
+                <span className="text-[9px] text-gray-400 font-medium leading-tight text-center mt-0.5">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Filter chips */}
+          <div className="flex gap-2 px-4 py-3 overflow-x-auto bg-white border-b border-gray-100 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {filtros.map(({ id, label, count, Icon }) => {
+              const active = filtro === id
+              return (
+                <button
+                  key={id}
+                  onClick={() => setFiltro(id)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                    active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                  {count > 0 && (
+                    <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
+                      active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Lista */}
+          <div className="px-4 pt-3 space-y-3">
+            {listaFiltrada.length === 0 ? (
+              <div className="text-center py-12 text-gray-400 text-sm">
+                No hay incidentes en este estado
+              </div>
+            ) : (
+              listaFiltrada.map(a => renderCard(a))
+            )}
+          </div>
+        </>
       )}
 
-      {/* Modal detalle incidente */}
       <IncidenteDetailModal
         incidenteId={incidenteSeleccionado}
         open={modalOpen}
         onOpenChange={setModalOpen}
         rol="tecnico"
+        initialTab={modalTab}
+        hideTabs
+        onUpdate={() => router.refresh()}
       />
-
-      {/* Dialog: Cargar Inspección */}
-      <Dialog
-        open={inspeccionDialog?.open ?? false}
-        onOpenChange={(o) => {
-          if (!o) {
-            setInspeccionDialog(null)
-            setInspeccionDesc('')
-            setInspeccionCausas('')
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar Inspección</DialogTitle>
-            <DialogDescription>
-              Documenta los resultados de tu inspección técnica para el incidente #{inspeccionDialog?.idIncidente}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="inspeccion-desc">Descripción de la Inspección *</Label>
-              <Textarea
-                id="inspeccion-desc"
-                placeholder="Describe en detalle qué inspeccionaste y qué encontraste..."
-                value={inspeccionDesc}
-                onChange={(e) => setInspeccionDesc(e.target.value)}
-                rows={4}
-                maxLength={1000}
-                disabled={loadingInspeccion}
-              />
-              <p className="text-xs text-gray-500">{inspeccionDesc.length}/1000 caracteres</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="inspeccion-causas">Causas Determinadas (opcional)</Label>
-              <Textarea
-                id="inspeccion-causas"
-                placeholder="Problemas detectados, causas del incidente, recomendaciones..."
-                value={inspeccionCausas}
-                onChange={(e) => setInspeccionCausas(e.target.value)}
-                rows={3}
-                maxLength={500}
-                disabled={loadingInspeccion}
-              />
-              <p className="text-xs text-gray-500">{inspeccionCausas.length}/500 caracteres</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setInspeccionDialog(null)
-                setInspeccionDesc('')
-                setInspeccionCausas('')
-              }}
-              disabled={loadingInspeccion}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleCargarInspeccion}
-              disabled={loadingInspeccion || !inspeccionDesc.trim() || inspeccionDesc.trim().length < 10}
-            >
-              {loadingInspeccion ? 'Guardando...' : 'Registrar Inspección'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog: Registrar Avance */}
-      <Dialog open={avanceDialog?.open ?? false} onOpenChange={(o) => !o && setAvanceDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar Avance</DialogTitle>
-            <DialogDescription>Describe el progreso realizado en el trabajo.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="avance-desc">Descripción del avance *</Label>
-              <Textarea
-                id="avance-desc"
-                value={avanceDesc}
-                onChange={(e) => setAvanceDesc(e.target.value)}
-                placeholder="Describe qué trabajo se realizó..."
-                rows={4}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="avance-pct">Porcentaje completado (opcional)</Label>
-              <input
-                id="avance-pct"
-                type="number"
-                min={0}
-                max={100}
-                value={avancePct}
-                onChange={(e) => setAvancePct(e.target.value)}
-                placeholder="0-100"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAvanceDialog(null)} disabled={isPending}>Cancelar</Button>
-            <Button onClick={handleAvance} disabled={isPending || !avanceDesc.trim()}>
-              {isPending ? 'Guardando...' : 'Guardar Avance'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog: Completar Trabajo */}
-      <Dialog open={completarDialog?.open ?? false} onOpenChange={(o) => !o && setCompletarDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Completar Trabajo</DialogTitle>
-            <DialogDescription>
-              ¿Confirmas que el trabajo fue finalizado? El estado de la asignación pasará a &quot;Completada&quot;.
-              Después podrás subir la conformidad firmada por el cliente.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCompletarDialog(null)} disabled={isPending}>Cancelar</Button>
-            <Button onClick={handleCompletar} disabled={isPending}>
-              {isPending ? 'Procesando...' : 'Sí, completar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog: Subir Conformidad Firmada */}
-      <Dialog
-        open={conformidadDialog?.open ?? false}
-        onOpenChange={(o) => {
-          if (!o) {
-            setConformidadDialog(null)
-            setFotoFile(null)
-            setFotoPreview(null)
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Subir Conformidad Firmada</DialogTitle>
-            <DialogDescription>
-              Tomá una foto de la conformidad física firmada por el cliente y subila aquí.
-              La administración la revisará y aprobará para cerrar el incidente.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Foto de la conformidad *</Label>
-              <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {fotoPreview ? (
-                  <img src={fotoPreview} alt="Preview" className="max-h-48 mx-auto rounded-md object-contain" />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-500">
-                    <ImageIcon className="h-10 w-10 text-gray-400" />
-                    <p className="text-sm font-medium">Tocá para seleccionar una foto</p>
-                    <p className="text-xs text-gray-400">JPG, PNG, HEIC — máx. 10 MB</p>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFotoChange}
-              />
-              {fotoFile && (
-                <p className="text-xs text-gray-500">
-                  {fotoFile.name} ({(fotoFile.size / 1024 / 1024).toFixed(1)} MB)
-                </p>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConformidadDialog(null)
-                setFotoFile(null)
-                setFotoPreview(null)
-              }}
-              disabled={uploadingFoto}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSubirConformidad}
-              disabled={uploadingFoto || !fotoFile}
-              className="gap-2"
-            >
-              {uploadingFoto ? (
-                <><Loader2 className="h-4 w-4 animate-spin" />Subiendo...</>
-              ) : (
-                <><Upload className="h-4 w-4" />Enviar Conformidad</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

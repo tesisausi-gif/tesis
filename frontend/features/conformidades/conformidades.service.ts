@@ -56,6 +56,7 @@ export async function getConformidadesPendientes() {
     `)
     .not('url_documento', 'is', null)
     .eq('esta_firmada', 0)
+    .eq('esta_rechazada', false)
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
@@ -150,11 +151,12 @@ export async function crearConformidadPorTecnico(idIncidente: number, fotoUrl: s
   try {
     const supabase = createAdminClient()
 
-    // Verificar que no exista ya una conformidad pendiente
+    // Verificar que no exista ya una conformidad pendiente (no rechazada, no aprobada)
     const { data: existing } = await supabase
       .from('conformidades')
-      .select('id_conformidad, esta_firmada')
+      .select('id_conformidad, esta_firmada, esta_rechazada')
       .eq('id_incidente', idIncidente)
+      .eq('esta_rechazada', false)
       .maybeSingle()
 
     if (existing) {
@@ -185,6 +187,17 @@ export async function crearConformidadPorTecnico(idIncidente: number, fotoUrl: s
       })
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al admin que hay una nueva conformidad para revisar
+    try {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacionAdmin({
+        tipo: 'nueva_conformidad',
+        titulo: 'Nueva conformidad para revisar',
+        mensaje: `El técnico subió una foto de conformidad para el incidente #${idIncidente}. Revisala en el módulo de Conformidades.`,
+        id_incidente: idIncidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
 
     return { success: true, data: undefined }
   } catch {
@@ -268,15 +281,29 @@ export async function aprobarConformidad(
       }
     }
 
-    // 3. Marcar incidente como resuelto
+    // 3. Marcar incidente como resuelto con fecha de cierre
     await supabase
       .from('incidentes')
-      .update({ estado_actual: 'resuelto', fue_resuelto: 1 })
+      .update({ estado_actual: 'finalizado', fue_resuelto: 1, fecha_cierre: new Date().toISOString() })
       .eq('id_incidente', idIncidente)
 
-    // 4. Notificar al cliente (fire-and-forget)
+    // 4. Notificar al cliente: email (fire-and-forget)
     const { notificarIncidenteResuelto } = await import('@/features/notificaciones/notificaciones.service')
     notificarIncidenteResuelto(idIncidente).catch(console.error)
+
+    // 5. Notificar al cliente: in-app
+    if (conf.id_cliente) {
+      try {
+        const { crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionCliente({
+          id_cliente: conf.id_cliente,
+          tipo: 'incidente_resuelto',
+          titulo: '¡Tu incidente fue resuelto!',
+          mensaje: `El incidente #${idIncidente} fue marcado como resuelto por la administración. Podés calificar al técnico desde el módulo de Incidentes.`,
+          id_incidente: idIncidente,
+        })
+      } catch { /* no bloquear la operación principal */ }
+    }
 
     return { success: true, data: undefined }
   } catch {
@@ -293,23 +320,51 @@ export async function rechazarConformidad(idConformidad: number): Promise<Action
   try {
     const supabase = createAdminClient()
 
-    // Obtener conformidad para saber el incidente
+    // Obtener conformidad con datos del técnico asignado
     const { data: conf, error: errConf } = await supabase
       .from('conformidades')
-      .select('id_conformidad, id_incidente')
+      .select(`
+        id_conformidad, id_incidente,
+        incidentes (
+          asignaciones_tecnico (id_tecnico, estado_asignacion)
+        )
+      `)
       .eq('id_conformidad', idConformidad)
       .single()
 
     if (errConf || !conf) return { success: false, error: 'Conformidad no encontrada' }
 
-    // Notificar al técnico antes de eliminar (fire-and-forget)
+    // Obtener id_tecnico del asignado
+    const inc = conf.incidentes as any
+    const asigs = Array.isArray(inc?.asignaciones_tecnico) ? inc.asignaciones_tecnico : []
+    const asig = asigs.find((a: any) => a.estado_asignacion === 'completada') || asigs[0]
+    const idTecnico = asig?.id_tecnico
+
+    // Notificar al técnico: email (fire-and-forget)
     const { notificarTecnicoConformidadRechazada } = await import('@/features/notificaciones/notificaciones.service')
     notificarTecnicoConformidadRechazada(conf.id_incidente).catch(console.error)
 
-    // Eliminar la conformidad para que el técnico pueda volver a subir
+    // Notificar al técnico: in-app
+    if (idTecnico) {
+      try {
+        const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacion({
+          id_tecnico: idTecnico,
+          tipo: 'conformidad_rechazada',
+          titulo: 'Conformidad rechazada',
+          mensaje: `La foto de conformidad del incidente #${conf.id_incidente} fue rechazada. Por favor subí una nueva foto clara de la conformidad firmada por el cliente.`,
+          id_incidente: conf.id_incidente,
+        })
+      } catch { /* no bloquear la operación principal */ }
+    }
+
+    // Marcar como rechazada (sin eliminar, para conservar historial en timeline)
     const { error } = await supabase
       .from('conformidades')
-      .delete()
+      .update({
+        esta_rechazada: true,
+        fecha_rechazo: new Date().toISOString(),
+      })
       .eq('id_conformidad', idConformidad)
 
     if (error) return { success: false, error: error.message }

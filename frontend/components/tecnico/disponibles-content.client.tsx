@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle, Phone, Mail } from 'lucide-react'
 import { toast } from 'sonner'
-import { getPrioridadColor } from '@/shared/utils/colors'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -178,11 +177,6 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales }: Disp
                         {asignacion.incidentes.categoria}
                       </Badge>
                     )}
-                    {asignacion.incidentes.nivel_prioridad && (
-                      <Badge className={getPrioridadColor(asignacion.incidentes.nivel_prioridad)}>
-                        {asignacion.incidentes.nivel_prioridad}
-                      </Badge>
-                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -230,32 +224,32 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales }: Disp
                   Asignado: {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy HH:mm', { locale: es })}
                 </div>
 
-                <div className="flex gap-2 pt-2 border-t">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => handleVerDetalles(asignacion.incidentes!.id_incidente)}
-                  >
-                    Ver Detalles
-                  </Button>
-                  <div className="flex-1 flex gap-2">
+                <div className="space-y-2 pt-2 border-t">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
-                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700"
                       onClick={() => handleAceptarClick(asignacion)}
                       disabled={procesando}
                     >
-                      <CheckCircle className="h-4 w-4 mr-2" />
+                      <CheckCircle className="h-4 w-4 mr-1.5" />
                       Aprobar
                     </Button>
                     <Button
                       variant="outline"
-                      className="flex-1"
+                      className="text-red-600 border-red-200 hover:bg-red-50"
                       onClick={() => handleRechazarClick(asignacion)}
                       disabled={procesando}
                     >
                       Rechazar
                     </Button>
                   </div>
+                  <Button
+                    variant="ghost"
+                    className="w-full text-xs text-gray-500 h-8"
+                    onClick={() => handleVerDetalles(asignacion.incidentes!.id_incidente)}
+                  >
+                    Ver detalles del incidente
+                  </Button>
                 </div>
               </CardContent>
             </Card>

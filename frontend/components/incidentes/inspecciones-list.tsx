@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Plus, Trash2, Wrench, Eye } from 'lucide-react'
-import { crearInspeccion, eliminarInspeccion } from '@/features/inspecciones/inspecciones.service'
+import { Plus, Wrench, Eye, CheckCircle } from 'lucide-react'
+import { crearInspeccion } from '@/features/inspecciones/inspecciones.service'
 import type { InspeccionConDetalle } from '@/features/inspecciones/inspecciones.types'
 
 interface InspeccionsListProps {
@@ -20,6 +20,7 @@ interface InspeccionsListProps {
   inspecciones: InspeccionConDetalle[]
   onInspeccionCreated?: () => void
   onInspeccionDeleted?: () => void
+  puedeCrearNueva?: boolean
 }
 
 export function InspeccionesList({
@@ -28,6 +29,7 @@ export function InspeccionesList({
   inspecciones,
   onInspeccionCreated,
   onInspeccionDeleted,
+  puedeCrearNueva = false,
 }: InspeccionsListProps) {
   const [openModal, setOpenModal] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -78,24 +80,6 @@ export function InspeccionesList({
     }
   }
 
-  const handleDelete = async (idInspeccion: number) => {
-    if (!confirm('¿Eliminar esta inspección?')) return
-
-    setLoading(true)
-    try {
-      const result = await eliminarInspeccion(idInspeccion)
-      if (result.success) {
-        toast.success('Inspección eliminada')
-        onInspeccionDeleted?.()
-      } else {
-        toast.error('Error', {
-          description: result.error,
-        })
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="space-y-4">
@@ -109,7 +93,8 @@ export function InspeccionesList({
           </div>
         </div>
 
-        <Dialog open={openModal} onOpenChange={setOpenModal}>
+        {(inspecciones.length === 0 || puedeCrearNueva) ? (
+          <Dialog open={openModal} onOpenChange={setOpenModal}>
           <DialogTrigger asChild>
             <Button onClick={() => resetForm()} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -174,7 +159,13 @@ export function InspeccionesList({
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
+            <CheckCircle className="h-4 w-4 flex-shrink-0" />
+            <span>Ya cargaste la inspección de este incidente</span>
+          </div>
+        )}
       </div>
 
       {/* Listado de inspecciones */}
@@ -198,24 +189,16 @@ export function InspeccionesList({
               <Card>
                 <CardContent className="pt-6">
                   <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-600 font-medium">
-                            {format(new Date(inspeccion.fecha_inspeccion || new Date()), 'dd MMM yyyy', { locale: es })}
-                          </span>
-                        </div>
-                        <p className="font-medium text-sm">{inspeccion.descripcion_inspeccion}</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-0.5">
+                          Inspección #{inspeccion.id_inspeccion}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {format(new Date(inspeccion.fecha_inspeccion || new Date()), 'dd MMM yyyy', { locale: es })}
+                        </span>
                       </div>
-
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(inspeccion.id_inspeccion)}
-                        disabled={loading}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
+                      <p className="font-medium text-sm">{inspeccion.descripcion_inspeccion}</p>
                     </div>
 
                     {inspeccion.causas_determinadas && (

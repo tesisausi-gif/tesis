@@ -14,6 +14,7 @@ const INSPECCION_SELECT = `
   id_inspeccion,
   id_incidente,
   id_tecnico,
+  esta_anulada,
   fecha_inspeccion,
   descripcion_inspeccion,
   causas_determinadas,
@@ -88,7 +89,8 @@ export async function getInspeccion(idInspeccion: number): Promise<InspeccionCon
 // --- Escrituras ---
 
 /**
- * Crear una nueva inspección
+ * Crear una nueva inspección.
+ * Bloqueada si ya existe un presupuesto activo (no rechazado) para el incidente.
  */
 export async function crearInspeccion(data: {
   id_incidente: number
@@ -105,6 +107,20 @@ export async function crearInspeccion(data: {
   try {
     const supabase = await createClient()
 
+    // Bloquear si ya existe un presupuesto activo para el incidente
+    const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+    const supabaseAdmin = createAdminClient()
+    const { data: presupuestoExistente } = await supabaseAdmin
+      .from('presupuestos')
+      .select('id_presupuesto')
+      .eq('id_incidente', data.id_incidente)
+      .neq('estado_presupuesto', 'rechazado')
+      .maybeSingle()
+
+    if (presupuestoExistente) {
+      return { success: false, error: 'Ya existe un presupuesto activo para este incidente. No se pueden agregar más inspecciones.' }
+    }
+
     const { data: inspeccion, error } = await supabase
       .from('inspecciones')
       .insert({
@@ -115,6 +131,16 @@ export async function crearInspeccion(data: {
       .single()
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al admin que se realizó la inspección
+    const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+    await crearNotificacionAdmin({
+      tipo: 'inspeccion_realizada',
+      titulo: 'Inspección realizada',
+      mensaje: `El técnico completó la inspección del incidente #${data.id_incidente}. Ya puede cargar el presupuesto.`,
+      id_incidente: data.id_incidente,
+    })
+
     return { success: true, data: inspeccion as Inspeccion }
   } catch (error) {
     return { success: false, error: 'Error inesperado al crear inspección' }

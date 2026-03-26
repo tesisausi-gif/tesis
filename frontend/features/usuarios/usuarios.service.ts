@@ -434,6 +434,17 @@ export async function crearSolicitudRegistro(data: {
       })
 
     if (error) return { success: false, error: error.message }
+
+    // Notificar al admin sobre la nueva solicitud de registro
+    try {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacionAdmin({
+        tipo: 'solicitud_registro',
+        titulo: 'Nueva solicitud de técnico',
+        mensaje: `${data.nombre} ${data.apellido} solicitó registrarse como técnico${data.especialidad ? ` (${data.especialidad})` : ''}.`,
+      })
+    } catch { /* no bloquear el registro si la notificación falla */ }
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al enviar solicitud' }

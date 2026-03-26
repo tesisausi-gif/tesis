@@ -295,12 +295,10 @@ export function TecnicoPerfilContent({ tecnico, email }: Props) {
 
       {/* Cambiar Contraseña */}
       {!changingPassword ? (
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={() => setChangingPassword(true)}>
-            <Lock className="h-4 w-4 mr-2" />
-            Cambiar Contraseña
-          </Button>
-        </div>
+        <Button variant="outline" className="w-full" onClick={() => setChangingPassword(true)}>
+          <Lock className="h-4 w-4 mr-2" />
+          Cambiar Contraseña
+        </Button>
       ) : (
         <Card>
           <CardHeader>

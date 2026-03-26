@@ -30,6 +30,7 @@ export interface Incidente extends IncidenteBase {
 // Incidente con datos de cliente (para admin)
 export interface IncidenteConCliente extends Incidente {
   clientes: ClienteResumen | null
+  asignaciones_tecnico?: { estado_asignacion: string; tecnicos: { nombre: string; apellido: string } | null }[]
 }
 
 // Incidente con todos los detalles
@@ -58,6 +59,26 @@ export interface UpdateIncidenteDTO {
   estado_actual?: string
   nivel_prioridad?: string
   categoria?: string | null
+}
+
+// Resumen de presupuesto para la lista de incidentes del admin
+export interface PresupuestoResumen {
+  id_presupuesto: number
+  estado_presupuesto: string
+}
+
+// Resumen de conformidad para la lista de incidentes del admin
+export interface ConformidadResumen {
+  id_conformidad: number
+  url_documento: string | null
+  esta_firmada: number | boolean
+  esta_rechazada: boolean
+}
+
+// Incidente con datos de cliente + presupuestos/conformidades (para admin)
+export interface IncidenteConClienteAdmin extends IncidenteConCliente {
+  presupuestos?: PresupuestoResumen[]
+  conformidades?: ConformidadResumen[]
 }
 
 // Filtros para métricas y reportes

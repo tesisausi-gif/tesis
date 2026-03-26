@@ -72,7 +72,7 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
       const r = await getR1IncidentesPorTipoEstado({ fechaDesde, fechaHasta, categoria, estadoActual })
       kpis = [
         { label: 'Total', valor: String(r.total) },
-        { label: '% Resueltos', valor: fmtPct(r.porcentajeCerrados) },
+        { label: '% Finalizados', valor: fmtPct(r.porcentajeCerrados) },
         { label: '% En proceso', valor: fmtPct(r.porcentajeEnCurso) },
         { label: 'Promedio diario', valor: fmtN(r.promedioDiario) },
       ]
@@ -234,7 +234,7 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
       kpis = [
         { label: 'Total incidentes', valor: String(r.totalIncidentes) },
         { label: 'Abiertos', valor: String(r.incidentesAbiertos) },
-        { label: 'Resueltos', valor: String(r.incidentesCerrados) },
+        { label: 'Finalizados', valor: String(r.incidentesCerrados) },
         { label: 'Días prom. resolución', valor: fmtN(r.promedioResolucionDias) },
         { label: 'Ingresos', valor: fmt$(r.totalIngresos) },
         { label: 'Costos', valor: fmt$(r.totalCostos) },

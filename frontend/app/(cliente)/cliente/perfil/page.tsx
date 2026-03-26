@@ -343,10 +343,6 @@ export default function ClientePerfil() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-gray-500">ID de Usuario</p>
-                <p className="text-base font-mono text-sm">{user.id}</p>
-              </div>
-              <div>
                 <p className="text-sm font-medium text-gray-500">Tipo de Cuenta</p>
                 <p className="text-base">Cliente</p>
               </div>
@@ -355,12 +351,10 @@ export default function ClientePerfil() {
 
           {/* Cambiar Contraseña */}
           {!changingPassword ? (
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={() => setChangingPassword(true)}>
-                <Lock className="h-4 w-4 mr-2" />
-                Cambiar Contraseña
-              </Button>
-            </div>
+            <Button variant="outline" className="w-full" onClick={() => setChangingPassword(true)}>
+              <Lock className="h-4 w-4 mr-2" />
+              Cambiar Contraseña
+            </Button>
           ) : (
             <Card>
               <CardHeader>

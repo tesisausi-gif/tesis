@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -33,8 +34,21 @@ import {
   UserPlus,
   Settings,
   Save,
+  Loader2,
+  Send,
+  XCircle,
+  Phone,
+  Mail,
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
+  Lock,
+  Plus,
+  CheckCircle2,
+  Upload,
+  ImageIcon,
 } from 'lucide-react'
-import { CategoriaIncidente, EstadoIncidente } from '@/shared/types/enums'
+import { CategoriaIncidente, EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { InspeccionesList } from './inspecciones-list'
 import { CalificacionTecnico } from '@/components/cliente/calificacion-tecnico'
 import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
@@ -44,18 +58,31 @@ import {
   getTimelineData,
   actualizarIncidente,
 } from '@/features/incidentes/incidentes.service'
-import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
+import { crearAsignacion, completarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
+import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rechazarPresupuesto } from '@/features/presupuestos/presupuestos.service'
+import { getConformidadDelIncidente, crearConformidadPorTecnico, aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
+import { crearAvance } from '@/features/avances/avances.service'
+import { createClient } from '@/shared/lib/supabase/client'
+import { PresupuestosClienteList } from '@/components/cliente/presupuestos-cliente-list'
+import type { Presupuesto } from '@/features/presupuestos/presupuestos.types'
+import type { Conformidad } from '@/features/conformidades/conformidades.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
+
+interface TimelineEventDetalle {
+  label: string
+  value: string
+}
 
 interface TimelineEvent {
   id: string
-  tipo: 'creacion' | 'asignacion' | 'inspeccion' | 'presupuesto' | 'pago' | 'conformidad' | 'calificacion' | 'estado'
+  tipo: 'creacion' | 'asignacion' | 'inspeccion' | 'presupuesto' | 'pago' | 'conformidad' | 'calificacion' | 'estado' | 'avance'
   titulo: string
   descripcion: string
   fecha: string
   icono: React.ReactNode
   color: string
+  detalleItems?: TimelineEventDetalle[]
 }
 
 interface IncidenteCompleto {
@@ -105,28 +132,90 @@ interface Props {
   onOpenChange: (open: boolean) => void
   onUpdate?: () => void
   rol?: 'admin' | 'cliente' | 'tecnico'
+  initialTab?: string
+  hideTabs?: boolean
 }
 
-// Estados simplificados
+// Estados que el admin puede asignar manualmente.
+// 'resuelto' NO está incluido — solo se alcanza via aprobación de conformidad.
 const ESTADOS_INCIDENTE = [
   'pendiente',
   'en_proceso',
-  'resuelto',
 ]
 
 const ESTADOS_LABELS: Record<string, string> = {
   'pendiente': 'Pendiente',
   'en_proceso': 'En Proceso',
+  'asignacion_solicitada': 'Asignación solicitada',
   'resuelto': 'Resuelto',
+  'finalizado': 'Finalizado',
 }
 
 const ESTADO_COLORS: Record<string, string> = {
   'pendiente': 'bg-yellow-100 text-yellow-800',
   'en_proceso': 'bg-blue-100 text-blue-800',
+  'asignacion_solicitada': 'bg-purple-100 text-purple-800',
   'resuelto': 'bg-green-100 text-green-800',
+  'finalizado': 'bg-green-100 text-green-800',
 }
 
-const PRIORIDADES = ['Baja', 'Media', 'Alta', 'Urgente']
+function TecnicoAsignadoCard({ nombre, especialidad, telefono, email, estado }: {
+  nombre: string
+  especialidad?: string
+  telefono?: string
+  email?: string
+  estado: string
+}) {
+  const [contactoVisible, setContactoVisible] = useState(false)
+  const tieneContacto = telefono || email
+
+  return (
+    <div className="space-y-2">
+      <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+        <Wrench className="h-4 w-4" />
+        Técnico Asignado
+      </h4>
+      <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">{nombre}</p>
+            {especialidad && <p className="text-xs text-gray-500">{especialidad}</p>}
+          </div>
+          <Badge variant="outline">{ESTADO_ASIGNACION_LABELS[estado] || estado}</Badge>
+        </div>
+        {tieneContacto && (
+          <div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 -ml-2"
+              onClick={() => setContactoVisible(v => !v)}
+            >
+              {contactoVisible ? <ChevronUp className="h-3 w-3 mr-1" /> : <ChevronDown className="h-3 w-3 mr-1" />}
+              {contactoVisible ? 'Ocultar datos' : 'Ver datos de contacto'}
+            </Button>
+            {contactoVisible && (
+              <div className="mt-1 space-y-1 border-t pt-2">
+                {telefono && (
+                  <p className="text-xs text-gray-600 flex items-center gap-1.5">
+                    <Phone className="h-3 w-3 text-gray-400" />
+                    {telefono}
+                  </p>
+                )}
+                {email && (
+                  <p className="text-xs text-gray-600 flex items-center gap-1.5">
+                    <Mail className="h-3 w-3 text-gray-400" />
+                    {email}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 const ESTADO_ASIGNACION_LABELS: Record<string, string> = {
   'pendiente': 'Pendiente',
@@ -136,39 +225,162 @@ const ESTADO_ASIGNACION_LABELS: Record<string, string> = {
   'completada': 'Completada',
 }
 
-const PRIORIDAD_COLORS: Record<string, string> = {
-  'Baja': 'bg-green-100 text-green-800',
-  'Media': 'bg-yellow-100 text-yellow-800',
-  'Alta': 'bg-orange-100 text-orange-800',
-  'Urgente': 'bg-red-100 text-red-800',
+// ─────────────────────────────────────────────────────────────────────────────
+// Stepper de flujo de trabajo para el técnico
+// ─────────────────────────────────────────────────────────────────────────────
+type StepStatus = 'completed' | 'active' | 'locked'
+
+interface StepDef {
+  id: number
+  label: string
+  sublabel: string
+  tab: string
+  status: StepStatus
 }
 
-export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin' }: Props) {
+function StepperTecnico({
+  steps,
+  activeTab,
+  onStepClick,
+}: {
+  steps: StepDef[]
+  activeTab: string
+  onStepClick: (tab: string) => void
+}) {
+  const completedCount = steps.filter(s => s.status === 'completed').length
+
+  return (
+    <div className="space-y-1">
+      {/* Progress header */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Flujo de trabajo</span>
+        <span className="text-[10px] text-gray-400 font-medium">{completedCount}/{steps.length} completados</span>
+      </div>
+
+      {/* Step rows — each is a full-width nav item */}
+      {steps.map((step) => {
+        // Highlight the step whose tab is active AND is the "most relevant" for that tab
+        // (when multiple steps share a tab, highlight the active/last-completed one)
+        const stepsForTab = steps.filter(s => s.tab === step.tab)
+        const relevantStep = stepsForTab.find(s => s.status === 'active') ??
+          stepsForTab.filter(s => s.status === 'completed').at(-1) ??
+          stepsForTab[0]
+        const isSelected = activeTab === step.tab && relevantStep?.id === step.id
+        const canClick = step.status !== 'locked'
+
+        return (
+          <button
+            key={step.id}
+            onClick={() => canClick && onStepClick(step.tab)}
+            disabled={!canClick}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${
+              isSelected
+                ? step.status === 'completed'
+                  ? 'bg-emerald-50 border border-emerald-200'
+                  : 'bg-amber-50 border border-amber-200'
+                : canClick
+                ? 'bg-gray-50 border border-gray-100 hover:bg-gray-100 active:scale-[0.98]'
+                : 'bg-gray-50 border border-gray-100 opacity-40 cursor-not-allowed'
+            }`}
+          >
+            {/* Status circle */}
+            <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+              step.status === 'completed'
+                ? 'bg-emerald-500 text-white'
+                : step.status === 'active'
+                ? 'bg-amber-500 text-white'
+                : 'bg-gray-200 text-gray-400'
+            }`}>
+              {step.status === 'completed' ? <CheckCircle className="w-3.5 h-3.5" /> : step.id}
+            </div>
+
+            {/* Label + sublabel */}
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs font-semibold leading-tight ${
+                step.status === 'completed' ? 'text-emerald-700' :
+                step.status === 'active' ? 'text-amber-700' : 'text-gray-400'
+              }`}>
+                {step.label}
+              </p>
+              <p className={`text-[10px] leading-tight mt-0.5 ${
+                step.status === 'completed' ? 'text-emerald-500' :
+                step.status === 'active' ? 'text-amber-500' : 'text-gray-300'
+              }`}>
+                {step.sublabel}
+              </p>
+            </div>
+
+            {/* Right icon */}
+            {canClick
+              ? <ChevronRight className={`w-4 h-4 flex-shrink-0 ${
+                  step.status === 'completed' ? 'text-emerald-400' : 'text-amber-400'
+                }`} />
+              : <Lock className="w-3.5 h-3.5 flex-shrink-0 text-gray-300" />
+            }
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin', initialTab, hideTabs = false }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState('detalles')
   const [incidente, setIncidente] = useState<IncidenteCompleto | null>(null)
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([])
   const [inspecciones, setInspecciones] = useState<any[]>([])
+  const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([])
+  const [conformidad, setConformidad] = useState<Conformidad | null>(null)
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
-  const [nuevaPrioridad, setNuevaPrioridad] = useState('')
   const [nuevaCategoria, setNuevaCategoria] = useState('')
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState('')
   const [observacionesAsignacion, setObservacionesAsignacion] = useState('')
+
+  // Form state para presupuesto
+  const [presDescripcion, setPresDescripcion] = useState('')
+  const [presCostoMateriales, setPresCostoMateriales] = useState('')
+  const [presCostoManoObra, setPresCostoManoObra] = useState('')
+  const [presAlternativas, setPresAlternativas] = useState('')
+  const [presInspeccionId, setPresInspeccionId] = useState('')
+  const [savingPresupuesto, setSavingPresupuesto] = useState(false)
+
+  // State para acciones de admin (aprobar/rechazar presupuesto y conformidad)
+  const [gastosAdmin, setGastosAdmin] = useState('')
+  const [puntuacionAdmin, setPuntuacionAdmin] = useState(5)
+  const [comentariosAdmin, setComentariosAdmin] = useState('')
+  const [resolvioProbAdmin, setResolvioProbAdmin] = useState(true)
+  const [savingPresupuestoAdmin, setSavingPresupuestoAdmin] = useState(false)
+  const [savingConformidadAdmin, setSavingConformidadAdmin] = useState(false)
+
+  // State para acciones de ejecución (solo técnico)
+  const [avanceDesc, setAvanceDesc] = useState('')
+  const [avancePct, setAvancePct] = useState('')
+  const [savingAvance, setSavingAvance] = useState(false)
+  const [savingCompletar, setSavingCompletar] = useState(false)
+  const [confirmandoCompletar, setConfirmandoCompletar] = useState(false)
+  const [fotoFile, setFotoFile] = useState<File | null>(null)
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null)
+  const [uploadingFoto, setUploadingFoto] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const CATEGORIAS = Object.values(CategoriaIncidente) as string[]
 
   useEffect(() => {
     if (open && incidenteId) {
+      setActiveTab(initialTab ?? 'detalles')
       cargarIncidente()
       if (rol === 'admin') {
         cargarTecnicos()
       }
     }
-  }, [open, incidenteId])
+  }, [open, incidenteId, initialTab])
 
   const cargarTecnicos = async () => {
     try {
@@ -189,24 +401,42 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       setIncidente(incidenteData as unknown as IncidenteCompleto)
       setNuevoEstado(incidenteData.estado_actual || '')
-      setNuevaPrioridad(incidenteData.nivel_prioridad || '')
-
       // Cargar asignaciones
       const asignacionesData = await getAsignacionesDelIncidente(incidenteId)
       setAsignaciones(asignacionesData as unknown as Asignacion[])
 
-      // Cargar inspecciones si el rol es técnico
-      if (rol === 'tecnico') {
+      // Cargar datos específicos por rol
+      if (rol === 'tecnico' || rol === 'admin') {
         try {
-          const inspeccionesData = await getInspeccionesDelIncidente(incidenteId)
+          const [inspeccionesData, presupuestosData, conformidadData] = await Promise.all([
+            getInspeccionesDelIncidente(incidenteId),
+            getPresupuestosDelIncidente(incidenteId),
+            getConformidadDelIncidente(incidenteId),
+          ])
           setInspecciones(inspeccionesData)
+          setPresupuestos(presupuestosData)
+          setConformidad(conformidadData)
         } catch (error) {
-          console.error('Error al cargar inspecciones:', error)
+          console.error('Error al cargar datos:', error)
+        }
+      }
+
+      if (rol === 'cliente') {
+        try {
+          const presupuestosData = await getPresupuestosDelIncidente(incidenteId)
+          // El cliente solo ve presupuestos que la inmobiliaria ya aprobó y ajustó.
+          // No ve: 'enviado' (precio original del técnico) ni 'rechazado' por admin (decisión interna).
+          const visiblesParaCliente = presupuestosData.filter(p =>
+            [EstadoPresupuesto.APROBADO_ADMIN, EstadoPresupuesto.APROBADO].includes(p.estado_presupuesto as EstadoPresupuesto)
+          )
+          setPresupuestos(visiblesParaCliente)
+        } catch (error) {
+          console.error('Error al cargar presupuestos del cliente:', error)
         }
       }
 
       // Construir timeline
-      await construirTimeline(incidenteData, asignacionesData)
+      await construirTimeline(incidenteData, asignacionesData, rol)
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -214,7 +444,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     }
   }
 
-  const construirTimeline = async (incidenteData: any, asignacionesData: any[]) => {
+  const construirTimeline = async (incidenteData: any, asignacionesData: any[], rolActual: string = 'admin') => {
+    // Normaliza fechas sin info de timezone a UTC (columnas timestamp sin timestamptz)
+    const toUTC = (d: string | null | undefined): string | undefined => {
+      if (!d) return undefined
+      if (d.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(d)) return d
+      return d + 'Z'
+    }
     const timelineEvents: TimelineEvent[] = []
 
     // Evento de creación
@@ -228,91 +464,279 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       color: 'bg-blue-500',
     })
 
-    // Asignaciones
+    // Asignaciones — cada estado genera su propio evento con la fecha correcta
     asignacionesData?.forEach((asig: any) => {
       const tecnicoNombre = `${asig.tecnicos?.nombre || ''} ${asig.tecnicos?.apellido || ''}`.trim()
+      const desc = tecnicoNombre || 'Sin técnico'
 
-      let titulo: string
-      let color: string
-
-      switch (asig.estado_asignacion) {
-        case 'pendiente':
-          titulo = 'Asignación Pendiente de Aprobación'
-          color = 'bg-yellow-500'
-          break
-        case 'aceptada':
-          titulo = 'Técnico Asignado'
-          color = 'bg-purple-500'
-          break
-        case 'rechazada':
-          titulo = 'Asignación Rechazada'
-          color = 'bg-red-500'
-          break
-        case 'en_curso':
-          titulo = 'Trabajo en Curso'
-          color = 'bg-blue-500'
-          break
-        case 'completada':
-          titulo = 'Trabajo Completado'
-          color = 'bg-green-500'
-          break
-        default:
-          titulo = 'Asignación de Técnico'
-          color = 'bg-purple-500'
-      }
-
-      const descripcion = asig.observaciones
-        ? `${tecnicoNombre} — ${asig.observaciones}`
-        : tecnicoNombre
-
+      // Evento de asignación (siempre)
       timelineEvents.push({
-        id: `asig-${asig.id_asignacion}`,
+        id: `asig-pendiente-${asig.id_asignacion}`,
         tipo: 'asignacion',
-        titulo,
-        descripcion,
+        titulo: 'Técnico asignado',
+        descripcion: desc,
         fecha: asig.fecha_asignacion,
         icono: <Wrench className="h-4 w-4" />,
-        color,
+        color: 'bg-orange-400',
       })
+
+      // Evento de aceptación
+      if (asig.fecha_aceptacion) {
+        timelineEvents.push({
+          id: `asig-aceptada-${asig.id_asignacion}`,
+          tipo: 'asignacion',
+          titulo: 'Técnico aceptó la asignación',
+          descripcion: desc,
+          fecha: asig.fecha_aceptacion,
+          icono: <Wrench className="h-4 w-4" />,
+          color: 'bg-purple-500',
+        })
+      }
+
+      // Evento de rechazo (solo visible para admin/técnico)
+      if (asig.fecha_rechazo && rolActual !== 'cliente') {
+        timelineEvents.push({
+          id: `asig-rechazada-${asig.id_asignacion}`,
+          tipo: 'asignacion',
+          titulo: 'Técnico rechazó la asignación',
+          descripcion: desc,
+          fecha: asig.fecha_rechazo,
+          icono: <Wrench className="h-4 w-4" />,
+          color: 'bg-red-500',
+        })
+      }
+
+      // Evento de trabajo completado
+      if (asig.estado_asignacion === 'completada') {
+        timelineEvents.push({
+          id: `asig-completada-${asig.id_asignacion}`,
+          tipo: 'asignacion',
+          titulo: 'Trabajo completado',
+          descripcion: desc,
+          fecha: asig.fecha_completado || asig.fecha_aceptacion || asig.fecha_asignacion,
+          icono: <Wrench className="h-4 w-4" />,
+          color: 'bg-green-500',
+        })
+      }
     })
 
-    // Cargar inspecciones, presupuestos y pagos para timeline
-    const { inspecciones, presupuestos, pagos } = await getTimelineData(incidenteData.id_incidente)
+    // Cargar inspecciones, presupuestos, pagos, avances y conformidades para timeline
+    const { inspecciones, presupuestos, pagos, avances, conformidades } = await getTimelineData(incidenteData.id_incidente)
 
     inspecciones?.forEach((insp: any) => {
+      const tecnicoNombre = insp.tecnicos ? `${insp.tecnicos.nombre} ${insp.tecnicos.apellido}`.trim() : null
+      const detalle: TimelineEventDetalle[] = []
+      if (tecnicoNombre) detalle.push({ label: 'Técnico', value: tecnicoNombre })
+      if (insp.descripcion_inspeccion) detalle.push({ label: 'Descripción', value: insp.descripcion_inspeccion })
+      if (insp.causas_determinadas) detalle.push({ label: 'Causas', value: insp.causas_determinadas })
+      if (insp.danos_ocasionados) detalle.push({ label: 'Daños', value: insp.danos_ocasionados })
+      if (insp.dias_estimados_trabajo) detalle.push({ label: 'Días estimados', value: String(insp.dias_estimados_trabajo) })
+
       timelineEvents.push({
         id: `insp-${insp.id_inspeccion}`,
         tipo: 'inspeccion',
         titulo: 'Inspección Realizada',
-        descripcion: insp.descripcion_inspeccion || 'Sin descripción',
+        descripcion: tecnicoNombre ? `Por ${tecnicoNombre}` : (insp.descripcion_inspeccion || 'Sin descripción'),
         fecha: insp.fecha_inspeccion,
         icono: <ClipboardList className="h-4 w-4" />,
         color: 'bg-orange-500',
+        detalleItems: detalle.length > 0 ? detalle : undefined,
+      })
+    })
+
+    avances?.forEach((av: any) => {
+      if (rolActual === 'cliente') return // el cliente no ve avances técnicos
+      const tecnicoNombre = av.tecnicos ? `${av.tecnicos.nombre} ${av.tecnicos.apellido}`.trim() : null
+      const detalle: TimelineEventDetalle[] = []
+      if (tecnicoNombre) detalle.push({ label: 'Técnico', value: tecnicoNombre })
+      if (av.descripcion_avance) detalle.push({ label: 'Detalle', value: av.descripcion_avance })
+      if (av.porcentaje_completado != null) detalle.push({ label: 'Progreso', value: `${av.porcentaje_completado}%` })
+      if (av.observaciones) detalle.push({ label: 'Observaciones', value: av.observaciones })
+
+      timelineEvents.push({
+        id: `avance-${av.id_avance}`,
+        tipo: 'avance',
+        titulo: 'Avance de Reparación',
+        descripcion: av.porcentaje_completado != null ? `${av.porcentaje_completado}% completado` : (av.descripcion_avance || 'Sin descripción'),
+        fecha: av.fecha_avance,
+        icono: <Wrench className="h-4 w-4" />,
+        color: 'bg-indigo-500',
+        detalleItems: detalle.length > 0 ? detalle : undefined,
       })
     })
 
     presupuestos?.forEach((pres: any) => {
-      timelineEvents.push({
-        id: `pres-${pres.id_presupuesto}`,
-        tipo: 'presupuesto',
-        titulo: `Presupuesto ${pres.estado_presupuesto || ''}`,
-        descripcion: `Total: $${pres.costo_total?.toLocaleString() || 0}`,
-        fecha: pres.fecha_creacion,
-        icono: <FileText className="h-4 w-4" />,
-        color: 'bg-cyan-500',
-      })
+      if (rolActual === 'cliente') {
+        if (!['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto)) return
+        timelineEvents.push({
+          id: `pres-${pres.id_presupuesto}`,
+          tipo: 'presupuesto',
+          titulo: 'Presupuesto Recibido',
+          descripcion: `La inmobiliaria te envió un presupuesto por $${(pres.costo_total ?? 0).toLocaleString()}`,
+          fecha: pres.fecha_modificacion || pres.fecha_creacion,
+          icono: <FileText className="h-4 w-4" />,
+          color: 'bg-cyan-500',
+        })
+        if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto Aprobado',
+            descripcion: `Aprobaste el presupuesto por $${(pres.costo_total ?? 0).toLocaleString()}`,
+            fecha: pres.fecha_aprobacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-green-500',
+          })
+        }
+      } else if (rolActual === 'tecnico') {
+        // Técnico: ve el presupuesto que él envió y si fue aprobado/rechazado por la inmobiliaria
+        timelineEvents.push({
+          id: `pres-${pres.id_presupuesto}`,
+          tipo: 'presupuesto',
+          titulo: 'Presupuesto enviado a la inmobiliaria',
+          descripcion: `Total: $${(pres.costo_total ?? 0).toLocaleString()}`,
+          fecha: pres.fecha_creacion,
+          icono: <FileText className="h-4 w-4" />,
+          color: 'bg-cyan-500',
+        })
+        if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-admin-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto aprobado por la inmobiliaria',
+            descripcion: `Total: $${(pres.costo_total ?? 0).toLocaleString()}`,
+            fecha: pres.fecha_modificacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-green-500',
+          })
+        }
+        if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-cliente-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Cliente aprobó el presupuesto',
+            descripcion: 'Ya podés comenzar el trabajo',
+            fecha: pres.fecha_aprobacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-green-500',
+          })
+        }
+        if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
+          timelineEvents.push({
+            id: `pres-rechazado-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto rechazado por la inmobiliaria',
+            descripcion: 'Deberás enviar un nuevo presupuesto',
+            fecha: pres.fecha_modificacion,
+            icono: <XCircle className="h-4 w-4" />,
+            color: 'bg-red-500',
+          })
+        }
+      } else {
+        // Admin: ve el flujo completo
+        timelineEvents.push({
+          id: `pres-${pres.id_presupuesto}`,
+          tipo: 'presupuesto',
+          titulo: 'Presupuesto Enviado',
+          descripcion: `Total: $${(pres.costo_total ?? 0).toLocaleString()}`,
+          fecha: pres.fecha_creacion,
+          icono: <FileText className="h-4 w-4" />,
+          color: 'bg-cyan-500',
+        })
+        if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-admin-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto aprobado por administración',
+            descripcion: `Costo final: $${(pres.costo_total ?? 0).toLocaleString()}`,
+            fecha: pres.fecha_modificacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-amber-500',
+          })
+        }
+        if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
+          timelineEvents.push({
+            id: `pres-aprobado-cliente-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto aprobado por el cliente',
+            descripcion: 'El cliente autorizó el trabajo — incidente en proceso',
+            fecha: pres.fecha_aprobacion,
+            icono: <CheckCircle className="h-4 w-4" />,
+            color: 'bg-green-500',
+          })
+        }
+        if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
+          timelineEvents.push({
+            id: `pres-rechazado-${pres.id_presupuesto}`,
+            tipo: 'presupuesto',
+            titulo: 'Presupuesto Rechazado',
+            descripcion: 'El incidente volvió a estado Pendiente',
+            fecha: pres.fecha_modificacion,
+            icono: <XCircle className="h-4 w-4" />,
+            color: 'bg-red-500',
+          })
+        }
+      }
     })
 
     pagos?.forEach((pago: any) => {
+      const detalle: TimelineEventDetalle[] = [
+        { label: 'Monto', value: `$${(pago.monto_pagado ?? 0).toLocaleString()}` },
+      ]
+      if (pago.metodo_pago) detalle.push({ label: 'Método', value: pago.metodo_pago })
+      if (pago.referencia_pago) detalle.push({ label: 'Referencia', value: pago.referencia_pago })
+      if (pago.observaciones) detalle.push({ label: 'Observaciones', value: pago.observaciones })
+
       timelineEvents.push({
         id: `pago-${pago.id_pago}`,
         tipo: 'pago',
         titulo: `Pago Registrado`,
-        descripcion: `$${pago.monto_pagado?.toLocaleString() || 0} - ${pago.metodo_pago || ''}`,
+        descripcion: `$${(pago.monto_pagado ?? 0).toLocaleString()}${pago.metodo_pago ? ` — ${pago.metodo_pago}` : ''}`,
         fecha: pago.fecha_pago,
         icono: <DollarSign className="h-4 w-4" />,
         color: 'bg-green-500',
+        detalleItems: detalle,
       })
+    })
+
+    // Conformidades
+    conformidades?.forEach((conf: any) => {
+      // Subida de foto
+      timelineEvents.push({
+        id: `conf-subida-${conf.id_conformidad}`,
+        tipo: 'conformidad',
+        titulo: 'Conformidad subida',
+        descripcion: 'El técnico subió la foto de conformidad para revisión',
+        fecha: conf.fecha_creacion,
+        icono: <ClipboardList className="h-4 w-4" />,
+        color: 'bg-amber-500',
+      })
+
+      // Rechazada
+      if (conf.esta_rechazada && conf.fecha_rechazo) {
+        timelineEvents.push({
+          id: `conf-rechazada-${conf.id_conformidad}`,
+          tipo: 'conformidad',
+          titulo: 'Conformidad rechazada',
+          descripcion: rolActual === 'cliente' ? 'La administración solicitó una nueva foto' : 'La conformidad fue rechazada — técnico debe resubir',
+          fecha: conf.fecha_rechazo,
+          icono: <XCircle className="h-4 w-4" />,
+          color: 'bg-red-500',
+        })
+      }
+
+      // Aprobada
+      if ((conf.esta_firmada === 1 || conf.esta_firmada === true) && conf.fecha_conformidad) {
+        timelineEvents.push({
+          id: `conf-aprobada-${conf.id_conformidad}`,
+          tipo: 'conformidad',
+          titulo: 'Conformidad aprobada',
+          descripcion: 'La administración aprobó la conformidad — incidente resuelto',
+          fecha: conf.fecha_conformidad,
+          icono: <CheckCircle className="h-4 w-4" />,
+          color: 'bg-green-500',
+        })
+      }
     })
 
     // Evento de cierre si existe
@@ -321,12 +745,15 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         id: 'cierre',
         tipo: 'estado',
         titulo: 'Incidente Cerrado',
-        descripcion: incidenteData.fue_resuelto ? 'Resuelto satisfactoriamente' : 'Cerrado sin resolución',
+        descripcion: incidenteData.fue_resuelto ? 'Finalizado satisfactoriamente' : 'Cerrado sin resolución',
         fecha: incidenteData.fecha_cierre,
         icono: <CheckCircle className="h-4 w-4" />,
         color: incidenteData.fue_resuelto ? 'bg-green-500' : 'bg-gray-500',
       })
     }
+
+    // Normalizar todas las fechas a UTC antes de ordenar
+    timelineEvents.forEach(e => { e.fecha = toUTC(e.fecha) as string })
 
     // Ordenar timeline por fecha
     timelineEvents.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
@@ -342,10 +769,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       if (nuevoEstado && nuevoEstado !== incidente?.estado_actual) {
         updates.estado_actual = nuevoEstado
-      }
-
-      if (nuevaPrioridad && nuevaPrioridad !== incidente?.nivel_prioridad) {
-        updates.nivel_prioridad = nuevaPrioridad
       }
 
       if (nuevaCategoria && nuevaCategoria !== incidente?.categoria) {
@@ -404,6 +827,214 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     }
   }
 
+  const handleAvance = async () => {
+    if (!incidenteId || !avanceDesc.trim()) return
+    setSavingAvance(true)
+    try {
+      const res = await crearAvance({
+        id_incidente: incidenteId,
+        descripcion_avance: avanceDesc.trim(),
+        porcentaje_completado: avancePct ? parseInt(avancePct) : null,
+      })
+      if (res.success) {
+        toast.success('Avance registrado')
+        setAvanceDesc('')
+        setAvancePct('')
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al registrar avance')
+      }
+    } finally {
+      setSavingAvance(false)
+    }
+  }
+
+  const handleCompletar = async () => {
+    if (!incidenteId) return
+    const asig = asignaciones.find(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion))
+    if (!asig) return
+    setSavingCompletar(true)
+    try {
+      const res = await completarAsignacion(asig.id_asignacion)
+      if (res.success) {
+        toast.success('Trabajo marcado como completado')
+        setConfirmandoCompletar(false)
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al completar')
+      }
+    } finally {
+      setSavingCompletar(false)
+    }
+  }
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFotoFile(file)
+    setFotoPreview(URL.createObjectURL(file))
+  }
+
+  const handleSubirConformidad = async () => {
+    if (!incidenteId || !fotoFile) return
+    setUploadingFoto(true)
+    try {
+      const supabase = createClient()
+      const ext = fotoFile.name.split('.').pop() || 'jpg'
+      const path = `tecnico/${incidenteId}/${Date.now()}.${ext}`
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('conformidades')
+        .upload(path, fotoFile, { upsert: false })
+
+      if (uploadError) {
+        toast.error('Error al subir la foto: ' + uploadError.message)
+        return
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('conformidades')
+        .getPublicUrl(uploadData.path)
+
+      const res = await crearConformidadPorTecnico(incidenteId, publicUrl)
+      if (res.success) {
+        toast.success('Conformidad enviada', { description: 'La administración revisará la foto y te notificará.' })
+        setFotoFile(null)
+        setFotoPreview(null)
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al enviar conformidad')
+      }
+    } catch {
+      toast.error('Error inesperado al subir la foto')
+    } finally {
+      setUploadingFoto(false)
+    }
+  }
+
+  const handleCrearPresupuesto = async () => {
+    if (!incidenteId || !presDescripcion.trim()) {
+      toast.error('La descripción es obligatoria')
+      return
+    }
+
+    const materiales = parseFloat(presCostoMateriales) || 0
+    const manoObra = parseFloat(presCostoManoObra) || 0
+    const total = materiales + manoObra
+
+    setSavingPresupuesto(true)
+    try {
+      const idTecnicoActual = asignaciones.find(a =>
+        a.estado_asignacion !== 'rechazada'
+      )?.id_tecnico
+      const inspeccionDelTecnico = inspecciones.find(i => i.id_tecnico === idTecnicoActual)
+      const result = await crearPresupuesto({
+        id_incidente: incidenteId,
+        id_inspeccion: inspeccionDelTecnico?.id_inspeccion ?? null,
+        descripcion_detallada: presDescripcion.trim(),
+        costo_materiales: materiales || undefined,
+        costo_mano_obra: manoObra || undefined,
+        costo_total: total,
+        alternativas_reparacion: presAlternativas.trim() || undefined,
+      })
+
+      if (!result.success) {
+        toast.error('Error al crear presupuesto', { description: result.error })
+        return
+      }
+
+      toast.success('Presupuesto enviado correctamente')
+      setPresDescripcion('')
+      setPresCostoMateriales('')
+      setPresCostoManoObra('')
+      setPresAlternativas('')
+      setPresInspeccionId('')
+      // Recargar presupuestos
+      const data = await getPresupuestosDelIncidente(incidenteId)
+      setPresupuestos(data)
+      onUpdate?.()
+    } catch {
+      toast.error('Error inesperado al crear presupuesto')
+    } finally {
+      setSavingPresupuesto(false)
+    }
+  }
+
+  const handleAprobarPresupuesto = async (idPresupuesto: number) => {
+    setSavingPresupuestoAdmin(true)
+    try {
+      const gastos = parseFloat(gastosAdmin) || 0
+      const res = await aprobarPresupuesto(idPresupuesto, gastos)
+      if (res.success) {
+        toast.success('Presupuesto aprobado — el cliente recibirá notificación')
+        setGastosAdmin('')
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al aprobar presupuesto')
+      }
+    } finally {
+      setSavingPresupuestoAdmin(false)
+    }
+  }
+
+  const handleRechazarPresupuesto = async (idPresupuesto: number) => {
+    setSavingPresupuestoAdmin(true)
+    try {
+      const res = await rechazarPresupuesto(idPresupuesto)
+      if (res.success) {
+        toast.success('Presupuesto rechazado — el incidente volvió a Pendiente')
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al rechazar presupuesto')
+      }
+    } finally {
+      setSavingPresupuestoAdmin(false)
+    }
+  }
+
+  const handleAprobarConformidad = async (idConformidad: number) => {
+    if (puntuacionAdmin < 1 || puntuacionAdmin > 5) {
+      toast.error('La calificación debe ser entre 1 y 5')
+      return
+    }
+    setSavingConformidadAdmin(true)
+    try {
+      const res = await aprobarConformidad(idConformidad, puntuacionAdmin, comentariosAdmin || null, resolvioProbAdmin)
+      if (res.success) {
+        toast.success('Conformidad aprobada — incidente finalizado')
+        setComentariosAdmin('')
+        setPuntuacionAdmin(5)
+        setResolvioProbAdmin(true)
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al aprobar conformidad')
+      }
+    } finally {
+      setSavingConformidadAdmin(false)
+    }
+  }
+
+  const handleRechazarConformidad = async (idConformidad: number) => {
+    setSavingConformidadAdmin(true)
+    try {
+      const res = await rechazarConformidad(idConformidad)
+      if (res.success) {
+        toast.success('Conformidad rechazada — el técnico debe resubir')
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al rechazar conformidad')
+      }
+    } finally {
+      setSavingConformidadAdmin(false)
+    }
+  }
+
   const formatDireccion = () => {
     if (!incidente?.inmuebles) return 'Sin dirección'
     const i = incidente.inmuebles
@@ -416,10 +1047,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
   const getEstadoColor = (estado: string) => {
     return ESTADO_COLORS[estado] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getPrioridadColor = (prioridad: string) => {
-    return PRIORIDAD_COLORS[prioridad] || 'bg-gray-100 text-gray-800'
   }
 
   const getEstadoLabel = (estado: string) => {
@@ -445,28 +1072,85 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : incidente ? (
-          <Tabs defaultValue="detalles" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="detalles">Detalles</TabsTrigger>
-              <TabsTrigger value="timeline">Timeline</TabsTrigger>
-              {rol === 'tecnico' && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && <TabsTrigger value="inspecciones">Inspecciones</TabsTrigger>}
-              {rol === 'cliente' && incidente?.estado_actual === EstadoIncidente.RESUELTO && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
-              {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
-            </TabsList>
+        ) : incidente ? (() => {
+          const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => a.estado_asignacion !== 'rechazada')
+          const hasClientePresupuesto = rol === 'cliente' && presupuestos.length > 0
+          const hasCalificacion = rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO
+          const hasAdminStepperTabs = rol === 'admin' && asignaciones.some(a =>
+            ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+          )
+          // ── Stepper steps computation ─────────────────────────────────────
+          const inspeccionesActivas = inspecciones.filter(i => !i.esta_anulada)
+          const presupuestosActivos = presupuestos.filter(p => p.estado_presupuesto !== EstadoPresupuesto.RECHAZADO)
+          const tieneInspeccion = inspeccionesActivas.length > 0
+          const tienePresupuesto = presupuestosActivos.length > 0
+          const presupuestoAprobadoAdmin = presupuestosActivos.some(p =>
+            [EstadoPresupuesto.APROBADO_ADMIN, EstadoPresupuesto.APROBADO].includes(p.estado_presupuesto as EstadoPresupuesto)
+          )
+          const presupuestoAprobadoCliente = presupuestosActivos.some(p =>
+            p.estado_presupuesto === EstadoPresupuesto.APROBADO
+          )
+          const trabajoCompletado = asignaciones.some(a => a.estado_asignacion === 'completada')
+          const tieneConformidad = !!conformidad
+
+          const computeSteps = (): StepDef[] => {
+            const s1: StepStatus = tieneInspeccion ? 'completed' : 'active'
+            const s2: StepStatus = tienePresupuesto ? 'completed' : tieneInspeccion ? 'active' : 'locked'
+            const s3: StepStatus = presupuestoAprobadoAdmin ? 'completed' : tienePresupuesto ? 'active' : 'locked'
+            const s4: StepStatus = presupuestoAprobadoCliente ? 'completed' : presupuestoAprobadoAdmin ? 'active' : 'locked'
+            const s5: StepStatus = trabajoCompletado ? 'completed' : presupuestoAprobadoCliente ? 'active' : 'locked'
+            const s6: StepStatus = tieneConformidad ? 'completed' : trabajoCompletado ? 'active' : 'locked'
+            return [
+              { id: 1, label: 'Inspección', sublabel: tieneInspeccion ? 'Realizada' : 'Pendiente', tab: 'inspecciones', status: s1 },
+              { id: 2, label: 'Presupuesto', sublabel: tienePresupuesto ? 'Enviado' : 'Pendiente', tab: 'presupuesto', status: s2 },
+              { id: 3, label: 'Aprob. Admin', sublabel: presupuestoAprobadoAdmin ? 'Aprobado' : 'En revisión', tab: 'presupuesto', status: s3 },
+              { id: 4, label: 'Aprob. Cliente', sublabel: presupuestoAprobadoCliente ? 'Aprobado' : 'En espera', tab: 'timeline', status: s4 },
+              { id: 5, label: 'Ejecución', sublabel: trabajoCompletado ? 'Completado' : 'Por iniciar', tab: 'ejecucion', status: s5 },
+              { id: 6, label: 'Conformidad', sublabel: tieneConformidad ? 'Enviada' : trabajoCompletado ? 'Pendiente' : 'Bloqueada', tab: 'conformidad', status: s6 },
+            ]
+          }
+
+          const steps = computeSteps()
+
+          const conformidadAprobada = conformidad && (conformidad.esta_firmada === 1 || conformidad.esta_firmada === true)
+          // Stepper admin: 2 pasos — Presupuesto y Conformidad
+          const computeAdminSteps = (): StepDef[] => {
+            const sa1: StepStatus = presupuestoAprobadoAdmin ? 'completed' : tienePresupuesto ? 'active' : 'locked'
+            const sa2: StepStatus = conformidadAprobada ? 'completed' : (tieneConformidad || trabajoCompletado) ? 'active' : 'locked'
+            return [
+              { id: 1, label: 'Presupuesto', sublabel: presupuestoAprobadoAdmin ? 'Aprobado' : tienePresupuesto ? 'Para aprobar' : 'Sin envío',                          tab: 'presupuesto_admin', status: sa1 },
+              { id: 2, label: 'Conformidad', sublabel: conformidadAprobada ? 'Aprobada' : tieneConformidad ? 'Para revisar' : trabajoCompletado ? 'Pendiente' : 'Bloqueada', tab: 'conformidad_admin', status: sa2 },
+            ]
+          }
+          const adminSteps = computeAdminSteps()
+
+          return (
+          <div className="w-full">
+
+            {/* Stepper admin — solo en área de gestión, sin pills de navegación */}
+            {hasAdminStepperTabs && ['presupuesto_admin', 'conformidad_admin'].includes(activeTab) && !hideTabs && (
+              <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                <StepperTecnico steps={adminSteps} activeTab={activeTab} onStepClick={setActiveTab} />
+              </div>
+            )}
+
+            {/* Stepper técnico — siempre visible en su área de trabajo */}
+            {hasTecnicoTabs && !hideTabs && (
+              <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
+              </div>
+            )}
+
+            {/* ── Content area: key=activeTab garantiza que solo un tab se renderiza ── */}
+            <div key={activeTab}>
 
             {/* Tab Detalles */}
-            <TabsContent value="detalles" className="space-y-4 mt-4">
-              {/* Estado y Prioridad */}
+            {activeTab === 'detalles' && (<div className="space-y-4 mt-4">
+              {/* Estado y Categoría */}
               <div className="flex flex-wrap gap-2">
                 <Badge className={getEstadoColor(incidente.estado_actual)}>
                   {getEstadoLabel(incidente.estado_actual)}
                 </Badge>
-                {incidente.nivel_prioridad && (
-                  <Badge className={getPrioridadColor(incidente.nivel_prioridad)}>
-                    Prioridad: {incidente.nivel_prioridad}
-                  </Badge>
-                )}
                 {incidente.categoria && (
                   <Badge variant="outline">{incidente.categoria}</Badge>
                 )}
@@ -533,30 +1217,23 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 </div>
               )}
 
-              {/* Técnicos Asignados */}
-              {asignaciones.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
-                    <Wrench className="h-4 w-4" />
-                    Técnicos Asignados
-                  </h4>
-                  <div className="space-y-2">
-                    {asignaciones.map((asig) => (
-                      <div key={asig.id_asignacion} className="bg-gray-50 p-3 rounded-lg flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">
-                            {asig.tecnicos?.nombre} {asig.tecnicos?.apellido}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {asig.tecnicos?.especialidad || 'Sin especialidad'}
-                          </p>
-                        </div>
-                        <Badge variant="outline">{ESTADO_ASIGNACION_LABELS[asig.estado_asignacion] || asig.estado_asignacion}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Técnico Asignado */}
+              {(() => {
+                const asigActiva = asignaciones.find(a =>
+                  ['pendiente', 'aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+                )
+                if (!asigActiva) return null
+                const tec = asigActiva.tecnicos
+                return (
+                  <TecnicoAsignadoCard
+                    nombre={tec ? `${tec.nombre} ${tec.apellido}` : 'Sin nombre'}
+                    especialidad={(tec as any)?.especialidad}
+                    telefono={(tec as any)?.telefono}
+                    email={(tec as any)?.correo_electronico}
+                    estado={asigActiva.estado_asignacion}
+                  />
+                )
+              })()}
 
               {/* Fechas */}
               <div className="grid grid-cols-2 gap-4">
@@ -581,10 +1258,10 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </div>
                 )}
               </div>
-            </TabsContent>
+            </div>)}
 
             {/* Tab Timeline */}
-            <TabsContent value="timeline" className="mt-4">
+            {activeTab === 'timeline' && (<div className="mt-4">
               <div className="space-y-3">
                 <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
@@ -595,22 +1272,46 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   <div className="relative">
                     <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-gray-200" />
                     <div className="space-y-4">
-                      {timeline.map((event) => (
-                        <div key={event.id} className="relative flex gap-3">
-                          <div className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full ${event.color} text-white`}>
-                            {event.icono}
-                          </div>
-                          <div className="flex-1 pb-2">
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium">{event.titulo}</p>
-                              <span className="text-xs text-gray-500">
-                                {format(new Date(event.fecha), "dd/MM/yy HH:mm", { locale: es })}
-                              </span>
+                      {timeline.map((event) => {
+                        const isExpanded = expandedEventId === event.id
+                        const hasDetail = event.detalleItems && event.detalleItems.length > 0
+                        return (
+                          <div key={event.id} className="relative flex gap-3">
+                            <div className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${event.color} text-white`}>
+                              {event.icono}
                             </div>
-                            <p className="text-xs text-gray-600 mt-0.5">{event.descripcion}</p>
+                            <div className="flex-1 pb-2">
+                              <button
+                                onClick={() => setExpandedEventId(isExpanded ? null : event.id)}
+                                className={`w-full text-left ${hasDetail ? 'cursor-pointer' : 'cursor-default'}`}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-sm font-medium">{event.titulo}</p>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <span className="text-xs text-gray-500">
+                                      {new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(event.fecha))}
+                                    </span>
+                                    {hasDetail && (
+                                      <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                    )}
+                                  </div>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-0.5">{event.descripcion}</p>
+                              </button>
+                              {isExpanded && hasDetail && (
+                                <div className="mt-2 rounded-md border bg-gray-50 p-3 space-y-1.5">
+                                  {event.detalleItems!.map((item, i) => (
+                                    <div key={i} className="grid grid-cols-[100px_1fr] gap-2 text-xs">
+                                      <span className="font-medium text-gray-500">{item.label}</span>
+                                      <span className="text-gray-800">{item.value}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 ) : (
@@ -619,19 +1320,19 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </p>
                 )}
               </div>
-            </TabsContent>
+            </div>)}
 
-            {/* Tab Gestión (solo admin) */}
-            {rol === 'admin' && (
+            {/* Tab Gestión legacy — eliminado, ahora el stepper admin maneja esto */}
+            {false && rol === 'admin' && (
               <TabsContent value="gestion" className="space-y-6 mt-4">
-                {/* Cambiar Estado y Prioridad */}
+                {/* Cambiar Estado y Categoría */}
                 <div className="space-y-4">
                   <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
                     <Settings className="h-4 w-4" />
-                    Estado y Prioridad
+                    Estado
                   </h4>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Estado</Label>
                       <Select value={nuevoEstado} onValueChange={setNuevoEstado}>
@@ -642,22 +1343,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           {ESTADOS_INCIDENTE.map((estado) => (
                             <SelectItem key={estado} value={estado}>
                               {ESTADOS_LABELS[estado] || estado}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Prioridad</Label>
-                      <Select value={nuevaPrioridad} onValueChange={setNuevaPrioridad}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar prioridad" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PRIORIDADES.map((prio) => (
-                            <SelectItem key={prio} value={prio}>
-                              {prio}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -772,25 +1457,603 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             )}
 
             {/* Tab Inspecciones (para técnicos con asignación confirmada) */}
-            {rol === 'tecnico' && incidente && asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)) && (
-              <TabsContent value="inspecciones" className="mt-4">
+            {hasTecnicoTabs && incidente && activeTab === 'inspecciones' && (
+              <div className="mt-4">
                 <InspeccionesList
                   incidenteId={incidente.id_incidente}
-                  idTecnico={asignaciones[0]?.id_tecnico || 0}
-                  inspecciones={inspecciones}
-                  onInspeccionCreated={() => {
-                    cargarIncidente()
-                  }}
-                  onInspeccionDeleted={() => {
-                    cargarIncidente()
-                  }}
+                  idTecnico={asignaciones.find(a => a.estado_asignacion !== 'rechazada')?.id_tecnico || 0}
+                  inspecciones={inspeccionesActivas}
+                  puedeCrearNueva={presupuestos.some(p => p.estado_presupuesto === EstadoPresupuesto.RECHAZADO)}
+                  onInspeccionCreated={() => cargarIncidente()}
+                  onInspeccionDeleted={() => cargarIncidente()}
                 />
-              </TabsContent>
+              </div>
+            )}
+
+            {/* Tab Presupuesto (para técnicos con asignación confirmada) */}
+            {hasTecnicoTabs && incidente && activeTab === 'presupuesto' && (
+              <div className="mt-4 space-y-4">
+                {(() => {
+                  const tienePresupuestoActivo = presupuestosActivos.length > 0
+                  return (
+                    <>
+                      {presupuestosActivos.length > 0 && (
+                        <div className="space-y-4">
+                          {presupuestosActivos.map((pres) => {
+                      const estado = pres.estado_presupuesto as EstadoPresupuesto
+                      const estadoConfig: Record<string, { label: string; className: string }> = {
+                        [EstadoPresupuesto.ENVIADO]: { label: 'Enviado — pendiente de revisión', className: 'bg-blue-50 border-blue-200 text-blue-800' },
+                        [EstadoPresupuesto.APROBADO_ADMIN]: { label: 'Aprobado por administración — pendiente de aprobación del cliente', className: 'bg-amber-50 border-amber-200 text-amber-800' },
+                        [EstadoPresupuesto.APROBADO]: { label: 'Aprobado — autorizado para ejecutar', className: 'bg-green-50 border-green-200 text-green-800' },
+                        [EstadoPresupuesto.RECHAZADO]: { label: 'Rechazado', className: 'bg-red-50 border-red-200 text-red-800' },
+                        [EstadoPresupuesto.VENCIDO]: { label: 'Vencido', className: 'bg-gray-50 border-gray-200 text-gray-600' },
+                      }
+                      const cfg = estadoConfig[estado] ?? { label: estado, className: 'bg-gray-50 border-gray-200 text-gray-600' }
+                      return (
+                        <div key={pres.id_presupuesto} className={`rounded-lg border p-4 space-y-3 ${cfg.className}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold uppercase tracking-wide">Presupuesto #{pres.id_presupuesto}</span>
+                            <Badge variant="outline" className={cfg.className}>{cfg.label}</Badge>
+                          </div>
+                          <p className="text-sm">{pres.descripcion_detallada}</p>
+                          <div className="grid grid-cols-3 gap-2 text-center">
+                            {pres.costo_materiales != null && (
+                              <div className="bg-white/70 rounded p-2">
+                                <p className="text-xs text-gray-500">Materiales</p>
+                                <p className="text-sm font-semibold">${(pres.costo_materiales ?? 0).toLocaleString()}</p>
+                              </div>
+                            )}
+                            {pres.costo_mano_obra != null && (
+                              <div className="bg-white/70 rounded p-2">
+                                <p className="text-xs text-gray-500">Mano de obra</p>
+                                <p className="text-sm font-semibold">${(pres.costo_mano_obra ?? 0).toLocaleString()}</p>
+                              </div>
+                            )}
+                            <div className="bg-white/70 rounded p-2">
+                              <p className="text-xs text-gray-500">Total</p>
+                              <p className="text-sm font-bold">${(pres.costo_total ?? 0).toLocaleString()}</p>
+                            </div>
+                          </div>
+                          {pres.alternativas_reparacion && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 mb-1">Alternativas</p>
+                              <p className="text-xs">{pres.alternativas_reparacion}</p>
+                            </div>
+                          )}
+                          {pres.fecha_creacion && (
+                            <p className="text-xs text-gray-500">
+                              Creado: {format(new Date(pres.fecha_creacion), "dd/MM/yy HH:mm", { locale: es })}
+                            </p>
+                          )}
+                        </div>
+                      )
+                          })}
+                        </div>
+                      )}
+                      {!tienePresupuestoActivo && (inspeccionesActivas.length === 0 ? (
+                        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
+                          <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-semibold mb-1">Inspección requerida</p>
+                            <p>Debés cargar al menos una inspección antes de poder crear un presupuesto. Andá al tab Inspecciones para registrarla.</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-5">
+                          <div className="space-y-3">
+                            <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              Nuevo Presupuesto
+                            </h4>
+                      <div className="space-y-2">
+                        <Label>Descripción detallada <span className="text-red-500">*</span></Label>
+                        <Textarea
+                          value={presDescripcion}
+                          onChange={(e) => setPresDescripcion(e.target.value)}
+                          placeholder="Describí el trabajo a realizar, materiales necesarios, etc."
+                          rows={3}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Costo materiales ($)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={presCostoMateriales}
+                            onChange={(e) => setPresCostoMateriales(e.target.value)}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Costo mano de obra ($)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={presCostoManoObra}
+                            onChange={(e) => setPresCostoManoObra(e.target.value)}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      {(presCostoMateriales || presCostoManoObra) && (
+                        <p className="text-sm text-gray-600 font-medium">
+                          Total estimado: ${((parseFloat(presCostoMateriales) || 0) + (parseFloat(presCostoManoObra) || 0)).toLocaleString()}
+                        </p>
+                      )}
+                      <div className="space-y-2">
+                        <Label>Alternativas de reparación (opcional)</Label>
+                        <Textarea
+                          value={presAlternativas}
+                          onChange={(e) => setPresAlternativas(e.target.value)}
+                          placeholder="Otras opciones de resolución..."
+                          rows={2}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Inspección vinculada <span className="text-red-500">*</span></Label>
+                        <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                          Inspección #{inspeccionesActivas[0]?.id_inspeccion} — {inspeccionesActivas[0] ? format(new Date(inspeccionesActivas[0].fecha_inspeccion), "dd/MM/yy", { locale: es }) : ''}
+                        </div>
+                      </div>
+                            <Button
+                              onClick={handleCrearPresupuesto}
+                              disabled={savingPresupuesto || !presDescripcion.trim()}
+                              className="w-full gap-2"
+                            >
+                              {savingPresupuesto ? (
+                                <><Loader2 className="h-4 w-4 animate-spin" />Enviando...</>
+                              ) : (
+                                <><Send className="h-4 w-4" />Enviar Presupuesto</>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )
+                })()}
+              </div>
+            )}
+
+            {/* Tab Ejecución (para técnicos con presupuesto aprobado) */}
+            {hasTecnicoTabs && incidente && activeTab === 'ejecucion' && (
+              <div className="mt-4 space-y-5">
+                {!presupuestoAprobadoCliente ? (
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
+                    <Lock className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold mb-1">Presupuesto pendiente de aprobación</p>
+                      <p>El cliente debe aprobar el presupuesto antes de que puedas iniciar el trabajo.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Estado del trabajo */}
+                    {trabajoCompletado ? (
+                      <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-emerald-800">Trabajo completado</p>
+                          <p className="text-xs text-emerald-600">Procedé a cargar la conformidad firmada en el siguiente paso.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Registrar avance */}
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-sm text-gray-600 flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            Registrar Avance
+                          </h4>
+                          <div className="space-y-3">
+                            <div className="space-y-1.5">
+                              <Label htmlFor="modal-avance-desc">Descripción del avance <span className="text-red-500">*</span></Label>
+                              <Textarea
+                                id="modal-avance-desc"
+                                value={avanceDesc}
+                                onChange={(e) => setAvanceDesc(e.target.value)}
+                                placeholder="Describe qué trabajo se realizó..."
+                                rows={3}
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label htmlFor="modal-avance-pct">Porcentaje completado (opcional)</Label>
+                              <input
+                                id="modal-avance-pct"
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={avancePct}
+                                onChange={(e) => setAvancePct(e.target.value)}
+                                placeholder="0–100"
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                              />
+                            </div>
+                            <Button
+                              onClick={handleAvance}
+                              disabled={savingAvance || !avanceDesc.trim()}
+                              className="w-full gap-2"
+                            >
+                              {savingAvance ? <><Loader2 className="h-4 w-4 animate-spin" />Guardando...</> : <><Plus className="h-4 w-4" />Guardar Avance</>}
+                            </Button>
+                          </div>
+                        </div>
+
+                        <Separator />
+
+                        {/* Completar trabajo */}
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-sm text-gray-600 flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Completar Trabajo
+                          </h4>
+                          {!confirmandoCompletar ? (
+                            <Button
+                              variant="outline"
+                              className="w-full gap-2 text-green-700 border-green-300 hover:bg-green-50"
+                              onClick={() => setConfirmandoCompletar(true)}
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              Marcar como completado
+                            </Button>
+                          ) : (
+                            <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-3">
+                              <p className="text-sm text-green-800">
+                                ¿Confirmás que el trabajo fue finalizado? Después deberás subir la conformidad firmada por el cliente.
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setConfirmandoCompletar(false)}
+                                  disabled={savingCompletar}
+                                >
+                                  Cancelar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="flex-1 gap-2"
+                                  onClick={handleCompletar}
+                                  disabled={savingCompletar}
+                                >
+                                  {savingCompletar ? <><Loader2 className="h-4 w-4 animate-spin" />Procesando...</> : 'Sí, completar'}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Tab Conformidad (para técnicos con trabajo completado) */}
+            {hasTecnicoTabs && incidente && activeTab === 'conformidad' && (
+              <div className="mt-4 space-y-4">
+                {!trabajoCompletado ? (
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
+                    <Lock className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold mb-1">Trabajo no completado</p>
+                      <p>Debés completar el trabajo antes de poder cargar la conformidad.</p>
+                    </div>
+                  </div>
+                ) : conformidad ? (
+                  <div className={`rounded-lg border p-4 space-y-3 ${
+                    (conformidad.esta_firmada === true || conformidad.esta_firmada === 1)
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : 'bg-amber-50 border-amber-200'
+                  }`}>
+                    {(conformidad.esta_firmada === true || conformidad.esta_firmada === 1) ? (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        <p className="text-sm font-semibold text-emerald-800">Conformidad aprobada — incidente resuelto</p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin text-amber-600" />
+                        <p className="text-sm font-semibold text-amber-800">Conformidad en revisión por la administración</p>
+                      </div>
+                    )}
+                    {conformidad.url_documento && (
+                      <a
+                        href={conformidad.url_documento}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 underline"
+                      >
+                        Ver documento subido
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                      Tomá una foto de la conformidad física firmada por el cliente y subila aquí. La administración la revisará para cerrar el incidente.
+                    </p>
+                    <div className="space-y-2">
+                      <Label>Foto de la conformidad <span className="text-red-500">*</span></Label>
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {fotoPreview ? (
+                          <img src={fotoPreview} alt="Preview" className="max-h-48 mx-auto rounded-md object-contain" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 text-gray-500">
+                            <ImageIcon className="h-10 w-10 text-gray-400" />
+                            <p className="text-sm font-medium">Tocá para seleccionar una foto</p>
+                            <p className="text-xs text-gray-400">JPG, PNG, HEIC — máx. 10 MB</p>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFotoChange}
+                      />
+                      {fotoFile && (
+                        <p className="text-xs text-gray-500">{fotoFile.name} ({(fotoFile.size / 1024 / 1024).toFixed(1)} MB)</p>
+                      )}
+                    </div>
+                    <Button
+                      onClick={handleSubirConformidad}
+                      disabled={uploadingFoto || !fotoFile}
+                      className="w-full gap-2"
+                    >
+                      {uploadingFoto ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" />Subiendo...</>
+                      ) : (
+                        <><Upload className="h-4 w-4" />Enviar Conformidad</>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab Presupuesto Admin — revisar y aprobar/rechazar */}
+            {rol === 'admin' && activeTab === 'presupuesto_admin' && (
+              <div className="mt-4 space-y-4">
+                {presupuestosActivos.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <FileText className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No hay presupuesto enviado aún</p>
+                    <p className="text-xs mt-1">El técnico debe enviarlo desde su portal</p>
+                  </div>
+                ) : (
+                  presupuestosActivos.map(pres => (
+                    <div key={pres.id_presupuesto} className="space-y-4">
+                      {/* Detalle del presupuesto */}
+                      <div className="rounded-lg border bg-gray-50 p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold text-gray-700">Presupuesto #{pres.id_presupuesto}</span>
+                          <Badge variant="outline" className="text-xs">{pres.estado_presupuesto}</Badge>
+                        </div>
+                        {pres.descripcion_detallada && (
+                          <p className="text-sm text-gray-700">{pres.descripcion_detallada}</p>
+                        )}
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          {pres.costo_materiales != null && (
+                            <div className="bg-white rounded p-2 border">
+                              <p className="text-[10px] text-gray-500">Materiales</p>
+                              <p className="text-sm font-semibold">${(pres.costo_materiales ?? 0).toLocaleString()}</p>
+                            </div>
+                          )}
+                          {pres.costo_mano_obra != null && (
+                            <div className="bg-white rounded p-2 border">
+                              <p className="text-[10px] text-gray-500">Mano de obra</p>
+                              <p className="text-sm font-semibold">${(pres.costo_mano_obra ?? 0).toLocaleString()}</p>
+                            </div>
+                          )}
+                          <div className="bg-white rounded p-2 border">
+                            <p className="text-[10px] text-gray-500">Total técnico</p>
+                            <p className="text-sm font-bold">${(pres.costo_total ?? 0).toLocaleString()}</p>
+                          </div>
+                        </div>
+                        {pres.alternativas_reparacion && (
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 mb-1">Alternativas</p>
+                            <p className="text-xs text-gray-600">{pres.alternativas_reparacion}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Aprobar / Rechazar — solo cuando enviado */}
+                      {pres.estado_presupuesto === 'enviado' && (
+                        <div className="space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4">
+                          <h4 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            Revisión del presupuesto
+                          </h4>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Gastos administrativos ($) — opcional</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={gastosAdmin}
+                              onChange={(e) => setGastosAdmin(e.target.value)}
+                              placeholder="0"
+                              className="bg-white"
+                            />
+                            {(parseFloat(gastosAdmin) || 0) > 0 && (
+                              <p className="text-xs text-blue-700 font-medium">
+                                Total final al cliente: ${((pres.costo_materiales || 0) + (pres.costo_mano_obra || 0) + (parseFloat(gastosAdmin) || 0)).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex gap-2 pt-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
+                              onClick={() => handleRechazarPresupuesto(pres.id_presupuesto)}
+                              disabled={savingPresupuestoAdmin}
+                            >
+                              <XCircle className="h-3.5 w-3.5" />
+                              Rechazar
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700"
+                              onClick={() => handleAprobarPresupuesto(pres.id_presupuesto)}
+                              disabled={savingPresupuestoAdmin}
+                            >
+                              {savingPresupuestoAdmin
+                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                : <CheckCircle className="h-3.5 w-3.5" />
+                              }
+                              Aprobar
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto ?? '') && (
+                        <div className="rounded-lg bg-green-50 border border-green-200 p-3 flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          <p className="text-sm text-green-800">
+                            {pres.estado_presupuesto === 'aprobado'
+                              ? 'Aprobado por el cliente — trabajo en curso'
+                              : 'Aprobado por administración — pendiente de aprobación del cliente'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Tab Conformidad Admin — ver foto y aprobar/rechazar */}
+            {rol === 'admin' && activeTab === 'conformidad_admin' && (
+              <div className="mt-4 space-y-4">
+                {!tieneConformidad ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <ClipboardList className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No hay conformidad subida aún</p>
+                    <p className="text-xs mt-1">El técnico debe completar el trabajo y subir la foto</p>
+                  </div>
+                ) : conformidad?.esta_rechazada ? (
+                  <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-center gap-2">
+                    <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                    <p className="text-sm text-red-800">Conformidad rechazada — el técnico debe resubir la foto</p>
+                  </div>
+                ) : (conformidad?.esta_firmada === 1 || conformidad?.esta_firmada === true) ? (
+                  <div className="rounded-lg bg-green-50 border border-green-200 p-4 flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <p className="text-sm text-green-800">Conformidad aprobada — incidente finalizado</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Foto de conformidad */}
+                    {conformidad?.url_documento && (
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                          <ImageIcon className="h-3.5 w-3.5" />
+                          Foto de conformidad subida por el técnico
+                        </Label>
+                        <a href={conformidad.url_documento} target="_blank" rel="noopener noreferrer" className="block">
+                          <img
+                            src={conformidad.url_documento}
+                            alt="Conformidad"
+                            className="w-full max-h-72 object-contain rounded-lg border border-gray-200 bg-gray-50 cursor-zoom-in hover:opacity-90 transition-opacity"
+                          />
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Calificación del técnico */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-500">Calificación del técnico</Label>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setPuntuacionAdmin(n)}
+                            className="p-0.5 transition-transform active:scale-90"
+                          >
+                            <CheckCircle
+                              className={`h-7 w-7 transition-colors ${n <= puntuacionAdmin ? 'text-amber-400' : 'text-gray-200'}`}
+                              fill={n <= puntuacionAdmin ? '#fbbf24' : 'none'}
+                            />
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm text-gray-500">{puntuacionAdmin}/5</span>
+                      </div>
+                    </div>
+
+                    {/* Comentario */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-500">Comentario (opcional)</Label>
+                      <Textarea
+                        value={comentariosAdmin}
+                        onChange={(e) => setComentariosAdmin(e.target.value)}
+                        placeholder="Observaciones sobre el trabajo realizado..."
+                        rows={2}
+                      />
+                    </div>
+
+                    {/* Resolvió el problema */}
+                    <label className="flex items-center gap-2.5 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={resolvioProbAdmin}
+                        onChange={(e) => setResolvioProbAdmin(e.target.checked)}
+                        className="w-4 h-4 rounded accent-blue-600"
+                      />
+                      <span className="text-sm text-gray-700 group-hover:text-gray-900">El técnico resolvió el problema satisfactoriamente</span>
+                    </label>
+
+                    {/* Botones */}
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50"
+                        onClick={() => handleRechazarConformidad(conformidad!.id_conformidad)}
+                        disabled={savingConformidadAdmin}
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Rechazar
+                      </Button>
+                      <Button
+                        className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700"
+                        onClick={() => handleAprobarConformidad(conformidad!.id_conformidad)}
+                        disabled={savingConformidadAdmin}
+                      >
+                        {savingConformidadAdmin
+                          ? <Loader2 className="h-4 w-4 animate-spin" />
+                          : <CheckCircle2 className="h-4 w-4" />
+                        }
+                        Aprobar y cerrar incidente
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab Presupuesto (para clientes con presupuestos) */}
+            {rol === 'cliente' && presupuestos.length > 0 && activeTab === 'presupuesto' && (
+              <div className="mt-4">
+                <PresupuestosClienteList
+                  presupuestos={presupuestos as any}
+                  onPresupuestoActualizado={() => cargarIncidente()}
+                />
+              </div>
             )}
 
             {/* Tab Calificación (para clientes cuando está resuelto) */}
-            {rol === 'cliente' && incidente && incidente.estado_actual === EstadoIncidente.RESUELTO && asignaciones.length > 0 && (
-              <TabsContent value="calificacion" className="mt-4">
+            {rol === 'cliente' && incidente && incidente.estado_actual === EstadoIncidente.RESUELTO && asignaciones.length > 0 && activeTab === 'calificacion' && (
+              <div className="mt-4">
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600">
                     Califica al técnico que resolvió tu incidente
@@ -807,10 +2070,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     />
                   ))}
                 </div>
-              </TabsContent>
+              </div>
             )}
-          </Tabs>
-        ) : (
+
+            </div>{/* end key={activeTab} content area */}
+          </div>
+          )
+        })() : (
           <p className="text-center text-gray-500 py-8">
             No se pudo cargar el incidente
           </p>

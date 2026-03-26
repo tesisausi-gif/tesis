@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, ClipboardList, User, LogOut, Wrench, FileText, Search, DollarSign } from 'lucide-react'
+import { Home, ClipboardList, User, LogOut, Wrench, Search } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -15,9 +15,7 @@ type BadgeKey = keyof TecnicoBadgeCounts
 const navItems: { title: string; icon: React.ElementType; href: string; badge?: BadgeKey }[] = [
   { title: 'Inicio', icon: Home, href: '/tecnico' },
   { title: 'Asignación', icon: Search, href: '/tecnico/disponibles', badge: 'disponibles' },
-  { title: 'Trabajos', icon: ClipboardList, href: '/tecnico/trabajos', badge: 'trabajos' },
-  { title: 'Presupuestos', icon: FileText, href: '/tecnico/presupuestos' },
-  { title: 'Cobros', icon: DollarSign, href: '/tecnico/pagos', badge: 'pagos' as BadgeKey },
+  { title: 'Incidentes', icon: ClipboardList, href: '/tecnico/trabajos', badge: 'trabajos' },
   { title: 'Perfil', icon: User, href: '/tecnico/perfil' },
 ]
 
@@ -25,7 +23,7 @@ function TecnicoNavComponent() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const [counts, setCounts] = useState<TecnicoBadgeCounts>({ disponibles: 0, trabajos: 0, pagos: 0 })
+  const [counts, setCounts] = useState<TecnicoBadgeCounts>({ disponibles: 0, trabajos: 0, pagos: 0, notificaciones: 0 })
 
   useEffect(() => {
     getTecnicoBadgeCounts()
@@ -61,26 +59,28 @@ function TecnicoNavComponent() {
       <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-white shadow-lg pb-safe">
         <div className="flex justify-around">
           {navItems.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = item.href === '/tecnico'
+              ? pathname === '/tecnico'
+              : pathname === item.href || pathname.startsWith(item.href + '/')
             const badgeCount = item.badge ? counts[item.badge] : 0
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative flex flex-col items-center gap-1 py-3 px-4 transition-colors ${isActive
+                className={`relative flex flex-col items-center gap-0.5 py-2 px-1 min-w-0 flex-1 transition-colors ${isActive
                   ? 'text-blue-600'
                   : 'text-gray-600 hover:text-blue-600'
                   }`}
               >
                 <div className="relative">
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
                   {badgeCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   )}
                 </div>
-                <span className="text-xs font-medium">{item.title}</span>
+                <span className="text-[10px] font-medium truncate w-full text-center leading-tight">{item.title}</span>
               </Link>
             )
           })}

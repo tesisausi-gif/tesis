@@ -6,14 +6,17 @@
 // 1. Estados de Incidentes
 export const ESTADO_INCIDENTE_COLORS: Record<string, string> = {
   pendiente: 'border-yellow-200 bg-yellow-50 text-yellow-700',
+  asignacion_solicitada: 'border-orange-200 bg-orange-50 text-orange-700',
   en_proceso: 'border-blue-200 bg-blue-50 text-blue-700',
   resuelto: 'border-green-200 bg-green-50 text-green-700',
 }
 
 export const ESTADO_INCIDENTE_LABELS: Record<string, string> = {
   pendiente: 'Pendiente',
+  asignacion_solicitada: 'Asignación Solicitada',
   en_proceso: 'En Proceso',
-  resuelto: 'Resuelto',
+  resuelto: 'Finalizado',
+  finalizado: 'Finalizado',
 }
 
 // 2. Prioridades

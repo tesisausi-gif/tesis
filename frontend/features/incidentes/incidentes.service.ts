@@ -8,7 +8,7 @@
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireClienteId } from '@/features/auth/auth.service'
-import type { Incidente, IncidenteConCliente, IncidenteConDetalles, MetricasDashboard, FiltrosMetricas } from './incidentes.types'
+import type { Incidente, IncidenteConCliente, IncidenteConClienteAdmin, IncidenteConDetalles, MetricasDashboard, FiltrosMetricas } from './incidentes.types'
 import type { ActionResult } from '@/shared/types'
 
 // Select base para incidentes
@@ -35,10 +35,10 @@ const INCIDENTE_SELECT = `
 `
 
 /**
- * Obtener todos los incidentes (admin)
+ * Obtener todos los incidentes (admin) — incluye presupuestos y conformidades para acciones contextuales
  */
-export async function getIncidentesForAdmin(): Promise<IncidenteConCliente[]> {
-  const supabase = await createClient()
+export async function getIncidentesForAdmin(): Promise<IncidenteConClienteAdmin[]> {
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('incidentes')
@@ -48,12 +48,29 @@ export async function getIncidentesForAdmin(): Promise<IncidenteConCliente[]> {
         nombre,
         apellido,
         telefono
+      ),
+      asignaciones_tecnico (
+        estado_asignacion,
+        tecnicos (
+          nombre,
+          apellido
+        )
+      ),
+      presupuestos (
+        id_presupuesto,
+        estado_presupuesto
+      ),
+      conformidades (
+        id_conformidad,
+        url_documento,
+        esta_firmada,
+        esta_rechazada
       )
     `)
     .order('fecha_registro', { ascending: false })
 
   if (error) throw error
-  return data as unknown as IncidenteConCliente[]
+  return data as unknown as IncidenteConClienteAdmin[]
 }
 
 /**
@@ -134,11 +151,13 @@ export async function getIncidenteCompleto(idIncidente: number) {
  * Obtener asignaciones de un incidente con datos del técnico
  */
 export async function getAsignacionesDelIncidente(idIncidente: number) {
-  const supabase = await createClient()
+  // Usa adminClient para garantizar el join con tecnicos sin importar el rol del usuario
+  const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('asignaciones_tecnico')
-    .select('*, tecnicos(nombre, apellido, especialidad)')
+    .select('*, tecnicos(nombre, apellido, especialidad, telefono, correo_electronico)')
     .eq('id_incidente', idIncidente)
     .order('fecha_asignacion', { ascending: false })
 
@@ -150,13 +169,16 @@ export async function getAsignacionesDelIncidente(idIncidente: number) {
  * Obtener datos de timeline (inspecciones, presupuestos, pagos) de un incidente
  */
 export async function getTimelineData(idIncidente: number) {
-  const supabase = await createClient()
+  // Usa adminClient para bypassear RLS y poder leer datos de todos los roles
+  const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+  const supabase = createAdminClient()
 
-  const [inspecciones, presupuestos, pagos] = await Promise.all([
+  const [inspecciones, presupuestos, pagos, avances, conformidades] = await Promise.all([
     supabase
       .from('inspecciones')
       .select('*, tecnicos(nombre, apellido)')
       .eq('id_incidente', idIncidente)
+      .eq('esta_anulada', false)
       .order('fecha_inspeccion', { ascending: true }),
     supabase
       .from('presupuestos')
@@ -168,12 +190,24 @@ export async function getTimelineData(idIncidente: number) {
       .select('*')
       .eq('id_incidente', idIncidente)
       .order('fecha_pago', { ascending: true }),
+    supabase
+      .from('avances_reparacion')
+      .select('*, tecnicos(nombre, apellido)')
+      .eq('id_incidente', idIncidente)
+      .order('fecha_avance', { ascending: true }),
+    supabase
+      .from('conformidades')
+      .select('id_conformidad, fecha_creacion, fecha_conformidad, fecha_rechazo, esta_firmada, esta_rechazada, url_documento')
+      .eq('id_incidente', idIncidente)
+      .order('fecha_creacion', { ascending: true }),
   ])
 
   return {
     inspecciones: inspecciones.data || [],
     presupuestos: presupuestos.data || [],
     pagos: pagos.data || [],
+    avances: avances.data || [],
+    conformidades: conformidades.data || [],
   }
 }
 
@@ -196,7 +230,7 @@ export async function getDashboardStats() {
   return {
     incidentesPendientes: incidentesData.filter(i => i.estado_actual === 'pendiente').length,
     incidentesEnProceso: incidentesData.filter(i => i.estado_actual === 'en_proceso').length,
-    incidentesResueltos: incidentesData.filter(i => i.estado_actual === 'resuelto').length,
+    incidentesResueltos: incidentesData.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto').length,
     propiedades: propiedades.count || 0,
     clientes: clientes.count || 0,
     tecnicos: tecnicos.count || 0,
@@ -279,6 +313,11 @@ export async function actualizarIncidente(
   }
 ): Promise<ActionResult> {
   try {
+    // 'finalizado' y 'resuelto' solo se alcanzan vía aprobación de conformidad
+    if (updates.estado_actual === 'finalizado' || updates.estado_actual === 'resuelto') {
+      return { success: false, error: 'El incidente no puede marcarse como finalizado manualmente. Debe aprobarse una conformidad primero.' }
+    }
+
     const supabase = await createClient()
 
     const { error } = await supabase
@@ -287,13 +326,6 @@ export async function actualizarIncidente(
       .eq('id_incidente', idIncidente)
 
     if (error) return { success: false, error: error.message }
-
-    // Notificar al cliente si el incidente fue marcado como resuelto (fire-and-forget)
-    if (updates.estado_actual === 'resuelto') {
-      const { notificarIncidenteResuelto } = await import('@/features/notificaciones/notificaciones.service')
-      notificarIncidenteResuelto(idIncidente).catch(console.error)
-    }
-
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar incidente' }
