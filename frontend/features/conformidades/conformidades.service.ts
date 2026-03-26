@@ -147,7 +147,7 @@ export async function firmarConformidad(idConformidad: number, observaciones?: s
  * Crea el registro de conformidad con url_documento = fotoUrl.
  * El admin luego revisa la foto y aprueba o rechaza.
  */
-export async function crearConformidadPorTecnico(idIncidente: number, fotoUrl: string): Promise<ActionResult> {
+export async function crearConformidadPorTecnico(idIncidente: number, fotoUrl: string, comprobanteUrl: string): Promise<ActionResult> {
   try {
     const supabase = createAdminClient()
 
@@ -183,6 +183,7 @@ export async function crearConformidadPorTecnico(idIncidente: number, fotoUrl: s
         tipo_conformidad: 'final',
         esta_firmada: 0,
         url_documento: fotoUrl,
+        url_comprobante_compras: comprobanteUrl,
         fecha_conformidad: new Date().toISOString(),
       })
 
