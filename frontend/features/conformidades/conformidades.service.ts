@@ -44,7 +44,7 @@ export async function getConformidadesPendientes() {
     .from('conformidades')
     .select(`
       id_conformidad, id_incidente, id_cliente, tipo_conformidad,
-      esta_firmada, url_documento, fecha_creacion, observaciones,
+      esta_firmada, url_documento, url_comprobante_compras, fecha_creacion, observaciones,
       incidentes (
         id_incidente, descripcion_problema, categoria,
         clientes:id_cliente_reporta (nombre, apellido),
