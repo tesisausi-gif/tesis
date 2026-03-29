@@ -331,7 +331,6 @@ export async function rechazarSolicitud(idSolicitud: number): Promise<ActionResu
 
 export async function aprobarSolicitudTecnico(
   solicitudId: number,
-  password: string
 ): Promise<ActionResult> {
   const supabase = createAdminClient()
 
@@ -346,12 +345,16 @@ export async function aprobarSolicitudTecnico(
     return { success: false, error: 'Solicitud no encontrada' }
   }
 
+  // Generar contraseña temporal segura
+  const { generarPasswordTemporal } = await import('@/features/email/email.service')
+  const passwordTemporal = generarPasswordTemporal()
+
   // 2. Crear usuario en Supabase Auth con rol 'gestor' para que el trigger
   //    solo inserte en `usuarios` (sin tocar `tecnicos`) — evita fallos del trigger.
   //    Luego insertamos manualmente en `tecnicos` y actualizamos `usuarios`.
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: solicitud.email,
-    password,
+    password: passwordTemporal,
     email_confirm: true,
     user_metadata: {
       nombre: solicitud.nombre,
@@ -394,10 +397,11 @@ export async function aprobarSolicitudTecnico(
     return { success: false, error: 'Error al crear perfil de técnico' }
   }
 
-  // 4. Actualizar el registro en `usuarios`: cambiar rol a 'tecnico' y vincular id_tecnico
+  // 4. Actualizar el registro en `usuarios`: cambiar rol a 'tecnico', vincular id_tecnico
+  //    y activar bandera de cambio obligatorio de contraseña
   const { error: updError } = await supabase
     .from('usuarios')
-    .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico })
+    .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico, debe_cambiar_password: true })
     .eq('id', authUserId)
 
   if (updError) {
@@ -414,6 +418,21 @@ export async function aprobarSolicitudTecnico(
       fecha_aprobacion: new Date().toISOString(),
     })
     .eq('id_solicitud', solicitudId)
+
+  // 6. Enviar email con credenciales al técnico (fire-and-forget)
+  try {
+    const { enviarEmailBienvenida } = await import('@/features/email/email.service')
+    await enviarEmailBienvenida({
+      destinatario: solicitud.email,
+      nombre: solicitud.nombre,
+      apellido: solicitud.apellido,
+      passwordTemporal,
+      rol: 'tecnico',
+    })
+  } catch (emailError) {
+    // No bloquear el flujo si el email falla
+    console.error('[aprobarSolicitudTecnico] Error al enviar email:', emailError)
+  }
 
   return { success: true, data: undefined }
 }
