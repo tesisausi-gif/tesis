@@ -60,12 +60,17 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
       .finally(() => setCargando(false))
   }, [paso])
 
-  // Filtrar técnicos por la categoría seleccionada
+  // Filtrar técnicos por la categoría seleccionada (chequea todas las especialidades)
   const tecnicosFiltrados = tecnicos
     .filter(t => {
-      const esp = (t.especialidad || '').toLowerCase()
       const cat = categoria.toLowerCase()
-      return esp.includes(cat) || cat.includes(esp)
+      const esps = t.especialidades?.length
+        ? t.especialidades
+        : t.especialidad ? [t.especialidad] : []
+      return esps.some(esp => {
+        const e = esp.toLowerCase()
+        return e.includes(cat) || cat.includes(e)
+      })
     })
     .sort((a, b) => (b.calificacion_promedio ?? 0) - (a.calificacion_promedio ?? 0))
 
@@ -209,7 +214,10 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
                           <input type="radio" checked={tecnicoSeleccionado?.id_tecnico === t.id_tecnico} onChange={() => setTecnicoSeleccionado(t)} className="cursor-pointer" />
                         </TableCell>
                         <TableCell className="font-medium">{t.nombre} {t.apellido}</TableCell>
-                        <TableCell className="text-sm text-gray-600">{t.especialidad || '—'}</TableCell>
+                        <TableCell className="text-sm text-gray-600">
+                          {(t.especialidades?.length ? t.especialidades : t.especialidad ? [t.especialidad] : [])
+                            .join(', ') || '—'}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
                             {renderStars(t.calificacion_promedio ?? 0)}

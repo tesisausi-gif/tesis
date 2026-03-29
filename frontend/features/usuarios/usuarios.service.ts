@@ -131,7 +131,7 @@ export async function getTecnicosActivos(): Promise<TecnicoActivo[]> {
 
   const { data, error } = await supabase
     .from('tecnicos')
-    .select('id_tecnico, nombre, apellido, especialidad')
+    .select('id_tecnico, nombre, apellido, especialidad, especialidades')
     .eq('esta_activo', true)
     .order('nombre')
 
@@ -287,7 +287,7 @@ export async function actualizarTecnico(
     telefono: string | null
     dni: string | null
     direccion: string | null
-    especialidad: string | null
+    especialidades: string[]
   }
 ): Promise<ActionResult> {
   try {
@@ -295,7 +295,10 @@ export async function actualizarTecnico(
 
     const { error } = await supabase
       .from('tecnicos')
-      .update(data)
+      .update({
+        ...data,
+        especialidad: data.especialidades[0] ?? null,
+      })
       .eq('id_tecnico', idTecnico)
 
     if (error) return { success: false, error: error.message }
@@ -378,6 +381,7 @@ export async function aprobarSolicitudTecnico(
       dni: solicitud.dni ?? null,
       direccion: solicitud.direccion ?? null,
       especialidad: solicitud.especialidad ?? null,
+      especialidades: solicitud.especialidades ?? (solicitud.especialidad ? [solicitud.especialidad] : []),
       calificacion_promedio: null,
       cantidad_trabajos_realizados: 0,
       esta_activo: true,
@@ -420,7 +424,7 @@ export async function crearSolicitudRegistro(data: {
   email: string
   telefono: string | null
   dni: string | null
-  especialidad: string | null
+  especialidades: string[]
   direccion: string | null
 }): Promise<ActionResult> {
   try {
@@ -430,6 +434,7 @@ export async function crearSolicitudRegistro(data: {
       .from('solicitudes_registro')
       .insert({
         ...data,
+        especialidad: data.especialidades[0] ?? null,
         estado_solicitud: 'pendiente',
       })
 
@@ -438,10 +443,11 @@ export async function crearSolicitudRegistro(data: {
     // Notificar al admin sobre la nueva solicitud de registro
     try {
       const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      const espsLabel = data.especialidades.length > 0 ? ` (${data.especialidades.join(', ')})` : ''
       await crearNotificacionAdmin({
         tipo: 'solicitud_registro',
         titulo: 'Nueva solicitud de técnico',
-        mensaje: `${data.nombre} ${data.apellido} solicitó registrarse como técnico${data.especialidad ? ` (${data.especialidad})` : ''}.`,
+        mensaje: `${data.nombre} ${data.apellido} solicitó registrarse como técnico${espsLabel}.`,
       })
     } catch { /* no bloquear el registro si la notificación falla */ }
 
@@ -459,6 +465,7 @@ export async function actualizarPerfilTecnico(
   data: {
     telefono: string | null
     direccion: string | null
+    especialidades: string[]
   }
 ): Promise<ActionResult> {
   try {
@@ -466,7 +473,10 @@ export async function actualizarPerfilTecnico(
 
     const { error } = await supabase
       .from('tecnicos')
-      .update(data)
+      .update({
+        ...data,
+        especialidad: data.especialidades[0] ?? null,
+      })
       .eq('id_tecnico', idTecnico)
 
     if (error) return { success: false, error: error.message }
