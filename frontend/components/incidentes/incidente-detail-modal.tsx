@@ -1792,19 +1792,26 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                         onClick={() => fileInputRef.current?.click()}
                       >
                         {fotoPreview ? (
-                          <img src={fotoPreview} alt="Preview" className="max-h-48 mx-auto rounded-md object-contain" />
+                          fotoFile?.type === 'application/pdf' ? (
+                            <div className="flex flex-col items-center gap-2 text-purple-700">
+                              <FileText className="h-10 w-10" />
+                              <p className="text-sm font-medium">{fotoFile.name}</p>
+                            </div>
+                          ) : (
+                            <img src={fotoPreview} alt="Preview" className="max-h-48 mx-auto rounded-md object-contain" />
+                          )
                         ) : (
                           <div className="flex flex-col items-center gap-2 text-gray-500">
                             <ImageIcon className="h-10 w-10 text-gray-400" />
-                            <p className="text-sm font-medium">Tocá para seleccionar una foto</p>
-                            <p className="text-xs text-gray-400">JPG, PNG, HEIC — máx. 10 MB</p>
+                            <p className="text-sm font-medium">Tocá para seleccionar una foto o PDF</p>
+                            <p className="text-xs text-gray-400">JPG, PNG, HEIC, PDF — máx. 10 MB</p>
                           </div>
                         )}
                       </div>
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept="image/*"
+                        accept="image/*,application/pdf"
                         className="hidden"
                         onChange={handleFotoChange}
                       />
@@ -1821,19 +1828,26 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                         onClick={() => comprobanteInputRef.current?.click()}
                       >
                         {comprobantePreview ? (
-                          <img src={comprobantePreview} alt="Comprobante" className="max-h-48 mx-auto rounded-md object-contain" />
+                          comprobanteFile?.type === 'application/pdf' ? (
+                            <div className="flex flex-col items-center gap-2 text-amber-700">
+                              <FileText className="h-10 w-10" />
+                              <p className="text-sm font-medium">{comprobanteFile.name}</p>
+                            </div>
+                          ) : (
+                            <img src={comprobantePreview} alt="Comprobante" className="max-h-48 mx-auto rounded-md object-contain" />
+                          )
                         ) : (
                           <div className="flex flex-col items-center gap-2 text-gray-500">
                             <ImageIcon className="h-10 w-10 text-amber-400" />
                             <p className="text-sm font-medium">Tocá para seleccionar el comprobante</p>
-                            <p className="text-xs text-gray-400">JPG, PNG, HEIC — máx. 10 MB</p>
+                            <p className="text-xs text-gray-400">JPG, PNG, HEIC, PDF — máx. 10 MB</p>
                           </div>
                         )}
                       </div>
                       <input
                         ref={comprobanteInputRef}
                         type="file"
-                        accept="image/*"
+                        accept="image/*,application/pdf"
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0]
