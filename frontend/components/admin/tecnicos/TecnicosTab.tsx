@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/shared/lib/supabase/client'
-import { getTecnicos, toggleActivoTecnico, actualizarTecnico as actualizarTecnicoService } from '@/features/usuarios/usuarios.service'
+import { getTecnicos, toggleActivoTecnico, actualizarTecnico as actualizarTecnicoService, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,6 +36,7 @@ interface Tecnico {
   dni: string | null
   direccion: string | null
   especialidad: string | null
+  especialidades: string[]
   calificacion_promedio: number | null
   cantidad_trabajos_realizados: number
   esta_activo: boolean
@@ -65,7 +66,12 @@ export default function TecnicosTab() {
   const [telefono, setTelefono] = useState('')
   const [dni, setDni] = useState('')
   const [direccion, setDireccion] = useState('')
-  const [especialidad, setEspecialidad] = useState('')
+  const [especialidades, setEspecialidades] = useState<string[]>([])
+  const [opcionesEspecialidades, setOpcionesEspecialidades] = useState<Array<{ nombre: string }>>([])
+
+  useEffect(() => {
+    getEspecialidadesActivas().then(data => setOpcionesEspecialidades(data)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     cargarTecnicos()
@@ -134,7 +140,11 @@ export default function TecnicosTab() {
     setTelefono(tecnico.telefono || '')
     setDni(tecnico.dni || '')
     setDireccion(tecnico.direccion || '')
-    setEspecialidad(tecnico.especialidad || '')
+    setEspecialidades(
+      tecnico.especialidades?.length
+        ? tecnico.especialidades
+        : tecnico.especialidad ? [tecnico.especialidad] : []
+    )
     setEditDialogOpen(true)
   }
 
@@ -153,7 +163,7 @@ export default function TecnicosTab() {
         telefono: telefono || null,
         dni: dni || null,
         direccion: direccion || null,
-        especialidad: especialidad || null,
+        especialidades,
       })
 
       if (!result.success) {
@@ -172,7 +182,7 @@ export default function TecnicosTab() {
       setTelefono('')
       setDni('')
       setDireccion('')
-      setEspecialidad('')
+      setEspecialidades([])
 
       // Cerrar dialog y recargar
       setEditDialogOpen(false)
@@ -187,12 +197,12 @@ export default function TecnicosTab() {
     }
   }
 
-  // Obtener especialidades únicas
+  // Obtener especialidades únicas de todos los técnicos (considerando array)
   const especialidadesUnicas = Array.from(
     new Set(
-      tecnicos
-        .map((t) => t.especialidad)
-        .filter((e) => e !== null && e !== '')
+      tecnicos.flatMap(t =>
+        t.especialidades?.length ? t.especialidades : t.especialidad ? [t.especialidad] : []
+      )
     )
   ).sort()
 
@@ -205,10 +215,13 @@ export default function TecnicosTab() {
       (filtroEstado === 'activos' && estaActivo) ||
       (filtroEstado === 'inactivos' && !estaActivo)
 
-    // Filtro por especialidad
+    // Filtro por especialidad (chequea todas las especialidades del técnico)
+    const esps = tecnico.especialidades?.length
+      ? tecnico.especialidades
+      : tecnico.especialidad ? [tecnico.especialidad] : []
     const cumpleEspecialidad =
       filtroEspecialidad === 'todas' ||
-      tecnico.especialidad === filtroEspecialidad
+      esps.includes(filtroEspecialidad)
 
     return cumpleEstado && cumpleEspecialidad
   })
@@ -319,7 +332,16 @@ export default function TecnicosTab() {
                   </TableCell>
                   <TableCell>{tecnico.correo_electronico}</TableCell>
                   <TableCell>{tecnico.telefono || '-'}</TableCell>
-                  <TableCell>{tecnico.especialidad || '-'}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const esps = tecnico.especialidades?.length
+                        ? tecnico.especialidades
+                        : tecnico.especialidad ? [tecnico.especialidad] : []
+                      return esps.length > 0
+                        ? <div className="flex flex-wrap gap-1">{esps.map(e => <Badge key={e} variant="secondary" className="text-xs">{e}</Badge>)}</div>
+                        : <span className="text-gray-400">-</span>
+                    })()}
+                  </TableCell>
                   <TableCell>{tecnico.cantidad_trabajos_realizados}</TableCell>
                   <TableCell>
                     {tecnico.calificacion_promedio
@@ -533,14 +555,34 @@ export default function TecnicosTab() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-especialidad">Especialidad</Label>
-              <Input
-                id="edit-especialidad"
-                value={especialidad}
-                onChange={(e) => setEspecialidad(e.target.value)}
-                disabled={submitting}
-                placeholder="Ej: Electricidad, Plomería, etc."
-              />
+              <Label>Especialidades</Label>
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                {opcionesEspecialidades.map(esp => (
+                  <label
+                    key={esp.nombre}
+                    className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors text-sm ${
+                      especialidades.includes(esp.nombre)
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    } ${submitting ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={especialidades.includes(esp.nombre)}
+                      onChange={() =>
+                        setEspecialidades(prev =>
+                          prev.includes(esp.nombre)
+                            ? prev.filter(e => e !== esp.nombre)
+                            : [...prev, esp.nombre]
+                        )
+                      }
+                      disabled={submitting}
+                      className="h-4 w-4 accent-blue-500"
+                    />
+                    {esp.nombre}
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="flex gap-2">

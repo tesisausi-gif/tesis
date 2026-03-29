@@ -32,6 +32,7 @@ interface Solicitud {
   telefono: string | null
   dni: string | null
   especialidad: string | null
+  especialidades: string[]
   direccion: string | null
   estado_solicitud: string
   fecha_solicitud: string
@@ -213,7 +214,14 @@ export default function SolicitudesTab() {
                       {solicitud.nombre} {solicitud.apellido}
                     </TableCell>
                     <TableCell>{solicitud.email}</TableCell>
-                    <TableCell>{solicitud.especialidad || '-'}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const esps = solicitud.especialidades?.length
+                          ? solicitud.especialidades
+                          : solicitud.especialidad ? [solicitud.especialidad] : []
+                        return esps.length > 0 ? esps.join(', ') : '-'
+                      })()}
+                    </TableCell>
                     <TableCell>
                       <Badge className={getEstadoColor(solicitud.estado_solicitud)}>
                         {solicitud.estado_solicitud}

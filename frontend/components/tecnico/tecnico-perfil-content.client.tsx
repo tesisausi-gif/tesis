@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { User, Mail, Phone, Hash, MapPin, Wrench, Star, Briefcase, Settings, Save, X, Lock } from 'lucide-react'
 import { toast } from 'sonner'
-import { actualizarPerfilTecnico } from '@/features/usuarios/usuarios.service'
+import { actualizarPerfilTecnico, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
 import { createClient } from '@/shared/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -20,6 +21,7 @@ interface TecnicoData {
   dni: string | null
   direccion: string | null
   especialidad: string | null
+  especialidades: string[]
   calificacion_promedio: number | null
   cantidad_trabajos_realizados: number | null
   esta_activo: boolean
@@ -36,9 +38,18 @@ export function TecnicoPerfilContent({ tecnico, email }: Props) {
   const [editing, setEditing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  // Form state (only editable fields)
+  // Form state (editable fields)
   const [telefono, setTelefono] = useState(tecnico.telefono || '')
   const [direccion, setDireccion] = useState(tecnico.direccion || '')
+  const tecnicoEspecialidades = tecnico.especialidades?.length
+    ? tecnico.especialidades
+    : tecnico.especialidad ? [tecnico.especialidad] : []
+  const [especialidades, setEspecialidades] = useState<string[]>(tecnicoEspecialidades)
+  const [opcionesEspecialidades, setOpcionesEspecialidades] = useState<Array<{ nombre: string }>>([])
+
+  useEffect(() => {
+    getEspecialidadesActivas().then(data => setOpcionesEspecialidades(data)).catch(() => {})
+  }, [])
 
   // Password change state
   const [changingPassword, setChangingPassword] = useState(false)
@@ -54,6 +65,7 @@ export function TecnicoPerfilContent({ tecnico, email }: Props) {
     setEditing(false)
     setTelefono(tecnico.telefono || '')
     setDireccion(tecnico.direccion || '')
+    setEspecialidades(tecnicoEspecialidades)
   }
 
   const handleGuardar = async (e: React.FormEvent) => {
@@ -64,6 +76,7 @@ export function TecnicoPerfilContent({ tecnico, email }: Props) {
       const result = await actualizarPerfilTecnico(tecnico.id_tecnico, {
         telefono: telefono || null,
         direccion: direccion || null,
+        especialidades,
       })
 
       if (!result.success) {
@@ -179,6 +192,36 @@ export function TecnicoPerfilContent({ tecnico, email }: Props) {
                   placeholder="Calle 123, Ciudad"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Especialidades</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {opcionesEspecialidades.map(esp => (
+                    <label
+                      key={esp.nombre}
+                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors text-sm ${
+                        especialidades.includes(esp.nombre)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:bg-gray-50'
+                      } ${submitting ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={especialidades.includes(esp.nombre)}
+                        onChange={() =>
+                          setEspecialidades(prev =>
+                            prev.includes(esp.nombre)
+                              ? prev.filter(e => e !== esp.nombre)
+                              : [...prev, esp.nombre]
+                          )
+                        }
+                        disabled={submitting}
+                        className="h-4 w-4 accent-blue-500"
+                      />
+                      {esp.nombre}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <div className="flex gap-2 pt-2">
                 <Button type="submit" size="sm" disabled={submitting}>
                   <Save className="h-4 w-4 mr-2" />
@@ -241,12 +284,16 @@ export function TecnicoPerfilContent({ tecnico, email }: Props) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {tecnico.especialidad && (
-            <div className="flex items-center space-x-3">
-              <Wrench className="h-5 w-5 text-gray-400" />
+          {tecnicoEspecialidades.length > 0 && (
+            <div className="flex items-start space-x-3">
+              <Wrench className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
-                <p className="text-xs font-medium text-gray-500">Especialidad</p>
-                <p className="text-sm font-medium capitalize">{tecnico.especialidad}</p>
+                <p className="text-xs font-medium text-gray-500">Especialidades</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {tecnicoEspecialidades.map(esp => (
+                    <Badge key={esp} variant="secondary" className="text-xs">{esp}</Badge>
+                  ))}
+                </div>
               </div>
             </div>
           )}

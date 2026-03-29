@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { AnimatedTabs, AnimatedTabContent } from '@/components/ui/animated-tabs'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { getAuthErrorMessage } from '@/shared/utils'
 
@@ -43,7 +42,7 @@ function RegisterPageContent() {
   const [tecnicoEmail, setTecnicoEmail] = useState('')
   const [tecnicoTelefono, setTecnicoTelefono] = useState('')
   const [tecnicoDNI, setTecnicoDNI] = useState('')
-  const [tecnicoEspecialidad, setTecnicoEspecialidad] = useState('')
+  const [tecnicoEspecialidades, setTecnicoEspecialidades] = useState<string[]>([])
   const [tecnicoDireccion, setTecnicoDireccion] = useState('')
 
   // Cargar especialidades al montar el componente
@@ -164,7 +163,7 @@ function RegisterPageContent() {
         email: tecnicoEmail,
         telefono: tecnicoTelefono || null,
         dni: tecnicoDNI || null,
-        especialidad: tecnicoEspecialidad || null,
+        especialidades: tecnicoEspecialidades,
         direccion: tecnicoDireccion || null,
       })
 
@@ -185,7 +184,7 @@ function RegisterPageContent() {
       setTecnicoEmail('')
       setTecnicoTelefono('')
       setTecnicoDNI('')
-      setTecnicoEspecialidad('')
+      setTecnicoEspecialidades([])
       setTecnicoDireccion('')
 
       setTimeout(() => {
@@ -390,23 +389,38 @@ function RegisterPageContent() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tecnico-especialidad">Especialidad *</Label>
-                <Select
-                  value={tecnicoEspecialidad}
-                  onValueChange={setTecnicoEspecialidad}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona una especialidad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {especialidades.map((esp) => (
-                      <SelectItem key={esp.id_especialidad} value={esp.nombre}>
-                        {esp.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Especialidades *</Label>
+                <p className="text-xs text-gray-500">Podés seleccionar una o más especialidades.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {especialidades.map((esp) => (
+                    <label
+                      key={esp.id_especialidad}
+                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                        tecnicoEspecialidades.includes(esp.nombre)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:bg-gray-50'
+                      } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={tecnicoEspecialidades.includes(esp.nombre)}
+                        onChange={() => {
+                          setTecnicoEspecialidades(prev =>
+                            prev.includes(esp.nombre)
+                              ? prev.filter(e => e !== esp.nombre)
+                              : [...prev, esp.nombre]
+                          )
+                        }}
+                        disabled={loading}
+                        className="h-4 w-4 accent-blue-500"
+                      />
+                      <span className="text-sm">{esp.nombre}</span>
+                    </label>
+                  ))}
+                </div>
+                {tecnicoEspecialidades.length === 0 && (
+                  <p className="text-xs text-amber-600">Seleccioná al menos una especialidad</p>
+                )}
               </div>
 
               <div className="space-y-2">

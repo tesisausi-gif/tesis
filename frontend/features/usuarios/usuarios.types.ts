@@ -48,7 +48,8 @@ export interface Tecnico {
   telefono: string | null
   dni: string | null
   direccion: string | null
-  especialidad: string | null
+  especialidad: string | null       // especialidad primaria (= especialidades[0])
+  especialidades: string[]          // todas las especialidades
   calificacion_promedio: number | null
   cantidad_trabajos_realizados: number
   esta_activo: boolean

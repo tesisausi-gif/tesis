@@ -25,6 +25,7 @@ export interface TecnicoResumen {
   nombre: string
   apellido: string
   especialidad?: string | null
+  especialidades?: string[]
 }
 
 /**
@@ -51,6 +52,7 @@ export interface TecnicoActivo {
   nombre: string
   apellido: string
   especialidad: string | null
+  especialidades: string[]
 }
 
 /**
