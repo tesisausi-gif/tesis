@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createClient } from '@/shared/lib/supabase/client'
 import { getTecnicos, toggleActivoTecnico, actualizarTecnico as actualizarTecnicoService } from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,6 +69,18 @@ export default function TecnicosTab() {
 
   useEffect(() => {
     cargarTecnicos()
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel('tecnicos-admin-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes_registro' }, () => {
+        cargarTecnicos()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'asignaciones_tecnico' }, () => {
+        cargarTecnicos()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   const cargarTecnicos = async () => {
