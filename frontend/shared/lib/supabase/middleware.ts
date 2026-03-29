@@ -35,18 +35,35 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Verificar rol del usuario si está autenticado
+  // Verificar rol y flags del usuario si está autenticado
   let userRole: string | null = null
+  let debeCambiarPassword = false
   if (user) {
     const { data: usuario } = await supabase
       .from('usuarios')
-      .select('rol')
+      .select('rol, debe_cambiar_password')
       .eq('id', user.id)
       .single()
     userRole = usuario?.rol || null
+    debeCambiarPassword = usuario?.debe_cambiar_password === true
   }
 
   const pathname = request.nextUrl.pathname
+
+  // Si el usuario debe cambiar su contraseña, redirigir a la página de cambio
+  // (excepto si ya está en esa página o en rutas de auth)
+  const isCambiarPasswordRoute = pathname === '/cambiar-password'
+  const isAuthRoute = pathname === '/login' || pathname.startsWith('/register')
+  if (user && debeCambiarPassword && !isCambiarPasswordRoute && !isAuthRoute) {
+    return NextResponse.redirect(new URL('/cambiar-password', request.url))
+  }
+  // Si no debe cambiar, no debe poder acceder a esa página directamente
+  if (user && !debeCambiarPassword && isCambiarPasswordRoute) {
+    const redirectTo = userRole === 'tecnico' ? '/tecnico'
+      : userRole === 'cliente' ? '/cliente'
+      : '/dashboard'
+    return NextResponse.redirect(new URL(redirectTo, request.url))
+  }
 
   // Rutas protegidas por rol
   const isClienteRoute = pathname.startsWith('/cliente')

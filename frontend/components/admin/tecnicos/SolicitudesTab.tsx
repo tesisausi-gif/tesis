@@ -12,10 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Filter } from 'lucide-react'
+import { CheckCircle, XCircle, Filter, Mail } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -43,7 +41,6 @@ export default function SolicitudesTab() {
   const [loading, setLoading] = useState(true)
   const [selectedSolicitud, setSelectedSolicitud] = useState<Solicitud | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [password, setPassword] = useState('')
   const [procesando, setProcesando] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState<'todas' | 'pendiente' | 'aprobada' | 'rechazada'>('todas')
 
@@ -74,38 +71,28 @@ export default function SolicitudesTab() {
 
   const abrirDialog = (solicitud: Solicitud) => {
     setSelectedSolicitud(solicitud)
-    setPassword(Math.random().toString(36).slice(-8))
     setDialogOpen(true)
   }
 
   const aprobarSolicitud = async () => {
-    if (!selectedSolicitud || !password) {
-      toast.error('Debes generar una contraseña')
-      return
-    }
+    if (!selectedSolicitud) return
 
     setProcesando(true)
 
     try {
-      const result = await aprobarSolicitudTecnico(
-        selectedSolicitud.id_solicitud,
-        password
-      )
+      const result = await aprobarSolicitudTecnico(selectedSolicitud.id_solicitud)
 
       if (!result.success) {
-        toast.error('Error al aprobar solicitud', {
-          description: result.error
-        })
+        toast.error('Error al aprobar solicitud', { description: result.error })
         return
       }
 
       toast.success('Técnico aprobado', {
-        description: `Se ha enviado un email a ${selectedSolicitud.email} con la contraseña`
+        description: `Se envió un email a ${selectedSolicitud.email} con la contraseña temporal.`,
       })
 
       setDialogOpen(false)
       setSelectedSolicitud(null)
-      setPassword('')
       cargarSolicitudes()
 
     } catch (error) {
@@ -144,12 +131,7 @@ export default function SolicitudesTab() {
     return colors[estado] || 'bg-gray-100 text-gray-800'
   }
 
-  const generarNuevaPassword = () => {
-    const newPass = Math.random().toString(36).slice(-10)
-    setPassword(newPass)
-  }
-
-  // Filtrar solicitudes según el estado seleccionado
+// Filtrar solicitudes según el estado seleccionado
   const solicitudesFiltradas = solicitudes.filter((solicitud) => {
     if (filtroEstado === 'todas') return true
     return solicitud.estado_solicitud === filtroEstado
@@ -261,50 +243,42 @@ export default function SolicitudesTab() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
-            <DialogTitle>Aprobar Técnico</DialogTitle>
+            <DialogTitle>Aprobar solicitud de técnico</DialogTitle>
             <DialogDescription>
-              Genera una contraseña para el nuevo técnico
+              Se creará la cuenta y se enviará un email con la contraseña temporal al técnico.
             </DialogDescription>
           </DialogHeader>
           {selectedSolicitud && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Técnico</Label>
-                <p className="text-sm font-medium">
-                  {selectedSolicitud.nombre} {selectedSolicitud.apellido}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <p className="text-sm">{selectedSolicitud.email}</p>
-              </div>
-              <div className="space-y-2">
-                <Label>Especialidad</Label>
-                <p className="text-sm">{selectedSolicitud.especialidad || 'No especificada'}</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña Temporal</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="password"
-                    type="text"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Contraseña"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={generarNuevaPassword}
-                  >
-                    Generar
-                  </Button>
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Nombre</span>
+                  <span className="font-medium">{selectedSolicitud.nombre} {selectedSolicitud.apellido}</span>
                 </div>
-                <p className="text-xs text-gray-600">
-                  Esta contraseña se enviará al técnico por email
-                </p>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Email</span>
+                  <span className="font-medium">{selectedSolicitud.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Especialidades</span>
+                  <span className="font-medium text-right max-w-[220px]">
+                    {(() => {
+                      const esps = selectedSolicitud.especialidades?.length
+                        ? selectedSolicitud.especialidades
+                        : selectedSolicitud.especialidad ? [selectedSolicitud.especialidad] : []
+                      return esps.length > 0 ? esps.join(', ') : 'No especificada'
+                    })()}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
+                <CheckCircle className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-500" />
+                <span>
+                  El sistema generará una contraseña temporal segura y la enviará por email
+                  al técnico. En su primer inicio de sesión deberá cambiarla obligatoriamente.
+                </span>
               </div>
               <div className="flex gap-2 justify-end">
                 <Button
@@ -316,9 +290,11 @@ export default function SolicitudesTab() {
                 </Button>
                 <Button
                   onClick={aprobarSolicitud}
-                  disabled={procesando || !password}
+                  disabled={procesando}
+                  className="gap-2"
                 >
-                  {procesando ? 'Aprobando...' : 'Aprobar y Crear Cuenta'}
+                  <CheckCircle className="h-4 w-4" />
+                  {procesando ? 'Aprobando...' : 'Aprobar y enviar email'}
                 </Button>
               </div>
             </div>
