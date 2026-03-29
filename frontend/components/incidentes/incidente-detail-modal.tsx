@@ -1109,6 +1109,23 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           const trabajoCompletado = asignaciones.some(a => a.estado_asignacion === 'completada')
           const tieneConformidad = !!conformidad
 
+          // ── Presupuestos adicionales ──────────────────────────────────────
+          const presOrdenados = [...presupuestos].sort((a, b) =>
+            new Date(a.fecha_creacion ?? '').getTime() - new Date(b.fecha_creacion ?? '').getTime()
+          )
+          const primerPresAprobado = presOrdenados.find(p => p.estado_presupuesto === EstadoPresupuesto.APROBADO)
+          const presupuestosAdicionales = primerPresAprobado
+            ? presOrdenados.filter(p =>
+                p.id_presupuesto !== primerPresAprobado.id_presupuesto &&
+                new Date(p.fecha_creacion ?? '') > new Date(primerPresAprobado.fecha_creacion ?? '')
+              )
+            : []
+          const hayAdicionalRechazado = presupuestosAdicionales.some(p => p.estado_presupuesto === EstadoPresupuesto.RECHAZADO)
+          const hayAdicionalPendiente = presupuestosAdicionales.some(p =>
+            [EstadoPresupuesto.ENVIADO, EstadoPresupuesto.APROBADO_ADMIN].includes(p.estado_presupuesto as EstadoPresupuesto)
+          )
+          const puedeAgregarAdicional = !!primerPresAprobado && !trabajoCompletado && !hayAdicionalRechazado && !hayAdicionalPendiente
+
           const computeSteps = (): StepDef[] => {
             const s1: StepStatus = tieneInspeccion ? 'completed' : 'active'
             const s2: StepStatus = tienePresupuesto ? 'completed' : tieneInspeccion ? 'active' : 'locked'
@@ -1725,6 +1742,109 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       </div>
                     ) : (
                       <>
+                        {/* Presupuestos adicionales */}
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-sm text-gray-600 flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            Presupuestos adicionales
+                          </h4>
+
+                          {/* Lista de adicionales enviados */}
+                          {presupuestosAdicionales.length > 0 && (
+                            <div className="space-y-2">
+                              {presupuestosAdicionales.map((p) => {
+                                const colorMap: Record<string, string> = {
+                                  enviado: 'bg-blue-50 border-blue-200 text-blue-800',
+                                  aprobado_admin: 'bg-indigo-50 border-indigo-200 text-indigo-800',
+                                  aprobado: 'bg-green-50 border-green-200 text-green-800',
+                                  rechazado: 'bg-red-50 border-red-200 text-red-800',
+                                }
+                                const labelMap: Record<string, string> = {
+                                  enviado: 'Enviado — esperando revisión admin',
+                                  aprobado_admin: 'Aprobado por admin — esperando cliente',
+                                  aprobado: 'Aprobado',
+                                  rechazado: 'Rechazado',
+                                }
+                                const color = colorMap[p.estado_presupuesto ?? ''] ?? 'bg-gray-50 border-gray-200 text-gray-700'
+                                const label = labelMap[p.estado_presupuesto ?? ''] ?? p.estado_presupuesto
+                                return (
+                                  <div key={p.id_presupuesto} className={`rounded-lg border p-3 text-xs ${color}`}>
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="font-semibold">Presupuesto adicional #{p.id_presupuesto}</span>
+                                      <span className="font-medium">{label}</span>
+                                    </div>
+                                    <p className="text-xs opacity-80 truncate">{p.descripcion_detallada}</p>
+                                    {p.costo_total != null && (
+                                      <p className="font-semibold mt-1">Total: ${Number(p.costo_total).toLocaleString('es-AR')}</p>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+
+                          {/* Alerta si fue rechazado */}
+                          {hayAdicionalRechazado && (
+                            <div className="rounded-lg bg-red-50 border border-red-200 p-3 flex items-start gap-2">
+                              <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+                              <p className="text-xs text-red-800 font-medium">
+                                Tu presupuesto adicional fue rechazado. Debés terminar el trabajo con los recursos aprobados. El trabajo puede quedar incompleto.
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Formulario para agregar nuevo adicional */}
+                          {puedeAgregarAdicional && (
+                            <div className="space-y-3 rounded-lg border border-dashed border-gray-300 p-3">
+                              <p className="text-xs text-gray-500">Necesitás más recursos para completar el trabajo. Enviá un presupuesto adicional:</p>
+                              <div className="space-y-2">
+                                <Label className="text-xs">Descripción <span className="text-red-500">*</span></Label>
+                                <Textarea
+                                  value={presDescripcion}
+                                  onChange={(e) => setPresDescripcion(e.target.value)}
+                                  placeholder="Describí los materiales o trabajos adicionales necesarios..."
+                                  rows={2}
+                                  className="text-sm"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Costo materiales ($)</Label>
+                                  <Input type="number" min="0" step="0.01" value={presCostoMateriales}
+                                    onChange={(e) => setPresCostoMateriales(e.target.value)} placeholder="0" className="text-sm h-8" />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Mano de obra ($)</Label>
+                                  <Input type="number" min="0" step="0.01" value={presCostoManoObra}
+                                    onChange={(e) => setPresCostoManoObra(e.target.value)} placeholder="0" className="text-sm h-8" />
+                                </div>
+                              </div>
+                              {(presCostoMateriales || presCostoManoObra) && (
+                                <p className="text-xs text-gray-600 font-medium">
+                                  Total: ${((parseFloat(presCostoMateriales) || 0) + (parseFloat(presCostoManoObra) || 0)).toLocaleString('es-AR')}
+                                </p>
+                              )}
+                              <Button
+                                onClick={handleCrearPresupuesto}
+                                disabled={savingPresupuesto || !presDescripcion.trim()}
+                                size="sm"
+                                className="w-full gap-2"
+                              >
+                                {savingPresupuesto ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Enviando...</> : <><Send className="h-3.5 w-3.5" />Enviar presupuesto adicional</>}
+                              </Button>
+                            </div>
+                          )}
+
+                          {hayAdicionalPendiente && (
+                            <p className="text-xs text-blue-600 flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5" />
+                              Presupuesto adicional en revisión. Esperá la respuesta antes de enviar otro.
+                            </p>
+                          )}
+                        </div>
+
+                        <Separator />
+
                         {/* Registrar avance */}
                         <div className="space-y-3">
                           <h4 className="font-semibold text-sm text-gray-600 flex items-center gap-2">
@@ -1740,19 +1860,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                                 onChange={(e) => setAvanceDesc(e.target.value)}
                                 placeholder="Describe qué trabajo se realizó..."
                                 rows={3}
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <Label htmlFor="modal-avance-pct">Porcentaje completado (opcional)</Label>
-                              <input
-                                id="modal-avance-pct"
-                                type="number"
-                                min={0}
-                                max={100}
-                                value={avancePct}
-                                onChange={(e) => setAvancePct(e.target.value)}
-                                placeholder="0–100"
-                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
                               />
                             </div>
                             <Button
@@ -1773,11 +1880,16 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                             <CheckCircle2 className="h-4 w-4" />
                             Completar Trabajo
                           </h4>
+                          {hayAdicionalPendiente && (
+                            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                              Hay un presupuesto adicional pendiente de aprobación. Esperá la respuesta antes de completar el trabajo.
+                            </p>
+                          )}
                           {!confirmandoCompletar ? (
                             <Button
-                              variant="outline"
-                              className="w-full gap-2 text-green-700 border-green-300 hover:bg-green-50"
+                              className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold shadow-sm"
                               onClick={() => setConfirmandoCompletar(true)}
+                              disabled={hayAdicionalPendiente}
                             >
                               <CheckCircle2 className="h-4 w-4" />
                               Marcar como completado
@@ -1798,7 +1910,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                                 </Button>
                                 <Button
                                   size="sm"
-                                  className="flex-1 gap-2"
+                                  className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white"
                                   onClick={handleCompletar}
                                   disabled={savingCompletar}
                                 >
@@ -2087,6 +2199,17 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {/* Advertencia si hubo presupuesto adicional rechazado */}
+                    {hayAdicionalRechazado && (
+                      <div className="rounded-lg bg-amber-50 border border-amber-300 p-3 flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div className="text-xs text-amber-800">
+                          <p className="font-semibold mb-0.5">Presupuesto adicional rechazado</p>
+                          <p>El técnico solicitó recursos adicionales que fueron rechazados. El trabajo puede estar incompleto ya que debió terminar con los recursos originalmente aprobados.</p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Foto de conformidad */}
                     {conformidad?.url_documento && (
                       <div className="space-y-2">
