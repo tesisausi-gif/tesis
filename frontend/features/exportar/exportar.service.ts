@@ -20,7 +20,6 @@ import type {
   R6Resultado,
   R7Resultado,
   R8Resultado,
-  R9Resultado,
   R10Resultado,
   R11Resultado,
   R12Resultado,
@@ -508,48 +507,62 @@ export async function getR5RentabilidadPorRefaccion(filtros: {
 }): Promise<R5Resultado> {
   const supabase = createAdminClient()
 
-  let query = supabase
-    .from('pagos')
-    .select('monto_pagado, fecha_pago, incidentes (categoria)')
+  // Ingresos: cobros a clientes (incluyen comisión ISBA)
+  let qCobros = supabase
+    .from('cobros_clientes')
+    .select('monto_cobro, fecha_cobro, id_incidente, incidentes:id_incidente (categoria)')
+  if (filtros.fechaDesde) qCobros = qCobros.gte('fecha_cobro', filtros.fechaDesde)
+  if (filtros.fechaHasta) qCobros = qCobros.lte('fecha_cobro', filtros.fechaHasta)
 
-  if (filtros.fechaDesde) query = query.gte('fecha_pago', filtros.fechaDesde)
-  if (filtros.fechaHasta) query = query.lte('fecha_pago', filtros.fechaHasta)
+  // Costos: pagos a técnicos (materiales + mano de obra)
+  let qPagos = supabase
+    .from('pagos_tecnicos')
+    .select('monto_pago, fecha_pago, id_incidente, incidentes:id_incidente (categoria)')
+  if (filtros.fechaDesde) qPagos = qPagos.gte('fecha_pago', filtros.fechaDesde)
+  if (filtros.fechaHasta) qPagos = qPagos.lte('fecha_pago', filtros.fechaHasta)
 
-  const { data, error } = await query
-  if (error) throw error
+  const [cobrosRes, pagosRes] = await Promise.all([qCobros, qPagos])
 
-  const tipoMap: Record<string, number> = {}
+  const tipoMap: Record<string, { ingreso: number; costo: number }> = {}
 
-  for (const p of (data || [])) {
-    const inc = Array.isArray(p.incidentes) ? p.incidentes[0] : p.incidentes
-    const tipo = inc?.categoria || 'Sin categoría'
+  for (const c of (cobrosRes.data || [])) {
+    const inc = Array.isArray(c.incidentes) ? c.incidentes[0] : c.incidentes
+    const tipo = (inc as any)?.categoria || 'Sin categoría'
     if (filtros.categoria && tipo !== filtros.categoria) continue
-    tipoMap[tipo] = (tipoMap[tipo] || 0) + (p.monto_pagado || 0)
+    if (!tipoMap[tipo]) tipoMap[tipo] = { ingreso: 0, costo: 0 }
+    tipoMap[tipo].ingreso += Number(c.monto_cobro) || 0
   }
 
-  const montoTotal = Object.values(tipoMap).reduce((a, b) => a + b, 0)
-  const COMISION_PCT = 0.10
+  for (const p of (pagosRes.data || [])) {
+    const inc = Array.isArray(p.incidentes) ? p.incidentes[0] : p.incidentes
+    const tipo = (inc as any)?.categoria || 'Sin categoría'
+    if (filtros.categoria && tipo !== filtros.categoria) continue
+    if (!tipoMap[tipo]) tipoMap[tipo] = { ingreso: 0, costo: 0 }
+    tipoMap[tipo].costo += Number(p.monto_pago) || 0
+  }
 
   const porTipo = Object.entries(tipoMap)
-    .sort((a, b) => b[1] - a[1])
-    .map(([tipo, montoTipo]) => {
-      const comisiones = montoTipo * COMISION_PCT
+    .map(([tipo, v]) => {
+      const comision = v.ingreso - v.costo
       return {
         tipo,
-        montoTotal: montoTipo,
-        comisiones,
-        gananciaNeta: comisiones,
-        margen: montoTipo > 0 ? (comisiones / montoTipo) * 100 : 0,
+        ingresoBruto: v.ingreso,
+        costoPagadoTecnico: v.costo,
+        comision,
+        margen: v.ingreso > 0 ? (comision / v.ingreso) * 100 : 0,
       }
     })
+    .sort((a, b) => b.ingresoBruto - a.ingresoBruto)
 
-  const comisionesTotales = montoTotal * COMISION_PCT
+  const ingresoTotal = porTipo.reduce((s, t) => s + t.ingresoBruto, 0)
+  const costoTotal = porTipo.reduce((s, t) => s + t.costoPagadoTecnico, 0)
+  const comisionTotal = ingresoTotal - costoTotal
 
   return {
-    montoTotal,
-    comisionesTotales,
-    gananciaNeta: comisionesTotales,
-    margenGlobal: montoTotal > 0 ? (comisionesTotales / montoTotal) * 100 : 0,
+    ingresoTotal,
+    costoTotal,
+    comisionTotal,
+    margenGlobal: ingresoTotal > 0 ? (comisionTotal / ingresoTotal) * 100 : 0,
     porTipo,
   }
 }
@@ -561,47 +574,97 @@ export async function getR6DesempenoTecnicos(filtros: {
   fechaHasta?: string
   idTecnico?: number
 }): Promise<R6Resultado> {
-  const r3 = await getR3TecnicosPorVolumen(filtros)
   const supabase = createAdminClient()
 
-  let calQuery = supabase
-    .from('calificaciones')
-    .select('id_tecnico, puntuacion')
+  // Datos de técnicos base
+  let tecnicosQuery = supabase.from('tecnicos').select('id_tecnico, nombre, apellido, especialidad').eq('esta_activo', true)
+  if (filtros.idTecnico) tecnicosQuery = tecnicosQuery.eq('id_tecnico', filtros.idTecnico)
+
+  // Asignaciones (todas las del período)
+  let asigQuery = supabase
+    .from('asignaciones_tecnico')
+    .select('id_tecnico, id_incidente, estado_asignacion, fecha_asignacion, incidentes:id_incidente (fecha_registro)')
+  if (filtros.fechaDesde) asigQuery = asigQuery.gte('fecha_asignacion', filtros.fechaDesde)
+  if (filtros.fechaHasta) asigQuery = asigQuery.lte('fecha_asignacion', filtros.fechaHasta)
+  if (filtros.idTecnico) asigQuery = asigQuery.eq('id_tecnico', filtros.idTecnico)
+
+  // Calificaciones
+  let calQuery = supabase.from('calificaciones').select('id_tecnico, puntuacion')
   if (filtros.idTecnico) calQuery = calQuery.eq('id_tecnico', filtros.idTecnico)
   if (filtros.fechaDesde) calQuery = calQuery.gte('fecha_calificacion', filtros.fechaDesde)
   if (filtros.fechaHasta) calQuery = calQuery.lte('fecha_calificacion', filtros.fechaHasta)
 
-  const { data: calData } = await calQuery
+  const [tecnicosRes, asigRes, calRes] = await Promise.all([tecnicosQuery, asigQuery, calQuery])
+
+  const tecnicos = tecnicosRes.data || []
+  const asignaciones = asigRes.data || []
+
+  // Mapa de calificaciones
   const calMap: Record<number, number[]> = {}
-  for (const c of (calData || [])) {
+  for (const c of (calRes.data || [])) {
     if (!calMap[c.id_tecnico]) calMap[c.id_tecnico] = []
     calMap[c.id_tecnico].push(c.puntuacion || 0)
   }
 
-  const tecnicos = r3.tecnicos.map((t, idx) => {
+  // Agrupar asignaciones por técnico
+  const tecMap: Record<number, {
+    asignados: number; cerrados: number; rechazadas: number; diasRespuestaList: number[]
+  }> = {}
+  for (const t of tecnicos) {
+    tecMap[t.id_tecnico] = { asignados: 0, cerrados: 0, rechazadas: 0, diasRespuestaList: [] }
+  }
+
+  for (const a of asignaciones) {
+    const entry = tecMap[a.id_tecnico]
+    if (!entry) continue
+    entry.asignados++
+    if (a.estado_asignacion === 'completada') entry.cerrados++
+    if (a.estado_asignacion === 'rechazada' || a.estado_asignacion === 'cancelada') entry.rechazadas++
+    // Tiempo de respuesta: días desde registro incidente hasta asignación
+    const inc = Array.isArray(a.incidentes) ? a.incidentes[0] : a.incidentes
+    if (inc?.fecha_registro && a.fecha_asignacion) {
+      const dias = diasEntre(inc.fecha_registro, a.fecha_asignacion)
+      if (dias >= 0) entry.diasRespuestaList.push(dias)
+    }
+  }
+
+  const result = tecnicos.map((t: any) => {
+    const m = tecMap[t.id_tecnico] || { asignados: 0, cerrados: 0, rechazadas: 0, diasRespuestaList: [] }
     const puntList = calMap[t.id_tecnico] || []
     const satisfaccion = puntList.length > 0
-      ? puntList.reduce((a, b) => a + b, 0) / puntList.length
+      ? puntList.reduce((a: number, b: number) => a + b, 0) / puntList.length
       : null
+    const promedioDiasRespuesta = m.diasRespuestaList.length > 0
+      ? m.diasRespuestaList.reduce((a, b) => a + b, 0) / m.diasRespuestaList.length
+      : 0
+    const productividad = m.asignados > 0 ? (m.cerrados / m.asignados) * 100 : 0
     return {
-      ...t,
-      productividad: t.tasaCierre,
+      id_tecnico: t.id_tecnico,
+      nombre: t.nombre || '',
+      apellido: t.apellido || '',
+      especialidad: t.especialidad || '',
+      asignados: m.asignados,
+      cerrados: m.cerrados,
+      rechazadas: m.rechazadas,
+      productividad,
       satisfaccion,
-      rankingPos: idx + 1,
+      promedioDiasRespuesta,
+      rankingPos: 0,
     }
-  }).sort((a, b) => b.productividad - a.productividad)
+  })
+    .sort((a, b) => b.productividad - a.productividad)
     .map((t, idx) => ({ ...t, rankingPos: idx + 1 }))
 
-  const totalTecnicos = tecnicos.length
+  const totalTecnicos = result.length
   const promedioProductividad = totalTecnicos > 0
-    ? tecnicos.reduce((s, t) => s + t.productividad, 0) / totalTecnicos
+    ? result.reduce((s, t) => s + t.productividad, 0) / totalTecnicos
     : 0
-  const conSatisfaccion = tecnicos.filter(t => t.satisfaccion !== null)
+  const conSatisfaccion = result.filter(t => t.satisfaccion !== null)
   const promedioSatisfaccion = conSatisfaccion.length > 0
     ? conSatisfaccion.reduce((s, t) => s + (t.satisfaccion || 0), 0) / conSatisfaccion.length
     : 0
 
-  return { totalTecnicos, promedioProductividad, promedioSatisfaccion, tecnicos }
+  return { totalTecnicos, promedioProductividad, promedioSatisfaccion, tecnicos: result }
 }
 
 // ─── R7: Satisfacción de ISBA ─────────────────────────────────────────────────
@@ -729,95 +792,6 @@ export async function getR8CostosMantenimiento(filtros: {
     costoPromedio: totalIncidentes > 0 ? costoTotal / totalIncidentes : 0,
     presupuestoTotal: costoTotal,
     porCategoria,
-  }
-}
-
-// ─── R9: Eficiencia de Costos por Técnico ────────────────────────────────────
-
-export async function getR9EficienciaCostos(filtros: {
-  fechaDesde?: string
-  fechaHasta?: string
-  idTecnico?: number
-}): Promise<R9Resultado> {
-  const supabase = createAdminClient()
-
-  // Paso 1: presupuestos de incidentes resueltos
-  const { data: presupuestos, error: presError } = await supabase
-    .from('presupuestos')
-    .select('id_incidente, costo_total, incidentes (id_incidente, estado_actual, fecha_cierre, fecha_registro)')
-
-  if (presError) throw presError
-
-  const incIdsResueltos = (presupuestos || [])
-    .filter((p: any) => {
-      const inc = Array.isArray(p.incidentes) ? p.incidentes[0] : p.incidentes
-      if (inc?.estado_actual !== 'finalizado' && inc?.estado_actual !== 'resuelto') return false
-      if (filtros.fechaDesde && inc?.fecha_registro && inc.fecha_registro < filtros.fechaDesde) return false
-      if (filtros.fechaHasta && inc?.fecha_registro && inc.fecha_registro > filtros.fechaHasta) return false
-      return true
-    })
-    .map((p: any) => p.id_incidente)
-
-  if (!incIdsResueltos.length) {
-    return { costoPromedioGlobal: 0, totalIncidentes: 0, costoTotal: 0, tecnicos: [] }
-  }
-
-  // Paso 2: asignaciones completadas para esos incidentes
-  let asigQuery = supabase
-    .from('asignaciones_tecnico')
-    .select('id_incidente, id_tecnico, estado_asignacion, tecnicos (nombre, apellido)')
-    .in('id_incidente', incIdsResueltos)
-    .eq('estado_asignacion', 'completada')
-
-  if (filtros.idTecnico) asigQuery = asigQuery.eq('id_tecnico', filtros.idTecnico)
-
-  const { data: asignaciones, error: asigError } = await asigQuery
-  if (asigError) throw asigError
-
-  // Construir mapa incidente → costo
-  const costoPorIncidente: Record<number, number> = {}
-  for (const p of (presupuestos || [])) {
-    costoPorIncidente[p.id_incidente] = (costoPorIncidente[p.id_incidente] || 0) + (p.costo_total || 0)
-  }
-
-  // Agregar por técnico
-  const tecMap: Record<number, any> = {}
-  for (const a of (asignaciones || [])) {
-    const tec = Array.isArray(a.tecnicos) ? a.tecnicos[0] : a.tecnicos
-    if (!tecMap[a.id_tecnico]) {
-      tecMap[a.id_tecnico] = {
-        id_tecnico: a.id_tecnico,
-        nombre: tec?.nombre || '',
-        apellido: tec?.apellido || '',
-        incidentesCerrados: 0,
-        costoTotal: 0,
-      }
-    }
-    tecMap[a.id_tecnico].incidentesCerrados++
-    tecMap[a.id_tecnico].costoTotal += costoPorIncidente[a.id_incidente] || 0
-  }
-
-  const result = Object.values(tecMap).map((t: any) => ({
-    ...t,
-    costoPromedio: t.incidentesCerrados > 0 ? t.costoTotal / t.incidentesCerrados : 0,
-    desviacion: 0,
-  }))
-
-  const costoTotal = result.reduce((s, t) => s + t.costoTotal, 0)
-  const totalIncidentes = result.reduce((s, t) => s + t.incidentesCerrados, 0)
-  const costoPromedioGlobal = totalIncidentes > 0 ? costoTotal / totalIncidentes : 0
-
-  for (const t of result) {
-    t.desviacion = costoPromedioGlobal > 0
-      ? ((t.costoPromedio - costoPromedioGlobal) / costoPromedioGlobal) * 100
-      : 0
-  }
-
-  return {
-    costoPromedioGlobal,
-    totalIncidentes,
-    costoTotal,
-    tecnicos: result.sort((a, b) => a.costoPromedio - b.costoPromedio),
   }
 }
 

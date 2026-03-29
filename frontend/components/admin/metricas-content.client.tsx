@@ -30,7 +30,7 @@ function fechaDesde(periodo: Periodo): string | null {
   return ahora.toISOString().slice(0, 10)
 }
 
-function BarraHorizontal({ valor, maximo, color = 'bg-blue-500' }: { valor: number; maximo: number; color?: string }) {
+function BarraHorizontal({ valor, maximo, color = 'bg-blue-500', showLabel = true }: { valor: number; maximo: number; color?: string; showLabel?: boolean }) {
   const pct = maximo > 0 ? Math.round((valor / maximo) * 100) : 0
   return (
     <div className="flex items-center gap-2">
@@ -40,7 +40,7 @@ function BarraHorizontal({ valor, maximo, color = 'bg-blue-500' }: { valor: numb
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-sm font-medium w-6 text-right text-gray-700">{valor}</span>
+      {showLabel && <span className="text-sm font-medium w-6 text-right text-gray-700">{valor}</span>}
     </div>
   )
 }
@@ -272,7 +272,7 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
                       <span className="truncate max-w-[60%]">{item.categoria}</span>
                       <span className="font-medium">{item.count}</span>
                     </div>
-                    <BarraHorizontal valor={item.count} maximo={maxCategoria} color="bg-orange-400" />
+                    <BarraHorizontal valor={item.count} maximo={maxCategoria} color="bg-orange-400" showLabel={false} />
                   </div>
                 ))}
               </div>

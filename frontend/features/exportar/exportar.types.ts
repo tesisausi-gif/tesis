@@ -154,16 +154,16 @@ export interface R4Resultado {
 
 export interface R5FilaTipo {
   tipo: string
-  montoTotal: number
-  comisiones: number
-  gananciaNeta: number
-  margen: number
+  ingresoBruto: number        // cobrado al cliente (cobros_clientes.monto_cobro)
+  costoPagadoTecnico: number  // pagado al técnico (pagos_tecnicos.monto_pago)
+  comision: number            // ingresoBruto - costoPagadoTecnico (margen ISBA)
+  margen: number              // comision / ingresoBruto * 100
 }
 
 export interface R5Resultado {
-  montoTotal: number
-  comisionesTotales: number
-  gananciaNeta: number
+  ingresoTotal: number
+  costoTotal: number
+  comisionTotal: number
   margenGlobal: number
   porTipo: R5FilaTipo[]
 }
@@ -174,10 +174,13 @@ export interface R6FilaTecnico {
   id_tecnico: number
   nombre: string
   apellido: string
+  especialidad: string
   asignados: number
   cerrados: number
-  productividad: number
+  rechazadas: number            // asignaciones rechazadas/canceladas por el técnico
+  productividad: number         // cerrados/asignados * 100
   satisfaccion: number | null
+  promedioDiasRespuesta: number // días promedio desde registro incidente hasta primera asignación
   rankingPos: number
 }
 
@@ -224,25 +227,6 @@ export interface R8Resultado {
   costoPromedio: number
   presupuestoTotal: number
   porCategoria: R8FilaCategoria[]
-}
-
-// ─── R9: Eficiencia de Costos por Técnico ────────────────────────────────────
-
-export interface R9FilaTecnico {
-  id_tecnico: number
-  nombre: string
-  apellido: string
-  incidentesCerrados: number
-  costoTotal: number
-  costoPromedio: number
-  desviacion: number
-}
-
-export interface R9Resultado {
-  costoPromedioGlobal: number
-  totalIncidentes: number
-  costoTotal: number
-  tecnicos: R9FilaTecnico[]
 }
 
 // ─── R10: Rentabilidad por Inmueble ──────────────────────────────────────────
