@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/shared/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -124,6 +125,17 @@ const COLORES_TIMELINE: Record<string, string> = {
 export function ConformidadesContent({ conformidades }: ConformidadesContentProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('conformidades-admin-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conformidades' }, () => {
+        router.refresh()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [])
 
   // Conformidad seleccionada para el panel de detalle
   const [selected, setSelected] = useState<ConformidadItem | null>(null)

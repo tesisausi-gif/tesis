@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/shared/lib/supabase/client'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,6 +24,17 @@ interface AprobarPresupuestosContentProps {
 
 export function AprobarPresupuestosContent({ presupuestosIniciales }: AprobarPresupuestosContentProps) {
     const router = useRouter()
+
+    useEffect(() => {
+      const supabase = createClient()
+      const channel = supabase
+        .channel('presupuestos-admin-rt')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, () => {
+          router.refresh()
+        })
+        .subscribe()
+      return () => { supabase.removeChannel(channel) }
+    }, [])
 
     const [presupuestos, setPresupuestos] = useState<Presupuesto[]>(presupuestosIniciales as Presupuesto[])
     const [procesando, setProcesando] = useState(false)

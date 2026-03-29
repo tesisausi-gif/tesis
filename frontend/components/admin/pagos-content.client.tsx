@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/shared/lib/supabase/client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -564,6 +565,25 @@ interface PagosContentProps {
 }
 
 export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendientesCobroCliente, realizadosCobroCliente }: PagosContentProps) {
+  const router = useRouter()
+
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('pagos-admin-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cobros_clientes' }, () => {
+        router.refresh()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos_tecnicos' }, () => {
+        router.refresh()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, () => {
+        router.refresh()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
   return (
     <div className="space-y-4 px-4 py-6">
       <div>

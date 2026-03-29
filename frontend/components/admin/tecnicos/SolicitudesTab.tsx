@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createClient } from '@/shared/lib/supabase/client'
 import {
   getSolicitudesRegistro,
   rechazarSolicitud as rechazarSolicitudService,
@@ -47,6 +48,15 @@ export default function SolicitudesTab() {
 
   useEffect(() => {
     cargarSolicitudes()
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel('solicitudes-admin-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes_registro' }, () => {
+        cargarSolicitudes()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   const cargarSolicitudes = async () => {

@@ -36,7 +36,7 @@ type BadgeKey = keyof AdminBadgeCounts
 
 const menuItems: { title: string; icon: React.ElementType; href: string; badge?: BadgeKey }[] = [
   { title: 'Dashboard', icon: Home, href: '/dashboard' },
-  { title: 'Incidentes', icon: FileText, href: '/dashboard/incidentes' },
+  { title: 'Incidentes', icon: FileText, href: '/dashboard/incidentes', badge: 'incidentes' },
   { title: 'Clientes', icon: Users, href: '/dashboard/clientes' },
   { title: 'Técnicos', icon: Wrench, href: '/dashboard/tecnicos', badge: 'solicitudes' },
   { title: 'Empleados', icon: UserCog, href: '/dashboard/usuarios' },
@@ -59,7 +59,7 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const [counts, setCounts] = useState<AdminBadgeCounts>({ conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0, reasignaciones: 0, notificaciones: 0 })
+  const [counts, setCounts] = useState<AdminBadgeCounts>({ incidentes: 0, conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0, reasignaciones: 0, notificaciones: 0 })
 
   useEffect(() => {
     // Carga inicial
