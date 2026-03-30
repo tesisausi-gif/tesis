@@ -510,32 +510,46 @@ export async function getR5RentabilidadPorRefaccion(filtros: {
   // Ingresos: cobros a clientes (incluyen comisión ISBA)
   let qCobros = supabase
     .from('cobros_clientes')
-    .select('monto_cobro, fecha_cobro, id_incidente, incidentes:id_incidente (categoria)')
+    .select('monto_cobro, fecha_cobro, id_incidente')
   if (filtros.fechaDesde) qCobros = qCobros.gte('fecha_cobro', filtros.fechaDesde)
   if (filtros.fechaHasta) qCobros = qCobros.lte('fecha_cobro', filtros.fechaHasta)
 
   // Costos: pagos a técnicos (materiales + mano de obra)
   let qPagos = supabase
     .from('pagos_tecnicos')
-    .select('monto_pago, fecha_pago, id_incidente, incidentes:id_incidente (categoria)')
+    .select('monto_pago, fecha_pago, id_incidente')
   if (filtros.fechaDesde) qPagos = qPagos.gte('fecha_pago', filtros.fechaDesde)
   if (filtros.fechaHasta) qPagos = qPagos.lte('fecha_pago', filtros.fechaHasta)
 
   const [cobrosRes, pagosRes] = await Promise.all([qCobros, qPagos])
 
+  const cobros = cobrosRes.data || []
+  const pagos = pagosRes.data || []
+
+  // Fetch categories separately to avoid FK join issues
+  const incIds = [...new Set([
+    ...cobros.map((c: any) => c.id_incidente).filter(Boolean),
+    ...pagos.map((p: any) => p.id_incidente).filter(Boolean),
+  ])]
+  let catPorIncidente: Record<number, string> = {}
+  if (incIds.length > 0) {
+    const { data: incs } = await supabase.from('incidentes').select('id_incidente, categoria').in('id_incidente', incIds)
+    for (const inc of (incs || [])) {
+      catPorIncidente[inc.id_incidente] = inc.categoria || 'Sin categoría'
+    }
+  }
+
   const tipoMap: Record<string, { ingreso: number; costo: number }> = {}
 
-  for (const c of (cobrosRes.data || [])) {
-    const inc = Array.isArray(c.incidentes) ? c.incidentes[0] : c.incidentes
-    const tipo = (inc as any)?.categoria || 'Sin categoría'
+  for (const c of cobros) {
+    const tipo = (c.id_incidente && catPorIncidente[c.id_incidente]) || 'Sin categoría'
     if (filtros.categoria && tipo !== filtros.categoria) continue
     if (!tipoMap[tipo]) tipoMap[tipo] = { ingreso: 0, costo: 0 }
     tipoMap[tipo].ingreso += Number(c.monto_cobro) || 0
   }
 
-  for (const p of (pagosRes.data || [])) {
-    const inc = Array.isArray(p.incidentes) ? p.incidentes[0] : p.incidentes
-    const tipo = (inc as any)?.categoria || 'Sin categoría'
+  for (const p of pagos) {
+    const tipo = (p.id_incidente && catPorIncidente[p.id_incidente]) || 'Sin categoría'
     if (filtros.categoria && tipo !== filtros.categoria) continue
     if (!tipoMap[tipo]) tipoMap[tipo] = { ingreso: 0, costo: 0 }
     tipoMap[tipo].costo += Number(p.monto_pago) || 0

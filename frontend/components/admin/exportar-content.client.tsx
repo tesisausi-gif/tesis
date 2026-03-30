@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, FileSpreadsheet, Download, BarChart3, TrendingUp, Users, Building2, DollarSign, Star, Wrench, LayoutDashboard } from 'lucide-react'
+import { Loader2, FileSpreadsheet, Download, BarChart3, TrendingUp, Users, Building2, DollarSign, Star, Wrench, LayoutDashboard, Info } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { FilaFechasPicker } from '@/components/ui/date-picker-informes'
 import { toast } from 'sonner'
 import {
@@ -163,8 +164,8 @@ function BotonesExport({
   )
 }
 
-function BtnGenerar({ onClick, cargando, desde, hasta }: { onClick: () => void; cargando: boolean; desde?: string; hasta?: string }) {
-  const faltaFecha = !desde || !hasta
+function BtnGenerar({ onClick, cargando, desde, hasta, fechaRequerida = true }: { onClick: () => void; cargando: boolean; desde?: string; hasta?: string; fechaRequerida?: boolean }) {
+  const faltaFecha = fechaRequerida && (!desde || !hasta)
   return (
     <Button
       onClick={onClick}
@@ -1065,7 +1066,7 @@ function TabR13() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
             <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} fechaRequerida={false} />
         </CardContent>
       </Card>
 
@@ -1146,18 +1147,18 @@ export function ExportarContent() {
   }, [])
 
   const tabs = [
-    { value: 'r1', label: 'Incidentes', icon: BarChart3, desc: 'Por tipo y estado' },
-    { value: 'r2', label: 'Tiempos', icon: TrendingUp, desc: 'Resolución' },
-    { value: 'r3', label: 'Vol. Técnicos', icon: Users, desc: 'Asignaciones' },
-    { value: 'r4', label: 'Propiedades', icon: Building2, desc: 'Con más incidentes' },
-    { value: 'r5', label: 'Rentabilidad', icon: DollarSign, desc: 'Por refacción' },
-    { value: 'r6', label: 'Desempeño', icon: Star, desc: 'Ranking técnicos' },
-    { value: 'r7', label: 'Satisfacción', icon: Star, desc: 'Calificaciones ISBA' },
-    { value: 'r8', label: 'Costos', icon: Wrench, desc: 'Mantenimiento' },
-    { value: 'r10', label: 'Rent. Inmueble', icon: Building2, desc: 'Por propiedad' },
-    { value: 'r11', label: 'Comparativo', icon: TrendingUp, desc: 'Período a período' },
-    { value: 'r12', label: 'Dashboard', icon: LayoutDashboard, desc: 'Indicadores globales' },
-    { value: 'r13', label: 'Medios de Pago', icon: DollarSign, desc: 'Cobros y pagos' },
+    { value: 'r1', label: 'Incidentes', icon: BarChart3, desc: 'Por tipo y estado', info: 'Identifica qué tipos de incidentes ocurren más seguido y en qué períodos, para planificar mantenimiento preventivo y asignar recursos.' },
+    { value: 'r2', label: 'Tiempos', icon: TrendingUp, desc: 'Resolución', info: 'Detecta cuellos de botella en la resolución: qué tipos de trabajo tardan más y cuáles técnicos resuelven más rápido, para mejorar la asignación.' },
+    { value: 'r3', label: 'Vol. Técnicos', icon: Users, desc: 'Asignaciones', info: 'Muestra la carga de trabajo real de cada técnico: cuántos trabajos tomó, cerró y tiene en curso. Útil para detectar sobrecarga o subutilización.' },
+    { value: 'r4', label: 'Propiedades', icon: Building2, desc: 'Con más incidentes', info: 'Identifica las propiedades con mayor frecuencia de incidentes y costos de mantenimiento. Permite justificar inspecciones o renegociar contratos.' },
+    { value: 'r5', label: 'Rentabilidad', icon: DollarSign, desc: 'Por refacción', info: 'Muestra la comisión real de ISBA (cobrado al cliente menos pagado al técnico) por cada tipo de servicio. Permite priorizar categorías más rentables.' },
+    { value: 'r6', label: 'Desempeño', icon: Star, desc: 'Ranking técnicos', info: 'Ranking integral de técnicos: productividad (cierre de trabajos), asignaciones rechazadas, tiempo de respuesta y satisfacción del cliente. No disponible en ninguna otra sección.' },
+    { value: 'r7', label: 'Satisfacción', icon: Star, desc: 'Calificaciones ISBA', info: 'Distribución detallada de calificaciones por técnico con comentarios reales de clientes. Permite detectar problemas de atención antes de que escalen.' },
+    { value: 'r8', label: 'Costos', icon: Wrench, desc: 'Mantenimiento', info: 'Desglose de costos de presupuesto (materiales, mano de obra, gastos admin) por categoría. Requiere que los presupuestos estén cargados con montos reales.' },
+    { value: 'r10', label: 'Rent. Inmueble', icon: Building2, desc: 'Por propiedad', info: 'Compara ingresos vs costos por propiedad, mostrando cuáles generan mayor margen. Útil para priorizar la cartera y negociar condiciones con propietarios.' },
+    { value: 'r11', label: 'Comparativo', icon: TrendingUp, desc: 'Período a período', info: 'Compara KPIs clave (incidentes, tiempos, ingresos, satisfacción) entre dos períodos consecutivos, mostrando tendencia de mejora o deterioro del negocio.' },
+    { value: 'r12', label: 'Dashboard', icon: LayoutDashboard, desc: 'Indicadores globales', info: 'Resumen ejecutivo de todos los indicadores clave en un solo informe: volumen, tiempos, ingresos, satisfacción y top técnicos/propiedades. Ideal para reportes a directivos.' },
+    { value: 'r13', label: 'Medios de Pago', icon: DollarSign, desc: 'Cobros y pagos', info: 'Analiza qué métodos de pago usan clientes y técnicos, con montos por método. Permite evaluar la adopción de medios digitales y detectar preferencias.' },
   ]
 
   return (
@@ -1167,11 +1168,24 @@ export function ExportarContent() {
         <p className="text-muted-foreground mt-1">12 reportes analíticos con filtros, exportación CSV y PDF para impresión.</p>
       </div>
 
+      <TooltipProvider>
       <Tabs defaultValue="r1">
         <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1 rounded-lg mb-2">
           {tabs.map(t => (
             <TabsTrigger key={t.value} value={t.value} className="flex flex-col items-center gap-0 px-3 py-1.5 text-xs leading-tight h-auto">
-              <span className="font-medium">{t.label}</span>
+              <div className="flex items-center gap-1">
+                <span className="font-medium">{t.label}</span>
+                {t.info && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs text-xs z-50">
+                      {t.info}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
               <span className="text-[10px] text-muted-foreground hidden sm:block">{t.desc}</span>
             </TabsTrigger>
           ))}
@@ -1190,6 +1204,7 @@ export function ExportarContent() {
         <TabsContent value="r12"><TabR12 /></TabsContent>
         <TabsContent value="r13"><TabR13 /></TabsContent>
       </Tabs>
+      </TooltipProvider>
     </div>
   )
 }
