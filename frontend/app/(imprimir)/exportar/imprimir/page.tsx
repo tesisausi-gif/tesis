@@ -8,7 +8,6 @@ import {
   getR6DesempenoTecnicos,
   getR7Satisfaccion,
   getR8CostosMantenimiento,
-  getR9EficienciaCostos,
   getR10RentabilidadInmueble,
   getR11ComparativoDesempenio,
   getR12IndicadoresGlobales,
@@ -126,15 +125,18 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
       titulo = 'Rentabilidad por Tipo de Refacción'
       const r = await getR5RentabilidadPorRefaccion({ fechaDesde, fechaHasta, categoria })
       kpis = [
-        { label: 'Monto total', valor: fmt$(r.montoTotal) },
-        { label: 'Comisiones (10%)', valor: fmt$(r.comisionesTotales) },
-        { label: 'Ganancia neta', valor: fmt$(r.gananciaNeta) },
+        { label: 'Total cobrado', valor: fmt$(r.ingresoTotal) },
+        { label: 'Total pagado a técnicos', valor: fmt$(r.costoTotal) },
+        { label: 'Comisión ISBA', valor: fmt$(r.comisionTotal) },
         { label: 'Margen global', valor: fmtPct(r.margenGlobal) },
       ]
-      cabeceras = ['Tipo', 'Monto total', 'Comisión', 'Ganancia', 'Margen %']
+      cabeceras = ['Tipo', 'Cobrado a cliente', 'Pagado al técnico', 'Comisión ISBA', 'Margen %']
       filas = r.porTipo.map(t => ({
-        'Tipo': t.tipo, 'Monto total': fmt$(t.montoTotal), 'Comisión': fmt$(t.comisiones),
-        'Ganancia': fmt$(t.gananciaNeta), 'Margen %': fmtPct(t.margen),
+        'Tipo': t.tipo,
+        'Cobrado a cliente': fmt$(t.ingresoBruto),
+        'Pagado al técnico': fmt$(t.costoPagadoTecnico),
+        'Comisión ISBA': fmt$(t.comision),
+        'Margen %': fmtPct(t.margen),
       }))
 
     } else if (tipo === 6) {
@@ -145,11 +147,14 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
         { label: 'Productividad prom.', valor: fmtPct(r.promedioProductividad) },
         { label: 'Satisfacción prom.', valor: r.promedioSatisfaccion > 0 ? `${fmtN(r.promedioSatisfaccion)} ★` : 'N/A' },
       ]
-      cabeceras = ['#', 'Técnico', 'Asignados', 'Cerrados', 'Productividad %', 'Satisfacción ★']
+      cabeceras = ['#', 'Técnico', 'Especialidad', 'Asignados', 'Cerrados', 'Rechazadas', 'Productividad %', 'Días resp.', 'Satisfacción ★']
       filas = r.tecnicos.map(t => ({
         '#': t.rankingPos, 'Técnico': `${t.nombre} ${t.apellido}`,
+        'Especialidad': t.especialidad || '—',
         'Asignados': t.asignados, 'Cerrados': t.cerrados,
+        'Rechazadas': t.rechazadas,
         'Productividad %': fmtPct(t.productividad),
+        'Días resp.': t.promedioDiasRespuesta > 0 ? fmtN(t.promedioDiasRespuesta) : '—',
         'Satisfacción ★': t.satisfaccion != null ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
       }))
 
@@ -180,21 +185,6 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
       filas = r.porCategoria.map(c => ({
         'Categoría': c.categoria, 'Costo total': fmt$(c.costoTotal), 'Materiales': fmt$(c.materiales),
         'Mano de obra': fmt$(c.manoObra), 'Incidentes': c.totalIncidentes, 'Promedio': fmt$(c.promedioCosto),
-      }))
-
-    } else if (tipo === 9) {
-      titulo = 'Eficiencia de Costos por Técnico'
-      const r = await getR9EficienciaCostos({ fechaDesde, fechaHasta, idTecnico })
-      kpis = [
-        { label: 'Costo prom. global', valor: fmt$(r.costoPromedioGlobal) },
-        { label: 'Total incidentes', valor: String(r.totalIncidentes) },
-        { label: 'Costo total', valor: fmt$(r.costoTotal) },
-      ]
-      cabeceras = ['Técnico', 'Incidentes', 'Costo total', 'Costo promedio', 'Desviación %']
-      filas = r.tecnicos.map(t => ({
-        'Técnico': `${t.nombre} ${t.apellido}`, 'Incidentes': t.incidentesCerrados,
-        'Costo total': fmt$(t.costoTotal), 'Costo promedio': fmt$(t.costoPromedio),
-        'Desviación %': `${t.desviacion >= 0 ? '+' : ''}${fmtN(t.desviacion)}%`,
       }))
 
     } else if (tipo === 10) {

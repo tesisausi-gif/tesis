@@ -1088,13 +1088,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           const hasAdminStepperTabs = rol === 'admin' && asignaciones.some(a =>
             ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
           )
-          const tabCount = 2
-            + (hasTecnicoTabs ? 2 : 0)
-            + (rol === 'admin' && !hasAdminStepperTabs ? 1 : 0)
-            + (hasClientePresupuesto ? 1 : 0)
-            + (hasCalificacion ? 1 : 0)
-          const tabGridClass = tabCount === 3 ? 'grid-cols-3' : tabCount === 4 ? 'grid-cols-4' : 'grid-cols-2'
-
           // ── Stepper steps computation ─────────────────────────────────────
           const inspeccionesActivas = inspecciones.filter(i => !i.esta_anulada)
           const presupuestosActivos = presupuestos.filter(p => p.estado_presupuesto !== EstadoPresupuesto.RECHAZADO)
@@ -1146,106 +1139,39 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           const steps = computeSteps()
 
           const conformidadAprobada = conformidad && (conformidad.esta_firmada === 1 || conformidad.esta_firmada === true)
-          const asigAceptadaAdmin = asignaciones.some(a => ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion))
-          // Stepper admin: solo los 3 pasos que el admin gestiona directamente
+          // Stepper admin: 2 pasos — Presupuesto y Conformidad
           const computeAdminSteps = (): StepDef[] => {
-            const sa1: StepStatus = asigAceptadaAdmin ? 'completed' : 'active'
-            const sa2: StepStatus = presupuestoAprobadoAdmin ? 'completed' : tienePresupuesto ? 'active' : 'locked'
-            const sa3: StepStatus = conformidadAprobada ? 'completed' : (tieneConformidad || trabajoCompletado) ? 'active' : 'locked'
+            const sa1: StepStatus = presupuestoAprobadoAdmin ? 'completed' : tienePresupuesto ? 'active' : 'locked'
+            const sa2: StepStatus = conformidadAprobada ? 'completed' : (tieneConformidad || trabajoCompletado) ? 'active' : 'locked'
             return [
-              { id: 1, label: 'Asignación',  sublabel: asigAceptadaAdmin ? 'Técnico asignado' : 'Sin asignar',                                                          tab: 'gestion',           status: sa1 },
-              { id: 2, label: 'Presupuesto', sublabel: presupuestoAprobadoAdmin ? 'Aprobado' : tienePresupuesto ? 'Para aprobar' : 'Sin envío',                          tab: 'presupuesto_admin', status: sa2 },
-              { id: 3, label: 'Conformidad', sublabel: conformidadAprobada ? 'Aprobada' : tieneConformidad ? 'Para revisar' : trabajoCompletado ? 'Pendiente' : 'Bloqueada', tab: 'conformidad_admin', status: sa3 },
+              { id: 1, label: 'Presupuesto', sublabel: presupuestoAprobadoAdmin ? 'Aprobado' : tienePresupuesto ? 'Para aprobar' : 'Sin envío',                          tab: 'presupuesto_admin', status: sa1 },
+              { id: 2, label: 'Conformidad', sublabel: conformidadAprobada ? 'Aprobada' : tieneConformidad ? 'Para revisar' : trabajoCompletado ? 'Pendiente' : 'Bloqueada', tab: 'conformidad_admin', status: sa2 },
             ]
           }
           const adminSteps = computeAdminSteps()
 
           return (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="w-full">
 
-            {hasAdminStepperTabs ? (
-              <>
-                {/* 3 pills exclusivos: Detalles | Timeline | Gestión */}
-                {!hideTabs && (
-                  <div className="mb-3">
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {[
-                        { id: 'detalles', label: 'Detalles' },
-                        { id: 'timeline', label: 'Timeline' },
-                        { id: 'gestion',  label: 'Gestión'  },
-                      ].map(({ id, label }) => {
-                        const GESTION_TABS = ['gestion', 'presupuesto_admin', 'conformidad_admin']
-                        const isActive = id === 'gestion'
-                          ? GESTION_TABS.includes(activeTab)
-                          : activeTab === id
-                        return (
-                          <button
-                            key={id}
-                            onClick={() => setActiveTab(id)}
-                            className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                              isActive
-                                ? 'bg-gray-900 text-white shadow-sm'
-                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                            }`}
-                          >
-                            {label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-                {/* Stepper admin — solo visible cuando el área activa es Gestión */}
-                {['gestion', 'presupuesto_admin', 'conformidad_admin'].includes(activeTab) && (
-                  <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-                    <StepperTecnico steps={adminSteps} activeTab={activeTab} onStepClick={setActiveTab} />
-                  </div>
-                )}
-              </>
-            ) : hasTecnicoTabs ? (
-              <>
-                {/* ── Info tabs (Detalles / Timeline) — ocultos en modo enfocado ── */}
-                {!hideTabs && (
-                  <div className="mb-3">
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {(['detalles', 'timeline'] as const).map((tab) => (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                            activeTab === tab
-                              ? 'bg-gray-900 text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                          }`}
-                        >
-                          {tab === 'detalles' ? 'Detalles' : 'Timeline'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Stepper — visible cuando no es info tab (detalles/timeline) ── */}
-                {(!hideTabs || ['inspecciones', 'presupuesto', 'ejecucion', 'conformidad'].includes(activeTab)) && (
-                  <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-                    <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
-                  </div>
-                )}
-              </>
-            ) : (
-              !hideTabs && (
-                <TabsList className={`grid w-full ${tabGridClass}`}>
-                  <TabsTrigger value="detalles">Detalles</TabsTrigger>
-                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                  {hasClientePresupuesto && <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>}
-                  {hasCalificacion && <TabsTrigger value="calificacion">Calificar</TabsTrigger>}
-                  {rol === 'admin' && <TabsTrigger value="gestion">Gestión</TabsTrigger>}
-                </TabsList>
-              )
+            {/* Stepper admin — solo en área de gestión, sin pills de navegación */}
+            {hasAdminStepperTabs && ['presupuesto_admin', 'conformidad_admin'].includes(activeTab) && !hideTabs && (
+              <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                <StepperTecnico steps={adminSteps} activeTab={activeTab} onStepClick={setActiveTab} />
+              </div>
             )}
 
+            {/* Stepper técnico — siempre visible en su área de trabajo */}
+            {hasTecnicoTabs && !hideTabs && (
+              <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
+              </div>
+            )}
+
+            {/* ── Content area: key=activeTab garantiza que solo un tab se renderiza ── */}
+            <div key={activeTab}>
+
             {/* Tab Detalles */}
-            <TabsContent value="detalles" className="space-y-4 mt-4">
+            {activeTab === 'detalles' && (<div className="space-y-4 mt-4">
               {/* Estado y Categoría */}
               <div className="flex flex-wrap gap-2">
                 <Badge className={getEstadoColor(incidente.estado_actual)}>
@@ -1358,10 +1284,10 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </div>
                 )}
               </div>
-            </TabsContent>
+            </div>)}
 
             {/* Tab Timeline */}
-            <TabsContent value="timeline" className="mt-4">
+            {activeTab === 'timeline' && (<div className="mt-4">
               <div className="space-y-3">
                 <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
@@ -1420,10 +1346,10 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </p>
                 )}
               </div>
-            </TabsContent>
+            </div>)}
 
-            {/* Tab Gestión (solo admin) */}
-            {rol === 'admin' && (
+            {/* Tab Gestión legacy — eliminado, ahora el stepper admin maneja esto */}
+            {false && rol === 'admin' && (
               <TabsContent value="gestion" className="space-y-6 mt-4">
                 {/* Cambiar Estado y Categoría */}
                 <div className="space-y-4">
@@ -1557,8 +1483,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             )}
 
             {/* Tab Inspecciones (para técnicos con asignación confirmada) */}
-            {hasTecnicoTabs && incidente && (
-              <TabsContent value="inspecciones" className="mt-4">
+            {hasTecnicoTabs && incidente && activeTab === 'inspecciones' && (
+              <div className="mt-4">
                 <InspeccionesList
                   incidenteId={incidente.id_incidente}
                   idTecnico={asignaciones.find(a => a.estado_asignacion !== 'rechazada')?.id_tecnico || 0}
@@ -1567,12 +1493,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   onInspeccionCreated={() => cargarIncidente()}
                   onInspeccionDeleted={() => cargarIncidente()}
                 />
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Presupuesto (para técnicos con asignación confirmada) */}
-            {hasTecnicoTabs && incidente && (
-              <TabsContent value="presupuesto" className="mt-4 space-y-4">
+            {hasTecnicoTabs && incidente && activeTab === 'presupuesto' && (
+              <div className="mt-4 space-y-4">
                 {(() => {
                   const tienePresupuestoActivo = presupuestosActivos.length > 0
                   return (
@@ -1715,12 +1641,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </>
                   )
                 })()}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Ejecución (para técnicos con presupuesto aprobado) */}
-            {hasTecnicoTabs && incidente && (
-              <TabsContent value="ejecucion" className="mt-4 space-y-5">
+            {hasTecnicoTabs && incidente && activeTab === 'ejecucion' && (
+              <div className="mt-4 space-y-5">
                 {!presupuestoAprobadoCliente ? (
                   <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
                     <Lock className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -1924,12 +1850,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     )}
                   </>
                 )}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Conformidad (para técnicos con trabajo completado) */}
-            {hasTecnicoTabs && incidente && (
-              <TabsContent value="conformidad" className="mt-4 space-y-4">
+            {hasTecnicoTabs && incidente && activeTab === 'conformidad' && (
+              <div className="mt-4 space-y-4">
                 {!trabajoCompletado ? (
                   <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
                     <Lock className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -2062,12 +1988,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </Button>
                   </div>
                 )}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Presupuesto Admin — revisar y aprobar/rechazar */}
-            {rol === 'admin' && (
-              <TabsContent value="presupuesto_admin" className="mt-4 space-y-4">
+            {rol === 'admin' && activeTab === 'presupuesto_admin' && (
+              <div className="mt-4 space-y-4">
                 {presupuestosActivos.length === 0 ? (
                   <div className="text-center py-8 text-gray-400">
                     <FileText className="h-10 w-10 mx-auto mb-2 text-gray-300" />
@@ -2175,12 +2101,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </div>
                   ))
                 )}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Conformidad Admin — ver foto y aprobar/rechazar */}
-            {rol === 'admin' && (
-              <TabsContent value="conformidad_admin" className="mt-4 space-y-4">
+            {rol === 'admin' && activeTab === 'conformidad_admin' && (
+              <div className="mt-4 space-y-4">
                 {!tieneConformidad ? (
                   <div className="text-center py-8 text-gray-400">
                     <ClipboardList className="h-10 w-10 mx-auto mb-2 text-gray-300" />
@@ -2295,22 +2221,22 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     </div>
                   </div>
                 )}
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Presupuesto (para clientes con presupuestos) */}
-            {rol === 'cliente' && presupuestos.length > 0 && (
-              <TabsContent value="presupuesto" className="mt-4">
+            {rol === 'cliente' && presupuestos.length > 0 && activeTab === 'presupuesto' && (
+              <div className="mt-4">
                 <PresupuestosClienteList
                   presupuestos={presupuestos as any}
                   onPresupuestoActualizado={() => cargarIncidente()}
                 />
-              </TabsContent>
+              </div>
             )}
 
             {/* Tab Calificación (para clientes cuando está resuelto) */}
-            {rol === 'cliente' && incidente && incidente.estado_actual === EstadoIncidente.RESUELTO && asignaciones.length > 0 && (
-              <TabsContent value="calificacion" className="mt-4">
+            {rol === 'cliente' && incidente && incidente.estado_actual === EstadoIncidente.RESUELTO && asignaciones.length > 0 && activeTab === 'calificacion' && (
+              <div className="mt-4">
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600">
                     Califica al técnico que resolvió tu incidente
@@ -2327,9 +2253,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     />
                   ))}
                 </div>
-              </TabsContent>
+              </div>
             )}
-          </Tabs>
+
+            </div>{/* end key={activeTab} content area */}
+          </div>
           )
         })() : (
           <p className="text-center text-gray-500 py-8">

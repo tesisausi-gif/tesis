@@ -158,11 +158,10 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   }
 
   const filtros = [
-    { id: 'todos',                label: 'Todos',        count: incidentes.length,                      Icon: AlertCircle },
-    { id: 'pendiente',            label: 'Pendientes',   count: porEstado.pendiente.length,             Icon: Clock },
-    { id: 'asignacion_solicitada',label: 'Asig. Sol.',   count: porEstado.asignacion_solicitada.length, Icon: Send },
-    { id: 'en_proceso',           label: 'En Proceso',   count: porEstado.en_proceso.length,            Icon: Wrench },
-    { id: 'finalizado',           label: 'Finalizados',  count: porEstado.finalizado.length,            Icon: CheckCircle },
+    { id: 'todos',      label: 'Todos',       count: incidentes.length,             Icon: AlertCircle },
+    { id: 'pendiente',  label: 'Pendientes',  count: porEstado.pendiente.length,    Icon: Clock },
+    { id: 'en_proceso', label: 'En Proceso',  count: porEstado.en_proceso.length,   Icon: Wrench },
+    { id: 'finalizado', label: 'Finalizados', count: porEstado.finalizado.length,   Icon: CheckCircle },
   ]
 
   // Filter by estado + search
@@ -256,7 +255,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {incidentesFiltrados.map(inc => {
             const cfg = STATUS_CONFIG[inc.estado_actual] ?? STATUS_CONFIG.pendiente
             const { Icon } = cfg

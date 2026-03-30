@@ -400,7 +400,7 @@ export async function getMetricasDashboard(filtros?: FiltrosMetricas): Promise<M
     const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - (5 - i), 1)
     const año = fecha.getFullYear()
     const mes = fecha.getMonth()
-    const nombre = fecha.toLocaleString('es-AR', { month: 'short', year: '2-digit' })
+    const nombre = fecha.toLocaleString('es-AR', { month: 'short', year: 'numeric' })
     const enMes = incidentes.filter(inc => {
       const f = new Date(inc.fecha_registro)
       return f.getFullYear() === año && f.getMonth() === mes

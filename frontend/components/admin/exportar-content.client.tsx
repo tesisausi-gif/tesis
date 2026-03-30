@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, FileSpreadsheet, Download, BarChart3, TrendingUp, Users, Building2, DollarSign, Star, Wrench, LayoutDashboard } from 'lucide-react'
+import { Loader2, FileSpreadsheet, Download, BarChart3, TrendingUp, Users, Building2, DollarSign, Star, Wrench, LayoutDashboard, Info } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { FilaFechasPicker } from '@/components/ui/date-picker-informes'
 import { toast } from 'sonner'
 import {
@@ -22,7 +23,6 @@ import {
   getR6DesempenoTecnicos,
   getR7Satisfaccion,
   getR8CostosMantenimiento,
-  getR9EficienciaCostos,
   getR10RentabilidadInmueble,
   getR11ComparativoDesempenio,
   getR12IndicadoresGlobales,
@@ -32,7 +32,7 @@ import { CategoriaIncidente } from '@/shared/types/enums'
 import type {
   TecnicoSelect, InmuebleSelect,
   R1Resultado, R2Resultado, R3Resultado, R4Resultado, R5Resultado, R6Resultado,
-  R7Resultado, R8Resultado, R9Resultado, R10Resultado, R11Resultado, R12Resultado,
+  R7Resultado, R8Resultado, R10Resultado, R11Resultado, R12Resultado,
   R13Resultado,
 } from '@/features/exportar/exportar.types'
 
@@ -164,8 +164,8 @@ function BotonesExport({
   )
 }
 
-function BtnGenerar({ onClick, cargando, desde, hasta }: { onClick: () => void; cargando: boolean; desde?: string; hasta?: string }) {
-  const faltaFecha = !desde || !hasta
+function BtnGenerar({ onClick, cargando, desde, hasta, fechaRequerida = true }: { onClick: () => void; cargando: boolean; desde?: string; hasta?: string; fechaRequerida?: boolean }) {
+  const faltaFecha = fechaRequerida && (!desde || !hasta)
   return (
     <Button
       onClick={onClick}
@@ -251,6 +251,7 @@ function TabR1() {
             <KpiCard label="% Finalizados" valor={fmtPct(resultado.porcentajeCerrados)} sub="del total" />
             <KpiCard label="% En proceso" valor={fmtPct(resultado.porcentajeEnCurso)} sub="del total" />
             <KpiCard label="% Pendientes" valor={fmtPct(resultado.porcentajePendientes)} sub="del total" />
+            <KpiCard label="Frec. diaria" valor={fmtN(resultado.promedioDiario)} sub="incidentes/día (en período)" />
           </div>
           <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -507,14 +508,25 @@ function TabR5() {
     finally { setCargando(false) }
   }
 
-  const cols = ['Tipo', 'Monto total', 'Comisión (10%)', 'Ganancia neta', 'Margen %']
+  const cols = ['Tipo', 'Cobrado a cliente', 'Pagado al técnico', 'Comisión ISBA', 'Margen %']
   const filas = resultado?.porTipo.map(t => ({
-    'Tipo': t.tipo, 'Monto total': fmt$(t.montoTotal),
-    'Comisión (10%)': fmt$(t.comisiones), 'Ganancia neta': fmt$(t.gananciaNeta), 'Margen %': fmtPct(t.margen),
+    'Tipo': t.tipo,
+    'Cobrado a cliente': fmt$(t.ingresoBruto),
+    'Pagado al técnico': fmt$(t.costoPagadoTecnico),
+    'Comisión ISBA': fmt$(t.comision),
+    'Margen %': fmtPct(t.margen),
   })) ?? []
 
   return (
     <div className="space-y-4">
+      <Card className="border-blue-100 bg-blue-50/40">
+        <CardContent className="pt-4 pb-3">
+          <p className="text-xs text-blue-700">
+            <strong>Nota:</strong> Comisión ISBA = lo cobrado al cliente menos lo pagado al técnico (materiales + mano de obra).
+            Los gastos administrativos incluidos en el presupuesto quedan como margen de la inmobiliaria.
+          </p>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
@@ -529,9 +541,9 @@ function TabR5() {
       {resultado && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <KpiCard label="Monto total" valor={fmt$(resultado.montoTotal)} />
-            <KpiCard label="Comisiones (10%)" valor={fmt$(resultado.comisionesTotales)} />
-            <KpiCard label="Ganancia neta" valor={fmt$(resultado.gananciaNeta)} />
+            <KpiCard label="Total cobrado" valor={fmt$(resultado.ingresoTotal)} sub="a clientes" />
+            <KpiCard label="Total pagado" valor={fmt$(resultado.costoTotal)} sub="a técnicos" />
+            <KpiCard label="Comisión ISBA" valor={fmt$(resultado.comisionTotal)} sub="margen neto" />
             <KpiCard label="Margen global" valor={fmtPct(resultado.margenGlobal)} />
           </div>
           <Card>
@@ -572,16 +584,28 @@ function TabR6({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
     finally { setCargando(false) }
   }
 
-  const cols = ['#', 'Técnico', 'Asignados', 'Cerrados', 'Productividad %', 'Satisfacción ★']
+  const cols = ['#', 'Técnico', 'Especialidad', 'Asignados', 'Cerrados', 'Rechazadas', 'Productividad %', 'Días resp. prom.', 'Satisfacción ★']
   const filas = resultado?.tecnicos.map(t => ({
-    '#': t.rankingPos, 'Técnico': `${t.nombre} ${t.apellido}`,
-    'Asignados': t.asignados, 'Cerrados': t.cerrados,
+    '#': t.rankingPos,
+    'Técnico': `${t.nombre} ${t.apellido}`,
+    'Especialidad': t.especialidad || '—',
+    'Asignados': t.asignados,
+    'Cerrados': t.cerrados,
+    'Rechazadas': t.rechazadas,
     'Productividad %': fmtPct(t.productividad),
+    'Días resp. prom.': t.promedioDiasRespuesta > 0 ? fmtN(t.promedioDiasRespuesta) : '—',
     'Satisfacción ★': t.satisfaccion != null ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
   })) ?? []
 
   return (
     <div className="space-y-4">
+      <Card className="border-blue-100 bg-blue-50/40">
+        <CardContent className="pt-4 pb-3">
+          <p className="text-xs text-blue-700">
+            <strong>Productividad</strong> = cerrados / asignados × 100 · <strong>Días resp.</strong> = días promedio desde registro del incidente hasta la asignación · <strong>Rechazadas</strong> = asignaciones rechazadas o canceladas por el técnico.
+          </p>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
@@ -741,71 +765,6 @@ function TabR8() {
               <BotonesExport disabled={!filas.length} cargando={cargando}
                 onCSV={() => descargarCSV(generarCSV(cols, filas), `r8_costos_${hoy()}.csv`)}
                 onPDF={() => abrirPDF(8, { fechaDesde: desde, fechaHasta: hasta, categoria: categoria === 'todas' ? undefined : categoria })}
-              />
-            </CardHeader>
-            <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
-          </Card>
-        </>
-      )}
-    </div>
-  )
-}
-
-// ─── R9: Eficiencia de Costos por Técnico ────────────────────────────────────
-
-function TabR9({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
-  const [desde, setDesde] = useState('')
-  const [hasta, setHasta] = useState('')
-  const [tecnico, setTecnico] = useState('todos')
-  const [cargando, setCargando] = useState(false)
-  const [resultado, setResultado] = useState<R9Resultado | null>(null)
-
-  const generar = async () => {
-    setCargando(true)
-    try {
-      const r = await getR9EficienciaCostos({
-        fechaDesde: desde || undefined,
-        fechaHasta: hasta || undefined,
-        idTecnico: tecnico === 'todos' ? undefined : Number(tecnico),
-      })
-      setResultado(r)
-    } catch { toast.error('Error al generar R9') }
-    finally { setCargando(false) }
-  }
-
-  const cols = ['Técnico', 'Incidentes', 'Costo total', 'Costo promedio', 'Desviación %']
-  const filas = resultado?.tecnicos.map(t => ({
-    'Técnico': `${t.nombre} ${t.apellido}`, 'Incidentes': t.incidentesCerrados,
-    'Costo total': fmt$(t.costoTotal), 'Costo promedio': fmt$(t.costoPromedio),
-    'Desviación %': `${t.desviacion >= 0 ? '+' : ''}${fmtN(t.desviacion)}%`,
-  })) ?? []
-
-  return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
-            <SelectTecnico value={tecnico} onChange={setTecnico} tecnicos={tecnicos} />
-          </div>
-          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
-        </CardContent>
-      </Card>
-
-      {resultado && (
-        <>
-          <div className="grid grid-cols-3 gap-3">
-            <KpiCard label="Costo prom. global" valor={fmt$(resultado.costoPromedioGlobal)} />
-            <KpiCard label="Total incidentes" valor={String(resultado.totalIncidentes)} />
-            <KpiCard label="Costo total" valor={fmt$(resultado.costoTotal)} />
-          </div>
-          <Card>
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm">Eficiencia por técnico</CardTitle>
-              <BotonesExport disabled={!filas.length} cargando={cargando}
-                onCSV={() => descargarCSV(generarCSV(cols, filas), `r9_eficiencia_${hoy()}.csv`)}
-                onPDF={() => abrirPDF(9, { fechaDesde: desde, fechaHasta: hasta, idTecnico: tecnico === 'todos' ? undefined : tecnico })}
               />
             </CardHeader>
             <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
@@ -1092,13 +1051,22 @@ function TabR13() {
 
   return (
     <div className="space-y-4">
+      <Card className="border-blue-100 bg-blue-50/40">
+        <CardContent className="pt-4 pb-3">
+          <p className="text-xs text-blue-700">
+            <strong>Cobrado a clientes</strong>: montos registrados en cobros_clientes (lo que el cliente pagó a ISBA por cada incidente). ·{' '}
+            <strong>Pagado a técnicos</strong>: montos registrados en pagos_tecnicos (materiales + mano de obra). ·{' '}
+            <strong>Total</strong>: suma de ambos flujos para el mismo método de pago.
+          </p>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-sm">Filtros</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
             <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
           </div>
-          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
+          <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} fechaRequerida={false} />
         </CardContent>
       </Card>
 
@@ -1179,33 +1147,45 @@ export function ExportarContent() {
   }, [])
 
   const tabs = [
-    { value: 'r1', label: 'Incidentes', icon: BarChart3, desc: 'Por tipo y estado' },
-    { value: 'r2', label: 'Tiempos', icon: TrendingUp, desc: 'Resolución' },
-    { value: 'r3', label: 'Vol. Técnicos', icon: Users, desc: 'Asignaciones' },
-    { value: 'r4', label: 'Propiedades', icon: Building2, desc: 'Con más incidentes' },
-    { value: 'r5', label: 'Rentabilidad', icon: DollarSign, desc: 'Por refacción' },
-    { value: 'r6', label: 'Desempeño', icon: Star, desc: 'Ranking técnicos' },
-    { value: 'r7', label: 'Satisfacción', icon: Star, desc: 'Calificaciones ISBA' },
-    { value: 'r8', label: 'Costos', icon: Wrench, desc: 'Mantenimiento' },
-    { value: 'r9', label: 'Efic. Costos', icon: DollarSign, desc: 'Por técnico' },
-    { value: 'r10', label: 'Rent. Inmueble', icon: Building2, desc: 'Por propiedad' },
-    { value: 'r11', label: 'Comparativo', icon: TrendingUp, desc: 'Período a período' },
-    { value: 'r12', label: 'Dashboard', icon: LayoutDashboard, desc: 'Indicadores globales' },
-    { value: 'r13', label: 'Medios de Pago', icon: DollarSign, desc: 'Cobros y pagos' },
+    { value: 'r1', label: 'Incidentes', icon: BarChart3, desc: 'Por tipo y estado', info: 'Identifica qué tipos de incidentes ocurren más seguido y en qué períodos, para planificar mantenimiento preventivo y asignar recursos.' },
+    { value: 'r2', label: 'Tiempos', icon: TrendingUp, desc: 'Resolución', info: 'Detecta cuellos de botella en la resolución: qué tipos de trabajo tardan más y cuáles técnicos resuelven más rápido, para mejorar la asignación.' },
+    { value: 'r3', label: 'Vol. Técnicos', icon: Users, desc: 'Asignaciones', info: 'Muestra la carga de trabajo real de cada técnico: cuántos trabajos tomó, cerró y tiene en curso. Útil para detectar sobrecarga o subutilización.' },
+    { value: 'r4', label: 'Propiedades', icon: Building2, desc: 'Con más incidentes', info: 'Identifica las propiedades con mayor frecuencia de incidentes y costos de mantenimiento. Permite justificar inspecciones o renegociar contratos.' },
+    { value: 'r5', label: 'Rentabilidad', icon: DollarSign, desc: 'Por refacción', info: 'Muestra la comisión real de ISBA (cobrado al cliente menos pagado al técnico) por cada tipo de servicio. Permite priorizar categorías más rentables.' },
+    { value: 'r6', label: 'Desempeño', icon: Star, desc: 'Ranking técnicos', info: 'Ranking integral de técnicos: productividad (cierre de trabajos), asignaciones rechazadas, tiempo de respuesta y satisfacción del cliente. No disponible en ninguna otra sección.' },
+    { value: 'r7', label: 'Satisfacción', icon: Star, desc: 'Calificaciones ISBA', info: 'Distribución detallada de calificaciones por técnico con comentarios reales de clientes. Permite detectar problemas de atención antes de que escalen.' },
+    { value: 'r8', label: 'Costos', icon: Wrench, desc: 'Mantenimiento', info: 'Desglose de costos de presupuesto (materiales, mano de obra, gastos admin) por categoría. Requiere que los presupuestos estén cargados con montos reales.' },
+    { value: 'r10', label: 'Rent. Inmueble', icon: Building2, desc: 'Por propiedad', info: 'Compara ingresos vs costos por propiedad, mostrando cuáles generan mayor margen. Útil para priorizar la cartera y negociar condiciones con propietarios.' },
+    { value: 'r11', label: 'Comparativo', icon: TrendingUp, desc: 'Período a período', info: 'Compara KPIs clave (incidentes, tiempos, ingresos, satisfacción) entre dos períodos consecutivos, mostrando tendencia de mejora o deterioro del negocio.' },
+    { value: 'r12', label: 'Dashboard', icon: LayoutDashboard, desc: 'Indicadores globales', info: 'Resumen ejecutivo de todos los indicadores clave en un solo informe: volumen, tiempos, ingresos, satisfacción y top técnicos/propiedades. Ideal para reportes a directivos.' },
+    { value: 'r13', label: 'Medios de Pago', icon: DollarSign, desc: 'Cobros y pagos', info: 'Analiza qué métodos de pago usan clientes y técnicos, con montos por método. Permite evaluar la adopción de medios digitales y detectar preferencias.' },
   ]
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Informes y Reportes</h2>
-        <p className="text-muted-foreground mt-1">13 reportes analíticos con filtros, exportación CSV y PDF para impresión.</p>
+        <p className="text-muted-foreground mt-1">12 reportes analíticos con filtros, exportación CSV y PDF para impresión.</p>
       </div>
 
+      <TooltipProvider>
       <Tabs defaultValue="r1">
         <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1 rounded-lg mb-2">
           {tabs.map(t => (
             <TabsTrigger key={t.value} value={t.value} className="flex flex-col items-center gap-0 px-3 py-1.5 text-xs leading-tight h-auto">
-              <span className="font-medium">{t.label}</span>
+              <div className="flex items-center gap-1">
+                <span className="font-medium">{t.label}</span>
+                {t.info && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs text-xs z-50">
+                      {t.info}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
               <span className="text-[10px] text-muted-foreground hidden sm:block">{t.desc}</span>
             </TabsTrigger>
           ))}
@@ -1219,12 +1199,12 @@ export function ExportarContent() {
         <TabsContent value="r6"><TabR6 tecnicos={tecnicos} /></TabsContent>
         <TabsContent value="r7"><TabR7 tecnicos={tecnicos} /></TabsContent>
         <TabsContent value="r8"><TabR8 /></TabsContent>
-        <TabsContent value="r9"><TabR9 tecnicos={tecnicos} /></TabsContent>
         <TabsContent value="r10"><TabR10 inmuebles={inmuebles} /></TabsContent>
         <TabsContent value="r11"><TabR11 /></TabsContent>
         <TabsContent value="r12"><TabR12 /></TabsContent>
         <TabsContent value="r13"><TabR13 /></TabsContent>
       </Tabs>
+      </TooltipProvider>
     </div>
   )
 }
