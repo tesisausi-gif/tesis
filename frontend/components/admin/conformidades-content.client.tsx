@@ -24,6 +24,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
+import { Paginacion } from '@/components/ui/paginacion'
 import { getTimelineIncidente } from '@/features/incidentes/incidentes.service'
 import type { EventoTimeline } from '@/features/incidentes/incidentes.service'
 
@@ -125,6 +126,8 @@ const COLORES_TIMELINE: Record<string, string> = {
 export function ConformidadesContent({ conformidades }: ConformidadesContentProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [pagina, setPagina] = useState(1)
+  const conformidadesPaginadas = conformidades.slice((pagina - 1) * 10, pagina * 10)
 
   useEffect(() => {
     const supabase = createClient()
@@ -189,6 +192,7 @@ export function ConformidadesContent({ conformidades }: ConformidadesContentProp
         })
         cerrarDetalle()
         router.refresh()
+        window.dispatchEvent(new CustomEvent('admin-badges-refresh'))
       } else {
         toast.error(res.error ?? 'Error al aprobar')
       }
@@ -205,6 +209,7 @@ export function ConformidadesContent({ conformidades }: ConformidadesContentProp
         })
         cerrarDetalle()
         router.refresh()
+        window.dispatchEvent(new CustomEvent('admin-badges-refresh'))
       } else {
         toast.error(res.error ?? 'Error al rechazar')
       }
@@ -233,8 +238,9 @@ export function ConformidadesContent({ conformidades }: ConformidadesContentProp
           </CardContent>
         </Card>
       ) : (
+        <>
         <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden bg-white">
-          {conformidades.map((conf) => {
+          {conformidadesPaginadas.map((conf) => {
             const inc = conf.incidentes
             const asig = Array.isArray(inc?.asignaciones_tecnico)
               ? inc.asignaciones_tecnico.find(a => a.estado_asignacion === 'completada') || inc.asignaciones_tecnico[0]
@@ -284,6 +290,8 @@ export function ConformidadesContent({ conformidades }: ConformidadesContentProp
             )
           })}
         </div>
+        <Paginacion pagina={pagina} total={conformidades.length} onChange={setPagina} />
+        </>
       )}
 
       {/* Panel de detalle */}

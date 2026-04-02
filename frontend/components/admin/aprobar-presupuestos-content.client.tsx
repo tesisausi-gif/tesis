@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { FileText, DollarSign, CheckCircle, XCircle, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { aprobarPresupuesto, rechazarPresupuesto } from '@/features/presupuestos/presupuestos.service'
+import { Paginacion } from '@/components/ui/paginacion'
 import type { PresupuestoConDetalle } from '@/features/presupuestos/presupuestos.types'
 
 interface Presupuesto extends PresupuestoConDetalle {}
@@ -37,6 +38,8 @@ export function AprobarPresupuestosContent({ presupuestosIniciales }: AprobarPre
     }, [])
 
     const [presupuestos, setPresupuestos] = useState<Presupuesto[]>(presupuestosIniciales as Presupuesto[])
+    const [pagina, setPagina] = useState(1)
+    const presupuestosPaginados = presupuestos.slice((pagina - 1) * 10, pagina * 10)
     const [procesando, setProcesando] = useState(false)
     const [presupuestoSeleccionado, setPresupuestoSeleccionado] = useState<Presupuesto | null>(null)
     const [accion, setAccion] = useState<'aprobar' | 'rechazar' | null>(null)
@@ -97,6 +100,7 @@ export function AprobarPresupuestosContent({ presupuestosIniciales }: AprobarPre
             // Eliminar de la lista local
             setPresupuestos(prev => prev.filter(p => p.id_presupuesto !== presupuestoSeleccionado.id_presupuesto))
             router.refresh()
+            window.dispatchEvent(new CustomEvent('admin-badges-refresh'))
         } catch (error) {
             console.error('Error:', error)
             toast.error('Error inesperado')
@@ -174,8 +178,9 @@ export function AprobarPresupuestosContent({ presupuestosIniciales }: AprobarPre
                     </CardContent>
                 </Card>
             ) : (
+                <>
                 <div className="grid gap-4">
-                    {presupuestos.map((presupuesto) => (
+                    {presupuestosPaginados.map((presupuesto) => (
                         <Card key={presupuesto.id_presupuesto} className="hover:shadow-md transition-shadow">
                             <CardHeader>
                                 <div className="flex items-start justify-between">
@@ -293,6 +298,8 @@ export function AprobarPresupuestosContent({ presupuestosIniciales }: AprobarPre
                         </Card>
                     ))}
                 </div>
+                <Paginacion pagina={pagina} total={presupuestos.length} onChange={setPagina} />
+                </>
             )}
 
             {/* Dialog de Confirmación */}
