@@ -331,6 +331,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [incidente, setIncidente] = useState<IncidenteCompleto | null>(null)
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
+  const [avancesRegistrados, setAvancesRegistrados] = useState<any[]>([])
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([])
   const [inspecciones, setInspecciones] = useState<any[]>([])
@@ -755,6 +756,9 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       })
     }
 
+    // Guardar avances para mostrar en tab ejecucion del técnico
+    setAvancesRegistrados(avances || [])
+
     // Normalizar todas las fechas a UTC antes de ordenar
     timelineEvents.forEach(e => { e.fecha = toUTC(e.fecha) as string })
 
@@ -844,6 +848,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         setAvanceDesc('')
         setAvancePct('')
         onUpdate?.()
+        // Recargar datos del incidente para actualizar lista de avances y timeline
+        if (incidente) await construirTimeline(incidente, asignaciones, rol)
       } else {
         toast.error(res.error ?? 'Error al registrar avance')
       }
@@ -1164,6 +1170,30 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             {hasTecnicoTabs && !hideTabs && (
               <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
                 <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
+              </div>
+            )}
+
+            {/* Nav pills para cliente */}
+            {rol === 'cliente' && !hideTabs && (
+              <div className="flex gap-1 mb-4 flex-wrap">
+                {[
+                  { id: 'detalles', label: 'Detalles' },
+                  { id: 'timeline', label: 'Timeline' },
+                  ...(hasClientePresupuesto ? [{ id: 'presupuesto', label: 'Presupuesto' }] : []),
+                  ...(hasCalificacion ? [{ id: 'calificacion', label: 'Calificar' }] : []),
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                      activeTab === tab.id
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
             )}
 
@@ -1768,6 +1798,39 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                             </p>
                           )}
                         </div>
+
+                        <Separator />
+
+                        {/* Lista de avances registrados */}
+                        {avancesRegistrados.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm text-gray-600 flex items-center gap-2">
+                              <Wrench className="h-4 w-4" />
+                              Avances registrados
+                            </h4>
+                            <div className="space-y-2">
+                              {avancesRegistrados.map((av: any, i: number) => (
+                                <div key={av.id_avance ?? i} className="rounded-lg border border-indigo-100 bg-indigo-50 p-3 text-xs space-y-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-semibold text-indigo-800">
+                                      Avance #{i + 1}
+                                      {av.porcentaje_completado != null && (
+                                        <span className="ml-2 text-indigo-600">{av.porcentaje_completado}%</span>
+                                      )}
+                                    </span>
+                                    <span className="text-gray-400 shrink-0">
+                                      {av.fecha_avance ? new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(av.fecha_avance.endsWith('Z') ? av.fecha_avance : av.fecha_avance + 'Z')) : ''}
+                                    </span>
+                                  </div>
+                                  <p className="text-gray-700">{av.descripcion_avance}</p>
+                                  {av.observaciones && (
+                                    <p className="text-gray-500 italic">{av.observaciones}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         <Separator />
 
