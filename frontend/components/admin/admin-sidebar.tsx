@@ -62,34 +62,29 @@ export function AdminSidebar() {
   const [counts, setCounts] = useState<AdminBadgeCounts>({ incidentes: 0, conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0, reasignaciones: 0, notificaciones: 0 })
 
   useEffect(() => {
+    const refresh = () => getAdminBadgeCounts().then(setCounts).catch(() => {})
+
     // Carga inicial
-    getAdminBadgeCounts().then(setCounts).catch(() => {})
+    refresh()
+
+    // Evento explícito para forzar refresh tras acciones del admin
+    window.addEventListener('admin-badges-refresh', refresh)
 
     // Suscripciones realtime para actualizar badges automáticamente
     const channel = supabase
       .channel('admin-badges-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cobros_clientes' }, () => {
-        getAdminBadgeCounts().then(setCounts).catch(() => {})
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos_tecnicos' }, () => {
-        getAdminBadgeCounts().then(setCounts).catch(() => {})
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conformidades' }, () => {
-        getAdminBadgeCounts().then(setCounts).catch(() => {})
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, () => {
-        getAdminBadgeCounts().then(setCounts).catch(() => {})
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes_registro' }, () => {
-        getAdminBadgeCounts().then(setCounts).catch(() => {})
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'incidentes' }, () => {
-        getAdminBadgeCounts().then(setCounts).catch(() => {})
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cobros_clientes' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos_tecnicos' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conformidades' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes_registro' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incidentes' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'asignaciones_tecnico' }, refresh)
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
+      window.removeEventListener('admin-badges-refresh', refresh)
     }
   }, []) // Solo ejecutar una vez al montar
 

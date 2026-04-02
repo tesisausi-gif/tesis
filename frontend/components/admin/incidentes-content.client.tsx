@@ -14,6 +14,7 @@ import {
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-modal'
 import type { IncidenteConClienteAdmin } from '@/features/incidentes/incidentes.types'
+import { Paginacion } from '@/components/ui/paginacion'
 
 interface IncidentesAdminContentProps {
   incidentes: IncidenteConClienteAdmin[]
@@ -101,6 +102,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   const [incidenteParaGestionar, setIncidenteParaGestionar] = useState<IncidenteConClienteAdmin | null>(null)
   const [highlightId, setHighlightId] = useState<number | null>(null)
   const highlightRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const [pagina, setPagina] = useState(1)
 
   // Realtime
   useEffect(() => {
@@ -164,6 +166,9 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     { id: 'finalizado', label: 'Finalizados', count: porEstado.finalizado.length,   Icon: CheckCircle },
   ]
 
+  // Reset page when filters change
+  useEffect(() => { setPagina(1) }, [filtro, busqueda])
+
   // Filter by estado + search
   const incidentesFiltrados = incidentes.filter(inc => {
     const estadoMatch = filtro === 'todos'
@@ -185,6 +190,8 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
 
     return true
   })
+
+  const incidentesPaginados = incidentesFiltrados.slice((pagina - 1) * 10, pagina * 10)
 
   return (
     <div className="space-y-4">
@@ -255,8 +262,9 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
           </p>
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {incidentesFiltrados.map(inc => {
+          {incidentesPaginados.map(inc => {
             const cfg = STATUS_CONFIG[inc.estado_actual] ?? STATUS_CONFIG.pendiente
             const { Icon } = cfg
             const accion = getAccionPendiente(inc)
@@ -397,6 +405,8 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             )
           })}
         </div>
+        <Paginacion pagina={pagina} total={incidentesFiltrados.length} onChange={setPagina} />
+        </>
       )}
 
       {/* Modal de Detalle */}
@@ -406,7 +416,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
         onOpenChange={setModalOpen}
         rol="admin"
         initialTab={modalTab}
-        onUpdate={() => router.refresh()}
+        onUpdate={() => { router.refresh(); window.dispatchEvent(new CustomEvent('admin-badges-refresh')) }}
       />
 
       {/* Modal de Gestión (asignar/reasignar técnico) */}
@@ -415,7 +425,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
           open={modalGestionarOpen}
           onOpenChange={setModalGestionarOpen}
           incidente={incidenteParaGestionar}
-          onGestionExito={() => { setModalGestionarOpen(false); router.refresh() }}
+          onGestionExito={() => { setModalGestionarOpen(false); router.refresh(); window.dispatchEvent(new CustomEvent('admin-badges-refresh')) }}
         />
       )}
     </div>

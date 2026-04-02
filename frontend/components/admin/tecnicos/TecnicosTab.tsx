@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { CheckCircle2, XCircle, Star, Eye, Power, Filter, Edit } from 'lucide-react'
+import { Paginacion } from '@/components/ui/paginacion'
 import TecnicoCalificacionesDialog from './TecnicoCalificacionesDialog'
 import {
   Dialog,
@@ -207,6 +208,8 @@ export default function TecnicosTab() {
   ).sort()
 
   // Filtrar técnicos según los filtros seleccionados
+  const [pagina, setPagina] = useState(1)
+
   const tecnicosFiltrados = tecnicos.filter((tecnico) => {
     // Filtro por estado - convertir a booleano para manejar tanto números como booleanos
     const estaActivo = Boolean(tecnico.esta_activo)
@@ -225,6 +228,8 @@ export default function TecnicosTab() {
 
     return cumpleEstado && cumpleEspecialidad
   })
+
+  const tecnicosPaginados = tecnicosFiltrados.slice((pagina - 1) * 10, pagina * 10)
 
   return (
     <div className="space-y-6">
@@ -269,7 +274,7 @@ export default function TecnicosTab() {
             <Filter className="h-4 w-4 text-gray-500 hidden sm:block" />
 
             {/* Filtro de Estado */}
-            <Select value={filtroEstado} onValueChange={(value: any) => setFiltroEstado(value)}>
+            <Select value={filtroEstado} onValueChange={(value: any) => { setFiltroEstado(value); setPagina(1) }}>
               <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
@@ -281,7 +286,7 @@ export default function TecnicosTab() {
             </Select>
 
             {/* Filtro de Especialidad */}
-            <Select value={filtroEspecialidad} onValueChange={(value: string) => setFiltroEspecialidad(value)}>
+            <Select value={filtroEspecialidad} onValueChange={(value: string) => { setFiltroEspecialidad(value); setPagina(1) }}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Especialidad" />
               </SelectTrigger>
@@ -311,6 +316,7 @@ export default function TecnicosTab() {
             {filtroEspecialidad !== 'todas' && ` con especialidad "${filtroEspecialidad}"`}
           </p>
         ) : (
+          <>
           <Table>
             <TableHeader>
               <TableRow>
@@ -325,7 +331,7 @@ export default function TecnicosTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tecnicosFiltrados.map((tecnico) => (
+              {tecnicosPaginados.map((tecnico) => (
                 <TableRow key={tecnico.id_tecnico}>
                   <TableCell className="font-medium">
                     {tecnico.nombre} {tecnico.apellido}
@@ -380,6 +386,8 @@ export default function TecnicosTab() {
               ))}
             </TableBody>
           </Table>
+          <Paginacion pagina={pagina} total={tecnicosFiltrados.length} onChange={setPagina} />
+          </>
         )}
       </CardContent>
 

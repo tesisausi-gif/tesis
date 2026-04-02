@@ -29,6 +29,7 @@ import type { PendientePagoTecnico, PagoTecnicoRegistrado } from '@/features/pag
 import type { PendienteCobroCliente, CobroClienteRegistrado } from '@/features/pagos/cobros-clientes.service'
 import { getTimelineIncidente } from '@/features/incidentes/incidentes.service'
 import type { EventoTimeline } from '@/features/incidentes/incidentes.service'
+import { Paginacion } from '@/components/ui/paginacion'
 
 const AR = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const fmt$ = (n: number) => AR.format(n)
@@ -146,6 +147,10 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
   const [isPending, startTransition] = useTransition()
   const [cobrarDialog, setCobrarDialog] = useState<PendienteCobroCliente | null>(null)
   const [formPago, setFormPago] = useState<MetodoPagoData>(METODO_INICIAL)
+  const [paginaPendientes, setPaginaPendientes] = useState(1)
+  const [paginaRealizados, setPaginaRealizados] = useState(1)
+  const pendientesPag = pendientes.slice((paginaPendientes - 1) * 10, paginaPendientes * 10)
+  const realizadosPag = realizados.slice((paginaRealizados - 1) * 10, paginaRealizados * 10)
 
   const totalPendiente = pendientes.reduce((s,p) => s + p.monto_cobro, 0)
   const totalCobrado = realizados.reduce((s,c) => s + Number(c.monto_cobro), 0)
@@ -170,7 +175,7 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
       })
       if (res.success) {
         toast.success('Cobro registrado', { description: `${fmt$(cobrarDialog.monto_cobro)} — ${metodoLabel(formPago.metodo)}` })
-        setCobrarDialog(null); setFormPago(METODO_INICIAL); router.refresh()
+        setCobrarDialog(null); setFormPago(METODO_INICIAL); router.refresh(); window.dispatchEvent(new CustomEvent('admin-badges-refresh'))
       } else { toast.error(res.error ?? 'Error al registrar cobro') }
     })
   }
@@ -197,8 +202,9 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
             <p className="text-green-700 font-medium">Sin cobros pendientes</p>
           </CardContent></Card>
         ) : (
+          <>
           <div className="grid gap-3">
-            {pendientes.map(p => (
+            {pendientesPag.map(p => (
               <Card key={p.id_presupuesto} className="border-amber-200 hover:shadow-md transition-shadow">
                 <CardContent className="pt-4 pb-4">
                   <div className="flex items-start justify-between gap-3">
@@ -220,13 +226,15 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
               </Card>
             ))}
           </div>
+          <Paginacion pagina={paginaPendientes} total={pendientes.length} onChange={setPaginaPendientes} />
+          </>
         )}
       </div>
       {realizados.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500"/>Historial de cobros</h3>
           <div className="grid gap-3">
-            {realizados.map(c => (
+            {realizadosPag.map(c => (
               <Card key={c.id_cobro} className="border-green-200"><CardContent className="pt-3 pb-3">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
@@ -248,6 +256,7 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
               </CardContent></Card>
             ))}
           </div>
+          <Paginacion pagina={paginaRealizados} total={realizados.length} onChange={setPaginaRealizados} />
         </div>
       )}
       <Dialog open={cobrarDialog !== null} onOpenChange={o => !o && setCobrarDialog(null)}>
@@ -277,6 +286,10 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
   const [isPending, startTransition] = useTransition()
   const [pagarDialog, setPagarDialog] = useState<PendientePagoTecnico | null>(null)
   const [formPago, setFormPago] = useState<MetodoPagoData>(METODO_INICIAL)
+  const [paginaPendientes, setPaginaPendientes] = useState(1)
+  const [paginaRealizados, setPaginaRealizados] = useState(1)
+  const pendientesPag = pendientes.slice((paginaPendientes - 1) * 10, paginaPendientes * 10)
+  const realizadosPag = realizados.slice((paginaRealizados - 1) * 10, paginaRealizados * 10)
 
   // Estado para timeline
   const [timeline, setTimeline] = useState<EventoTimeline[] | null>(null)
@@ -305,6 +318,7 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
         setPagarDialog(null)
         setFormPago(METODO_INICIAL)
         router.refresh()
+        window.dispatchEvent(new CustomEvent('admin-badges-refresh'))
       } else { toast.error(res.error ?? 'Error al registrar pago') }
     })
   }
@@ -341,8 +355,9 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
             <p className="text-green-700 font-medium">Sin pagos pendientes</p>
           </CardContent></Card>
         ) : (
+          <>
           <div className="grid gap-3">
-            {pendientes.map(p => (
+            {pendientesPag.map(p => (
               <Card key={p.id_presupuesto} className="border-amber-200 hover:shadow-md transition-shadow">
                 <CardContent className="pt-4 pb-4">
                   <div className="flex items-start justify-between gap-3">
@@ -373,13 +388,15 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
               </Card>
             ))}
           </div>
+          <Paginacion pagina={paginaPendientes} total={pendientes.length} onChange={setPaginaPendientes} />
+          </>
         )}
       </div>
       {realizados.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500"/>Historial</h3>
           <div className="grid gap-3">
-            {realizados.map(p => (
+            {realizadosPag.map(p => (
               <Card key={p.id_pago_tecnico} className="border-green-200"><CardContent className="pt-3 pb-3">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
@@ -401,6 +418,7 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
               </CardContent></Card>
             ))}
           </div>
+          <Paginacion pagina={paginaRealizados} total={realizados.length} onChange={setPaginaRealizados} />
         </div>
       )}
       <Dialog open={pagarDialog !== null} onOpenChange={o => !o && setPagarDialog(null)}>
@@ -487,10 +505,14 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
     | { tipo: 'tecnico'; fecha: string; item: PagoTecnicoRegistrado }
     | { tipo: 'cliente'; fecha: string; item: CobroClienteRegistrado }
 
+  const [pagina, setPagina] = useState(1)
+
   const items: RegistroItem[] = [
     ...realizadosTecnicos.map(p => ({ tipo: 'tecnico' as const, fecha: p.fecha_pago, item: p })),
     ...realizadosCobroCliente.map(c => ({ tipo: 'cliente' as const, fecha: c.fecha_cobro, item: c })),
   ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+
+  const itemsPag = items.slice((pagina - 1) * 10, pagina * 10)
 
   if (items.length === 0) {
     return (
@@ -503,7 +525,7 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
 
   return (
     <div className="space-y-3">
-      {items.map((entry, i) => {
+      {itemsPag.map((entry, i) => {
         if (entry.tipo === 'tecnico') {
           const p = entry.item
           return (
@@ -552,6 +574,7 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
           )
         }
       })}
+      <Paginacion pagina={pagina} total={items.length} onChange={setPagina} />
     </div>
   )
 }

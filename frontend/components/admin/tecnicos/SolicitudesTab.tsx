@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { CheckCircle, XCircle, Filter, Mail } from 'lucide-react'
+import { Paginacion } from '@/components/ui/paginacion'
 import {
   Select,
   SelectContent,
@@ -43,6 +44,7 @@ export default function SolicitudesTab() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [procesando, setProcesando] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState<'todas' | 'pendiente' | 'aprobada' | 'rechazada'>('todas')
+  const [pagina, setPagina] = useState(1)
 
   useEffect(() => {
     cargarSolicitudes()
@@ -94,6 +96,7 @@ export default function SolicitudesTab() {
       setDialogOpen(false)
       setSelectedSolicitud(null)
       cargarSolicitudes()
+      window.dispatchEvent(new CustomEvent('admin-badges-refresh'))
 
     } catch (error) {
       console.error('Error:', error)
@@ -116,6 +119,7 @@ export default function SolicitudesTab() {
 
       toast.success('Solicitud rechazada')
       cargarSolicitudes()
+      window.dispatchEvent(new CustomEvent('admin-badges-refresh'))
     } catch (error) {
       console.error('Error:', error)
       toast.error('Error al rechazar solicitud')
@@ -137,6 +141,13 @@ export default function SolicitudesTab() {
     return solicitud.estado_solicitud === filtroEstado
   })
 
+  const solicitudesPaginadas = solicitudesFiltradas.slice((pagina - 1) * 10, pagina * 10)
+
+  const handleFiltroEstado = (value: typeof filtroEstado) => {
+    setFiltroEstado(value)
+    setPagina(1)
+  }
+
   return (
     <>
       <Card>
@@ -152,7 +163,7 @@ export default function SolicitudesTab() {
             {/* Filtro de Estado */}
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-gray-500" />
-              <Select value={filtroEstado} onValueChange={(value: any) => setFiltroEstado(value)}>
+              <Select value={filtroEstado} onValueChange={(value: any) => handleFiltroEstado(value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
@@ -178,6 +189,7 @@ export default function SolicitudesTab() {
               No hay solicitudes {filtroEstado !== 'todas' ? `en estado "${filtroEstado}"` : ''}
             </p>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -190,7 +202,7 @@ export default function SolicitudesTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {solicitudesFiltradas.map((solicitud) => (
+                {solicitudesPaginadas.map((solicitud) => (
                   <TableRow key={solicitud.id_solicitud}>
                     <TableCell className="font-medium">
                       {solicitud.nombre} {solicitud.apellido}
@@ -238,6 +250,8 @@ export default function SolicitudesTab() {
                 ))}
               </TableBody>
             </Table>
+            <Paginacion pagina={pagina} total={solicitudesFiltradas.length} onChange={setPagina} />
+            </>
           )}
         </CardContent>
       </Card>
