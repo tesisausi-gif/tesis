@@ -192,32 +192,117 @@ function abrirPDF(tipo: number | string, params: Record<string, string | undefin
 
 // ─── R1: Incidentes por Tipo y Estado ────────────────────────────────────────
 
+const ETAPA_CONFIG = [
+  {
+    key: 'pendiente' as const,
+    label: 'Pendientes',
+    desc: 'Sin técnico asignado todavía',
+    color: 'border-amber-300 bg-amber-50',
+    badge: 'bg-amber-100 text-amber-700',
+    dot: 'bg-amber-400',
+  },
+  {
+    key: 'asignacion_solicitada' as const,
+    label: 'Asig. Solicitada',
+    desc: 'Esperando respuesta del técnico',
+    color: 'border-blue-300 bg-blue-50',
+    badge: 'bg-blue-100 text-blue-700',
+    dot: 'bg-blue-400',
+  },
+  {
+    key: 'en_proceso' as const,
+    label: 'En Proceso',
+    desc: 'Técnico trabajando en el incidente',
+    color: 'border-orange-300 bg-orange-50',
+    badge: 'bg-orange-100 text-orange-700',
+    dot: 'bg-orange-400',
+  },
+  {
+    key: 'con_presupuesto_pendiente' as const,
+    label: 'Presupuesto Pendiente',
+    desc: 'Presupuesto enviado, esperando aprobación',
+    color: 'border-yellow-300 bg-yellow-50',
+    badge: 'bg-yellow-100 text-yellow-700',
+    dot: 'bg-yellow-400',
+    indent: true,
+  },
+  {
+    key: 'con_conformidad_pendiente' as const,
+    label: 'Conformidad Pendiente',
+    desc: 'Conformidad subida, esperando firma',
+    color: 'border-purple-300 bg-purple-50',
+    badge: 'bg-purple-100 text-purple-700',
+    dot: 'bg-purple-400',
+    indent: true,
+  },
+  {
+    key: 'finalizado' as const,
+    label: 'Finalizados',
+    desc: 'Incidentes cerrados y resueltos',
+    color: 'border-green-300 bg-green-50',
+    badge: 'bg-green-100 text-green-700',
+    dot: 'bg-green-400',
+  },
+]
+
+function TablaEtapa({ incidentes }: { incidentes: R1Resultado['etapas']['pendiente']['incidentes'] }) {
+  if (!incidentes.length) return <p className="text-xs text-muted-foreground py-2 text-center">Sin incidentes en esta etapa.</p>
+  return (
+    <div className="overflow-x-auto mt-2">
+      <table className="w-full text-xs border-collapse">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">ID</th>
+            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">Descripción</th>
+            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">Categoría</th>
+            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">Cliente</th>
+            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">Inmueble</th>
+            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {incidentes.map((inc, i) => (
+            <tr key={inc.id_incidente} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+              <td className="py-1.5 px-2 font-mono font-semibold">#{inc.id_incidente}</td>
+              <td className="py-1.5 px-2 max-w-[200px] truncate">{inc.descripcion}</td>
+              <td className="py-1.5 px-2">{inc.categoria}</td>
+              <td className="py-1.5 px-2">{inc.cliente}</td>
+              <td className="py-1.5 px-2 max-w-[160px] truncate">{inc.inmueble}</td>
+              <td className="py-1.5 px-2 whitespace-nowrap">{inc.fecha_registro ? inc.fecha_registro.slice(0, 10) : ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function TabR1() {
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
   const [categoria, setCategoria] = useState('todas')
-  const [estado, setEstado] = useState('todos')
   const [cargando, setCargando] = useState(false)
   const [resultado, setResultado] = useState<R1Resultado | null>(null)
+  const [etapaExpandida, setEtapaExpandida] = useState<string | null>(null)
 
   const generar = async () => {
     setCargando(true)
+    setEtapaExpandida(null)
     try {
       const r = await getR1IncidentesPorTipoEstado({
         fechaDesde: desde || undefined,
         fechaHasta: hasta || undefined,
         categoria: categoria === 'todas' ? undefined : categoria,
-        estadoActual: estado === 'todos' ? undefined : estado,
       })
       setResultado(r)
     } catch { toast.error('Error al generar R1') }
     finally { setCargando(false) }
   }
 
-  const cols = ['Categoría', 'Cantidad', '%']
-  const filas = resultado?.porCategoria.map(c => ({ 'Categoría': c.categoria, 'Cantidad': c.cantidad, '%': fmtPct(c.porcentaje) })) ?? []
+  const toggleEtapa = (key: string) => setEtapaExpandida(prev => prev === key ? null : key)
 
-  const estadosFijos = ['pendiente', 'en_proceso', 'resuelto']
+  const colsCat = ['Categoría', 'Cantidad', '%']
+  const filasCat = resultado?.porCategoria.map(c => ({ 'Categoría': c.categoria, 'Cantidad': c.cantidad, '%': fmtPct(c.porcentaje) })) ?? []
 
   return (
     <div className="space-y-4">
@@ -226,19 +311,9 @@ function TabR1() {
           <CardTitle className="text-sm">Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
             <FilaFechasPicker desde={desde} hasta={hasta} onDesde={setDesde} onHasta={setHasta} />
             <SelectCategoria value={categoria} onChange={setCategoria} />
-            <div className="space-y-1">
-              <Label className="text-xs">Estado</Label>
-              <Select value={estado} onValueChange={setEstado}>
-                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  {estadosFijos.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
           <BtnGenerar onClick={generar} cargando={cargando} desde={desde} hasta={hasta} />
         </CardContent>
@@ -246,25 +321,83 @@ function TabR1() {
 
       {resultado && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {/* KPIs globales */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <KpiCard label="Total" valor={String(resultado.total)} />
             <KpiCard label="% Finalizados" valor={fmtPct(resultado.porcentajeCerrados)} sub="del total" />
             <KpiCard label="% En proceso" valor={fmtPct(resultado.porcentajeEnCurso)} sub="del total" />
             <KpiCard label="% Pendientes" valor={fmtPct(resultado.porcentajePendientes)} sub="del total" />
-            <KpiCard label="Frec. diaria" valor={fmtN(resultado.promedioDiario)} sub="incidentes/día (en período)" />
+            <KpiCard label="Frec. diaria" valor={fmtN(resultado.promedioDiario)} sub="incidentes/día" />
           </div>
+
+          {/* Etapas del proceso — clickeables */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Estado del proceso — hacé clic en una etapa para ver los incidentes</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {ETAPA_CONFIG.map(cfg => {
+                const etapa = resultado.etapas[cfg.key]
+                const expandida = etapaExpandida === cfg.key
+                const pct = resultado.total > 0 ? (etapa.cantidad / resultado.total) * 100 : 0
+                return (
+                  <div key={cfg.key} className={cfg.indent ? 'ml-6' : ''}>
+                    <button
+                      onClick={() => toggleEtapa(cfg.key)}
+                      disabled={etapa.cantidad === 0}
+                      className={`w-full text-left rounded-lg border px-4 py-3 transition-all ${cfg.color} ${
+                        etapa.cantidad === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90 active:scale-[0.99]'
+                      } ${expandida ? 'ring-2 ring-offset-1 ring-gray-400' : ''}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-800">{cfg.label}</p>
+                            <p className="text-xs text-gray-500">{cfg.desc}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="text-right">
+                            <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${cfg.badge}`}>
+                              {etapa.cantidad}
+                            </span>
+                            <p className="text-[10px] text-gray-400 mt-0.5">{fmtPct(pct)}</p>
+                          </div>
+                          {etapa.cantidad > 0 && (
+                            <span className="text-xs text-gray-400">{expandida ? '▲' : '▼'}</span>
+                          )}
+                        </div>
+                      </div>
+                      {/* Barra de progreso */}
+                      <div className="mt-2 h-1.5 bg-white/60 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${cfg.dot}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </button>
+                    {expandida && (
+                      <div className="border border-t-0 border-gray-200 rounded-b-lg px-3 pb-3 bg-white">
+                        <TablaEtapa incidentes={etapa.incidentes} />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </CardContent>
+          </Card>
+
+          {/* Desglose por Categoría */}
           <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-sm">Desglose por Categoría</CardTitle>
               <BotonesExport
-                disabled={!filas.length}
+                disabled={!filasCat.length}
                 cargando={cargando}
-                onCSV={() => descargarCSV(generarCSV(cols, filas), `r1_categorias_${hoy()}.csv`)}
-                onPDF={() => abrirPDF(1, { fechaDesde: desde, fechaHasta: hasta, categoria: categoria === 'todas' ? undefined : categoria, estadoActual: estado === 'todos' ? undefined : estado })}
+                onCSV={() => descargarCSV(generarCSV(colsCat, filasCat), `r1_categorias_${hoy()}.csv`)}
+                onPDF={() => abrirPDF(1, { fechaDesde: desde, fechaHasta: hasta, categoria: categoria === 'todas' ? undefined : categoria })}
               />
             </CardHeader>
             <CardContent>
-              <TablaResultados cols={cols} filas={filas} />
+              <TablaResultados cols={colsCat} filas={filasCat} />
             </CardContent>
           </Card>
         </>

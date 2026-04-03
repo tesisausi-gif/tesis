@@ -193,7 +193,19 @@ export async function getR1IncidentesPorTipoEstado(filtros: {
 
   let query = supabase
     .from('incidentes')
-    .select('categoria, estado_actual, fecha_registro, fecha_cierre')
+    .select(`
+      id_incidente,
+      descripcion_problema,
+      categoria,
+      estado_actual,
+      fecha_registro,
+      fecha_cierre,
+      clientes:id_cliente_reporta (nombre, apellido),
+      inmuebles:id_propiedad (calle, altura, barrio, localidad),
+      presupuestos (id_presupuesto, estado_presupuesto),
+      conformidades (id_conformidad, url_documento, esta_firmada, esta_rechazada)
+    `)
+    .order('fecha_registro', { ascending: false })
 
   if (filtros.fechaDesde) query = query.gte('fecha_registro', filtros.fechaDesde)
   if (filtros.fechaHasta) query = query.lte('fecha_registro', filtros.fechaHasta)
@@ -203,8 +215,19 @@ export async function getR1IncidentesPorTipoEstado(filtros: {
   const { data, error } = await query
   if (error) throw error
 
-  const items = data || []
+  const items = (data || []) as any[]
   const total = items.length
+
+  const toResumen = (row: any) => ({
+    id_incidente: row.id_incidente,
+    descripcion: row.descripcion_problema || '',
+    categoria: row.categoria || 'Sin categoría',
+    cliente: row.clientes ? `${row.clientes.nombre} ${row.clientes.apellido}` : '',
+    inmueble: row.inmuebles
+      ? [row.inmuebles.calle, row.inmuebles.altura, row.inmuebles.barrio, row.inmuebles.localidad].filter(Boolean).join(' ')
+      : '',
+    fecha_registro: row.fecha_registro || '',
+  })
 
   const categoriasMap: Record<string, number> = {}
   const estadosMap: Record<string, number> = {}
@@ -220,10 +243,34 @@ export async function getR1IncidentesPorTipoEstado(filtros: {
   const enCurso = estadosMap['en_proceso'] || 0
   const pendientesCount = estadosMap['pendiente'] || 0
 
-  // Calcular días del período para promedio diario
-  let dias = 1
+  let diasPeriodo = 1
   if (filtros.fechaDesde && filtros.fechaHasta) {
-    dias = Math.max(1, diasEntre(filtros.fechaDesde, filtros.fechaHasta))
+    diasPeriodo = Math.max(1, diasEntre(filtros.fechaDesde, filtros.fechaHasta))
+  }
+
+  // Agrupar por etapas del proceso
+  const pendienteItems = items.filter(i => i.estado_actual === 'pendiente')
+  const asigSolItems = items.filter(i => i.estado_actual === 'asignacion_solicitada')
+  const enProcesoItems = items.filter(i => i.estado_actual === 'en_proceso')
+  const finalizadoItems = items.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto')
+
+  const conPresupuestoPendiente = enProcesoItems.filter(i =>
+    i.presupuestos?.some((p: any) => p.estado_presupuesto === 'enviado')
+  )
+  const conConformidadPendiente = enProcesoItems.filter(i =>
+    i.conformidades?.some((c: any) => c.url_documento && !c.esta_firmada && !c.esta_rechazada) &&
+    !i.presupuestos?.some((p: any) => p.estado_presupuesto === 'enviado')
+  )
+
+  const porCategoriaItems = Object.entries(categoriasMap).sort((a, b) => b[1] - a[1])
+    .map(([categoria, cantidad]) => ({
+      categoria,
+      cantidad,
+      porcentaje: total > 0 ? Math.round((cantidad / total) * 1000) / 10 : 0,
+    }))
+  if (porCategoriaItems.length > 0 && total > 0) {
+    const sumaParcial = porCategoriaItems.slice(0, -1).reduce((s, i) => s + i.porcentaje, 0)
+    porCategoriaItems[porCategoriaItems.length - 1].porcentaje = Math.round((100 - sumaParcial) * 10) / 10
   }
 
   return {
@@ -231,21 +278,8 @@ export async function getR1IncidentesPorTipoEstado(filtros: {
     porcentajeCerrados: total > 0 ? (cerrados / total) * 100 : 0,
     porcentajeEnCurso: total > 0 ? (enCurso / total) * 100 : 0,
     porcentajePendientes: total > 0 ? (pendientesCount / total) * 100 : 0,
-    promedioDiario: total / dias,
-    porCategoria: (() => {
-      const sorted = Object.entries(categoriasMap).sort((a, b) => b[1] - a[1])
-      const items = sorted.map(([categoria, cantidad]) => ({
-        categoria,
-        cantidad,
-        porcentaje: total > 0 ? Math.round((cantidad / total) * 1000) / 10 : 0,
-      }))
-      // Ajustar el último para que la suma sea exactamente 100%
-      if (items.length > 0 && total > 0) {
-        const sumaParcial = items.slice(0, -1).reduce((s, i) => s + i.porcentaje, 0)
-        items[items.length - 1].porcentaje = Math.round((100 - sumaParcial) * 10) / 10
-      }
-      return items
-    })(),
+    promedioDiario: total / diasPeriodo,
+    porCategoria: porCategoriaItems,
     porEstado: Object.entries(estadosMap)
       .sort((a, b) => b[1] - a[1])
       .map(([estado, cantidad]) => ({
@@ -253,6 +287,14 @@ export async function getR1IncidentesPorTipoEstado(filtros: {
         cantidad,
         porcentaje: total > 0 ? (cantidad / total) * 100 : 0,
       })),
+    etapas: {
+      pendiente: { cantidad: pendienteItems.length, incidentes: pendienteItems.map(toResumen) },
+      asignacion_solicitada: { cantidad: asigSolItems.length, incidentes: asigSolItems.map(toResumen) },
+      en_proceso: { cantidad: enProcesoItems.length, incidentes: enProcesoItems.map(toResumen) },
+      con_presupuesto_pendiente: { cantidad: conPresupuestoPendiente.length, incidentes: conPresupuestoPendiente.map(toResumen) },
+      con_conformidad_pendiente: { cantidad: conConformidadPendiente.length, incidentes: conConformidadPendiente.map(toResumen) },
+      finalizado: { cantidad: finalizadoItems.length, incidentes: finalizadoItems.map(toResumen) },
+    },
   }
 }
 

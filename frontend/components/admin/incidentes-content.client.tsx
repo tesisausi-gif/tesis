@@ -184,8 +184,14 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       const matchId = inc.id_incidente.toString().includes(q)
       const matchDesc = inc.descripcion_problema.toLowerCase().includes(q)
       const matchCliente = `${inc.clientes?.nombre ?? ''} ${inc.clientes?.apellido ?? ''}`.toLowerCase().includes(q)
-      const matchDir = `${inc.inmuebles?.calle ?? ''} ${inc.inmuebles?.altura ?? ''}`.toLowerCase().includes(q)
-      if (!matchId && !matchDesc && !matchCliente && !matchDir) return false
+      const matchDir = `${inc.inmuebles?.calle ?? ''} ${inc.inmuebles?.altura ?? ''} ${inc.inmuebles?.barrio ?? ''} ${inc.inmuebles?.localidad ?? ''}`.toLowerCase().includes(q)
+      const matchCategoria = (inc.categoria ?? '').toLowerCase().includes(q)
+      const matchPrioridad = (inc.nivel_prioridad ?? '').toLowerCase().includes(q)
+      const matchTecnico = inc.asignaciones_tecnico?.some(a => {
+        const t = a.tecnicos
+        return t ? `${t.nombre} ${t.apellido}`.toLowerCase().includes(q) : false
+      }) ?? false
+      if (!matchId && !matchDesc && !matchCliente && !matchDir && !matchCategoria && !matchPrioridad && !matchTecnico) return false
     }
 
     return true
@@ -221,7 +227,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Buscar por ID, descripción, cliente o dirección..."
+            placeholder="Buscar por ID, descripción, cliente, dirección, categoría, técnico..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="pl-10"
