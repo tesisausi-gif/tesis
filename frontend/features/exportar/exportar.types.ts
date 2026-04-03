@@ -80,6 +80,20 @@ export interface R1FilaEstado {
   porcentaje: number
 }
 
+export interface R1IncidenteResumen {
+  id_incidente: number
+  descripcion: string
+  categoria: string
+  cliente: string
+  inmueble: string
+  fecha_registro: string
+}
+
+export interface R1Etapa {
+  cantidad: number
+  incidentes: R1IncidenteResumen[]
+}
+
 export interface R1Resultado {
   total: number
   porcentajeCerrados: number
@@ -88,6 +102,14 @@ export interface R1Resultado {
   promedioDiario: number
   porCategoria: R1FilaCategoria[]
   porEstado: R1FilaEstado[]
+  etapas: {
+    pendiente: R1Etapa
+    asignacion_solicitada: R1Etapa
+    en_proceso: R1Etapa
+    con_presupuesto_pendiente: R1Etapa
+    con_conformidad_pendiente: R1Etapa
+    finalizado: R1Etapa
+  }
 }
 
 // ─── R2: Tiempos de Resolución ────────────────────────────────────────────────
