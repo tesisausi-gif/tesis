@@ -553,15 +553,14 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       const tecnicoNombre = av.tecnicos ? `${av.tecnicos.nombre} ${av.tecnicos.apellido}`.trim() : null
       const detalle: TimelineEventDetalle[] = []
       if (tecnicoNombre) detalle.push({ label: 'Técnico', value: tecnicoNombre })
-      if (av.descripcion_avance) detalle.push({ label: 'Detalle', value: av.descripcion_avance })
-      if (av.porcentaje_completado != null) detalle.push({ label: 'Progreso', value: `${av.porcentaje_completado}%` })
-      if (av.observaciones) detalle.push({ label: 'Observaciones', value: av.observaciones })
+      if (av.descripcion) detalle.push({ label: 'Detalle', value: av.descripcion })
+      if (av.porcentaje_avance != null) detalle.push({ label: 'Progreso', value: `${av.porcentaje_avance}%` })
 
       timelineEvents.push({
         id: `avance-${av.id_avance}`,
         tipo: 'avance',
         titulo: 'Avance de Reparación',
-        descripcion: av.porcentaje_completado != null ? `${av.porcentaje_completado}% completado` : (av.descripcion_avance || 'Sin descripción'),
+        descripcion: av.porcentaje_avance != null ? `${av.porcentaje_avance}% completado` : (av.descripcion || 'Sin descripción'),
         fecha: av.fecha_avance,
         icono: <Wrench className="h-4 w-4" />,
         color: 'bg-indigo-500',
@@ -1814,18 +1813,15 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                                   <div className="flex items-center justify-between gap-2">
                                     <span className="font-semibold text-indigo-800">
                                       Avance #{i + 1}
-                                      {av.porcentaje_completado != null && (
-                                        <span className="ml-2 text-indigo-600">{av.porcentaje_completado}%</span>
+                                      {av.porcentaje_avance != null && (
+                                        <span className="ml-2 text-indigo-600">{av.porcentaje_avance}%</span>
                                       )}
                                     </span>
                                     <span className="text-gray-400 shrink-0">
                                       {av.fecha_avance ? new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(av.fecha_avance.endsWith('Z') ? av.fecha_avance : av.fecha_avance + 'Z')) : ''}
                                     </span>
                                   </div>
-                                  <p className="text-gray-700">{av.descripcion_avance}</p>
-                                  {av.observaciones && (
-                                    <p className="text-gray-500 italic">{av.observaciones}</p>
-                                  )}
+                                  <p className="text-gray-700">{av.descripcion}</p>
                                 </div>
                               ))}
                             </div>
