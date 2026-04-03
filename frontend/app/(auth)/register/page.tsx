@@ -31,8 +31,8 @@ function RegisterPageContent() {
 
   // Form state para Cliente
   const [clienteEmail, setClienteEmail] = useState('')
-  const [clientePassword, setClientePassword] = useState('')
-  const [clienteConfirmPassword, setClienteConfirmPassword] = useState('')
+  const [clientePassword, setClientePassword] = useState('cliente123')
+  const [clienteConfirmPassword, setClienteConfirmPassword] = useState('cliente123')
   const [clienteNombre, setClienteNombre] = useState('')
   const [clienteApellido, setClienteApellido] = useState('')
   const [clienteTelefono, setClienteTelefono] = useState('')

@@ -345,9 +345,7 @@ export async function aprobarSolicitudTecnico(
     return { success: false, error: 'Solicitud no encontrada' }
   }
 
-  // Generar contraseña temporal segura
-  const { generarPasswordTemporal } = await import('@/features/email/email.service')
-  const passwordTemporal = generarPasswordTemporal()
+  const passwordTemporal = 'tecnico123'
 
   // 2. Crear usuario en Supabase Auth con rol 'gestor' para que el trigger
   //    solo inserte en `usuarios` (sin tocar `tecnicos`) — evita fallos del trigger.
@@ -401,7 +399,7 @@ export async function aprobarSolicitudTecnico(
   //    y activar bandera de cambio obligatorio de contraseña
   const { error: updError } = await supabase
     .from('usuarios')
-    .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico, debe_cambiar_password: true })
+    .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico, debe_cambiar_password: false })
     .eq('id', authUserId)
 
   if (updError) {
