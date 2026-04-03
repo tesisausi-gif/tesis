@@ -1818,7 +1818,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                                       )}
                                     </span>
                                     <span className="text-gray-400 shrink-0">
-                                      {av.fecha_avance ? new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(av.fecha_avance.endsWith('Z') ? av.fecha_avance : av.fecha_avance + 'Z')) : ''}
+                                      {av.fecha_avance ? (() => { try { return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(av.fecha_avance)) } catch { return '' } })() : ''}
                                     </span>
                                   </div>
                                   <p className="text-gray-700">{av.descripcion}</p>
