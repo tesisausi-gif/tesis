@@ -90,7 +90,8 @@ export default function SolicitudesTab() {
       }
 
       toast.success('Técnico aprobado', {
-        description: `Se envió un email a ${selectedSolicitud.email} con la contraseña temporal.`,
+        description: `Contraseña inicial: tecnico123 — Se intentó enviar email a ${selectedSolicitud.email}.`,
+        duration: 8000,
       })
 
       setDialogOpen(false)

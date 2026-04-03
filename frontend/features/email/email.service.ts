@@ -16,27 +16,6 @@ function getResend() {
   return new Resend(apiKey)
 }
 
-function generarPasswordTemporal(): string {
-  // Sin caracteres ambiguos (0/O, 1/l/I)
-  const mayus = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
-  const minus = 'abcdefghjkmnpqrstuvwxyz'
-  const nums  = '23456789'
-  const esps  = '@#$!%'
-  const todos = mayus + minus + nums + esps
-  // Garantizar al menos un carácter de cada tipo
-  let pwd = ''
-  pwd += mayus[Math.floor(Math.random() * mayus.length)]
-  pwd += minus[Math.floor(Math.random() * minus.length)]
-  pwd += nums[Math.floor(Math.random() * nums.length)]
-  pwd += esps[Math.floor(Math.random() * esps.length)]
-  for (let i = 4; i < 12; i++) {
-    pwd += todos[Math.floor(Math.random() * todos.length)]
-  }
-  // Mezclar
-  return pwd.split('').sort(() => Math.random() - 0.5).join('')
-}
-
-export { generarPasswordTemporal }
 
 export async function enviarEmailBienvenida({
   destinatario,
