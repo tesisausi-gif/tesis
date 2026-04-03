@@ -1344,7 +1344,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                                   <p className="text-sm font-medium">{event.titulo}</p>
                                   <div className="flex items-center gap-1 shrink-0">
                                     <span className="text-xs text-gray-500">
-                                      {new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(event.fecha))}
+                                      {event.fecha ? (() => { try { return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(event.fecha)) } catch { return '' } })() : ''}
                                     </span>
                                     {hasDetail && (
                                       <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -1493,7 +1493,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                                 {asig.tecnicos?.nombre} {asig.tecnicos?.apellido}
                               </p>
                               <p className="text-xs text-gray-500">
-                                Asignado: {format(new Date(asig.fecha_asignacion), "dd/MM/yy HH:mm", { locale: es })}
+                                Asignado: {asig.fecha_asignacion ? format(new Date(asig.fecha_asignacion), "dd/MM/yy HH:mm", { locale: es }) : ''}
                               </p>
                             </div>
                             <Badge variant="outline">{ESTADO_ASIGNACION_LABELS[asig.estado_asignacion] || asig.estado_asignacion}</Badge>
@@ -1577,7 +1577,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           )}
                           {pres.fecha_creacion && (
                             <p className="text-xs text-gray-500">
-                              Creado: {format(new Date(pres.fecha_creacion), "dd/MM/yy HH:mm", { locale: es })}
+                              Creado: {pres.fecha_creacion ? format(new Date(pres.fecha_creacion), "dd/MM/yy HH:mm", { locale: es }) : ''}
                             </p>
                           )}
                         </div>
