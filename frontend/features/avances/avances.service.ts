@@ -14,13 +14,10 @@ const AVANCE_SELECT = `
   id_avance,
   id_incidente,
   id_tecnico,
-  descripcion_avance,
-  porcentaje_completado,
-  requiere_nueva_etapa,
-  observaciones,
+  descripcion,
+  porcentaje_avance,
   fecha_avance,
-  fecha_creacion,
-  fecha_modificacion,
+  fecha_registro,
   tecnicos (
     nombre,
     apellido
@@ -48,16 +45,17 @@ export async function getAvancesDelIncidente(idIncidente: number): Promise<Avanc
  */
 export async function crearAvance(dto: CreateAvanceDTO): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
     const idTecnico = await requireTecnicoId()
+    const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+    const supabase = createAdminClient()
 
     const { data: avance, error } = await supabase
       .from('avances_reparacion')
       .insert({
         id_incidente: dto.id_incidente,
         id_tecnico: idTecnico,
-        descripcion_avance: dto.descripcion_avance,
-        porcentaje_completado: dto.porcentaje_completado ?? null,
+        descripcion: dto.descripcion_avance,
+        porcentaje_avance: dto.porcentaje_completado ?? null,
         fecha_avance: new Date().toISOString(),
       })
       .select('id_avance')

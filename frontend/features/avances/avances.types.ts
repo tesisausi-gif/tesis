@@ -7,13 +7,11 @@ export interface Avance {
   id_avance: number
   id_incidente: number
   id_tecnico: number
-  descripcion_avance: string
-  porcentaje_completado: number | null
-  requiere_nueva_etapa?: number | null  // INTEGER 0/1 en DB
-  observaciones?: string | null
+  descripcion: string
+  porcentaje_avance: number | null
+  fotos_url?: string[] | null
   fecha_avance: string
-  fecha_creacion?: string
-  fecha_modificacion?: string
+  fecha_registro?: string
 }
 
 export interface AvanceConDetalle extends Avance {
