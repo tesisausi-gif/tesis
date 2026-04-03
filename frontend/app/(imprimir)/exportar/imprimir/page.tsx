@@ -64,6 +64,7 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
   let filas: Record<string, unknown>[] = []
   let kpis: { label: string; valor: string }[] = []
   let errorMsg: string | null = null
+  let r1Etapas: { label: string; desc: string; cantidad: number; pct: number; incidentes: { id_incidente: number; descripcion: string; categoria: string; cliente: string; inmueble: string; fecha_registro: string }[] }[] = []
 
   try {
     if (tipo === 1) {
@@ -73,10 +74,20 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
         { label: 'Total', valor: String(r.total) },
         { label: '% Finalizados', valor: fmtPct(r.porcentajeCerrados) },
         { label: '% En proceso', valor: fmtPct(r.porcentajeEnCurso) },
+        { label: '% Pendientes', valor: fmtPct(r.porcentajePendientes) },
         { label: 'Promedio diario', valor: fmtN(r.promedioDiario) },
       ]
       cabeceras = ['Categoría', 'Cantidad', '%']
       filas = r.porCategoria.map(c => ({ 'Categoría': c.categoria, 'Cantidad': c.cantidad, '%': fmtPct(c.porcentaje) }))
+      const total = r.total
+      r1Etapas = [
+        { label: 'Pendientes', desc: 'Sin técnico asignado', cantidad: r.etapas.pendiente.cantidad, pct: total > 0 ? (r.etapas.pendiente.cantidad / total) * 100 : 0, incidentes: r.etapas.pendiente.incidentes },
+        { label: 'Asignación Solicitada', desc: 'Esperando respuesta del técnico', cantidad: r.etapas.asignacion_solicitada.cantidad, pct: total > 0 ? (r.etapas.asignacion_solicitada.cantidad / total) * 100 : 0, incidentes: r.etapas.asignacion_solicitada.incidentes },
+        { label: 'En Proceso', desc: 'Técnico trabajando', cantidad: r.etapas.en_proceso.cantidad, pct: total > 0 ? (r.etapas.en_proceso.cantidad / total) * 100 : 0, incidentes: r.etapas.en_proceso.incidentes },
+        { label: 'Presupuesto Pendiente', desc: 'Enviado, esperando aprobación', cantidad: r.etapas.con_presupuesto_pendiente.cantidad, pct: total > 0 ? (r.etapas.con_presupuesto_pendiente.cantidad / total) * 100 : 0, incidentes: r.etapas.con_presupuesto_pendiente.incidentes },
+        { label: 'Conformidad Pendiente', desc: 'Subida, esperando firma', cantidad: r.etapas.con_conformidad_pendiente.cantidad, pct: total > 0 ? (r.etapas.con_conformidad_pendiente.cantidad / total) * 100 : 0, incidentes: r.etapas.con_conformidad_pendiente.incidentes },
+        { label: 'Finalizados', desc: 'Cerrados y resueltos', cantidad: r.etapas.finalizado.cantidad, pct: total > 0 ? (r.etapas.finalizado.cantidad / total) * 100 : 0, incidentes: r.etapas.finalizado.incidentes },
+      ]
 
     } else if (tipo === 2) {
       titulo = 'Tiempos Promedio de Resolución'
@@ -296,6 +307,13 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
         tr:nth-child(even) td { background: #f9fafb; }
         .footer { margin-top: 18px; color: #aaa; font-size: 9px; text-align: right; border-top: 1px solid #e5e7eb; padding-top: 6px; }
         .error-msg { color: #dc2626; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 12px; margin: 20px 0; }
+        .etapa-header { display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-top: 12px; }
+        .etapa-title { font-weight: 700; font-size: 11px; color: #1e293b; }
+        .etapa-desc { font-size: 9px; color: #64748b; margin-top: 1px; }
+        .etapa-badge { font-size: 11px; font-weight: 700; color: #1d4ed8; background: #dbeafe; border-radius: 20px; padding: 2px 10px; }
+        .etapa-pct { font-size: 9px; color: #64748b; text-align: right; margin-top: 1px; }
+        .etapa-table { margin-top: 4px; margin-left: 8px; }
+        .etapa-section { break-inside: avoid; }
       `}</style>
 
       <h1>{titulo}</h1>
@@ -339,6 +357,57 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
             ))}
           </tbody>
         </table>
+      )}
+
+      {/* R1: Etapas del proceso */}
+      {r1Etapas.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <h2 style={{ fontSize: 13, fontWeight: 700, color: '#1e3a5f', marginBottom: 8, borderBottom: '1px solid #e5e7eb', paddingBottom: 4 }}>
+            Estado del Proceso
+          </h2>
+          {r1Etapas.map(etapa => (
+            <div key={etapa.label} className="etapa-section">
+              <div className="etapa-header">
+                <div>
+                  <div className="etapa-title">{etapa.label}</div>
+                  <div className="etapa-desc">{etapa.desc}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span className="etapa-badge">{etapa.cantidad}</span>
+                  <div className="etapa-pct">{fmtPct(etapa.pct)} del total</div>
+                </div>
+              </div>
+              {etapa.incidentes.length > 0 && (
+                <div className="etapa-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Descripción</th>
+                        <th>Categoría</th>
+                        <th>Cliente</th>
+                        <th>Inmueble</th>
+                        <th>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {etapa.incidentes.map((inc, i) => (
+                        <tr key={inc.id_incidente}>
+                          <td style={{ fontWeight: 600 }}>#{inc.id_incidente}</td>
+                          <td style={{ maxWidth: 200 }}>{inc.descripcion}</td>
+                          <td>{inc.categoria}</td>
+                          <td>{inc.cliente}</td>
+                          <td>{inc.inmueble}</td>
+                          <td style={{ whiteSpace: 'nowrap' }}>{inc.fecha_registro ? inc.fecha_registro.slice(0, 10) : ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
 
       <p className="footer">ISBA · Sistema de Gestión de Incidentes · {fechaGenerado}</p>
