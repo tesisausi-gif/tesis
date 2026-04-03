@@ -200,11 +200,14 @@ export function GestionarPendienteModal({
 
   const tecnicosFiltrados = tecnicos
     .filter((t) => {
-      if (!t.especialidad || !categoria) return true
-      return (
-        t.especialidad.toLowerCase().includes(categoria.toLowerCase()) ||
-        categoria.toLowerCase().includes(t.especialidad.toLowerCase())
-      )
+      if (!categoria) return true
+      const cat = categoria.toLowerCase()
+      const todasEsps = [
+        ...(t.especialidad ? [t.especialidad] : []),
+        ...(Array.isArray(t.especialidades) ? t.especialidades : []),
+      ]
+      if (todasEsps.length === 0) return true
+      return todasEsps.some(esp => esp.toLowerCase().includes(cat) || cat.includes(esp.toLowerCase()))
     })
     .sort((a, b) => (b.calificacion_promedio ?? 0) - (a.calificacion_promedio ?? 0))
 
@@ -410,7 +413,9 @@ export function GestionarPendienteModal({
                               {t.nombre} {t.apellido}
                             </TableCell>
                             <TableCell className="text-sm text-gray-600">
-                              {t.especialidad ?? '—'}
+                              {Array.isArray(t.especialidades) && t.especialidades.length > 0
+                                ? t.especialidades.join(', ')
+                                : (t.especialidad ?? '—')}
                             </TableCell>
                             <TableCell>
                               <StarRating value={t.calificacion_promedio} />
