@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Mail } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { crearSolicitudRegistro, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,8 @@ import { getAuthErrorMessage } from '@/shared/utils'
 
 function RegisterPageContent() {
   const [loading, setLoading] = useState(false)
+  const [emailPendiente, setEmailPendiente] = useState('')
+  const [confirmacionEnviada, setConfirmacionEnviada] = useState(false)
   const [especialidades, setEspecialidades] = useState<Array<{ id_especialidad: number, nombre: string }>>([])
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -99,10 +101,15 @@ function RegisterPageContent() {
         return
       }
 
+      const redirectTo = typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/confirm?next=/cliente`
+        : '/auth/confirm?next=/cliente'
+
       const { data, error } = await supabase.auth.signUp({
         email: clienteEmail,
         password: clientePassword,
         options: {
+          emailRedirectTo: redirectTo,
           data: {
             nombre: clienteNombre,
             apellido: clienteApellido,
@@ -114,29 +121,27 @@ function RegisterPageContent() {
       })
 
       if (error) {
-        // Mejorar mensajes de error específicos
         if (error.message.includes('already registered') || error.message.includes('already exists')) {
           toast.error('Email ya registrado', {
             description: 'Este correo electrónico ya está en uso. Por favor usa otro o inicia sesión.'
           })
         } else {
           const errorMsg = getAuthErrorMessage(error)
-          toast.error(errorMsg.title, {
-            description: errorMsg.description
-          })
+          toast.error(errorMsg.title, { description: errorMsg.description })
         }
         return
       }
 
       if (data.user) {
-        // El trigger handle_new_user() crea automáticamente en usuarios y clientes
-        toast.success('Registro exitoso', {
-          description: 'Ya puedes iniciar sesión'
-        })
-
-        setTimeout(() => {
-          router.push('/login')
-        }, 2000)
+        if (data.session === null) {
+          // Supabase requiere confirmación de email
+          setEmailPendiente(clienteEmail)
+          setConfirmacionEnviada(true)
+        } else {
+          // Sin confirmación requerida (local dev sin enable_confirmations)
+          toast.success('Registro exitoso', { description: 'Ya puedes iniciar sesión' })
+          setTimeout(() => router.push('/cliente'), 1500)
+        }
       }
     } catch (error) {
       console.error('Error inesperado:', error)
@@ -196,6 +201,46 @@ function RegisterPageContent() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (confirmacionEnviada) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
+        <Card className="w-full">
+          <CardContent className="pt-8 pb-8">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="bg-green-100 rounded-full p-4">
+                  <Mail className="h-8 w-8 text-green-600" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="font-semibold text-gray-800 text-lg">¡Revisá tu correo!</p>
+                <p className="text-sm text-gray-500">
+                  Enviamos un enlace de confirmación a{' '}
+                  <span className="font-medium text-gray-700">{emailPendiente}</span>.
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Hacé clic en el enlace del email para activar tu cuenta y acceder al sistema.
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Si no lo ves, revisá la carpeta de spam.
+                </p>
+              </div>
+              <div className="pt-2">
+                <Link href="/login" className="text-sm text-primary hover:underline">
+                  Volver al inicio de sesión
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    )
   }
 
   return (
