@@ -14,10 +14,9 @@ const AVANCE_SELECT = `
   id_avance,
   id_incidente,
   id_tecnico,
-  descripcion,
-  porcentaje_avance,
+  descripcion_avance,
+  porcentaje_completado,
   fecha_avance,
-  fecha_registro,
   tecnicos (
     nombre,
     apellido
@@ -54,8 +53,8 @@ export async function crearAvance(dto: CreateAvanceDTO): Promise<ActionResult> {
       .insert({
         id_incidente: dto.id_incidente,
         id_tecnico: idTecnico,
-        descripcion: dto.descripcion_avance,
-        porcentaje_avance: dto.porcentaje_completado ?? null,
+        descripcion_avance: dto.descripcion_avance,
+        porcentaje_completado: dto.porcentaje_completado ?? null,
         fecha_avance: new Date().toISOString(),
       })
       .select('id_avance')
