@@ -181,7 +181,7 @@ export async function crearPresupuesto(data: {
   alternativas_reparacion?: string
 }): Promise<ActionResult<Presupuesto>> {
   try {
-    const idTecnico = await requireTecnicoId()
+    await requireTecnicoId()
     const { createAdminClient } = await import('@/shared/lib/supabase/admin')
     const supabase = createAdminClient()
 
@@ -189,7 +189,6 @@ export async function crearPresupuesto(data: {
       .from('presupuestos')
       .insert({
         ...data,
-        id_tecnico: idTecnico,
         estado_presupuesto: EstadoPresupuesto.ENVIADO,
       })
       .select()
