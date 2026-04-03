@@ -305,7 +305,6 @@ export function TrabajosContent({
         onOpenChange={setModalOpen}
         rol="tecnico"
         initialTab={modalTab}
-        hideTabs
         onUpdate={() => router.refresh()}
       />
     </div>
