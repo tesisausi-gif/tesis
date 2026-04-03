@@ -52,9 +52,11 @@ export async function getPresupuestosForAdmin(): Promise<PresupuestoConDetalle[]
 
 /**
  * Obtener presupuestos de un incidente específico
+ * Usa adminClient para evitar bloqueo por RLS (la columna id_tecnico puede ser NULL en filas existentes)
  */
 export async function getPresupuestosDelIncidente(idIncidente: number): Promise<Presupuesto[]> {
-  const supabase = await createClient()
+  const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('presupuestos')
@@ -179,12 +181,15 @@ export async function crearPresupuesto(data: {
   alternativas_reparacion?: string
 }): Promise<ActionResult<Presupuesto>> {
   try {
-    const supabase = await createClient()
+    const idTecnico = await requireTecnicoId()
+    const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+    const supabase = createAdminClient()
 
     const { data: presupuesto, error } = await supabase
       .from('presupuestos')
       .insert({
         ...data,
+        id_tecnico: idTecnico,
         estado_presupuesto: EstadoPresupuesto.ENVIADO,
       })
       .select()
