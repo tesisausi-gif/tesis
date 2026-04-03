@@ -65,7 +65,7 @@ export function NotificacionesCard({ notificaciones: inicial }: Props) {
                       <p className="text-xs text-red-600 mt-0.5">Incidente #{n.id_incidente} — tocá para ver detalles</p>
                     )}
                     <p className="text-xs text-red-500 mt-1">
-                      {format(new Date(n.fecha_creacion), "dd 'de' MMM, HH:mm", { locale: es })}
+                      {n.fecha_creacion ? format(new Date(n.fecha_creacion), "dd 'de' MMM, HH:mm", { locale: es }) : ''}
                     </p>
                   </div>
                   <button

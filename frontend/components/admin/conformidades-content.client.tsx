@@ -280,7 +280,7 @@ export function ConformidadesContent({ conformidades }: ConformidadesContentProp
                       </span>
                     )}
                     <span>
-                      {format(new Date(conf.fecha_creacion), "dd MMM yyyy, HH:mm", { locale: es })}
+                      {conf.fecha_creacion ? format(new Date(conf.fecha_creacion), "dd MMM yyyy, HH:mm", { locale: es }) : ''}
                     </span>
                     {inc?.categoria && <span className="text-gray-400">{inc.categoria}</span>}
                   </div>

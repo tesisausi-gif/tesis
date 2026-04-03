@@ -135,7 +135,7 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
-                  {format(new Date(p.fecha_creacion!), 'dd/MM/yy', { locale: es })}
+                  {p.fecha_creacion ? format(new Date(p.fecha_creacion), 'dd/MM/yy', { locale: es }) : ''}
                 </TableCell>
                 {mostrarAcciones && (
                   <TableCell>

@@ -221,7 +221,7 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales }: Disp
 
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Calendar className="h-3 w-3" />
-                  Asignado: {format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy HH:mm', { locale: es })}
+                  Asignado: {asignacion.fecha_asignacion ? format(new Date(asignacion.fecha_asignacion), 'dd/MM/yyyy HH:mm', { locale: es }) : ''}
                 </div>
 
                 <div className="space-y-2 pt-2 border-t">
