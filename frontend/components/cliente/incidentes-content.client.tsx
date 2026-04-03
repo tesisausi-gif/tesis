@@ -210,7 +210,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                           <span className="truncate">{direccion}</span>
                         </div>
                         <span className="text-xs text-gray-400 flex-shrink-0">
-                          {format(new Date(incidente.fecha_registro), 'dd MMM yy', { locale: es })}
+                          {incidente.fecha_registro ? format(new Date(incidente.fecha_registro), 'dd MMM yy', { locale: es }) : ''}
                         </span>
                       </div>
 
