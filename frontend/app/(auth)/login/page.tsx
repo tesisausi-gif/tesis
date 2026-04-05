@@ -11,12 +11,12 @@ import { getAuthErrorMessage } from '@/shared/utils'
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.07 } },
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
 }
 
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
 }
 
 function LoginPageContent() {
@@ -43,10 +43,7 @@ function LoginPageContent() {
     try {
       console.log('Intentando login con email:', email)
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
       console.log('Respuesta de Supabase:', { data, error })
 
@@ -76,7 +73,6 @@ function LoginPageContent() {
 
         const rol = usuarioData.rol
         console.log('Rol del usuario:', rol)
-
         toast.success('Inicio de sesión exitoso')
 
         switch (rol) {
@@ -111,124 +107,108 @@ function LoginPageContent() {
   }
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show">
-      {/* Mobile logo — only shown when left panel is hidden */}
-      <motion.div variants={item} className="flex items-center gap-2 mb-10 lg:hidden">
-        <div
-          className="w-8 h-8 rounded-md flex items-center justify-center"
-          style={{ background: '#2563eb' }}
-        >
-          <span
-            className="text-white font-bold text-xs"
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
+      {/* Card */}
+      <motion.div
+        variants={fadeUp}
+        className="bg-white rounded-2xl p-8 md:p-9"
+        style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)' }}
+      >
+        {/* Heading */}
+        <div className="mb-7">
+          <h2
+            className="text-2xl font-bold text-slate-900 mb-1.5 tracking-tight"
             style={{ fontFamily: 'var(--font-syne)' }}
           >
-            IS
-          </span>
+            Bienvenido
+          </h2>
+          <p className="text-slate-500 text-[13.5px]">
+            Ingresá tus credenciales para acceder al sistema
+          </p>
         </div>
-        <span
-          className="text-slate-400 text-xs tracking-[0.2em] uppercase"
-          style={{ fontFamily: 'var(--font-outfit)' }}
-        >
-          ISBA
-        </span>
-      </motion.div>
 
-      {/* Heading */}
-      <motion.div variants={item} className="mb-8">
-        <h2
-          className="text-3xl font-bold text-slate-900 mb-2 leading-tight"
-          style={{ fontFamily: 'var(--font-syne)' }}
-        >
-          Bienvenido
-        </h2>
-        <p className="text-slate-500 text-sm">
-          Ingresá tus credenciales para acceder al sistema
-        </p>
-      </motion.div>
-
-      {/* Form */}
-      <form onSubmit={handleLogin} className="space-y-5">
-        <motion.div variants={item}>
-          <label
-            htmlFor="email"
-            className="block text-[11px] font-semibold text-slate-400 uppercase tracking-[0.12em] mb-2"
-            style={{ fontFamily: 'var(--font-syne)' }}
-          >
-            Correo electrónico
-          </label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="tu@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading}
-            className="h-11 bg-slate-50 border-slate-200 focus-visible:ring-blue-500 focus-visible:border-blue-500 text-sm"
-          />
-        </motion.div>
-
-        <motion.div variants={item}>
-          <div className="flex items-center justify-between mb-2">
+        {/* Form */}
+        <form onSubmit={handleLogin} className="space-y-5">
+          <motion.div variants={fadeUp}>
             <label
-              htmlFor="password"
-              className="block text-[11px] font-semibold text-slate-400 uppercase tracking-[0.12em]"
+              htmlFor="email"
+              className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 mb-1.5"
               style={{ fontFamily: 'var(--font-syne)' }}
             >
-              Contraseña
+              Correo electrónico
             </label>
-            <Link
-              href="/forgot-password"
-              className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              ¿Olvidaste tu contraseña?
-            </Link>
-          </div>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={loading}
-            className="h-11 bg-slate-50 border-slate-200 focus-visible:ring-blue-500 focus-visible:border-blue-500 text-sm"
-          />
-        </motion.div>
+            <Input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+              className="h-11 text-sm border-slate-200 bg-slate-50/70 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-colors"
+            />
+          </motion.div>
 
-        <motion.div variants={item}>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-11 rounded-lg font-semibold text-sm text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            style={{
-              background: loading ? '#1d4ed8' : '#2563eb',
-              fontFamily: 'var(--font-syne)',
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#1d4ed8'
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#2563eb'
-            }}
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Iniciando sesión...
-              </>
-            ) : (
-              'Iniciar sesión'
-            )}
-          </button>
-        </motion.div>
-      </form>
+          <motion.div variants={fadeUp}>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="password"
+                className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400"
+                style={{ fontFamily: 'var(--font-syne)' }}
+              >
+                Contraseña
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-[12px] text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading}
+              className="h-11 text-sm border-slate-200 bg-slate-50/70 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-colors"
+            />
+          </motion.div>
+
+          <motion.div variants={fadeUp} className="pt-1">
+            <motion.button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 rounded-xl font-semibold text-[13.5px] text-white flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ background: '#2563eb', fontFamily: 'var(--font-syne)' }}
+              whileHover={loading ? {} : { scale: 1.01, background: '#1d4ed8' }}
+              whileTap={loading ? {} : { scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Iniciando sesión...
+                </>
+              ) : (
+                'Iniciar sesión'
+              )}
+            </motion.button>
+          </motion.div>
+        </form>
+      </motion.div>
 
       {/* Footer */}
-      <motion.p variants={item} className="mt-7 text-center text-sm text-slate-400">
+      <motion.p variants={fadeUp} className="mt-5 text-center text-[13px] text-slate-400">
         ¿No tienes cuenta?{' '}
         <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
           Regístrate aquí
