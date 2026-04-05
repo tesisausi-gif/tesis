@@ -14,7 +14,7 @@ export default function Icon() {
     (
       <div
         style={{
-          fontSize: 24,
+          fontSize: 13,
           background: '#2563eb',
           width: '100%',
           height: '100%',
@@ -23,10 +23,11 @@ export default function Icon() {
           justifyContent: 'center',
           color: 'white',
           borderRadius: '4px',
-          fontWeight: 'bold',
+          fontWeight: '700',
+          letterSpacing: '-0.5px',
         }}
       >
-        I
+        IS
       </div>
     ),
     {
