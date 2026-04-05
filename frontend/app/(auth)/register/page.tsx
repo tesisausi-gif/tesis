@@ -7,29 +7,64 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Mail } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { crearSolicitudRegistro, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { AnimatedTabs, AnimatedTabContent } from '@/components/ui/animated-tabs'
 import { toast } from 'sonner'
 import { getAuthErrorMessage } from '@/shared/utils'
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
+}
+
+function LabelText({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 mb-1.5"
+      style={{ fontFamily: 'var(--font-syne)' }}
+    >
+      {children}
+    </span>
+  )
+}
+
+function SubmitButton({ loading, label, loadingLabel }: { loading: boolean; label: string; loadingLabel: string }) {
+  return (
+    <motion.button
+      type="submit"
+      disabled={loading}
+      className="w-full h-11 rounded-xl font-semibold text-[13.5px] text-white flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+      style={{ background: '#2563eb', fontFamily: 'var(--font-syne)' }}
+      whileHover={loading ? undefined : { scale: 1.01 }}
+      whileTap={loading ? undefined : { scale: 0.98 }}
+      transition={{ duration: 0.15 }}
+    >
+      {loading ? (
+        <>
+          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          {loadingLabel}
+        </>
+      ) : label}
+    </motion.button>
+  )
+}
 
 function RegisterPageContent() {
   const [loading, setLoading] = useState(false)
   const [emailPendiente, setEmailPendiente] = useState('')
   const [confirmacionEnviada, setConfirmacionEnviada] = useState(false)
-  const [especialidades, setEspecialidades] = useState<Array<{ id_especialidad: number, nombre: string }>>([])
+  const [especialidades, setEspecialidades] = useState<Array<{ id_especialidad: number; nombre: string }>>([])
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  // Determinar tab por defecto según URL param
   const tipoParam = searchParams.get('tipo')
   const defaultTab = tipoParam === 'tecnico' ? 'tecnico' : 'cliente'
   const [activeTab, setActiveTab] = useState(defaultTab)
 
-  // Form state para Cliente
   const [clienteEmail, setClienteEmail] = useState('')
   const [clientePassword, setClientePassword] = useState('cliente123')
   const [clienteConfirmPassword, setClienteConfirmPassword] = useState('cliente123')
@@ -38,7 +73,6 @@ function RegisterPageContent() {
   const [clienteTelefono, setClienteTelefono] = useState('')
   const [clienteDNI, setClienteDNI] = useState('')
 
-  // Form state para Técnico
   const [tecnicoNombre, setTecnicoNombre] = useState('')
   const [tecnicoApellido, setTecnicoApellido] = useState('')
   const [tecnicoEmail, setTecnicoEmail] = useState('')
@@ -47,56 +81,25 @@ function RegisterPageContent() {
   const [tecnicoEspecialidades, setTecnicoEspecialidades] = useState<string[]>([])
   const [tecnicoDireccion, setTecnicoDireccion] = useState('')
 
-  // Cargar especialidades al montar el componente
   useEffect(() => {
-    const fetchEspecialidades = async () => {
-      try {
-        const data = await getEspecialidadesActivas()
-        setEspecialidades(data)
-      } catch (error) {
-        console.error('Error al cargar especialidades:', error)
-        toast.error('Error al cargar especialidades')
-      }
-    }
-
-    fetchEspecialidades()
+    getEspecialidadesActivas()
+      .then(setEspecialidades)
+      .catch(() => toast.error('Error al cargar especialidades'))
   }, [])
 
   const handleClienteRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!clienteDNI) {
-      toast.error('Por favor completa todos los campos obligatorios')
-      return
-    }
-
-    if (clientePassword !== clienteConfirmPassword) {
-      toast.error('Las contraseñas no coinciden')
-      return
-    }
-
-    if (clientePassword.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres')
-      return
-    }
+    if (!clienteDNI) { toast.error('Por favor completa todos los campos obligatorios'); return }
+    if (clientePassword !== clienteConfirmPassword) { toast.error('Las contraseñas no coinciden'); return }
+    if (clientePassword.length < 6) { toast.error('La contraseña debe tener al menos 6 caracteres'); return }
 
     setLoading(true)
-
     try {
-      // Verificar si el email ya existe
       const { data: existingUsers, error: checkError } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('correo_electronico', clienteEmail)
-        .limit(1)
+        .from('usuarios').select('id').eq('correo_electronico', clienteEmail).limit(1)
 
-      if (checkError) {
-        console.error('Error al verificar email:', checkError)
-        // Continuar con el registro aunque haya error en la verificación
-      } else if (existingUsers && existingUsers.length > 0) {
-        toast.error('Email ya registrado', {
-          description: 'Este correo electrónico ya está en uso. Por favor usa otro o inicia sesión.'
-        })
+      if (!checkError && existingUsers && existingUsers.length > 0) {
+        toast.error('Email ya registrado', { description: 'Este correo ya está en uso. Iniciá sesión.' })
         setLoading(false)
         return
       }
@@ -110,41 +113,30 @@ function RegisterPageContent() {
         password: clientePassword,
         options: {
           emailRedirectTo: redirectTo,
-          data: {
-            nombre: clienteNombre,
-            apellido: clienteApellido,
-            rol: 'cliente',
-            telefono: clienteTelefono,
-            dni: clienteDNI,
-          }
-        }
+          data: { nombre: clienteNombre, apellido: clienteApellido, rol: 'cliente', telefono: clienteTelefono, dni: clienteDNI },
+        },
       })
 
       if (error) {
         if (error.message.includes('already registered') || error.message.includes('already exists')) {
-          toast.error('Email ya registrado', {
-            description: 'Este correo electrónico ya está en uso. Por favor usa otro o inicia sesión.'
-          })
+          toast.error('Email ya registrado', { description: 'Este correo ya está en uso.' })
         } else {
-          const errorMsg = getAuthErrorMessage(error)
-          toast.error(errorMsg.title, { description: errorMsg.description })
+          const msg = getAuthErrorMessage(error)
+          toast.error(msg.title, { description: msg.description })
         }
         return
       }
 
       if (data.user) {
         if (data.session === null) {
-          // Supabase requiere confirmación de email
           setEmailPendiente(clienteEmail)
           setConfirmacionEnviada(true)
         } else {
-          // Sin confirmación requerida (local dev sin enable_confirmations)
           toast.success('Registro exitoso', { description: 'Ya puedes iniciar sesión' })
           setTimeout(() => router.push('/cliente'), 1500)
         }
       }
-    } catch (error) {
-      console.error('Error inesperado:', error)
+    } catch {
       toast.error('Error inesperado')
     } finally {
       setLoading(false)
@@ -153,353 +145,229 @@ function RegisterPageContent() {
 
   const handleTecnicoRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!tecnicoNombre || !tecnicoApellido || !tecnicoEmail) {
       toast.error('Por favor completa los campos requeridos')
       return
     }
 
     setLoading(true)
-
     try {
       const result = await crearSolicitudRegistro({
-        nombre: tecnicoNombre,
-        apellido: tecnicoApellido,
-        email: tecnicoEmail,
-        telefono: tecnicoTelefono || null,
-        dni: tecnicoDNI || null,
-        especialidades: tecnicoEspecialidades,
-        direccion: tecnicoDireccion || null,
+        nombre: tecnicoNombre, apellido: tecnicoApellido, email: tecnicoEmail,
+        telefono: tecnicoTelefono || null, dni: tecnicoDNI || null,
+        especialidades: tecnicoEspecialidades, direccion: tecnicoDireccion || null,
       })
 
       if (!result.success) {
-        toast.error('Error al enviar solicitud', {
-          description: result.error
-        })
+        toast.error('Error al enviar solicitud', { description: result.error })
         return
       }
 
-      toast.success('Solicitud enviada', {
-        description: 'Recibirás un email cuando sea aprobada'
-      })
-
-      // Limpiar formulario
-      setTecnicoNombre('')
-      setTecnicoApellido('')
-      setTecnicoEmail('')
-      setTecnicoTelefono('')
-      setTecnicoDNI('')
-      setTecnicoEspecialidades([])
-      setTecnicoDireccion('')
-
-      setTimeout(() => {
-        router.push('/login')
-      }, 3000)
-
-    } catch (error) {
+      toast.success('Solicitud enviada', { description: 'Recibirás un email cuando sea aprobada' })
+      setTecnicoNombre(''); setTecnicoApellido(''); setTecnicoEmail('')
+      setTecnicoTelefono(''); setTecnicoDNI(''); setTecnicoEspecialidades([]); setTecnicoDireccion('')
+      setTimeout(() => router.push('/login'), 3000)
+    } catch {
       toast.error('Error inesperado')
     } finally {
       setLoading(false)
     }
   }
 
+  // ── Email confirmation state ──
   if (confirmacionEnviada) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-      >
-        <Card className="w-full">
-          <CardContent className="pt-8 pb-8">
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="bg-green-100 rounded-full p-4">
-                  <Mail className="h-8 w-8 text-green-600" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <p className="font-semibold text-gray-800 text-lg">¡Revisá tu correo!</p>
-                <p className="text-sm text-gray-500">
-                  Enviamos un enlace de confirmación a{' '}
-                  <span className="font-medium text-gray-700">{emailPendiente}</span>.
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Hacé clic en el enlace del email para activar tu cuenta y acceder al sistema.
-                </p>
-                <p className="text-xs text-gray-400 mt-2">
-                  Si no lo ves, revisá la carpeta de spam.
-                </p>
-              </div>
-              <div className="pt-2">
-                <Link href="/login" className="text-sm text-primary hover:underline">
-                  Volver al inicio de sesión
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+        <div
+          className="bg-white rounded-2xl p-8 text-center"
+          style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)' }}
+        >
+          <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+            <Mail className="h-7 w-7 text-green-600" />
+          </div>
+          <h3 className="font-bold text-slate-900 text-lg mb-1" style={{ fontFamily: 'var(--font-syne)' }}>
+            ¡Revisá tu correo!
+          </h3>
+          <p className="text-sm text-slate-500 mb-1" style={{ fontFamily: 'var(--font-outfit)' }}>
+            Enviamos un enlace a{' '}
+            <span className="font-medium text-slate-700">{emailPendiente}</span>
+          </p>
+          <p className="text-sm text-slate-400 mb-5" style={{ fontFamily: 'var(--font-outfit)' }}>
+            Si no lo ves, revisá la carpeta de spam.
+          </p>
+          <Link href="/login" className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors" style={{ fontFamily: 'var(--font-syne)' }}>
+            Volver al inicio de sesión
+          </Link>
+        </div>
       </motion.div>
     )
   }
 
+  // ── Main form ──
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-    >
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+    <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}>
+      {/* Back link */}
+      <motion.div variants={fadeUp}>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-[13px] text-slate-400 hover:text-slate-600 mb-5 transition-colors"
+          style={{ fontFamily: 'var(--font-syne)' }}
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Volver al inicio
+        </Link>
+      </motion.div>
+
+      {/* Card */}
+      <motion.div
+        variants={fadeUp}
+        className="bg-white rounded-2xl p-7"
+        style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04)' }}
       >
-        <ArrowLeft className="h-4 w-4" />
-        Volver al inicio
-      </Link>
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Registro</CardTitle>
-        <CardDescription>
-          Selecciona tu tipo de cuenta
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        {/* Heading */}
+        <div className="mb-5">
+          <h2 className="text-2xl font-bold text-slate-900 mb-1 tracking-tight" style={{ fontFamily: 'var(--font-syne)' }}>
+            Crear cuenta
+          </h2>
+          <p className="text-slate-500 text-[13.5px]" style={{ fontFamily: 'var(--font-outfit)' }}>
+            Seleccioná tu tipo de cuenta
+          </p>
+        </div>
+
+        {/* Tabs */}
         <AnimatedTabs
-          tabs={[
-            { value: 'cliente', label: 'Cliente' },
-            { value: 'tecnico', label: 'Técnico' },
-          ]}
+          tabs={[{ value: 'cliente', label: 'Cliente' }, { value: 'tecnico', label: 'Técnico' }]}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
 
-        {/* TAB CLIENTE */}
+        {/* Tab: Cliente */}
         <AnimatedTabContent value="cliente" activeTab={activeTab}>
-            <form onSubmit={handleClienteRegister} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cliente-nombre">Nombre *</Label>
-                  <Input
-                    id="cliente-nombre"
-                    value={clienteNombre}
-                    onChange={(e) => setClienteNombre(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cliente-apellido">Apellido *</Label>
-                  <Input
-                    id="cliente-apellido"
-                    value={clienteApellido}
-                    onChange={(e) => setClienteApellido(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
+          <form onSubmit={handleClienteRegister} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <LabelText>Nombre *</LabelText>
+                <Input id="cliente-nombre" value={clienteNombre} onChange={(e) => setClienteNombre(e.target.value)} required disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cliente-email">Email *</Label>
-                <Input
-                  id="cliente-email"
-                  type="email"
-                  value={clienteEmail}
-                  onChange={(e) => setClienteEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+              <div>
+                <LabelText>Apellido *</LabelText>
+                <Input id="cliente-apellido" value={clienteApellido} onChange={(e) => setClienteApellido(e.target.value)} required disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cliente-telefono">Teléfono</Label>
-                  <Input
-                    id="cliente-telefono"
-                    type="tel"
-                    value={clienteTelefono}
-                    onChange={(e) => setClienteTelefono(e.target.value)}
-                    disabled={loading}
-                    placeholder="+54 9 11 1234-5678"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cliente-dni">DNI *</Label>
-                  <Input
-                    id="cliente-dni"
-                    value={clienteDNI}
-                    onChange={(e) => setClienteDNI(e.target.value)}
-                    required
-                    disabled={loading}
-                    placeholder="12345678"
-                  />
-                </div>
+            </div>
+            <div>
+              <LabelText>Email *</LabelText>
+              <Input id="cliente-email" type="email" value={clienteEmail} onChange={(e) => setClienteEmail(e.target.value)} required disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <LabelText>Teléfono</LabelText>
+                <Input id="cliente-telefono" type="tel" value={clienteTelefono} onChange={(e) => setClienteTelefono(e.target.value)} disabled={loading} placeholder="+54 9 11..." className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cliente-password">Contraseña *</Label>
-                <Input
-                  id="cliente-password"
-                  type="password"
-                  value={clientePassword}
-                  onChange={(e) => setClientePassword(e.target.value)}
-                  required
-                  disabled={loading}
-                  minLength={6}
-                  placeholder="Mínimo 6 caracteres"
-                />
+              <div>
+                <LabelText>DNI *</LabelText>
+                <Input id="cliente-dni" value={clienteDNI} onChange={(e) => setClienteDNI(e.target.value)} required disabled={loading} placeholder="12345678" className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cliente-confirm">Confirmar Contraseña *</Label>
-                <Input
-                  id="cliente-confirm"
-                  type="password"
-                  value={clienteConfirmPassword}
-                  onChange={(e) => setClienteConfirmPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                  minLength={6}
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Registrando...' : 'Registrarse como Cliente'}
-              </Button>
-            </form>
+            </div>
+            <div>
+              <LabelText>Contraseña *</LabelText>
+              <Input id="cliente-password" type="password" value={clientePassword} onChange={(e) => setClientePassword(e.target.value)} required disabled={loading} minLength={6} placeholder="Mínimo 6 caracteres" className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+            </div>
+            <div>
+              <LabelText>Confirmar Contraseña *</LabelText>
+              <Input id="cliente-confirm" type="password" value={clienteConfirmPassword} onChange={(e) => setClienteConfirmPassword(e.target.value)} required disabled={loading} minLength={6} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+            </div>
+            <SubmitButton loading={loading} label="Registrarse como Cliente" loadingLabel="Registrando..." />
+          </form>
         </AnimatedTabContent>
 
-        {/* TAB TÉCNICO */}
+        {/* Tab: Técnico */}
         <AnimatedTabContent value="tecnico" activeTab={activeTab}>
-            <form onSubmit={handleTecnicoRegister} className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Tu solicitud será revisada por un administrador antes de ser aprobada.
-              </p>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tecnico-nombre">Nombre *</Label>
-                  <Input
-                    id="tecnico-nombre"
-                    value={tecnicoNombre}
-                    onChange={(e) => setTecnicoNombre(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tecnico-apellido">Apellido *</Label>
-                  <Input
-                    id="tecnico-apellido"
-                    value={tecnicoApellido}
-                    onChange={(e) => setTecnicoApellido(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
+          <form onSubmit={handleTecnicoRegister} className="space-y-4">
+            <p className="text-sm text-slate-500" style={{ fontFamily: 'var(--font-outfit)' }}>
+              Tu solicitud será revisada por un administrador antes de ser aprobada.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <LabelText>Nombre *</LabelText>
+                <Input id="tecnico-nombre" value={tecnicoNombre} onChange={(e) => setTecnicoNombre(e.target.value)} required disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tecnico-email">Email *</Label>
-                <Input
-                  id="tecnico-email"
-                  type="email"
-                  value={tecnicoEmail}
-                  onChange={(e) => setTecnicoEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+              <div>
+                <LabelText>Apellido *</LabelText>
+                <Input id="tecnico-apellido" value={tecnicoApellido} onChange={(e) => setTecnicoApellido(e.target.value)} required disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tecnico-telefono">Teléfono</Label>
-                  <Input
-                    id="tecnico-telefono"
-                    type="tel"
-                    value={tecnicoTelefono}
-                    onChange={(e) => setTecnicoTelefono(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tecnico-dni">DNI</Label>
-                  <Input
-                    id="tecnico-dni"
-                    value={tecnicoDNI}
-                    onChange={(e) => setTecnicoDNI(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
+            </div>
+            <div>
+              <LabelText>Email *</LabelText>
+              <Input id="tecnico-email" type="email" value={tecnicoEmail} onChange={(e) => setTecnicoEmail(e.target.value)} required disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <LabelText>Teléfono</LabelText>
+                <Input id="tecnico-telefono" type="tel" value={tecnicoTelefono} onChange={(e) => setTecnicoTelefono(e.target.value)} disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
-
-              <div className="space-y-2">
-                <Label>Especialidades *</Label>
-                <p className="text-xs text-gray-500">Podés seleccionar una o más especialidades.</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {especialidades.map((esp) => (
-                    <label
-                      key={esp.id_especialidad}
-                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
-                        tecnicoEspecialidades.includes(esp.nombre)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:bg-gray-50'
-                      } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={tecnicoEspecialidades.includes(esp.nombre)}
-                        onChange={() => {
-                          setTecnicoEspecialidades(prev =>
-                            prev.includes(esp.nombre)
-                              ? prev.filter(e => e !== esp.nombre)
-                              : [...prev, esp.nombre]
-                          )
-                        }}
-                        disabled={loading}
-                        className="h-4 w-4 accent-blue-500"
-                      />
-                      <span className="text-sm">{esp.nombre}</span>
-                    </label>
-                  ))}
-                </div>
-                {tecnicoEspecialidades.length === 0 && (
-                  <p className="text-xs text-amber-600">Seleccioná al menos una especialidad</p>
-                )}
+              <div>
+                <LabelText>DNI</LabelText>
+                <Input id="tecnico-dni" value={tecnicoDNI} onChange={(e) => setTecnicoDNI(e.target.value)} disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tecnico-direccion">Dirección</Label>
-                <Input
-                  id="tecnico-direccion"
-                  value={tecnicoDireccion}
-                  onChange={(e) => setTecnicoDireccion(e.target.value)}
-                  disabled={loading}
-                />
+            </div>
+            <div>
+              <LabelText>Especialidades *</LabelText>
+              <p className="text-xs text-slate-400 mb-2" style={{ fontFamily: 'var(--font-outfit)' }}>Podés seleccionar una o más.</p>
+              <div className="grid grid-cols-2 gap-2">
+                {especialidades.map((esp) => (
+                  <label
+                    key={esp.id_especialidad}
+                    className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors text-sm ${
+                      tecnicoEspecialidades.includes(esp.nombre)
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                    } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+                    style={{ fontFamily: 'var(--font-outfit)' }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={tecnicoEspecialidades.includes(esp.nombre)}
+                      onChange={() => setTecnicoEspecialidades((prev) =>
+                        prev.includes(esp.nombre) ? prev.filter((e) => e !== esp.nombre) : [...prev, esp.nombre]
+                      )}
+                      disabled={loading}
+                      className="h-4 w-4 accent-blue-500"
+                    />
+                    {esp.nombre}
+                  </label>
+                ))}
               </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar Solicitud'}
-              </Button>
-            </form>
+              {tecnicoEspecialidades.length === 0 && (
+                <p className="text-xs text-amber-600 mt-1.5" style={{ fontFamily: 'var(--font-outfit)' }}>Seleccioná al menos una especialidad</p>
+              )}
+            </div>
+            <div>
+              <LabelText>Dirección</LabelText>
+              <Input id="tecnico-direccion" value={tecnicoDireccion} onChange={(e) => setTecnicoDireccion(e.target.value)} disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+            </div>
+            <SubmitButton loading={loading} label="Enviar Solicitud" loadingLabel="Enviando..." />
+          </form>
         </AnimatedTabContent>
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
-          ¿Ya tienes cuenta?{' '}
-          <Link href="/login" className="text-primary hover:underline">
-            Inicia sesión
-          </Link>
-        </p>
-      </CardFooter>
-      </Card>
+      </motion.div>
+
+      {/* Footer */}
+      <p className="mt-5 text-center text-[13px] text-slate-400" style={{ fontFamily: 'var(--font-outfit)' }}>
+        ¿Ya tienes cuenta?{' '}
+        <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
+          Iniciá sesión
+        </Link>
+      </p>
     </motion.div>
   )
 }
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<Card className="w-full"><CardContent className="py-8 text-center">Cargando...</CardContent></Card>}>
+    <Suspense fallback={
+      <div className="bg-white rounded-2xl p-8 text-center text-sm text-slate-400" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.07)' }}>
+        Cargando...
+      </div>
+    }>
       <RegisterPageContent />
     </Suspense>
   )

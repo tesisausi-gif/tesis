@@ -34,11 +34,7 @@ export function AnimatedTabs({ tabs, activeTab, onTabChange, className }: Animat
             <motion.div
               layoutId="active-tab-indicator"
               className="absolute inset-0 bg-background rounded-md shadow-sm"
-              transition={{
-                type: 'spring',
-                stiffness: 400,
-                damping: 30,
-              }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             />
           )}
           <span className="relative z-10">{tab.label}</span>
@@ -55,19 +51,18 @@ interface AnimatedTabContentProps {
   className?: string
 }
 
+// Render both tabs always — hide inactive with CSS to prevent layout shifts
 export function AnimatedTabContent({ value, activeTab, children, className }: AnimatedTabContentProps) {
-  if (value !== activeTab) return null
+  const isActive = value === activeTab
 
   return (
-    <motion.div
-      key={value}
-      initial={{ opacity: 0, x: value === 'cliente' ? -10 : 10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: value === 'cliente' ? 10 : -10 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className={cn('mt-4', className)}
+    <div
+      aria-hidden={!isActive}
+      style={{ display: isActive ? 'block' : 'none' }}
     >
-      {children}
-    </motion.div>
+      <div className={cn('mt-4', className)}>
+        {children}
+      </div>
+    </div>
   )
 }

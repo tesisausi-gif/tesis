@@ -1,103 +1,107 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Card, CardContent } from '@/components/ui/card'
 import { AlertCircle, Clock, UserCheck, LayoutDashboard } from 'lucide-react'
 
 const features = [
   {
     icon: AlertCircle,
-    title: 'Reporta Incidentes Fácilmente',
-    description: 'Crea reportes detallados con fotos y descripción. El proceso es rápido y sencillo.',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
+    title: 'Reporta Incidentes',
+    description: 'Crea reportes detallados con fotos y descripción. Rápido y sencillo desde cualquier dispositivo.',
+    accent: '#2563eb',
+    bg: 'rgba(37,99,235,0.08)',
   },
   {
     icon: Clock,
     title: 'Seguimiento en Tiempo Real',
-    description: 'Monitorea el estado de tus incidentes. Recibe notificaciones de cada actualización.',
-    color: 'text-green-600',
-    bgColor: 'bg-green-100',
+    description: 'Monitorea el estado de tus incidentes y recibe notificaciones de cada actualización.',
+    accent: '#059669',
+    bg: 'rgba(5,150,105,0.08)',
   },
   {
     icon: UserCheck,
     title: 'Técnicos Calificados',
-    description: 'Contamos con profesionales especializados en distintas áreas para resolver tu problema.',
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100',
+    description: 'Profesionales especializados en distintas áreas listos para resolver tu problema.',
+    accent: '#d97706',
+    bg: 'rgba(217,119,6,0.08)',
   },
   {
     icon: LayoutDashboard,
-    title: 'Panel de Administración',
-    description: 'Gestiona propiedades, técnicos e incidentes desde un único lugar centralizado.',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
+    title: 'Panel Centralizado',
+    description: 'Gestiona propiedades, técnicos e incidentes desde un único lugar.',
+    accent: '#7c3aed',
+    bg: 'rgba(124,58,237,0.08)',
   },
 ]
 
 const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
 }
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: 'easeOut' as const,
-    },
-  },
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
 }
 
 export function FeaturesSection() {
   return (
-    <section className="bg-slate-50 py-16 md:py-20">
-      <div className="container mx-auto px-4">
+    <section className="py-20 md:py-28" style={{ background: '#F7F6F3' }}>
+      <div className="max-w-5xl mx-auto px-6">
+        {/* Heading */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-100px' }}
+          viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5 }}
-          className="text-center"
+          className="text-center mb-14"
         >
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl md:text-4xl">
+          <h2
+            className="text-3xl md:text-4xl font-bold text-slate-900 mb-4"
+            style={{ fontFamily: 'var(--font-syne)', letterSpacing: '-0.02em' }}
+          >
             Todo lo que necesitas
           </h2>
-          <p className="mt-3 text-base text-slate-600 sm:mt-4 sm:text-lg">
-            Una plataforma completa para la gestión de incidentes
+          <p className="text-slate-500 text-base md:text-lg max-w-sm mx-auto" style={{ fontFamily: 'var(--font-outfit)' }}>
+            Una plataforma completa para la gestión de incidentes inmobiliarios
           </p>
         </motion.div>
 
+        {/* Grid */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
-          className="mt-10 grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           {features.map((feature) => (
-            <motion.div key={feature.title} variants={itemVariants}>
-              <Card className="h-full hover:shadow-lg transition-shadow duration-300">
-                <CardContent className="pt-6">
-                  <div className={`inline-flex h-11 w-11 items-center justify-center rounded-lg sm:h-12 sm:w-12 ${feature.bgColor}`}>
-                    <feature.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${feature.color}`} />
-                  </div>
-                  <h3 className="mt-4 text-base font-semibold text-slate-900 sm:text-lg">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
+            <motion.div
+              key={feature.title}
+              variants={itemVariants}
+              className="rounded-2xl p-6 flex flex-col gap-4"
+              style={{
+                background: 'white',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.04)',
+              }}
+            >
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: feature.bg }}
+              >
+                <feature.icon className="h-5 w-5" style={{ color: feature.accent }} />
+              </div>
+              <div>
+                <h3
+                  className="font-bold text-slate-900 mb-1.5 text-[15px]"
+                  style={{ fontFamily: 'var(--font-syne)' }}
+                >
+                  {feature.title}
+                </h3>
+                <p className="text-slate-500 text-sm leading-relaxed" style={{ fontFamily: 'var(--font-outfit)' }}>
+                  {feature.description}
+                </p>
+              </div>
             </motion.div>
           ))}
         </motion.div>
