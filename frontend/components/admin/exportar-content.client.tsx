@@ -673,11 +673,13 @@ function TabR5() {
 
       {resultado && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <KpiCard label="Total cobrado" valor={fmt$(resultado.ingresoTotal)} sub="a clientes" />
             <KpiCard label="Total pagado" valor={fmt$(resultado.costoTotal)} sub="a técnicos" />
             <KpiCard label="Comisión ISBA" valor={fmt$(resultado.comisionTotal)} sub="margen neto" />
             <KpiCard label="Margen global" valor={fmtPct(resultado.margenGlobal)} />
+            <KpiCard label="Mano de obra" valor={fmt$(resultado.manoObraTotal)} sub="según presupuestos" />
+            <KpiCard label="Materiales" valor={fmt$(resultado.materialesTotal)} sub="según presupuestos" />
           </div>
           <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -689,6 +691,90 @@ function TabR5() {
             </CardHeader>
             <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
           </Card>
+          {resultado.porTecnico.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Por técnico</CardTitle>
+                <BotonesExport disabled={false} cargando={cargando}
+                  onCSV={() => descargarCSV(generarCSV(
+                    ['Técnico', 'Cobrado', 'Pagado', 'Comisión', 'Margen %', 'Incidentes'],
+                    resultado.porTecnico.map(t => ({
+                      'Técnico': `${t.nombre} ${t.apellido}`, 'Cobrado': fmt$(t.ingresoBruto),
+                      'Pagado': fmt$(t.costoPagadoTecnico), 'Comisión': fmt$(t.comision),
+                      'Margen %': fmtPct(t.margen), 'Incidentes': t.cantidadIncidentes,
+                    }))
+                  ), `r5_por_tecnico_${hoy()}.csv`)}
+                  onPDF={() => abrirPDF(5, { fechaDesde: desde, fechaHasta: hasta })}
+                />
+              </CardHeader>
+              <CardContent>
+                <TablaResultados
+                  cols={['Técnico', 'Cobrado', 'Pagado', 'Comisión', 'Margen %', 'Incidentes']}
+                  filas={resultado.porTecnico.map(t => ({
+                    'Técnico': `${t.nombre} ${t.apellido}`, 'Cobrado': fmt$(t.ingresoBruto),
+                    'Pagado': fmt$(t.costoPagadoTecnico), 'Comisión': fmt$(t.comision),
+                    'Margen %': fmtPct(t.margen), 'Incidentes': t.cantidadIncidentes,
+                  }))}
+                />
+              </CardContent>
+            </Card>
+          )}
+          {resultado.porIncidente.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Por incidente</CardTitle>
+                <BotonesExport disabled={false} cargando={cargando}
+                  onCSV={() => descargarCSV(generarCSV(
+                    ['#', 'Descripción', 'Categoría', 'Cobrado', 'Pagado', 'Comisión', 'Margen %'],
+                    resultado.porIncidente.map(i => ({
+                      '#': i.id_incidente, 'Descripción': i.descripcion, 'Categoría': i.categoria,
+                      'Cobrado': fmt$(i.ingresoBruto), 'Pagado': fmt$(i.costoPagadoTecnico),
+                      'Comisión': fmt$(i.comision), 'Margen %': fmtPct(i.margen),
+                    }))
+                  ), `r5_por_incidente_${hoy()}.csv`)}
+                  onPDF={() => abrirPDF(5, { fechaDesde: desde, fechaHasta: hasta })}
+                />
+              </CardHeader>
+              <CardContent>
+                <TablaResultados
+                  cols={['#', 'Descripción', 'Categoría', 'Cobrado', 'Pagado', 'Comisión', 'Margen %']}
+                  filas={resultado.porIncidente.map(i => ({
+                    '#': i.id_incidente, 'Descripción': i.descripcion, 'Categoría': i.categoria,
+                    'Cobrado': fmt$(i.ingresoBruto), 'Pagado': fmt$(i.costoPagadoTecnico),
+                    'Comisión': fmt$(i.comision), 'Margen %': fmtPct(i.margen),
+                  }))}
+                />
+              </CardContent>
+            </Card>
+          )}
+          {resultado.porMes.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Por mes</CardTitle>
+                <BotonesExport disabled={false} cargando={cargando}
+                  onCSV={() => descargarCSV(generarCSV(
+                    ['Mes', 'Cobrado', 'Pagado', 'Comisión', 'Margen %'],
+                    resultado.porMes.map(m => ({
+                      'Mes': m.label, 'Cobrado': fmt$(m.ingresoBruto),
+                      'Pagado': fmt$(m.costoPagadoTecnico), 'Comisión': fmt$(m.comision),
+                      'Margen %': fmtPct(m.margen),
+                    }))
+                  ), `r5_por_mes_${hoy()}.csv`)}
+                  onPDF={() => abrirPDF(5, { fechaDesde: desde, fechaHasta: hasta })}
+                />
+              </CardHeader>
+              <CardContent>
+                <TablaResultados
+                  cols={['Mes', 'Cobrado', 'Pagado', 'Comisión', 'Margen %']}
+                  filas={resultado.porMes.map(m => ({
+                    'Mes': m.label, 'Cobrado': fmt$(m.ingresoBruto),
+                    'Pagado': fmt$(m.costoPagadoTecnico), 'Comisión': fmt$(m.comision),
+                    'Margen %': fmtPct(m.margen),
+                  }))}
+                />
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>
@@ -887,10 +973,12 @@ function TabR8() {
 
       {resultado && (
         <>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <KpiCard label="Costo total" valor={fmt$(resultado.costoTotal)} />
             <KpiCard label="Total incidentes" valor={String(resultado.totalIncidentes)} />
             <KpiCard label="Costo promedio" valor={fmt$(resultado.costoPromedio)} />
+            <KpiCard label="Mano de obra" valor={fmt$(resultado.manoObraTotal)} />
+            <KpiCard label="Materiales" valor={fmt$(resultado.materialesTotal)} />
           </div>
           <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -902,6 +990,90 @@ function TabR8() {
             </CardHeader>
             <CardContent><TablaResultados cols={cols} filas={filas} /></CardContent>
           </Card>
+          {resultado.porTecnico.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Costos por técnico</CardTitle>
+                <BotonesExport disabled={false} cargando={cargando}
+                  onCSV={() => descargarCSV(generarCSV(
+                    ['Técnico', 'Costo total', 'Materiales', 'Mano de obra', 'Incidentes', 'Promedio'],
+                    resultado.porTecnico.map(t => ({
+                      'Técnico': `${t.nombre} ${t.apellido}`, 'Costo total': fmt$(t.costoTotal),
+                      'Materiales': fmt$(t.materiales), 'Mano de obra': fmt$(t.manoObra),
+                      'Incidentes': t.totalIncidentes, 'Promedio': fmt$(t.promedioCosto),
+                    }))
+                  ), `r8_por_tecnico_${hoy()}.csv`)}
+                  onPDF={() => abrirPDF(8, { fechaDesde: desde, fechaHasta: hasta })}
+                />
+              </CardHeader>
+              <CardContent>
+                <TablaResultados
+                  cols={['Técnico', 'Costo total', 'Materiales', 'Mano de obra', 'Incidentes', 'Promedio']}
+                  filas={resultado.porTecnico.map(t => ({
+                    'Técnico': `${t.nombre} ${t.apellido}`, 'Costo total': fmt$(t.costoTotal),
+                    'Materiales': fmt$(t.materiales), 'Mano de obra': fmt$(t.manoObra),
+                    'Incidentes': t.totalIncidentes, 'Promedio': fmt$(t.promedioCosto),
+                  }))}
+                />
+              </CardContent>
+            </Card>
+          )}
+          {resultado.porIncidente.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Costos por incidente</CardTitle>
+                <BotonesExport disabled={false} cargando={cargando}
+                  onCSV={() => descargarCSV(generarCSV(
+                    ['#', 'Descripción', 'Categoría', 'Costo total', 'Materiales', 'Mano de obra', 'Gastos admin'],
+                    resultado.porIncidente.map(i => ({
+                      '#': i.id_incidente, 'Descripción': i.descripcion, 'Categoría': i.categoria,
+                      'Costo total': fmt$(i.costoTotal), 'Materiales': fmt$(i.materiales),
+                      'Mano de obra': fmt$(i.manoObra), 'Gastos admin': fmt$(i.gastosAdmin),
+                    }))
+                  ), `r8_por_incidente_${hoy()}.csv`)}
+                  onPDF={() => abrirPDF(8, { fechaDesde: desde, fechaHasta: hasta })}
+                />
+              </CardHeader>
+              <CardContent>
+                <TablaResultados
+                  cols={['#', 'Descripción', 'Categoría', 'Costo total', 'Materiales', 'Mano de obra', 'Gastos admin']}
+                  filas={resultado.porIncidente.map(i => ({
+                    '#': i.id_incidente, 'Descripción': i.descripcion, 'Categoría': i.categoria,
+                    'Costo total': fmt$(i.costoTotal), 'Materiales': fmt$(i.materiales),
+                    'Mano de obra': fmt$(i.manoObra), 'Gastos admin': fmt$(i.gastosAdmin),
+                  }))}
+                />
+              </CardContent>
+            </Card>
+          )}
+          {resultado.porMes.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Costos por mes</CardTitle>
+                <BotonesExport disabled={false} cargando={cargando}
+                  onCSV={() => descargarCSV(generarCSV(
+                    ['Mes', 'Costo total', 'Materiales', 'Mano de obra', 'Incidentes'],
+                    resultado.porMes.map(m => ({
+                      'Mes': m.label, 'Costo total': fmt$(m.costoTotal),
+                      'Materiales': fmt$(m.materiales), 'Mano de obra': fmt$(m.manoObra),
+                      'Incidentes': m.totalIncidentes,
+                    }))
+                  ), `r8_por_mes_${hoy()}.csv`)}
+                  onPDF={() => abrirPDF(8, { fechaDesde: desde, fechaHasta: hasta })}
+                />
+              </CardHeader>
+              <CardContent>
+                <TablaResultados
+                  cols={['Mes', 'Costo total', 'Materiales', 'Mano de obra', 'Incidentes']}
+                  filas={resultado.porMes.map(m => ({
+                    'Mes': m.label, 'Costo total': fmt$(m.costoTotal),
+                    'Materiales': fmt$(m.materiales), 'Mano de obra': fmt$(m.manoObra),
+                    'Incidentes': m.totalIncidentes,
+                  }))}
+                />
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

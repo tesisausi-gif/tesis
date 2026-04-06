@@ -182,12 +182,47 @@ export interface R5FilaTipo {
   margen: number              // comision / ingresoBruto * 100
 }
 
+export interface R5FilaTecnico {
+  id_tecnico: number
+  nombre: string
+  apellido: string
+  ingresoBruto: number
+  costoPagadoTecnico: number
+  comision: number
+  margen: number
+  cantidadIncidentes: number
+}
+
+export interface R5FilaIncidente {
+  id_incidente: number
+  descripcion: string
+  categoria: string
+  ingresoBruto: number
+  costoPagadoTecnico: number
+  comision: number
+  margen: number
+}
+
+export interface R5FilaMes {
+  mes: string
+  label: string
+  ingresoBruto: number
+  costoPagadoTecnico: number
+  comision: number
+  margen: number
+}
+
 export interface R5Resultado {
   ingresoTotal: number
   costoTotal: number
   comisionTotal: number
   margenGlobal: number
+  manoObraTotal: number
+  materialesTotal: number
   porTipo: R5FilaTipo[]
+  porTecnico: R5FilaTecnico[]
+  porIncidente: R5FilaIncidente[]
+  porMes: R5FilaMes[]
 }
 
 // ─── R6: Desempeño de Técnicos ────────────────────────────────────────────────
@@ -243,12 +278,47 @@ export interface R8FilaCategoria {
   promedioCosto: number
 }
 
+export interface R8FilaTecnico {
+  id_tecnico: number
+  nombre: string
+  apellido: string
+  costoTotal: number
+  materiales: number
+  manoObra: number
+  totalIncidentes: number
+  promedioCosto: number
+}
+
+export interface R8FilaIncidente {
+  id_incidente: number
+  descripcion: string
+  categoria: string
+  costoTotal: number
+  materiales: number
+  manoObra: number
+  gastosAdmin: number
+}
+
+export interface R8FilaMes {
+  mes: string
+  label: string
+  costoTotal: number
+  materiales: number
+  manoObra: number
+  totalIncidentes: number
+}
+
 export interface R8Resultado {
   costoTotal: number
   totalIncidentes: number
   costoPromedio: number
   presupuestoTotal: number
+  manoObraTotal: number
+  materialesTotal: number
   porCategoria: R8FilaCategoria[]
+  porTecnico: R8FilaTecnico[]
+  porIncidente: R8FilaIncidente[]
+  porMes: R8FilaMes[]
 }
 
 // ─── R10: Rentabilidad por Inmueble ──────────────────────────────────────────

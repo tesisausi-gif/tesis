@@ -26,6 +26,13 @@ import type {
   R13Resultado,
 } from './exportar.types'
 
+const MES_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+
+function mesLabel(yyyymm: string): string {
+  const [year, month] = yyyymm.split('-')
+  return month ? `${MES_NAMES[parseInt(month) - 1]} ${year}` : yyyymm
+}
+
 interface FiltroFechas {
   fechaDesde?: string | null
   fechaHasta?: string | null
@@ -550,76 +557,169 @@ export async function getR5RentabilidadPorRefaccion(filtros: {
   const supabase = createAdminClient()
 
   // Ingresos: cobros a clientes (incluyen comisión ISBA)
-  let qCobros = supabase
-    .from('cobros_clientes')
-    .select('monto_cobro, fecha_cobro, id_incidente')
+  let qCobros = supabase.from('cobros_clientes').select('monto_cobro, fecha_cobro, id_incidente')
   if (filtros.fechaDesde) qCobros = qCobros.gte('fecha_cobro', filtros.fechaDesde)
   if (filtros.fechaHasta) qCobros = qCobros.lte('fecha_cobro', filtros.fechaHasta)
 
-  // Costos: pagos a técnicos (materiales + mano de obra)
-  let qPagos = supabase
-    .from('pagos_tecnicos')
-    .select('monto_pago, fecha_pago, id_incidente')
+  // Costos: pagos a técnicos
+  let qPagos = supabase.from('pagos_tecnicos').select('monto_pago, fecha_pago, id_incidente')
   if (filtros.fechaDesde) qPagos = qPagos.gte('fecha_pago', filtros.fechaDesde)
   if (filtros.fechaHasta) qPagos = qPagos.lte('fecha_pago', filtros.fechaHasta)
 
   const [cobrosRes, pagosRes] = await Promise.all([qCobros, qPagos])
-
   const cobros = cobrosRes.data || []
   const pagos = pagosRes.data || []
 
-  // Fetch categories separately to avoid FK join issues
   const incIds = [...new Set([
     ...cobros.map((c: any) => c.id_incidente).filter(Boolean),
     ...pagos.map((p: any) => p.id_incidente).filter(Boolean),
   ])]
+
   let catPorIncidente: Record<number, string> = {}
+  let descPorIncidente: Record<number, string> = {}
+  let manoObraTotal = 0
+  let materialesTotal = 0
+  let tecnicoPorIncidente: Record<number, number> = {}
+  let tecnicosInfo: Record<number, { nombre: string; apellido: string }> = {}
+
   if (incIds.length > 0) {
-    const { data: incs } = await supabase.from('incidentes').select('id_incidente, categoria').in('id_incidente', incIds)
-    for (const inc of (incs || [])) {
+    const [incsRes, presRes, asigRes] = await Promise.all([
+      supabase.from('incidentes').select('id_incidente, categoria, descripcion_problema').in('id_incidente', incIds),
+      supabase.from('presupuestos').select('id_incidente, costo_mano_obra, costo_materiales').in('id_incidente', incIds),
+      supabase.from('asignaciones_tecnico').select('id_incidente, id_tecnico, id_asignacion').in('id_incidente', incIds).order('id_asignacion', { ascending: false }),
+    ])
+
+    for (const inc of (incsRes.data || [])) {
       catPorIncidente[inc.id_incidente] = inc.categoria || 'Sin categoría'
+      descPorIncidente[inc.id_incidente] = inc.descripcion_problema || `Incidente #${inc.id_incidente}`
+    }
+    for (const p of (presRes.data || [])) {
+      manoObraTotal += Number(p.costo_mano_obra) || 0
+      materialesTotal += Number(p.costo_materiales) || 0
+    }
+
+    const seenInc = new Set<number>()
+    for (const a of (asigRes.data || [])) {
+      if (!seenInc.has(a.id_incidente)) {
+        seenInc.add(a.id_incidente)
+        tecnicoPorIncidente[a.id_incidente] = a.id_tecnico
+      }
+    }
+    const tecnicoIds = [...new Set(Object.values(tecnicoPorIncidente))]
+    if (tecnicoIds.length > 0) {
+      const { data: tecs } = await supabase.from('tecnicos').select('id_tecnico, nombre, apellido').in('id_tecnico', tecnicoIds)
+      for (const t of (tecs || [])) {
+        tecnicosInfo[t.id_tecnico] = { nombre: t.nombre || '', apellido: t.apellido || '' }
+      }
     }
   }
 
+  // Aggregate por tipo (categoría)
   const tipoMap: Record<string, { ingreso: number; costo: number }> = {}
+  // Aggregate por incidente
+  const incMap: Record<number, { ingreso: number; costo: number; cat: string; desc: string }> = {}
+  // Aggregate por técnico
+  const tecMap: Record<number, { ingreso: number; costo: number; count: number }> = {}
+  // Aggregate por mes
+  const mesMap: Record<string, { ingreso: number; costo: number }> = {}
 
   for (const c of cobros) {
     const tipo = (c.id_incidente && catPorIncidente[c.id_incidente]) || 'Sin categoría'
     if (filtros.categoria && tipo !== filtros.categoria) continue
+    const monto = Number(c.monto_cobro) || 0
+
     if (!tipoMap[tipo]) tipoMap[tipo] = { ingreso: 0, costo: 0 }
-    tipoMap[tipo].ingreso += Number(c.monto_cobro) || 0
+    tipoMap[tipo].ingreso += monto
+
+    if (c.id_incidente) {
+      if (!incMap[c.id_incidente]) incMap[c.id_incidente] = { ingreso: 0, costo: 0, cat: tipo, desc: descPorIncidente[c.id_incidente] || '' }
+      incMap[c.id_incidente].ingreso += monto
+
+      const idTec = tecnicoPorIncidente[c.id_incidente]
+      if (idTec) {
+        if (!tecMap[idTec]) tecMap[idTec] = { ingreso: 0, costo: 0, count: 0 }
+        tecMap[idTec].ingreso += monto
+        tecMap[idTec].count++
+      }
+    }
+
+    if (c.fecha_cobro) {
+      const mes = c.fecha_cobro.substring(0, 7)
+      if (!mesMap[mes]) mesMap[mes] = { ingreso: 0, costo: 0 }
+      mesMap[mes].ingreso += monto
+    }
   }
 
   for (const p of pagos) {
     const tipo = (p.id_incidente && catPorIncidente[p.id_incidente]) || 'Sin categoría'
     if (filtros.categoria && tipo !== filtros.categoria) continue
+    const monto = Number(p.monto_pago) || 0
+
     if (!tipoMap[tipo]) tipoMap[tipo] = { ingreso: 0, costo: 0 }
-    tipoMap[tipo].costo += Number(p.monto_pago) || 0
+    tipoMap[tipo].costo += monto
+
+    if (p.id_incidente) {
+      if (!incMap[p.id_incidente]) incMap[p.id_incidente] = { ingreso: 0, costo: 0, cat: tipo, desc: descPorIncidente[p.id_incidente] || '' }
+      incMap[p.id_incidente].costo += monto
+
+      const idTec = tecnicoPorIncidente[p.id_incidente]
+      if (idTec) {
+        if (!tecMap[idTec]) tecMap[idTec] = { ingreso: 0, costo: 0, count: 0 }
+        tecMap[idTec].costo += monto
+      }
+    }
+
+    if (p.fecha_pago) {
+      const mes = p.fecha_pago.substring(0, 7)
+      if (!mesMap[mes]) mesMap[mes] = { ingreso: 0, costo: 0 }
+      mesMap[mes].costo += monto
+    }
   }
 
-  const porTipo = Object.entries(tipoMap)
-    .map(([tipo, v]) => {
-      const comision = v.ingreso - v.costo
-      return {
-        tipo,
-        ingresoBruto: v.ingreso,
-        costoPagadoTecnico: v.costo,
-        comision,
-        margen: v.ingreso > 0 ? (comision / v.ingreso) * 100 : 0,
-      }
-    })
-    .sort((a, b) => b.ingresoBruto - a.ingresoBruto)
+  const porTipo = Object.entries(tipoMap).map(([tipo, v]) => {
+    const comision = v.ingreso - v.costo
+    return { tipo, ingresoBruto: v.ingreso, costoPagadoTecnico: v.costo, comision, margen: v.ingreso > 0 ? (comision / v.ingreso) * 100 : 0 }
+  }).sort((a, b) => b.ingresoBruto - a.ingresoBruto)
+
+  const porIncidente = Object.entries(incMap).map(([id, v]) => {
+    const comision = v.ingreso - v.costo
+    return {
+      id_incidente: Number(id), descripcion: v.desc, categoria: v.cat,
+      ingresoBruto: v.ingreso, costoPagadoTecnico: v.costo, comision,
+      margen: v.ingreso > 0 ? (comision / v.ingreso) * 100 : 0,
+    }
+  }).sort((a, b) => b.ingresoBruto - a.ingresoBruto)
+
+  const porTecnico = Object.entries(tecMap).map(([id, v]) => {
+    const idTec = Number(id)
+    const info = tecnicosInfo[idTec] || { nombre: '?', apellido: '' }
+    const comision = v.ingreso - v.costo
+    return {
+      id_tecnico: idTec, nombre: info.nombre, apellido: info.apellido,
+      ingresoBruto: v.ingreso, costoPagadoTecnico: v.costo, comision,
+      margen: v.ingreso > 0 ? (comision / v.ingreso) * 100 : 0,
+      cantidadIncidentes: v.count,
+    }
+  }).sort((a, b) => b.ingresoBruto - a.ingresoBruto)
+
+  const porMes = Object.entries(mesMap).sort((a, b) => a[0].localeCompare(b[0])).map(([mes, v]) => {
+    const comision = v.ingreso - v.costo
+    return {
+      mes, label: mesLabel(mes),
+      ingresoBruto: v.ingreso, costoPagadoTecnico: v.costo, comision,
+      margen: v.ingreso > 0 ? (comision / v.ingreso) * 100 : 0,
+    }
+  })
 
   const ingresoTotal = porTipo.reduce((s, t) => s + t.ingresoBruto, 0)
   const costoTotal = porTipo.reduce((s, t) => s + t.costoPagadoTecnico, 0)
   const comisionTotal = ingresoTotal - costoTotal
 
   return {
-    ingresoTotal,
-    costoTotal,
-    comisionTotal,
+    ingresoTotal, costoTotal, comisionTotal,
     margenGlobal: ingresoTotal > 0 ? (comisionTotal / ingresoTotal) * 100 : 0,
-    porTipo,
+    manoObraTotal, materialesTotal,
+    porTipo, porTecnico, porIncidente, porMes,
   }
 }
 
@@ -794,60 +894,147 @@ export async function getR8CostosMantenimiento(filtros: {
 }): Promise<R8Resultado> {
   const supabase = createAdminClient()
 
-  let query = supabase
+  const { data, error } = await supabase
     .from('presupuestos')
     .select(`
+      id_incidente,
       costo_materiales,
       costo_mano_obra,
       gastos_administrativos,
       costo_total,
-      incidentes (id_incidente, categoria, fecha_registro)
+      incidentes (id_incidente, categoria, descripcion_problema, fecha_registro)
     `)
-
-  const { data, error } = await query
   if (error) throw error
 
-  const catMap: Record<string, any> = {}
-
-  for (const p of (data || [])) {
+  // Filter rows by date and categoria
+  const rows = (data || []).filter((p: any) => {
     const inc = Array.isArray(p.incidentes) ? p.incidentes[0] : p.incidentes
     const fechaReg = inc?.fecha_registro || ''
-    if (filtros.fechaDesde && fechaReg && fechaReg < filtros.fechaDesde) continue
-    if (filtros.fechaHasta && fechaReg && fechaReg > filtros.fechaHasta) continue
-    const cat = inc?.categoria || 'Sin categoría'
-    if (filtros.categoria && cat !== filtros.categoria) continue
-
-    if (!catMap[cat]) {
-      catMap[cat] = { categoria: cat, costoTotal: 0, materiales: 0, manoObra: 0, gastosAdmin: 0, count: 0 }
+    if (filtros.fechaDesde && fechaReg && fechaReg < filtros.fechaDesde) return false
+    if (filtros.fechaHasta && fechaReg && fechaReg > filtros.fechaHasta) return false
+    if (filtros.categoria) {
+      const cat = inc?.categoria || 'Sin categoría'
+      if (cat !== filtros.categoria) return false
     }
-    catMap[cat].costoTotal += p.costo_total || 0
-    catMap[cat].materiales += p.costo_materiales || 0
-    catMap[cat].manoObra += p.costo_mano_obra || 0
-    catMap[cat].gastosAdmin += p.gastos_administrativos || 0
-    catMap[cat].count++
+    return true
+  })
+
+  // Fetch tecnico assignments for involved incidentes
+  const incIds = [...new Set(rows.map((p: any) => {
+    const inc = Array.isArray(p.incidentes) ? p.incidentes[0] : p.incidentes
+    return inc?.id_incidente
+  }).filter(Boolean))]
+
+  let tecnicoPorIncidente: Record<number, number> = {}
+  let tecnicosInfo: Record<number, { nombre: string; apellido: string }> = {}
+
+  if (incIds.length > 0) {
+    const { data: asigs } = await supabase
+      .from('asignaciones_tecnico')
+      .select('id_incidente, id_tecnico, id_asignacion')
+      .in('id_incidente', incIds)
+      .order('id_asignacion', { ascending: false })
+
+    const seenInc = new Set<number>()
+    for (const a of (asigs || [])) {
+      if (!seenInc.has(a.id_incidente)) {
+        seenInc.add(a.id_incidente)
+        tecnicoPorIncidente[a.id_incidente] = a.id_tecnico
+      }
+    }
+    const tecnicoIds = [...new Set(Object.values(tecnicoPorIncidente))]
+    if (tecnicoIds.length > 0) {
+      const { data: tecs } = await supabase.from('tecnicos').select('id_tecnico, nombre, apellido').in('id_tecnico', tecnicoIds)
+      for (const t of (tecs || [])) {
+        tecnicosInfo[t.id_tecnico] = { nombre: t.nombre || '', apellido: t.apellido || '' }
+      }
+    }
   }
 
-  const porCategoria = Object.values(catMap)
-    .map((c: any) => ({
-      categoria: c.categoria,
-      costoTotal: c.costoTotal,
-      materiales: c.materiales,
-      manoObra: c.manoObra,
-      gastosAdmin: c.gastosAdmin,
-      totalIncidentes: c.count,
-      promedioCosto: c.count > 0 ? c.costoTotal / c.count : 0,
-    }))
-    .sort((a, b) => b.costoTotal - a.costoTotal)
+  const catMap: Record<string, any> = {}
+  const incMap: Record<number, any> = {}
+  const tecMap: Record<number, any> = {}
+  const mesMap: Record<string, any> = {}
+  let manoObraTotal = 0
+  let materialesTotal = 0
+
+  for (const p of rows) {
+    const inc = Array.isArray(p.incidentes) ? p.incidentes[0] : p.incidentes
+    const cat = inc?.categoria || 'Sin categoría'
+    const idInc = inc?.id_incidente
+    const desc = inc?.descripcion_problema || `Incidente #${idInc}`
+    const fechaReg = inc?.fecha_registro || ''
+    const mes = fechaReg ? fechaReg.substring(0, 7) : 'Sin fecha'
+
+    const mat = Number(p.costo_materiales) || 0
+    const mano = Number(p.costo_mano_obra) || 0
+    const admin = Number(p.gastos_administrativos) || 0
+    const total = Number(p.costo_total) || 0
+
+    manoObraTotal += mano
+    materialesTotal += mat
+
+    // Por categoría
+    if (!catMap[cat]) catMap[cat] = { categoria: cat, costoTotal: 0, materiales: 0, manoObra: 0, gastosAdmin: 0, count: 0 }
+    catMap[cat].costoTotal += total; catMap[cat].materiales += mat
+    catMap[cat].manoObra += mano; catMap[cat].gastosAdmin += admin; catMap[cat].count++
+
+    // Por incidente
+    if (idInc) {
+      if (!incMap[idInc]) incMap[idInc] = { id_incidente: idInc, descripcion: desc, categoria: cat, costoTotal: 0, materiales: 0, manoObra: 0, gastosAdmin: 0 }
+      incMap[idInc].costoTotal += total; incMap[idInc].materiales += mat
+      incMap[idInc].manoObra += mano; incMap[idInc].gastosAdmin += admin
+
+      // Por técnico
+      const idTec = tecnicoPorIncidente[idInc]
+      if (idTec) {
+        if (!tecMap[idTec]) tecMap[idTec] = { costoTotal: 0, materiales: 0, manoObra: 0, count: 0 }
+        tecMap[idTec].costoTotal += total; tecMap[idTec].materiales += mat
+        tecMap[idTec].manoObra += mano; tecMap[idTec].count++
+      }
+    }
+
+    // Por mes
+    if (!mesMap[mes]) mesMap[mes] = { costoTotal: 0, materiales: 0, manoObra: 0, count: 0 }
+    mesMap[mes].costoTotal += total; mesMap[mes].materiales += mat
+    mesMap[mes].manoObra += mano; mesMap[mes].count++
+  }
+
+  const porCategoria = Object.values(catMap).map((c: any) => ({
+    categoria: c.categoria, costoTotal: c.costoTotal, materiales: c.materiales,
+    manoObra: c.manoObra, gastosAdmin: c.gastosAdmin, totalIncidentes: c.count,
+    promedioCosto: c.count > 0 ? c.costoTotal / c.count : 0,
+  })).sort((a, b) => b.costoTotal - a.costoTotal)
+
+  const porIncidente = Object.values(incMap).map((i: any) => ({
+    id_incidente: i.id_incidente, descripcion: i.descripcion, categoria: i.categoria,
+    costoTotal: i.costoTotal, materiales: i.materiales, manoObra: i.manoObra, gastosAdmin: i.gastosAdmin,
+  })).sort((a: any, b: any) => b.costoTotal - a.costoTotal)
+
+  const porTecnico = Object.entries(tecMap).map(([id, v]: [string, any]) => {
+    const idTec = Number(id)
+    const info = tecnicosInfo[idTec] || { nombre: '?', apellido: '' }
+    return {
+      id_tecnico: idTec, nombre: info.nombre, apellido: info.apellido,
+      costoTotal: v.costoTotal, materiales: v.materiales, manoObra: v.manoObra,
+      totalIncidentes: v.count, promedioCosto: v.count > 0 ? v.costoTotal / v.count : 0,
+    }
+  }).sort((a, b) => b.costoTotal - a.costoTotal)
+
+  const porMes = Object.entries(mesMap).sort((a, b) => a[0].localeCompare(b[0])).map(([mes, v]: [string, any]) => ({
+    mes, label: mesLabel(mes),
+    costoTotal: v.costoTotal, materiales: v.materiales, manoObra: v.manoObra, totalIncidentes: v.count,
+  }))
 
   const costoTotal = porCategoria.reduce((s, c) => s + c.costoTotal, 0)
   const totalIncidentes = porCategoria.reduce((s, c) => s + c.totalIncidentes, 0)
 
   return {
-    costoTotal,
-    totalIncidentes,
+    costoTotal, totalIncidentes,
     costoPromedio: totalIncidentes > 0 ? costoTotal / totalIncidentes : 0,
     presupuestoTotal: costoTotal,
-    porCategoria,
+    manoObraTotal, materialesTotal,
+    porCategoria, porTecnico, porIncidente, porMes,
   }
 }
 
