@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Syne, Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,6 +59,7 @@ export default function RootLayout({
         {children}
         <Toaster />
         <SpeedInsights />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
