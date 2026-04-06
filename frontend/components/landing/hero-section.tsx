@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { User, Wrench, ArrowRight } from 'lucide-react'
+import { InstallPWAButton } from '@/components/pwa/InstallPWAButton'
 
 const stagger = {
   hidden: {},
@@ -143,6 +144,11 @@ export function HeroSection() {
             Inicia sesión
           </Link>
         </motion.p>
+
+        {/* PWA install button — only shows when Chrome offers install */}
+        <motion.div variants={fadeUp} className="flex justify-center mt-4">
+          <InstallPWAButton />
+        </motion.div>
       </motion.div>
     </section>
   )
