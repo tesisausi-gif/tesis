@@ -55,3 +55,19 @@ export interface Tecnico {
   esta_activo: boolean
   fecha_creacion: string
 }
+
+// Solicitud de registro de técnico
+export interface SolicitudRegistro {
+  id_solicitud: number
+  nombre: string
+  apellido: string
+  email: string
+  telefono: string | null
+  dni: string | null
+  especialidad: string | null
+  especialidades: string[]
+  direccion: string | null
+  estado_solicitud: 'pendiente' | 'aprobada' | 'rechazada'
+  fecha_solicitud: string
+  fecha_aprobacion: string | null
+}
