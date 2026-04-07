@@ -12,16 +12,18 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: 'portrait',
     icons: [
       {
-        src: '/icon-192.png',
+        // Ruta real: app/icon-192/route.tsx — SIN extensión .png
+        src: '/icon-192',
         sizes: '192x192',
         type: 'image/png',
-        purpose: 'maskable',
+        purpose: 'any',          // Chrome requiere 'any' para contar el ícono como válido
       },
       {
-        src: '/icon-512.png',
+        // Ruta real: app/icon-512/route.tsx — SIN extensión .png
+        src: '/icon-512',
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'any',
+        purpose: 'any maskable', // 'any' para instalar, 'maskable' para íconos adaptativos Android
       },
     ],
   }
