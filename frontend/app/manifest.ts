@@ -19,11 +19,18 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',          // Chrome requiere 'any' para contar el ícono como válido
       },
       {
-        // Ruta real: app/icon-512/route.tsx — SIN extensión .png
+        // 'any': Chrome lo usa para el ícono de instalación
         src: '/icon-512',
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'any maskable', // 'any' para instalar, 'maskable' para íconos adaptativos Android
+        purpose: 'any',
+      },
+      {
+        // 'maskable': Android lo usa para íconos adaptativos (recorte circular/forma)
+        src: '/icon-512',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
       },
     ],
   }
