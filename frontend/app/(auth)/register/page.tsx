@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Mail } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
-import { crearSolicitudRegistro, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
+import { crearSolicitudRegistro, getEspecialidadesActivas, verificarEmailDisponible } from '@/features/usuarios/usuarios.service'
 import { Input } from '@/components/ui/input'
 import { AnimatedTabs, AnimatedTabContent } from '@/components/ui/animated-tabs'
 import { toast } from 'sonner'
@@ -95,10 +95,8 @@ function RegisterPageContent() {
 
     setLoading(true)
     try {
-      const { data: existingUsers, error: checkError } = await supabase
-        .from('usuarios').select('id').eq('correo_electronico', clienteEmail).limit(1)
-
-      if (!checkError && existingUsers && existingUsers.length > 0) {
+      const disponible = await verificarEmailDisponible(clienteEmail)
+      if (!disponible) {
         toast.error('Email ya registrado', { description: 'Este correo ya está en uso. Iniciá sesión.' })
         setLoading(false)
         return

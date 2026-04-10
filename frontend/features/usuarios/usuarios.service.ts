@@ -61,6 +61,20 @@ export async function getClientesAdmin(): Promise<Cliente[]> {
 }
 
 /**
+ * Verificar si un email ya está registrado como cliente.
+ * Usa adminClient para evitar restricciones de RLS en el registro público.
+ */
+export async function verificarEmailDisponible(email: string): Promise<boolean> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('clientes')
+    .select('id_cliente')
+    .eq('correo_electronico', email)
+    .limit(1)
+  return !data || data.length === 0
+}
+
+/**
  * Obtener todos los clientes (admin)
  */
 export async function getClientes(): Promise<Cliente[]> {
