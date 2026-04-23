@@ -90,6 +90,12 @@ function RegisterPageContent() {
   const handleClienteRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!clienteDNI) { toast.error('Por favor completa todos los campos obligatorios'); return }
+    if (!/^\d{8}$/.test(clienteDNI)) {
+      toast.error('DNI inválido', { description: 'El DNI debe tener exactamente 8 dígitos numéricos.' }); return
+    }
+    if (clienteTelefono && !/^\d{9,14}$/.test(clienteTelefono.replace(/[\s\-+]/g, ''))) {
+      toast.error('Teléfono inválido', { description: 'El teléfono debe tener entre 9 y 14 dígitos.' }); return
+    }
     if (clientePassword !== clienteConfirmPassword) { toast.error('Las contraseñas no coinciden'); return }
     if (clientePassword.length < 6) { toast.error('La contraseña debe tener al menos 6 caracteres'); return }
 
@@ -146,6 +152,12 @@ function RegisterPageContent() {
     if (!tecnicoNombre || !tecnicoApellido || !tecnicoEmail) {
       toast.error('Por favor completa los campos requeridos')
       return
+    }
+    if (tecnicoDNI && !/^\d{8}$/.test(tecnicoDNI)) {
+      toast.error('DNI inválido', { description: 'El DNI debe tener exactamente 8 dígitos numéricos.' }); return
+    }
+    if (tecnicoTelefono && !/^\d{9,14}$/.test(tecnicoTelefono.replace(/[\s\-+]/g, ''))) {
+      toast.error('Teléfono inválido', { description: 'El teléfono debe tener entre 9 y 14 dígitos.' }); return
     }
 
     setLoading(true)
@@ -259,11 +271,11 @@ function RegisterPageContent() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <LabelText>Teléfono</LabelText>
-                <Input id="cliente-telefono" type="tel" value={clienteTelefono} onChange={(e) => setClienteTelefono(e.target.value)} disabled={loading} placeholder="+54 9 11..." className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+                <Input id="cliente-telefono" type="tel" inputMode="numeric" value={clienteTelefono} onChange={(e) => setClienteTelefono(e.target.value)} disabled={loading} placeholder="1123456789" maxLength={18} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
               <div>
                 <LabelText>DNI *</LabelText>
-                <Input id="cliente-dni" value={clienteDNI} onChange={(e) => setClienteDNI(e.target.value)} required disabled={loading} placeholder="12345678" className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+                <Input id="cliente-dni" inputMode="numeric" maxLength={8} value={clienteDNI} onChange={(e) => setClienteDNI(e.target.value.replace(/\D/g, '').slice(0, 8))} required disabled={loading} placeholder="12345678" className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
             </div>
             <div>
@@ -301,11 +313,11 @@ function RegisterPageContent() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <LabelText>Teléfono</LabelText>
-                <Input id="tecnico-telefono" type="tel" value={tecnicoTelefono} onChange={(e) => setTecnicoTelefono(e.target.value)} disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+                <Input id="tecnico-telefono" type="tel" inputMode="numeric" value={tecnicoTelefono} onChange={(e) => setTecnicoTelefono(e.target.value)} disabled={loading} placeholder="1123456789" maxLength={18} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
               <div>
                 <LabelText>DNI</LabelText>
-                <Input id="tecnico-dni" value={tecnicoDNI} onChange={(e) => setTecnicoDNI(e.target.value)} disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+                <Input id="tecnico-dni" inputMode="numeric" maxLength={8} value={tecnicoDNI} onChange={(e) => setTecnicoDNI(e.target.value.replace(/\D/g, '').slice(0, 8))} disabled={loading} placeholder="12345678" className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
             </div>
             <div>
