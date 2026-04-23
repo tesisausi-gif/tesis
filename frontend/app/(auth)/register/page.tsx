@@ -93,7 +93,7 @@ function RegisterPageContent() {
     if (!/^\d{8}$/.test(clienteDNI)) {
       toast.error('DNI inválido', { description: 'El DNI debe tener exactamente 8 dígitos numéricos.' }); return
     }
-    if (clienteTelefono && !/^\d{9,14}$/.test(clienteTelefono.replace(/[\s\-+]/g, ''))) {
+    if (!clienteTelefono || !/^\d{9,14}$/.test(clienteTelefono.replace(/[\s\-+]/g, ''))) {
       toast.error('Teléfono inválido', { description: 'El teléfono debe tener entre 9 y 14 dígitos.' }); return
     }
     if (clientePassword !== clienteConfirmPassword) { toast.error('Las contraseñas no coinciden'); return }
@@ -156,7 +156,7 @@ function RegisterPageContent() {
     if (tecnicoDNI && !/^\d{8}$/.test(tecnicoDNI)) {
       toast.error('DNI inválido', { description: 'El DNI debe tener exactamente 8 dígitos numéricos.' }); return
     }
-    if (tecnicoTelefono && !/^\d{9,14}$/.test(tecnicoTelefono.replace(/[\s\-+]/g, ''))) {
+    if (!tecnicoTelefono || !/^\d{9,14}$/.test(tecnicoTelefono.replace(/[\s\-+]/g, ''))) {
       toast.error('Teléfono inválido', { description: 'El teléfono debe tener entre 9 y 14 dígitos.' }); return
     }
 
@@ -270,8 +270,8 @@ function RegisterPageContent() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <LabelText>Teléfono</LabelText>
-                <Input id="cliente-telefono" type="tel" inputMode="numeric" value={clienteTelefono} onChange={(e) => setClienteTelefono(e.target.value)} disabled={loading} placeholder="1123456789" maxLength={18} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+                <LabelText>Teléfono *</LabelText>
+                <Input id="cliente-telefono" type="tel" inputMode="numeric" value={clienteTelefono} onChange={(e) => setClienteTelefono(e.target.value)} required disabled={loading} placeholder="1123456789" maxLength={18} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
               <div>
                 <LabelText>DNI *</LabelText>
@@ -312,8 +312,8 @@ function RegisterPageContent() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <LabelText>Teléfono</LabelText>
-                <Input id="tecnico-telefono" type="tel" inputMode="numeric" value={tecnicoTelefono} onChange={(e) => setTecnicoTelefono(e.target.value)} disabled={loading} placeholder="1123456789" maxLength={18} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+                <LabelText>Teléfono *</LabelText>
+                <Input id="tecnico-telefono" type="tel" inputMode="numeric" value={tecnicoTelefono} onChange={(e) => setTecnicoTelefono(e.target.value)} required disabled={loading} placeholder="1123456789" maxLength={18} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
               <div>
                 <LabelText>DNI</LabelText>
