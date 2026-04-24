@@ -1,6 +1,6 @@
 import { createClient } from '@/shared/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ClipboardList, CheckCircle2, Clock, Star } from 'lucide-react'
+import { ClipboardList, CheckCircle2, Clock, Star, UserCheck, Wrench } from 'lucide-react'
 import Link from 'next/link'
 import { getTecnicoBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 import { getNotificacionesTecnico } from '@/features/notificaciones/notificaciones-inapp.service'
@@ -22,9 +22,10 @@ export default async function TecnicoDashboard() {
 
   const tecnico = usuario?.tecnicos
 
+  // Traer incidentes asociados al técnico para contar por estado_actual
   const { data: asignaciones } = await supabase
     .from('asignaciones_tecnico')
-    .select('*, incidentes(*)')
+    .select('incidentes(estado_actual)')
     .eq('id_tecnico', tecnico?.id_tecnico)
 
   const [badgeCounts, notificaciones] = await Promise.all([
@@ -32,20 +33,35 @@ export default async function TecnicoDashboard() {
     getNotificacionesTecnico().catch(() => []),
   ])
 
-  const trabajosActivos = asignaciones?.filter(a => a.estado_asignacion === 'en_curso').length || 0
-  const trabajosCompletados = asignaciones?.filter(a => a.estado_asignacion === 'completado').length || 0
-  const totalTrabajos = asignaciones?.length || 0
+  // Contar por estado_actual del incidente
+  const estadosPorIncidente = (asignaciones || []).map(a => {
+    const inc = Array.isArray(a.incidentes) ? a.incidentes[0] : a.incidentes
+    return (inc as any)?.estado_actual as string | undefined
+  })
+
+  const cntPendiente  = estadosPorIncidente.filter(e => e === 'pendiente').length
+  const cntAsignado   = estadosPorIncidente.filter(e => e === 'asignacion_solicitada').length
+  const cntEnProceso  = estadosPorIncidente.filter(e => e === 'en_proceso').length
+  const cntFinalizado = estadosPorIncidente.filter(e => e === 'finalizado' || e === 'resuelto').length
+
+  // Especialidades: mostrar todas si hay array, si no la primaria
+  const especialidadesLabel = (() => {
+    const esps: string[] = tecnico?.especialidades?.length
+      ? tecnico.especialidades
+      : tecnico?.especialidad ? [tecnico.especialidad] : []
+    return esps.length ? `Especialidad${esps.length > 1 ? 'es' : ''}: ${esps.join(', ')}` : ''
+  })()
 
   return (
     <div className="space-y-4 px-4 py-6 md:px-6 md:py-8">
       {/* Header */}
-      <div className="space-y-2 mb-6">
+      <div className="space-y-1 mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
           Bienvenido, {tecnico?.nombre}
         </h1>
-        <p className="text-sm md:text-base text-gray-600">
-          {tecnico?.especialidad && `Especialidad: ${tecnico.especialidad}`}
-        </p>
+        {especialidadesLabel && (
+          <p className="text-sm md:text-base text-gray-600">{especialidadesLabel}</p>
+        )}
       </div>
 
       {/* Alerta: Trabajos listos para conformidad */}
@@ -69,58 +85,71 @@ export default async function TecnicoDashboard() {
         </Link>
       )}
 
-      {/* Stats Grid */}
+      {/* Contadores por estado */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Activos</CardTitle>
-              <Clock className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Pendientes</CardTitle>
+              <Clock className="h-4 w-4 md:h-5 md:w-5 text-gray-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-orange-600">{trabajosActivos}</div>
+            <div className="text-2xl md:text-3xl font-bold text-gray-700">{cntPendiente}</div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Completados</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Asignados</CardTitle>
+              <UserCheck className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl md:text-3xl font-bold text-blue-600">{cntAsignado}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">En proceso</CardTitle>
+              <Wrench className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl md:text-3xl font-bold text-orange-600">{cntEnProceso}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Finalizado</CardTitle>
               <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-green-600">{trabajosCompletados}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Total</CardTitle>
-              <ClipboardList className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-blue-600">{totalTrabajos}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Calificación</CardTitle>
-              <Star className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-yellow-600">
-              {tecnico?.calificacion_promedio ? tecnico.calificacion_promedio.toFixed(1) : '-'}
-            </div>
+            <div className="text-2xl md:text-3xl font-bold text-green-600">{cntFinalizado}</div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Calificación */}
+      <Card className="hover:shadow-lg transition-shadow">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium text-gray-600">Calificación promedio</CardTitle>
+            <Star className="h-5 w-5 text-yellow-500" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold text-yellow-600">
+            {tecnico?.calificacion_promedio ? `${tecnico.calificacion_promedio.toFixed(1)} ★` : '—'}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Notificaciones */}
       <Card className="border-2">

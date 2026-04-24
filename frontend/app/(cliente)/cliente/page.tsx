@@ -1,7 +1,7 @@
 import { createClient } from '@/shared/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, Plus, ArrowRight, Clock, CheckCircle2, FileText } from 'lucide-react'
+import { AlertCircle, Plus, ArrowRight, Clock, CheckCircle2, FileText, UserCheck, Wrench } from 'lucide-react'
 import Link from 'next/link'
 import { getClienteBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 import { getNotificacionesCliente } from '@/features/notificaciones/notificaciones-inapp.service'
@@ -30,13 +30,10 @@ export default async function ClienteDashboard() {
     .select('id_incidente, estado_actual')
     .eq('id_cliente_reporta', usuario?.id_cliente)
 
-  const incidentesAbiertos = incidentes?.filter(i =>
-    i.estado_actual === 'pendiente' || i.estado_actual === 'en_proceso'
-  ).length || 0
-
-  const incidentesCerrados = incidentes?.filter(i =>
-    i.estado_actual === 'resuelto'
-  ).length || 0
+  const cntPendiente  = incidentes?.filter(i => i.estado_actual === 'pendiente').length || 0
+  const cntAsignado   = incidentes?.filter(i => i.estado_actual === 'asignacion_solicitada').length || 0
+  const cntEnProceso  = incidentes?.filter(i => i.estado_actual === 'en_proceso').length || 0
+  const cntFinalizado = incidentes?.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto').length || 0
 
   const totalIncidentes = incidentes?.length || 0
 
@@ -109,28 +106,37 @@ export default async function ClienteDashboard() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Estadísticas de Incidentes */}
-          <div className="grid grid-cols-3 gap-2 md:gap-4">
+          <div className="grid grid-cols-2 gap-2 md:gap-3 sm:grid-cols-4">
             <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-2xl md:text-3xl font-bold text-gray-900">
-                {totalIncidentes}
+              <div className="text-2xl md:text-3xl font-bold text-gray-700 flex items-center justify-center gap-1">
+                <Clock className="h-4 w-4 md:h-5 md:w-5 text-gray-500" />
+                {cntPendiente}
               </div>
-              <p className="text-xs md:text-sm text-gray-600 mt-1">Total</p>
+              <p className="text-xs md:text-sm text-gray-600 mt-1">Pendientes</p>
+            </div>
+
+            <div className="text-center p-3 bg-blue-50 rounded-lg">
+              <div className="text-2xl md:text-3xl font-bold text-blue-600 flex items-center justify-center gap-1">
+                <UserCheck className="h-4 w-4 md:h-5 md:w-5" />
+                {cntAsignado}
+              </div>
+              <p className="text-xs md:text-sm text-blue-700 mt-1">Asignados</p>
             </div>
 
             <div className="text-center p-3 bg-orange-50 rounded-lg">
               <div className="text-2xl md:text-3xl font-bold text-orange-600 flex items-center justify-center gap-1">
-                <Clock className="h-4 w-4 md:h-5 md:w-5" />
-                {incidentesAbiertos}
+                <Wrench className="h-4 w-4 md:h-5 md:w-5" />
+                {cntEnProceso}
               </div>
-              <p className="text-xs md:text-sm text-orange-700 mt-1">Abiertos</p>
+              <p className="text-xs md:text-sm text-orange-700 mt-1">En proceso</p>
             </div>
 
             <div className="text-center p-3 bg-green-50 rounded-lg">
               <div className="text-2xl md:text-3xl font-bold text-green-600 flex items-center justify-center gap-1">
                 <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
-                {incidentesCerrados}
+                {cntFinalizado}
               </div>
-              <p className="text-xs md:text-sm text-green-700 mt-1">Finalizados</p>
+              <p className="text-xs md:text-sm text-green-700 mt-1">Finalizado</p>
             </div>
           </div>
 
