@@ -106,7 +106,7 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {paso === 1 ? 'Incidente y Categoría' : 'Seleccionar Técnico'}
@@ -193,7 +193,7 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
                 <Button variant="outline" size="sm" className="mt-3" onClick={() => setPaso(1)}>← Cambiar categoría</Button>
               </Card>
             ) : (
-              <div className="rounded-md border overflow-hidden">
+              <div className="rounded-md border overflow-hidden max-h-[45vh] overflow-y-auto">
                 <Table>
                   <TableHeader className="bg-gray-50">
                     <TableRow>
