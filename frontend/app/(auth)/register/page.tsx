@@ -271,7 +271,7 @@ function RegisterPageContent() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <LabelText>Teléfono *</LabelText>
-                <Input id="cliente-telefono" type="tel" inputMode="numeric" value={clienteTelefono} onChange={(e) => setClienteTelefono(e.target.value)} required disabled={loading} placeholder="1123456789" maxLength={18} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+                <Input id="cliente-telefono" type="tel" inputMode="numeric" value={clienteTelefono} onChange={(e) => setClienteTelefono(e.target.value.replace(/\D/g, '').slice(0, 14))} required disabled={loading} placeholder="1123456789" maxLength={14} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
               <div>
                 <LabelText>DNI *</LabelText>
@@ -313,7 +313,7 @@ function RegisterPageContent() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <LabelText>Teléfono *</LabelText>
-                <Input id="tecnico-telefono" type="tel" inputMode="numeric" value={tecnicoTelefono} onChange={(e) => setTecnicoTelefono(e.target.value)} required disabled={loading} placeholder="1123456789" maxLength={18} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+                <Input id="tecnico-telefono" type="tel" inputMode="numeric" value={tecnicoTelefono} onChange={(e) => setTecnicoTelefono(e.target.value.replace(/\D/g, '').slice(0, 14))} required disabled={loading} placeholder="1123456789" maxLength={14} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
               </div>
               <div>
                 <LabelText>DNI</LabelText>
