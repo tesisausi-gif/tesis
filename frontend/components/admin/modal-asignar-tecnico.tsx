@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -119,7 +118,7 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
         </DialogHeader>
 
         {/* Contenido scrolleable */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4">
           {paso === 1 && (
             <div className="space-y-4">
               {/* Info del incidente */}
@@ -187,46 +186,42 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
                   <Button variant="outline" size="sm" className="mt-3" onClick={() => setPaso(1)}>← Cambiar categoría</Button>
                 </Card>
               ) : (
-                <div className="rounded-md border overflow-hidden w-full">
-                  <Table className="table-fixed w-full">
-                    <TableHeader className="bg-gray-50">
-                      <TableRow>
-                        <TableHead className="w-8"></TableHead>
-                        <TableHead className="w-[30%]">Técnico</TableHead>
-                        <TableHead className="w-[30%]">Especialidad</TableHead>
-                        <TableHead className="w-[24%]">Calificación</TableHead>
-                        <TableHead className="w-[16%]">Trabajos</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {tecnicosFiltrados.map(t => (
-                        <TableRow key={t.id_tecnico}
-                          className={`cursor-pointer ${tecnicoSeleccionado?.id_tecnico === t.id_tecnico ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
-                          onClick={() => setTecnicoSeleccionado(t)}
-                        >
-                          <TableCell>
-                            <input type="radio" checked={tecnicoSeleccionado?.id_tecnico === t.id_tecnico} onChange={() => setTecnicoSeleccionado(t)} className="cursor-pointer" />
-                          </TableCell>
-                          <TableCell className="font-medium truncate">{t.nombre} {t.apellido}</TableCell>
-                          <TableCell className="text-sm text-gray-600 truncate">
-                            {(t.especialidades?.length ? t.especialidades : t.especialidad ? [t.especialidad] : [])
-                              .join(', ') || '—'}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-0.5">
-                              {renderStars(t.calificacion_promedio ?? 0)}
-                              <span className="text-xs ml-1 font-medium text-gray-700">
-                                {t.calificacion_promedio != null ? t.calificacion_promedio.toFixed(1) : '—'}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{t.cantidad_trabajos_realizados}</Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="rounded-md border divide-y overflow-hidden">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <span className="w-5 shrink-0"></span>
+                    <span className="flex-1 min-w-0">Técnico</span>
+                    <span className="w-28 shrink-0 hidden sm:block">Especialidad</span>
+                    <span className="w-28 shrink-0">Calificación</span>
+                    <span className="w-16 shrink-0 text-right">Trabajos</span>
+                  </div>
+                  {tecnicosFiltrados.map(t => (
+                    <div
+                      key={t.id_tecnico}
+                      className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer ${tecnicoSeleccionado?.id_tecnico === t.id_tecnico ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+                      onClick={() => setTecnicoSeleccionado(t)}
+                    >
+                      <input type="radio" checked={tecnicoSeleccionado?.id_tecnico === t.id_tecnico} onChange={() => setTecnicoSeleccionado(t)} className="cursor-pointer shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{t.nombre} {t.apellido}</p>
+                        <p className="text-xs text-gray-500 truncate sm:hidden">
+                          {(t.especialidades?.length ? t.especialidades : t.especialidad ? [t.especialidad] : []).join(', ') || '—'}
+                        </p>
+                      </div>
+                      <span className="w-28 shrink-0 text-sm text-gray-600 truncate hidden sm:block">
+                        {(t.especialidades?.length ? t.especialidades : t.especialidad ? [t.especialidad] : []).join(', ') || '—'}
+                      </span>
+                      <div className="w-28 shrink-0 flex items-center gap-0.5">
+                        {renderStars(t.calificacion_promedio ?? 0)}
+                        <span className="text-xs ml-1 font-medium text-gray-700">
+                          {t.calificacion_promedio != null ? t.calificacion_promedio.toFixed(1) : '—'}
+                        </span>
+                      </div>
+                      <div className="w-16 shrink-0 flex justify-end">
+                        <Badge variant="secondary">{t.cantidad_trabajos_realizados}</Badge>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
