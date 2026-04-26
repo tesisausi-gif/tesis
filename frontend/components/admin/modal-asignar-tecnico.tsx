@@ -105,7 +105,7 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-x-hidden">
         {/* Header fijo */}
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
           <DialogTitle>
@@ -187,15 +187,15 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
                   <Button variant="outline" size="sm" className="mt-3" onClick={() => setPaso(1)}>← Cambiar categoría</Button>
                 </Card>
               ) : (
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
+                <div className="rounded-md border overflow-hidden w-full">
+                  <Table className="table-fixed w-full">
                     <TableHeader className="bg-gray-50">
                       <TableRow>
-                        <TableHead className="w-10"></TableHead>
-                        <TableHead>Técnico</TableHead>
-                        <TableHead>Especialidad</TableHead>
-                        <TableHead>Calificación</TableHead>
-                        <TableHead>Trabajos</TableHead>
+                        <TableHead className="w-8"></TableHead>
+                        <TableHead className="w-[30%]">Técnico</TableHead>
+                        <TableHead className="w-[30%]">Especialidad</TableHead>
+                        <TableHead className="w-[24%]">Calificación</TableHead>
+                        <TableHead className="w-[16%]">Trabajos</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -207,13 +207,13 @@ export function ModalAsignarTecnico({ open, onOpenChange, incidente, onAsignarEx
                           <TableCell>
                             <input type="radio" checked={tecnicoSeleccionado?.id_tecnico === t.id_tecnico} onChange={() => setTecnicoSeleccionado(t)} className="cursor-pointer" />
                           </TableCell>
-                          <TableCell className="font-medium">{t.nombre} {t.apellido}</TableCell>
-                          <TableCell className="text-sm text-gray-600">
+                          <TableCell className="font-medium truncate">{t.nombre} {t.apellido}</TableCell>
+                          <TableCell className="text-sm text-gray-600 truncate">
                             {(t.especialidades?.length ? t.especialidades : t.especialidad ? [t.especialidad] : [])
                               .join(', ') || '—'}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-0.5">
                               {renderStars(t.calificacion_promedio ?? 0)}
                               <span className="text-xs ml-1 font-medium text-gray-700">
                                 {t.calificacion_promedio != null ? t.calificacion_promedio.toFixed(1) : '—'}
