@@ -21,14 +21,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   Star,
   Loader2,
   MapPin,
@@ -262,7 +254,7 @@ export function GestionarPendienteModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wrench className="h-5 w-5 text-blue-600" />
@@ -383,51 +375,42 @@ export function GestionarPendienteModal({
                 <div className="text-xs text-gray-500 mb-1">
                   {tecnicosFiltrados.length} técnico{tecnicosFiltrados.length !== 1 ? 's' : ''} disponible{tecnicosFiltrados.length !== 1 ? 's' : ''} · ordenados por calificación
                 </div>
-                <div className="border rounded-md overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[30px]"></TableHead>
-                        <TableHead>Técnico</TableHead>
-                        <TableHead>Especialidad</TableHead>
-                        <TableHead>Calificación</TableHead>
-                        <TableHead className="w-[80px]">Trabajos</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {tecnicosFiltrados.map((t) => {
-                        const selected = tecnicoSeleccionado?.id_tecnico === t.id_tecnico
-                        return (
-                          <TableRow
-                            key={t.id_tecnico}
-                            className={`cursor-pointer transition-colors ${selected ? 'bg-blue-50 hover:bg-blue-50' : 'hover:bg-gray-50'}`}
-                            onClick={() => setTecnicoSeleccionado(t)}
-                          >
-                            <TableCell>
-                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors
-                                ${selected ? 'border-blue-600 bg-blue-600' : 'border-gray-300'}`}>
-                                {selected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-medium text-sm">
-                              {t.nombre} {t.apellido}
-                            </TableCell>
-                            <TableCell className="text-sm text-gray-600">
-                              {Array.isArray(t.especialidades) && t.especialidades.length > 0
-                                ? t.especialidades.join(', ')
-                                : (t.especialidad ?? '—')}
-                            </TableCell>
-                            <TableCell>
-                              <StarRating value={t.calificacion_promedio} />
-                            </TableCell>
-                            <TableCell className="text-sm text-center text-gray-600">
-                              {t.cantidad_trabajos_realizados}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
+                <div className="border rounded-md overflow-hidden divide-y">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <span className="w-5 shrink-0" />
+                    <span className="flex-1 min-w-0">Técnico</span>
+                    <span className="w-32 shrink-0 hidden sm:block">Especialidad</span>
+                    <span className="w-28 shrink-0">Calificación</span>
+                    <span className="w-14 shrink-0 text-right">Trabajos</span>
+                  </div>
+                  {tecnicosFiltrados.map((t) => {
+                    const selected = tecnicoSeleccionado?.id_tecnico === t.id_tecnico
+                    const especialidad = Array.isArray(t.especialidades) && t.especialidades.length > 0
+                      ? t.especialidades.join(', ')
+                      : (t.especialidad ?? '—')
+                    return (
+                      <div
+                        key={t.id_tecnico}
+                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                        onClick={() => setTecnicoSeleccionado(t)}
+                      >
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
+                          ${selected ? 'border-blue-600 bg-blue-600' : 'border-gray-300'}`}>
+                          {selected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{t.nombre} {t.apellido}</p>
+                          <p className="text-xs text-gray-500 truncate sm:hidden">{especialidad}</p>
+                        </div>
+                        <span className="w-32 shrink-0 text-sm text-gray-600 truncate hidden sm:block">{especialidad}</span>
+                        <div className="w-28 shrink-0">
+                          <StarRating value={t.calificacion_promedio} />
+                        </div>
+                        <span className="w-14 shrink-0 text-sm text-gray-600 text-right">{t.cantidad_trabajos_realizados}</span>
+                      </div>
+                    )
+                  })}
                 </div>
 
                 {tecnicoSeleccionado && (
