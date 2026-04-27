@@ -52,6 +52,8 @@ frontend/node_modules/
 
 # Supabase
 supabase/.temp/
+supabase/seed_50_casos_parte1.sql
+supabase/seed_50_casos_parte2.sql
 *.py
 test_all_features.js
 test_e2e_lifecycle.mjs
