@@ -81,10 +81,11 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
       : incidentes.filter(i => i.estado_actual === filtro)
 
   const filtros = [
-    { id: 'todos',      label: 'Todos',       count: incidentes.length,           Icon: ClipboardList },
-    { id: 'pendiente',  label: 'Pendiente',   count: porEstado.pendiente.length,  Icon: Clock },
-    { id: 'en_proceso', label: 'En proceso',  count: porEstado.en_proceso.length, Icon: Wrench },
-    { id: 'resuelto',   label: 'Finalizados', count: porEstado.resuelto.length,   Icon: CheckCircle },
+    { id: 'todos',                label: 'Todos',       count: incidentes.length,                          Icon: ClipboardList },
+    { id: 'pendiente',            label: 'Pendiente',   count: porEstado.pendiente.length,                 Icon: Clock },
+    { id: 'asignacion_solicitada', label: 'Asignado',   count: porEstado.asignacion_solicitada.length,     Icon: Send },
+    { id: 'en_proceso',           label: 'En proceso',  count: porEstado.en_proceso.length,                Icon: Wrench },
+    { id: 'resuelto',             label: 'Finalizados', count: porEstado.resuelto.length,                  Icon: CheckCircle },
   ]
 
   return (
