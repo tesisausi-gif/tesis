@@ -212,7 +212,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       <div className="grid grid-cols-4 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         {[
           { label: 'Pendientes',   count: porEstado.pendiente.length,             color: 'text-amber-500' },
-          { label: 'Asig. Sol.',   count: porEstado.asignacion_solicitada.length, color: 'text-blue-500' },
+          { label: 'Asig. Solicitada', count: porEstado.asignacion_solicitada.length, color: 'text-blue-500' },
           { label: 'En Proceso',   count: porEstado.en_proceso.length,            color: 'text-orange-500' },
           { label: 'Finalizados',  count: porEstado.finalizado.length,            color: 'text-green-500' },
         ].map((stat, i) => (
