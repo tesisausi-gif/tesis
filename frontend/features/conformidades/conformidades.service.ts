@@ -64,6 +64,35 @@ export async function getConformidadesPendientes() {
 }
 
 /**
+ * Obtener conformidades aprobadas (historial) para el admin
+ */
+export async function getConformidadesHistorial() {
+  const { requireAdminOrGestorId } = await import('@/features/auth/auth.service')
+  await requireAdminOrGestorId()
+  const supabase = await createAdminClient()
+
+  const { data, error } = await supabase
+    .from('conformidades')
+    .select(`
+      id_conformidad, id_incidente, id_cliente, tipo_conformidad,
+      esta_firmada, url_documento, url_comprobante_compras, fecha_creacion, observaciones,
+      incidentes (
+        id_incidente, descripcion_problema, categoria,
+        clientes:id_cliente_reporta (nombre, apellido),
+        asignaciones_tecnico (
+          id_asignacion, estado_asignacion, id_tecnico,
+          tecnicos (id_tecnico, nombre, apellido, correo_electronico)
+        )
+      )
+    `)
+    .eq('esta_firmada', 1)
+    .order('fecha_creacion', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+/**
  * Obtener conformidades por lista de incidentes (para el técnico)
  */
 export async function getConformidadesPorIncidentes(idIncidentes: number[]) {

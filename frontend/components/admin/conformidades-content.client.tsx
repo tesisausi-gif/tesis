@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog'
 import {
   FileCheck, User, Wrench, ExternalLink, CheckCircle2, XCircle, Star,
-  FileText, Loader2, AlertTriangle, ChevronRight,
+  FileText, Loader2, AlertTriangle, ChevronRight, Clock, History,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -49,6 +49,7 @@ interface ConformidadItem {
 
 interface ConformidadesContentProps {
   conformidades: ConformidadItem[]
+  historial: ConformidadItem[]
 }
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -123,11 +124,14 @@ const COLORES_TIMELINE: Record<string, string> = {
   calificacion: 'bg-yellow-500',
 }
 
-export function ConformidadesContent({ conformidades }: ConformidadesContentProps) {
+export function ConformidadesContent({ conformidades, historial }: ConformidadesContentProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [vista, setVista] = useState<'pendientes' | 'historial'>('pendientes')
   const [pagina, setPagina] = useState(1)
-  const conformidadesPaginadas = conformidades.slice((pagina - 1) * 10, pagina * 10)
+
+  const listaActiva = vista === 'pendientes' ? conformidades : historial
+  const conformidadesPaginadas = listaActiva.slice((pagina - 1) * 10, pagina * 10)
 
   useEffect(() => {
     const supabase = createClient()
@@ -139,6 +143,8 @@ export function ConformidadesContent({ conformidades }: ConformidadesContentProp
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [])
+
+  useEffect(() => { setPagina(1) }, [vista])
 
   // Conformidad seleccionada para el panel de detalle
   const [selected, setSelected] = useState<ConformidadItem | null>(null)
@@ -219,21 +225,54 @@ export function ConformidadesContent({ conformidades }: ConformidadesContentProp
   return (
     <div className="space-y-4 px-4 py-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Conformidades Pendientes</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Conformidades</h1>
         <p className="text-gray-600 text-sm mt-1">
           Hacé clic en una conformidad para ver el historial completo y aprobar o rechazar.
         </p>
       </div>
 
-      {conformidades.length === 0 ? (
+      {/* Píldoras de filtro */}
+      <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {[
+          { id: 'pendientes' as const, label: 'Pendientes', count: conformidades.length, Icon: Clock },
+          { id: 'historial'  as const, label: 'Historial',  count: historial.length,     Icon: History },
+        ].map(({ id, label, count, Icon }) => {
+          const active = vista === id
+          return (
+            <button
+              key={id}
+              onClick={() => setVista(id)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+              {count > 0 && (
+                <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
+                  active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {count}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {listaActiva.length === 0 ? (
         <Card className="border-dashed border-2 border-gray-300">
           <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
             <div className="rounded-full bg-green-100 p-4 mb-4">
               <FileCheck className="h-12 w-12 text-green-500" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay conformidades pendientes</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {vista === 'pendientes' ? 'No hay conformidades pendientes' : 'Sin historial de conformidades'}
+            </h3>
             <p className="text-sm text-gray-600 max-w-md">
-              Cuando un técnico suba una foto de conformidad firmada, aparecerá aquí para tu revisión.
+              {vista === 'pendientes'
+                ? 'Cuando un técnico suba una foto de conformidad firmada, aparecerá aquí para tu revisión.'
+                : 'Las conformidades aprobadas aparecerán aquí.'}
             </p>
           </CardContent>
         </Card>
@@ -243,28 +282,39 @@ export function ConformidadesContent({ conformidades }: ConformidadesContentProp
           {conformidadesPaginadas.map((conf) => {
             const inc = conf.incidentes
             const asig = Array.isArray(inc?.asignaciones_tecnico)
-              ? inc.asignaciones_tecnico.find(a => a.estado_asignacion === 'completada') || inc.asignaciones_tecnico[0]
+              ? inc.asignaciones_tecnico.find((a: any) => a.estado_asignacion === 'completada') || inc.asignaciones_tecnico[0]
               : null
             const tec = asig?.tecnicos
             const cliente = inc?.clientes
+            const esHistorial = vista === 'historial'
 
             return (
               <button
                 key={conf.id_conformidad}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center gap-4 group"
-                onClick={() => abrirDetalle(conf)}
+                className={`w-full text-left px-4 py-3 transition-colors flex items-center gap-4 group ${
+                  esHistorial ? 'cursor-default' : 'hover:bg-gray-50'
+                }`}
+                onClick={() => !esHistorial && abrirDetalle(conf)}
               >
-                <div className="rounded-full bg-amber-100 p-2 flex-shrink-0">
-                  <FileCheck className="h-4 w-4 text-amber-600" />
+                <div className={`rounded-full p-2 flex-shrink-0 ${esHistorial ? 'bg-green-100' : 'bg-amber-100'}`}>
+                  <FileCheck className={`h-4 w-4 ${esHistorial ? 'text-green-600' : 'text-amber-600'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-sm text-gray-900">
                       Incidente #{conf.id_incidente}
                     </span>
-                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
-                      Pendiente
+                    <Badge
+                      variant="outline"
+                      className={esHistorial
+                        ? 'bg-green-50 text-green-700 border-green-200 text-xs'
+                        : 'bg-amber-50 text-amber-700 border-amber-200 text-xs'}
+                    >
+                      {esHistorial ? 'Aprobada' : 'Pendiente'}
                     </Badge>
+                    {inc?.categoria && (
+                      <span className="text-xs text-gray-400">{inc.categoria}</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500 flex-wrap">
                     {cliente && (
@@ -282,15 +332,19 @@ export function ConformidadesContent({ conformidades }: ConformidadesContentProp
                     <span>
                       {conf.fecha_creacion ? format(new Date(conf.fecha_creacion), "dd MMM yyyy, HH:mm", { locale: es }) : ''}
                     </span>
-                    {inc?.categoria && <span className="text-gray-400">{inc.categoria}</span>}
                   </div>
+                  {inc?.descripcion_problema && (
+                    <p className="text-xs text-gray-400 truncate mt-0.5">{inc.descripcion_problema}</p>
+                  )}
                 </div>
-                <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 flex-shrink-0 transition-colors" />
+                {!esHistorial && (
+                  <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 flex-shrink-0 transition-colors" />
+                )}
               </button>
             )
           })}
         </div>
-        <Paginacion pagina={pagina} total={conformidades.length} onChange={setPagina} />
+        <Paginacion pagina={pagina} total={listaActiva.length} onChange={setPagina} />
         </>
       )}
 

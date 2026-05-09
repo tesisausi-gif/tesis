@@ -147,6 +147,7 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
   const [isPending, startTransition] = useTransition()
   const [cobrarDialog, setCobrarDialog] = useState<PendienteCobroCliente | null>(null)
   const [formPago, setFormPago] = useState<MetodoPagoData>(METODO_INICIAL)
+  const [vista, setVista] = useState<'pendientes' | 'historial'>('pendientes')
   const [paginaPendientes, setPaginaPendientes] = useState(1)
   const [paginaRealizados, setPaginaRealizados] = useState(1)
   const pendientesPag = pendientes.slice((paginaPendientes - 1) * 10, paginaPendientes * 10)
@@ -194,71 +195,107 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
           <p className="text-xs text-green-600 mt-0.5">{realizados.length} cobro{realizados.length!==1?'s':''}</p>
         </CardContent></Card>
       </div>
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><Clock className="h-4 w-4 text-amber-500"/>Pendientes de cobro</h3>
-        {pendientes.length === 0 ? (
-          <Card className="border-dashed border-2 border-green-200"><CardContent className="flex flex-col items-center py-8 text-center">
-            <CheckCircle2 className="h-10 w-10 text-green-400 mb-2"/>
-            <p className="text-green-700 font-medium">Sin cobros pendientes</p>
-          </CardContent></Card>
-        ) : (
-          <>
-          <div className="grid gap-3">
-            {pendientesPag.map(p => (
-              <Card key={p.id_presupuesto} className="border-amber-200 hover:shadow-md transition-shadow">
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                        <span className="font-semibold">{p.nombre_cliente} {p.apellido_cliente}</span>
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>
-                      <p className="text-sm font-bold text-gray-800">Total (con comisión): {fmt$(p.monto_cobro)}</p>
-                    </div>
-                    <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setCobrarDialog(p) }}
-                      className="bg-green-600 hover:bg-green-700 gap-1 flex-shrink-0" disabled={isPending}>
-                      <DollarSign className="h-3.5 w-3.5"/>Cobrar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <Paginacion pagina={paginaPendientes} total={pendientes.length} onChange={setPaginaPendientes} />
-          </>
-        )}
+
+      {/* Píldoras de filtro */}
+      <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {[
+          { id: 'pendientes' as const, label: 'Pendientes de cobro', count: pendientes.length, Icon: Clock },
+          { id: 'historial'  as const, label: 'Historial de cobros',  count: realizados.length, Icon: History },
+        ].map(({ id, label, count, Icon }) => {
+          const active = vista === id
+          return (
+            <button key={id} onClick={() => setVista(id)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}>
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+              {count > 0 && (
+                <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
+                  active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>{count}</span>
+              )}
+            </button>
+          )
+        })}
       </div>
-      {realizados.length > 0 && (
+
+      {vista === 'pendientes' && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500"/>Historial de cobros</h3>
-          <div className="grid gap-3">
-            {realizadosPag.map(c => (
-              <Card key={c.id_cobro} className="border-green-200"><CardContent className="pt-3 pb-3">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                  <span className="font-medium">{c.nombre_cliente} {c.apellido_cliente}</span>
-                  <MetodoBadge metodo={c.metodo_pago}/>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Cobrado</Badge>
-                </div>
-                {c.descripcion_problema && <p className="text-sm text-gray-500 truncate">Incidente #{c.id_incidente} — {c.descripcion_problema}</p>}
-                <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
-                  <span className="font-semibold text-green-700">{fmt$(Number(c.monto_cobro))}</span>
-                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(c.fecha_cobro),'dd/MM/yyyy HH:mm',{locale:es})}</span>
-                  {c.referencia_pago && <span>Ref: {c.referencia_pago}</span>}
-                  {c.banco && <span>{c.banco}</span>}
-                  {c.cuotas && c.cuotas > 1 && <span>{c.cuotas} cuotas</span>}
-                  {c.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Cobrado por: {c.marcado_por_nombre}</span>}
-                  {!c.marcado_por_nombre && c.marcado_por_email && <span>{c.marcado_por_email}</span>}
-                </div>
-                {c.observaciones && <p className="text-xs text-gray-400 italic mt-1">{c.observaciones}</p>}
-              </CardContent></Card>
-            ))}
-          </div>
-          <Paginacion pagina={paginaRealizados} total={realizados.length} onChange={setPaginaRealizados} />
+          {pendientes.length === 0 ? (
+            <Card className="border-dashed border-2 border-green-200"><CardContent className="flex flex-col items-center py-8 text-center">
+              <CheckCircle2 className="h-10 w-10 text-green-400 mb-2"/>
+              <p className="text-green-700 font-medium">Sin cobros pendientes</p>
+            </CardContent></Card>
+          ) : (
+            <>
+            <div className="grid gap-3">
+              {pendientesPag.map(p => (
+                <Card key={p.id_presupuesto} className="border-amber-200 hover:shadow-md transition-shadow">
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
+                          <span className="font-semibold">{p.nombre_cliente} {p.apellido_cliente}</span>
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>
+                        <p className="text-sm font-bold text-gray-800">Total (con comisión): {fmt$(p.monto_cobro)}</p>
+                      </div>
+                      <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setCobrarDialog(p) }}
+                        className="bg-green-600 hover:bg-green-700 gap-1 flex-shrink-0" disabled={isPending}>
+                        <DollarSign className="h-3.5 w-3.5"/>Cobrar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <Paginacion pagina={paginaPendientes} total={pendientes.length} onChange={setPaginaPendientes} />
+            </>
+          )}
         </div>
       )}
+
+      {vista === 'historial' && (
+        <div>
+          {realizados.length === 0 ? (
+            <Card className="border-dashed border-2 border-gray-200"><CardContent className="flex flex-col items-center py-8 text-center">
+              <History className="h-10 w-10 text-gray-300 mb-2"/>
+              <p className="text-gray-500 font-medium">Sin cobros registrados</p>
+            </CardContent></Card>
+          ) : (
+            <>
+            <div className="grid gap-3">
+              {realizadosPag.map(c => (
+                <Card key={c.id_cobro} className="border-green-200"><CardContent className="pt-3 pb-3">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
+                    <span className="font-medium">{c.nombre_cliente} {c.apellido_cliente}</span>
+                    <MetodoBadge metodo={c.metodo_pago}/>
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Cobrado</Badge>
+                  </div>
+                  {c.descripcion_problema && <p className="text-sm text-gray-500 truncate">Incidente #{c.id_incidente} — {c.descripcion_problema}</p>}
+                  <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
+                    <span className="font-semibold text-green-700">{fmt$(Number(c.monto_cobro))}</span>
+                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(c.fecha_cobro),'dd/MM/yyyy HH:mm',{locale:es})}</span>
+                    {c.referencia_pago && <span>Ref: {c.referencia_pago}</span>}
+                    {c.banco && <span>{c.banco}</span>}
+                    {c.cuotas && c.cuotas > 1 && <span>{c.cuotas} cuotas</span>}
+                    {c.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Cobrado por: {c.marcado_por_nombre}</span>}
+                    {!c.marcado_por_nombre && c.marcado_por_email && <span>{c.marcado_por_email}</span>}
+                  </div>
+                  {c.observaciones && <p className="text-xs text-gray-400 italic mt-1">{c.observaciones}</p>}
+                </CardContent></Card>
+              ))}
+            </div>
+            <Paginacion pagina={paginaRealizados} total={realizados.length} onChange={setPaginaRealizados} />
+            </>
+          )}
+        </div>
+      )}
+
       <Dialog open={cobrarDialog !== null} onOpenChange={o => !o && setCobrarDialog(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -286,6 +323,7 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
   const [isPending, startTransition] = useTransition()
   const [pagarDialog, setPagarDialog] = useState<PendientePagoTecnico | null>(null)
   const [formPago, setFormPago] = useState<MetodoPagoData>(METODO_INICIAL)
+  const [vista, setVista] = useState<'pendientes' | 'historial'>('pendientes')
   const [paginaPendientes, setPaginaPendientes] = useState(1)
   const [paginaRealizados, setPaginaRealizados] = useState(1)
   const pendientesPag = pendientes.slice((paginaPendientes - 1) * 10, paginaPendientes * 10)
@@ -347,78 +385,112 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
           <p className="text-xs text-green-600 mt-0.5">{realizados.length} pago{realizados.length!==1?'s':''}</p>
         </CardContent></Card>
       </div>
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><Clock className="h-4 w-4 text-amber-500"/>Pendientes</h3>
-        {pendientes.length === 0 ? (
-          <Card className="border-dashed border-2 border-green-200"><CardContent className="flex flex-col items-center py-8 text-center">
-            <CheckCircle2 className="h-10 w-10 text-green-400 mb-2"/>
-            <p className="text-green-700 font-medium">Sin pagos pendientes</p>
-          </CardContent></Card>
-        ) : (
-          <>
-          <div className="grid gap-3">
-            {pendientesPag.map(p => (
-              <Card key={p.id_presupuesto} className="border-amber-200 hover:shadow-md transition-shadow">
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                        <span className="font-semibold">{p.nombre_tecnico} {p.apellido_tecnico}</span>
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>
-                      <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                        <span>Materiales: {fmt$(p.costo_materiales)}</span>
-                        <span>Mano de obra: {fmt$(p.costo_mano_obra)}</span>
-                        <span className="font-semibold text-gray-700">Total: {fmt$(p.monto_a_pagar)}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <Button size="sm" variant="outline" onClick={() => abrirTimeline(p.id_incidente)} disabled={isPending} className="gap-1 flex-shrink-0">
-                        <History className="h-3.5 w-3.5"/>Historial
-                      </Button>
-                      <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setPagarDialog(p) }}
-                        className="bg-green-600 hover:bg-green-700 gap-1 flex-shrink-0" disabled={isPending}>
-                        <CheckCircle2 className="h-3.5 w-3.5"/>Ya se le pagó
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <Paginacion pagina={paginaPendientes} total={pendientes.length} onChange={setPaginaPendientes} />
-          </>
-        )}
+      {/* Píldoras de filtro */}
+      <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {[
+          { id: 'pendientes' as const, label: 'Pendientes de pago', count: pendientes.length, Icon: Clock },
+          { id: 'historial'  as const, label: 'Historial de pagos',  count: realizados.length, Icon: History },
+        ].map(({ id, label, count, Icon }) => {
+          const active = vista === id
+          return (
+            <button key={id} onClick={() => setVista(id)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}>
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+              {count > 0 && (
+                <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
+                  active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>{count}</span>
+              )}
+            </button>
+          )
+        })}
       </div>
-      {realizados.length > 0 && (
+
+      {vista === 'pendientes' && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500"/>Historial</h3>
-          <div className="grid gap-3">
-            {realizadosPag.map(p => (
-              <Card key={p.id_pago_tecnico} className="border-green-200"><CardContent className="pt-3 pb-3">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                  <span className="font-medium">{p.nombre_tecnico} {p.apellido_tecnico}</span>
-                  {p.metodo_pago && <MetodoBadge metodo={p.metodo_pago}/>}
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Pagado</Badge>
-                </div>
-                {p.descripcion_problema && <p className="text-sm text-gray-500 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>}
-                <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
-                  <span className="font-semibold text-green-700">{fmt$(Number(p.monto_pago))}</span>
-                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(p.fecha_pago),'dd/MM/yyyy HH:mm',{locale:es})}</span>
-                  {p.referencia_pago && <span>Ref: {p.referencia_pago}</span>}
-                  {p.banco && <span>{p.banco}</span>}
-                  {p.cuotas && p.cuotas > 1 && <span>{p.cuotas} cuotas</span>}
-                  {p.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Pagado por: {p.marcado_por_nombre}</span>}
-                  {!p.marcado_por_nombre && p.marcado_por_email && <span>{p.marcado_por_email}</span>}
-                </div>
-                {p.observaciones && <p className="text-xs text-gray-400 italic mt-1">{p.observaciones}</p>}
-              </CardContent></Card>
-            ))}
-          </div>
-          <Paginacion pagina={paginaRealizados} total={realizados.length} onChange={setPaginaRealizados} />
+          {pendientes.length === 0 ? (
+            <Card className="border-dashed border-2 border-green-200"><CardContent className="flex flex-col items-center py-8 text-center">
+              <CheckCircle2 className="h-10 w-10 text-green-400 mb-2"/>
+              <p className="text-green-700 font-medium">Sin pagos pendientes</p>
+            </CardContent></Card>
+          ) : (
+            <>
+            <div className="grid gap-3">
+              {pendientesPag.map(p => (
+                <Card key={p.id_presupuesto} className="border-amber-200 hover:shadow-md transition-shadow">
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
+                          <span className="font-semibold">{p.nombre_tecnico} {p.apellido_tecnico}</span>
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>
+                        <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                          <span>Materiales: {fmt$(p.costo_materiales)}</span>
+                          <span>Mano de obra: {fmt$(p.costo_mano_obra)}</span>
+                          <span className="font-semibold text-gray-700">Total: {fmt$(p.monto_a_pagar)}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <Button size="sm" variant="outline" onClick={() => abrirTimeline(p.id_incidente)} disabled={isPending} className="gap-1 flex-shrink-0">
+                          <History className="h-3.5 w-3.5"/>Historial
+                        </Button>
+                        <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setPagarDialog(p) }}
+                          className="bg-green-600 hover:bg-green-700 gap-1 flex-shrink-0" disabled={isPending}>
+                          <CheckCircle2 className="h-3.5 w-3.5"/>Ya se le pagó
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <Paginacion pagina={paginaPendientes} total={pendientes.length} onChange={setPaginaPendientes} />
+            </>
+          )}
+        </div>
+      )}
+
+      {vista === 'historial' && (
+        <div>
+          {realizados.length === 0 ? (
+            <Card className="border-dashed border-2 border-gray-200"><CardContent className="flex flex-col items-center py-8 text-center">
+              <History className="h-10 w-10 text-gray-300 mb-2"/>
+              <p className="text-gray-500 font-medium">Sin pagos registrados</p>
+            </CardContent></Card>
+          ) : (
+            <>
+            <div className="grid gap-3">
+              {realizadosPag.map(p => (
+                <Card key={p.id_pago_tecnico} className="border-green-200"><CardContent className="pt-3 pb-3">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
+                    <span className="font-medium">{p.nombre_tecnico} {p.apellido_tecnico}</span>
+                    {p.metodo_pago && <MetodoBadge metodo={p.metodo_pago}/>}
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Pagado</Badge>
+                  </div>
+                  {p.descripcion_problema && <p className="text-sm text-gray-500 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>}
+                  <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
+                    <span className="font-semibold text-green-700">{fmt$(Number(p.monto_pago))}</span>
+                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(p.fecha_pago),'dd/MM/yyyy HH:mm',{locale:es})}</span>
+                    {p.referencia_pago && <span>Ref: {p.referencia_pago}</span>}
+                    {p.banco && <span>{p.banco}</span>}
+                    {p.cuotas && p.cuotas > 1 && <span>{p.cuotas} cuotas</span>}
+                    {p.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Pagado por: {p.marcado_por_nombre}</span>}
+                    {!p.marcado_por_nombre && p.marcado_por_email && <span>{p.marcado_por_email}</span>}
+                  </div>
+                  {p.observaciones && <p className="text-xs text-gray-400 italic mt-1">{p.observaciones}</p>}
+                </CardContent></Card>
+              ))}
+            </div>
+            <Paginacion pagina={paginaRealizados} total={realizados.length} onChange={setPaginaRealizados} />
+            </>
+          )}
         </div>
       )}
       <Dialog open={pagarDialog !== null} onOpenChange={o => !o && setPagarDialog(null)}>
