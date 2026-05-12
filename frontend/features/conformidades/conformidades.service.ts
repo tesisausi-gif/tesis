@@ -317,6 +317,12 @@ export async function aprobarConformidad(
       .update({ estado_actual: 'finalizado', fue_resuelto: 1, fecha_cierre: new Date().toISOString() })
       .eq('id_incidente', idIncidente)
 
+    // 3b. Liberar compromiso del técnico (horario queda libre)
+    try {
+      const { liberarCompromisoDeIncidente } = await import('@/features/disponibilidad/disponibilidad.service')
+      await liberarCompromisoDeIncidente(idIncidente)
+    } catch { /* no bloquear */ }
+
     // 4. Notificar al cliente: email (fire-and-forget)
     const { notificarIncidenteResuelto } = await import('@/features/notificaciones/notificaciones.service')
     notificarIncidenteResuelto(idIncidente).catch(console.error)

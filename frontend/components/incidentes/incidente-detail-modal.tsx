@@ -63,6 +63,10 @@ import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
 import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rechazarPresupuesto } from '@/features/presupuestos/presupuestos.service'
 import { getConformidadDelIncidente, crearConformidadPorTecnico, aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
 import { crearAvance } from '@/features/avances/avances.service'
+import { getFranjasDisponibilidad, getCompromisoDeAsignacion, guardarCompromisoTecnico } from '@/features/disponibilidad/disponibilidad.service'
+import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
+import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
+import type { CompromisoTecnico } from '@/features/disponibilidad/disponibilidad.types'
 import { createClient } from '@/shared/lib/supabase/client'
 import { PresupuestosClienteList } from '@/components/cliente/presupuestos-cliente-list'
 import type { Presupuesto } from '@/features/presupuestos/presupuestos.types'
@@ -337,6 +341,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [inspecciones, setInspecciones] = useState<any[]>([])
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([])
   const [conformidad, setConformidad] = useState<Conformidad | null>(null)
+  const [franjas, setFranjas] = useState<FranjaInput[]>([])
+  const [compromiso, setCompromiso] = useState<CompromisoTecnico | null>(null)
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -412,14 +418,27 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       // Cargar datos específicos por rol
       if (rol === 'tecnico' || rol === 'admin') {
         try {
-          const [inspeccionesData, presupuestosData, conformidadData] = await Promise.all([
+          const [inspeccionesData, presupuestosData, conformidadData, franjasData] = await Promise.all([
             getInspeccionesDelIncidente(incidenteId),
             getPresupuestosDelIncidente(incidenteId),
             getConformidadDelIncidente(incidenteId),
+            getFranjasDisponibilidad(incidenteId),
           ])
           setInspecciones(inspeccionesData)
           setPresupuestos(presupuestosData)
           setConformidad(conformidadData)
+          setFranjas(franjasData as FranjaInput[])
+
+          // Para técnico: cargar compromiso de la asignación activa
+          if (rol === 'tecnico') {
+            const asigActiva = asignacionesData.find((a: any) =>
+              ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+            ) as any
+            if (asigActiva?.id_asignacion) {
+              const comp = await getCompromisoDeAsignacion(asigActiva.id_asignacion)
+              setCompromiso(comp)
+            }
+          }
         } catch (error) {
           console.error('Error al cargar datos:', error)
         }
@@ -1219,18 +1238,74 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 </p>
               </div>
 
-              {/* Disponibilidad */}
-              {incidente.disponibilidad && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Disponibilidad para Contacto/Visita
-                  </h4>
+              {/* Disponibilidad — calendario o texto legacy */}
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Disponibilidad para la visita
+                </h4>
+                {franjas.length > 0 ? (
+                  <CalendarioDisponibilidad modo="ver" franjas={franjas} />
+                ) : incidente.disponibilidad ? (
                   <p className="text-sm text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-100 italic">
                     {incidente.disponibilidad}
                   </p>
-                </div>
-              )}
+                ) : (
+                  <p className="text-xs text-gray-400 italic">Sin disponibilidad registrada</p>
+                )}
+              </div>
+
+              {/* Sección de programar visita — solo para técnico con asignación activa */}
+              {rol === 'tecnico' && (() => {
+                const asigActiva = asignaciones.find(a =>
+                  ['aceptada', 'en_curso'].includes(a.estado_asignacion)
+                ) as any
+                if (!asigActiva) return null
+                return (
+                  <div className="space-y-2">
+                    <Separator />
+                    <h4 className="font-semibold text-sm text-gray-700 flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                      Programar mi visita
+                    </h4>
+                    <CalendarioDisponibilidad
+                      modo="comprometer"
+                      franjas={franjas}
+                      compromisoActual={compromiso ? {
+                        fecha_visita: compromiso.fecha_visita,
+                        hora_inicio: compromiso.hora_inicio,
+                        hora_fin_estimada: compromiso.hora_fin_estimada,
+                      } : null}
+                      onComprometer={async ({ fecha, horaInicio, horaFin }) => {
+                        const res = await guardarCompromisoTecnico(
+                          asigActiva.id_asignacion,
+                          incidente.id_incidente,
+                          asigActiva.id_tecnico,
+                          fecha,
+                          horaInicio,
+                          horaFin,
+                        )
+                        if (res.success) {
+                          toast.success('Visita programada', {
+                            description: `${fecha} de ${horaInicio} a ${horaFin}`,
+                          })
+                          setCompromiso({
+                            id_asignacion: asigActiva.id_asignacion,
+                            id_incidente: incidente.id_incidente,
+                            id_tecnico: asigActiva.id_tecnico,
+                            fecha_visita: fecha,
+                            hora_inicio: horaInicio,
+                            hora_fin_estimada: horaFin,
+                            estado: 'programado',
+                          })
+                        } else {
+                          toast.error(res.error ?? 'Error al programar visita')
+                        }
+                      }}
+                    />
+                  </div>
+                )
+              })()}
 
               <Separator />
 

@@ -35,6 +35,9 @@ import {
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { actualizarIncidente } from '@/features/incidentes/incidentes.service'
+import { getFranjasDisponibilidad, getConflictosTecnicos } from '@/features/disponibilidad/disponibilidad.service'
+import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
+import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import { CategoriaIncidente } from '@/shared/types/enums'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
@@ -159,6 +162,8 @@ export function GestionarPendienteModal({
   const [errorTecnicos, setErrorTecnicos] = useState(false)
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState<Tecnico | null>(null)
   const [asignando, setAsignando] = useState(false)
+  const [franjas, setFranjas] = useState<FranjaInput[]>([])
+  const [conflictos, setConflictos] = useState<Record<number, boolean>>({})
 
   // Reset al abrir
   useEffect(() => {
@@ -171,9 +176,12 @@ export function GestionarPendienteModal({
     }
   }, [open, incidente.id_incidente])
 
-  // Cargar técnicos al llegar al paso 2
+  // Cargar técnicos y franjas al llegar al paso 2
   useEffect(() => {
-    if (paso === 2) cargarTecnicos()
+    if (paso === 2) {
+      cargarTecnicos()
+      cargarFranjasYConflictos()
+    }
   }, [paso])
 
   const cargarTecnicos = async () => {
@@ -188,6 +196,17 @@ export function GestionarPendienteModal({
     } finally {
       setCargandoTecnicos(false)
     }
+  }
+
+  const cargarFranjasYConflictos = async () => {
+    try {
+      const [franjasData, conflictosData] = await Promise.all([
+        getFranjasDisponibilidad(incidente.id_incidente),
+        getConflictosTecnicos(incidente.id_incidente),
+      ])
+      setFranjas(franjasData as FranjaInput[])
+      setConflictos(conflictosData)
+    } catch { /* no bloquear */ }
   }
 
   const tecnicosFiltrados = tecnicos
@@ -323,12 +342,23 @@ export function GestionarPendienteModal({
           <div className="space-y-4">
             <IncidenteInfoCard incidente={{ ...incidente, categoria }} compact />
 
-            {incidente.disponibilidad && (
-              <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-                <Clock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span><strong>Disponibilidad del cliente:</strong> {incidente.disponibilidad}</span>
-              </div>
-            )}
+            {/* Disponibilidad del cliente — calendario */}
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-amber-500" />
+                Disponibilidad del cliente
+              </p>
+              {franjas.length > 0 ? (
+                <CalendarioDisponibilidad modo="ver" franjas={franjas} />
+              ) : incidente.disponibilidad ? (
+                <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                  <Clock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <span>{incidente.disponibilidad}</span>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 italic">Sin disponibilidad registrada</p>
+              )}
+            </div>
 
             {cargandoTecnicos ? (
               <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
@@ -386,13 +416,14 @@ export function GestionarPendienteModal({
                   </div>
                   {tecnicosFiltrados.map((t) => {
                     const selected = tecnicoSeleccionado?.id_tecnico === t.id_tecnico
+                    const tieneConflicto = conflictos[t.id_tecnico] === true
                     const especialidad = Array.isArray(t.especialidades) && t.especialidades.length > 0
                       ? t.especialidades.join(', ')
                       : (t.especialidad ?? '—')
                     return (
                       <div
                         key={t.id_tecnico}
-                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : tieneConflicto ? 'bg-orange-50' : 'hover:bg-gray-50'}`}
                         onClick={() => setTecnicoSeleccionado(t)}
                       >
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
@@ -400,7 +431,15 @@ export function GestionarPendienteModal({
                           {selected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{t.nombre} {t.apellido}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-medium truncate">{t.nombre} {t.apellido}</p>
+                            {tieneConflicto && (
+                              <span className="flex items-center gap-0.5 text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded-full">
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                Compromiso
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 truncate sm:hidden">{especialidad}</p>
                         </div>
                         <span className="w-32 shrink-0 text-sm text-gray-600 truncate hidden sm:block">{especialidad}</span>
@@ -413,10 +452,25 @@ export function GestionarPendienteModal({
                   })}
                 </div>
 
+                {Object.values(conflictos).some(Boolean) && (
+                  <div className="flex items-start gap-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <span>Los técnicos marcados con <strong>Compromiso</strong> ya tienen una visita programada que coincide con la disponibilidad del cliente. Podés asignarlos igual, pero habrá superposición de horarios.</span>
+                  </div>
+                )}
+
                 {tecnicoSeleccionado && (
-                  <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-md px-3 py-2 flex items-center gap-2">
-                    <CheckCircle className="h-3.5 w-3.5 shrink-0" />
+                  <div className={`text-xs rounded-md px-3 py-2 flex items-center gap-2 border ${
+                    conflictos[tecnicoSeleccionado.id_tecnico]
+                      ? 'text-orange-700 bg-orange-50 border-orange-200'
+                      : 'text-blue-700 bg-blue-50 border-blue-200'
+                  }`}>
+                    {conflictos[tecnicoSeleccionado.id_tecnico]
+                      ? <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      : <CheckCircle className="h-3.5 w-3.5 shrink-0" />
+                    }
                     Seleccionado: <strong>{tecnicoSeleccionado.nombre} {tecnicoSeleccionado.apellido}</strong>
+                    {conflictos[tecnicoSeleccionado.id_tecnico] && <span className="ml-1">— tiene un compromiso en el horario del cliente</span>}
                   </div>
                 )}
               </>

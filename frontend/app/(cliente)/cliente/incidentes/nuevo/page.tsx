@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, AlertCircle, Building2, MapPin, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { crearNotificacionAdmin } from '@/features/notificaciones/notificaciones-inapp.service'
+import { CalendarioDisponibilidad, type FranjaInput } from '@/components/ui/calendario-disponibilidad'
+import { guardarFranjasDisponibilidad } from '@/features/disponibilidad/disponibilidad.service'
 
 interface TipoInmueble {
   nombre: string
@@ -44,7 +46,7 @@ export default function NuevoIncidentePage() {
   // Form state
   const [inmuebleSeleccionado, setInmuebleSeleccionado] = useState('')
   const [descripcion, setDescripcion] = useState('')
-  const [disponibilidad, setDisponibilidad] = useState('')
+  const [franjas, setFranjas] = useState<FranjaInput[]>([])
 
   useEffect(() => {
     cargarDatos()
@@ -137,8 +139,13 @@ export default function NuevoIncidentePage() {
       return
     }
 
-    if (!disponibilidad.trim()) {
-      toast.error('Indica tu disponibilidad horaria')
+    if (franjas.length === 0) {
+      toast.error('Indicá al menos una franja de disponibilidad horaria')
+      return
+    }
+    const franjasConSlot = franjas.filter(f => f.hora_inicio && f.hora_fin)
+    if (franjasConSlot.length === 0) {
+      toast.error('Agregá horarios para los días seleccionados')
       return
     }
 
@@ -153,7 +160,7 @@ export default function NuevoIncidentePage() {
           descripcion_problema: descripcion.trim(),
           categoria: null,
           estado_actual: 'pendiente',
-          disponibilidad: disponibilidad.trim(),
+          disponibilidad: null,
         })
         .select()
         .single()
@@ -165,6 +172,9 @@ export default function NuevoIncidentePage() {
         })
         return
       }
+
+      // Guardar franjas de disponibilidad
+      await guardarFranjasDisponibilidad(data.id_incidente, franjasConSlot)
 
       toast.success('Incidente reportado exitosamente', {
         description: `Tu incidente #${data.id_incidente} ha sido registrado`
@@ -328,23 +338,19 @@ export default function NuevoIncidentePage() {
               </p>
             </div>
 
-            {/* Disponibilidad */}
+            {/* Disponibilidad — calendario interactivo */}
             <div className="space-y-2">
-              <Label htmlFor="disponibilidad" className="text-sm font-medium">
-                Disponibilidad para Contacto/Visita *
+              <Label className="text-sm font-medium">
+                Disponibilidad para la visita del técnico *
               </Label>
-              <Textarea
-                id="disponibilidad"
-                value={disponibilidad}
-                onChange={(e) => setDisponibilidad(e.target.value)}
-                placeholder="Indica días y horarios en los que puedes recibir llamadas o al técnico (ej: Lunes a Viernes de 09:00 a 13:00)..."
-                rows={2}
-                disabled={submitting}
-                className="resize-none"
-              />
               <p className="text-xs text-gray-500">
-                Ej: Lunes a Viernes de 9 a 17hs.
+                Marcá los días y horarios en que podés recibir al técnico. Podés seleccionar días discontinuos y múltiples franjas por día.
               </p>
+              <CalendarioDisponibilidad
+                modo="editar"
+                franjas={franjas}
+                onChange={setFranjas}
+              />
             </div>
 
             {/* Botones */}

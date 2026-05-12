@@ -399,6 +399,12 @@ export async function cancelarAsignacionAceptada(
     const tec = asig?.tecnicos as any
     const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
 
+    // 5b. Liberar compromiso de visita si existía
+    try {
+      const { liberarCompromisoDeIncidente } = await import('@/features/disponibilidad/disponibilidad.service')
+      await liberarCompromisoDeIncidente(idIncidente)
+    } catch { /* no bloquear */ }
+
     // 6. Notificar al admin
     try {
       const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
