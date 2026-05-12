@@ -49,7 +49,7 @@ interface GestionarPendienteModalProps {
 }
 
 function StepperHeader({ paso }: { paso: 1 | 2 | 3 }) {
-  const pasos = ['Categorización', 'Solicitud de asignación', 'Confirmación']
+  const pasos = ['Categoría', 'Asignación', 'Confirmación']
   return (
     <div className="flex items-center mb-6 px-1">
       {pasos.map((label, i) => {
@@ -57,20 +57,20 @@ function StepperHeader({ paso }: { paso: 1 | 2 | 3 }) {
         const done = paso > num
         const active = paso === num
         return (
-          <div key={num} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-1 min-w-0">
+          <div key={num} className="flex items-center flex-1 last:flex-none min-w-0">
+            <div className="flex flex-col items-center gap-1 min-w-0 flex-shrink-0">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0
                   ${done ? 'bg-blue-600 text-white' : active ? 'bg-blue-600 text-white ring-2 ring-blue-200' : 'bg-gray-200 text-gray-500'}`}
               >
                 {done ? <CheckCircle className="h-4 w-4" /> : num}
               </div>
-              <span className={`text-xs whitespace-nowrap ${active ? 'text-blue-700 font-medium' : done ? 'text-blue-500' : 'text-gray-400'}`}>
+              <span className={`text-[11px] text-center leading-tight ${active ? 'text-blue-700 font-medium' : done ? 'text-blue-500' : 'text-gray-400'}`}>
                 {label}
               </span>
             </div>
             {i < pasos.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-3 mb-4 ${paso > num ? 'bg-blue-600' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-0.5 mx-2 mb-4 min-w-0 ${paso > num ? 'bg-blue-600' : 'bg-gray-200'}`} />
             )}
           </div>
         )
@@ -279,7 +279,7 @@ export function GestionarPendienteModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wrench className="h-5 w-5 text-blue-600" />
@@ -412,47 +412,45 @@ export function GestionarPendienteModal({
                   {tecnicosFiltrados.length} técnico{tecnicosFiltrados.length !== 1 ? 's' : ''} disponible{tecnicosFiltrados.length !== 1 ? 's' : ''} · ordenados por calificación
                 </div>
                 <div className="border rounded-md overflow-hidden divide-y">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    <span className="w-5 shrink-0" />
-                    <span className="flex-1 min-w-0">Técnico</span>
-                    <span className="w-32 shrink-0 hidden sm:block">Especialidad</span>
-                    <span className="w-28 shrink-0">Calificación</span>
-                    <span className="w-14 shrink-0 text-right">Trabajos</span>
-                  </div>
                   {tecnicosFiltrados.map((t) => {
                     const selected = tecnicoSeleccionado?.id_tecnico === t.id_tecnico
                     const tieneConflicto = conflictos[t.id_tecnico] === true
                     const especialidad = Array.isArray(t.especialidades) && t.especialidades.length > 0
                       ? t.especialidades.join(', ')
-                      : (t.especialidad ?? '—')
+                      : (t.especialidad ?? null)
                     return (
                       <div
                         key={t.id_tecnico}
-                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : tieneConflicto ? 'bg-orange-50' : 'hover:bg-gray-50'}`}
+                        className={`flex items-center gap-3 px-3 py-3 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : tieneConflicto ? 'bg-orange-50' : 'hover:bg-gray-50'}`}
                         onClick={() => setTecnicoSeleccionado(t)}
                       >
+                        {/* Radio */}
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
                           ${selected ? 'border-blue-600 bg-blue-600' : 'border-gray-300'}`}>
                           {selected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
+
+                        {/* Info principal */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="text-sm font-medium truncate">{t.nombre} {t.apellido}</p>
+                            <p className="text-sm font-medium">{t.nombre} {t.apellido}</p>
                             {tieneConflicto && (
-                              <span className="flex items-center gap-0.5 text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded-full">
+                              <span className="flex items-center gap-0.5 text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded-full shrink-0">
                                 <AlertTriangle className="w-2.5 h-2.5" />
                                 Compromiso
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 truncate sm:hidden">{especialidad}</p>
+                          {especialidad && (
+                            <p className="text-xs text-gray-500 truncate">{especialidad}</p>
+                          )}
                         </div>
-                        <span className="w-32 shrink-0 text-sm text-gray-600 truncate hidden sm:block">{especialidad}</span>
-                        <div className="w-28 shrink-0">
+
+                        {/* Rating + trabajos */}
+                        <div className="shrink-0 text-right space-y-0.5">
                           <StarRating value={t.calificacion_promedio} />
+                          <p className="text-xs text-gray-400">{t.cantidad_trabajos_realizados} trabajo{t.cantidad_trabajos_realizados !== 1 ? 's' : ''}</p>
                         </div>
-                        <span className="w-14 shrink-0 text-sm text-gray-600 text-right">{t.cantidad_trabajos_realizados}</span>
                       </div>
                     )
                   })}

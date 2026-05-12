@@ -405,18 +405,18 @@ export function CalendarioDisponibilidad({
     },
     classNames: {
       months: 'flex flex-col',
-      month: 'space-y-3',
-      month_caption: 'flex justify-center pt-1 relative items-center',
+      month: 'space-y-2',
+      month_caption: 'flex justify-center pt-1 relative items-center pb-1',
       caption_label: 'text-sm font-medium capitalize',
       nav: 'flex items-center gap-1',
       button_previous: 'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
       button_next: 'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
-      month_grid: 'w-full border-collapse',
+      month_grid: 'border-collapse',
       weekdays: 'flex',
-      weekday: 'text-gray-400 rounded-md w-9 font-normal text-[0.7rem] text-center py-1',
-      week: 'flex w-full mt-1',
-      day: 'h-9 w-9 text-center text-sm p-0 relative',
-      day_button: 'h-9 w-9 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors',
+      weekday: 'text-gray-400 rounded-md w-8 font-normal text-[0.65rem] text-center py-1',
+      week: 'flex mt-1',
+      day: 'h-8 w-8 text-center text-sm p-0 relative',
+      day_button: 'h-8 w-8 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors text-sm',
       selected: '!bg-gray-900 !text-white rounded-full',
       today: 'text-blue-600 font-bold',
       outside: 'text-gray-300 opacity-50',
@@ -430,7 +430,7 @@ export function CalendarioDisponibilidad({
       {/* ── MODO EDITAR ── */}
       {modo === 'editar' && (
         <>
-          <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center">
+          <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center overflow-hidden">
             <DayPicker
               {...dayPickerCommon}
               mode="multiple"
@@ -482,7 +482,7 @@ export function CalendarioDisponibilidad({
         <>
           {franjas.length > 0 ? (
             <>
-              <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center">
+              <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center overflow-hidden">
                 <DayPicker
                   {...dayPickerCommon}
                   mode="single"
@@ -513,7 +513,7 @@ export function CalendarioDisponibilidad({
         <>
           {franjas.length > 0 ? (
             <>
-              <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center">
+              <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center overflow-hidden">
                 <DayPicker
                   {...dayPickerCommon}
                   mode="single"
