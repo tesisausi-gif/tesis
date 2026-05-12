@@ -9,7 +9,7 @@ import { es } from 'date-fns/locale'
 import {
   AlertCircle, Search, Clock, Send, Wrench, CheckCircle,
   MapPin, FileText, ClipboardList, RefreshCw, XCircle, Bell,
-  User,
+  User, AlertTriangle,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-modal'
@@ -46,7 +46,11 @@ type AccionPendiente =
 
 function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
   const estado = inc.estado_actual
-  if (estado === 'pendiente') return { tipo: 'asignar' }
+  if (estado === 'pendiente') {
+    const tieneCancelada = inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'cancelada')
+    if (tieneCancelada) return { tipo: 'reasignar' }
+    return { tipo: 'asignar' }
+  }
   if (estado === 'asignacion_solicitada') {
     const tieneRechazada = inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'rechazada')
     if (tieneRechazada) return { tipo: 'reasignar' }
@@ -294,6 +298,9 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             const rechazadaRecientemente = inc.estado_actual === 'asignacion_solicitada' &&
               inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'rechazada')
 
+            const canceladaPorTecnico = inc.estado_actual === 'pendiente' &&
+              inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'cancelada')
+
             return (
               <div
                 key={inc.id_incidente}
@@ -305,6 +312,17 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                   isHighlighted ? 'ring-2 ring-amber-400 ring-offset-1' : ''
                 }`}
               >
+                {/* Técnico canceló — banner urgente */}
+                {canceladaPorTecnico && (
+                  <div className="flex items-center gap-2 bg-red-600 px-4 py-2.5">
+                    <AlertTriangle className="h-4 w-4 text-yellow-300 animate-pulse flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-white">Técnico canceló el trabajo</span>
+                      <span className="text-red-200 text-xs ml-1.5">— Reasignar urgente</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Rejection banner */}
                 {rechazadaRecientemente && (
                   <div className="flex items-center gap-2 bg-red-500 px-4 py-2">

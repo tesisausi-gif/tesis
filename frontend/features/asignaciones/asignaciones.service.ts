@@ -325,6 +325,98 @@ export async function crearAsignacion(data: {
 }
 
 /**
+ * Técnico cancela una asignación ya aceptada.
+ * Consecuencias:
+ * - La asignación queda como 'cancelada'
+ * - El incidente vuelve a 'pendiente' para que el admin reasigne
+ * - Se registra una calificación de 1 estrella como penalización
+ */
+export async function cancelarAsignacionAceptada(
+  idAsignacion: number,
+  idIncidente: number,
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+    const idTecnico = await requireTecnicoId()
+
+    // 1. Marcar asignación como cancelada
+    const { error: errAsig } = await supabase
+      .from('asignaciones_tecnico')
+      .update({
+        estado_asignacion: 'cancelada',
+        fecha_rechazo: new Date().toISOString(),
+      })
+      .eq('id_asignacion', idAsignacion)
+      .eq('id_tecnico', idTecnico)
+
+    if (errAsig) return { success: false, error: errAsig.message }
+
+    // 2. Resetear incidente a pendiente
+    const { error: errInc } = await supabase
+      .from('incidentes')
+      .update({ estado_actual: 'pendiente' })
+      .eq('id_incidente', idIncidente)
+
+    if (errInc) return { success: false, error: errInc.message }
+
+    // 3. Registrar calificación penalización de 1 estrella (usando admin para bypass RLS)
+    const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+    const adminClient = createAdminClient()
+
+    await adminClient.from('calificaciones').insert({
+      id_incidente: idIncidente,
+      id_tecnico: idTecnico,
+      puntuacion: 1,
+      comentarios: 'Trabajo cancelado por el técnico',
+      resolvio_problema: 0,
+      fecha_calificacion: new Date().toISOString(),
+    })
+
+    // 4. Recalcular promedio del técnico
+    const { data: cals } = await adminClient
+      .from('calificaciones')
+      .select('puntuacion')
+      .eq('id_tecnico', idTecnico)
+
+    if (cals && cals.length > 0) {
+      const avg = cals.reduce((s: number, c: any) => s + c.puntuacion, 0) / cals.length
+      await adminClient
+        .from('tecnicos')
+        .update({
+          calificacion_promedio: parseFloat(avg.toFixed(2)),
+          cantidad_trabajos_realizados: cals.length,
+        })
+        .eq('id_tecnico', idTecnico)
+    }
+
+    // 5. Obtener nombre del técnico para la notificación
+    const { data: asig } = await supabase
+      .from('asignaciones_tecnico')
+      .select('tecnicos(nombre, apellido)')
+      .eq('id_asignacion', idAsignacion)
+      .single()
+
+    const tec = asig?.tecnicos as any
+    const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
+
+    // 6. Notificar al admin
+    try {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacionAdmin({
+        tipo: 'asignacion_cancelada',
+        titulo: 'Técnico canceló el trabajo',
+        mensaje: `${tecNombre} canceló el incidente #${idIncidente}. El incidente volvió a Pendiente y requiere reasignación urgente.`,
+        id_incidente: idIncidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
+
+    return { success: true, data: undefined }
+  } catch {
+    return { success: false, error: 'Error inesperado al cancelar la asignación' }
+  }
+}
+
+/**
  * Técnico marca su asignación como completada
  */
 export async function completarAsignacion(idAsignacion: number): Promise<ActionResult> {

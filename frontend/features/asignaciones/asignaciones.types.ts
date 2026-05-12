@@ -26,6 +26,7 @@ export interface AsignacionBase {
   fecha_asignacion: string
   fecha_aceptacion?: string | null
   fecha_rechazo?: string | null
+  fecha_cancelacion?: string | null
   fecha_visita_programada?: string | null
   observaciones?: string | null
 }
