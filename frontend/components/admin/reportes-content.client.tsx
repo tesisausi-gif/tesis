@@ -9,6 +9,7 @@ import {
   Users, TrendingDown, Clock, DollarSign, FileText,
   Building2, Star, BarChart2, HelpCircle, CheckCircle,
   AlertTriangle, Wrench, ShieldCheck, Timer, RefreshCcw, TrendingUp,
+  ChevronDown, ChevronUp, Layers,
 } from 'lucide-react'
 import type { ReportesData } from '@/features/reportes/reportes.service'
 
@@ -86,6 +87,100 @@ interface ReportesContentProps {
   data: ReportesData
 }
 
+// ─── Trabajos por categoría (subcomponente con acordeón) ──────────────────────
+
+import type { TrabajosPorCategoria, TrabajoCategoriaItem } from '@/features/reportes/reportes.service'
+
+function TrabajosPorCategoriaSection({ trabajosPorCategoria }: { trabajosPorCategoria: TrabajosPorCategoria[] }) {
+  const [expandida, setExpandida] = useState<string | null>(null)
+
+  const fmtFecha = (s: string) => new Date(s).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+
+  return (
+    <section>
+      <div className="flex items-center gap-2 mb-4">
+        <Layers className="h-5 w-5 text-indigo-600" />
+        <h3 className="text-lg font-semibold">Trabajos por categoría</h3>
+        <InfoTooltip texto="Para cada categoría de incidente muestra qué técnicos trabajaron, cuántos trabajos realizaron, las calificaciones recibidas y todos los montos involucrados." />
+      </div>
+      {trabajosPorCategoria.length === 0 ? (
+        <Card><CardContent className="text-center py-8 text-sm text-muted-foreground">Sin datos</CardContent></Card>
+      ) : (
+        <div className="space-y-3">
+          {trabajosPorCategoria.map((cat) => {
+            const abierta = expandida === cat.categoria
+            return (
+              <Card key={cat.categoria} className="overflow-hidden">
+                <button
+                  className="w-full text-left px-5 py-3.5 flex items-center gap-3 hover:bg-gray-50 transition-colors"
+                  onClick={() => setExpandida(abierta ? null : cat.categoria)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="font-semibold text-gray-800">{cat.categoria}</span>
+                      <Badge variant="secondary" className="text-xs">{cat.totalTrabajos} trabajos</Badge>
+                      {cat.calificacionPromedio != null && (
+                        <span className="text-xs text-yellow-600 font-medium">{cat.calificacionPromedio.toFixed(1)} ⭐ prom.</span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-4 mt-1 text-xs text-gray-500">
+                      {cat.montoTotalCobrado > 0 && <span className="text-green-600 font-medium">Cobrado: {AR.format(cat.montoTotalCobrado)}</span>}
+                      {cat.montoTotalPagado > 0 && <span className="text-blue-600 font-medium">Pagado técnicos: {AR.format(cat.montoTotalPagado)}</span>}
+                      {cat.montoTotalCobrado > 0 && cat.montoTotalPagado > 0 && (
+                        <span className="text-violet-600 font-medium">Margen: {AR.format(cat.montoTotalCobrado - cat.montoTotalPagado)}</span>
+                      )}
+                    </div>
+                  </div>
+                  {abierta ? <ChevronUp className="h-4 w-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />}
+                </button>
+
+                {abierta && (
+                  <div className="border-t overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-50">
+                        <tr className="text-gray-500 uppercase tracking-wide">
+                          <th className="text-left px-4 py-2">Inc.</th>
+                          <th className="text-left px-4 py-2">Fecha</th>
+                          <th className="text-left px-4 py-2">Técnico</th>
+                          <th className="text-right px-4 py-2">Cal.</th>
+                          <th className="text-right px-4 py-2">Materiales</th>
+                          <th className="text-right px-4 py-2">M. Obra</th>
+                          <th className="text-right px-4 py-2">Total presup.</th>
+                          <th className="text-right px-4 py-2">Cobro cli.</th>
+                          <th className="text-right px-4 py-2">Pago tec.</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {cat.trabajos.map((t) => (
+                          <tr key={t.id_incidente} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 font-medium text-gray-700">#{t.id_incidente}</td>
+                            <td className="px-4 py-2 text-gray-500">{fmtFecha(t.fecha_creacion)}</td>
+                            <td className="px-4 py-2 text-gray-700">{t.nombre_tecnico} {t.apellido_tecnico}</td>
+                            <td className="px-4 py-2 text-right">
+                              {t.calificacion != null
+                                ? <span className="text-yellow-500 font-semibold">{t.calificacion} ⭐</span>
+                                : <span className="text-gray-300">—</span>}
+                            </td>
+                            <td className="px-4 py-2 text-right text-gray-600">{t.costo_materiales != null ? AR.format(t.costo_materiales) : '—'}</td>
+                            <td className="px-4 py-2 text-right text-gray-600">{t.costo_mano_obra != null ? AR.format(t.costo_mano_obra) : '—'}</td>
+                            <td className="px-4 py-2 text-right font-medium text-gray-800">{t.costo_total != null ? AR.format(t.costo_total) : '—'}</td>
+                            <td className="px-4 py-2 text-right text-green-700 font-medium">{t.monto_cobro_cliente != null ? AR.format(t.monto_cobro_cliente) : '—'}</td>
+                            <td className="px-4 py-2 text-right text-blue-700 font-medium">{t.monto_pago_tecnico != null ? AR.format(t.monto_pago_tecnico) : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Card>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
+}
+
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 
 export function ReportesContent({ data }: ReportesContentProps) {
@@ -98,6 +193,8 @@ export function ReportesContent({ data }: ReportesContentProps) {
     incidentesPorTipoInmueble,
     satisfaccionCliente,
     kpisAdministrativos,
+    cobroPromedioPorTecnico,
+    trabajosPorCategoria,
     tiempoResolucionPorCategoria,
     reincidenciaPorPropiedad,
     rentabilidadTecnicos,
@@ -578,6 +675,56 @@ export function ReportesContent({ data }: ReportesContentProps) {
           </Card>
         </section>
       </div>
+
+      {/* ── Cobro promedio por técnico ── */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <DollarSign className="h-5 w-5 text-emerald-600" />
+          <h3 className="text-lg font-semibold">Cobro promedio por técnico</h3>
+          <InfoTooltip texto="Muestra cuánto cobra en promedio cada técnico por trabajo completado. Permite identificar si los técnicos mejor calificados también perciben mayores honorarios." />
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            {cobroPromedioPorTecnico.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Sin datos de pagos</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-xs text-gray-500 uppercase tracking-wide">
+                      <th className="text-left pb-2 pr-4">#</th>
+                      <th className="text-left pb-2 pr-4">Técnico</th>
+                      <th className="text-right pb-2 pr-4">Trabajos</th>
+                      <th className="text-right pb-2 pr-4">Total cobrado</th>
+                      <th className="text-right pb-2 pr-4">Promedio / trabajo</th>
+                      <th className="text-right pb-2">Calificación</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {cobroPromedioPorTecnico.map((tec, idx) => (
+                      <tr key={tec.id_tecnico} className="hover:bg-gray-50">
+                        <td className="py-2.5 pr-4 text-gray-400 text-xs font-bold">#{idx + 1}</td>
+                        <td className="py-2.5 pr-4 font-medium text-gray-800">{tec.nombre} {tec.apellido}</td>
+                        <td className="py-2.5 pr-4 text-right text-gray-600">{tec.cantidadTrabajos}</td>
+                        <td className="py-2.5 pr-4 text-right text-gray-700 font-medium">{AR.format(tec.totalPagadoTecnico)}</td>
+                        <td className="py-2.5 pr-4 text-right font-bold text-emerald-700">{AR.format(tec.promedioCobroPorTrabajo)}</td>
+                        <td className="py-2.5 text-right">
+                          {tec.calificacionPromedio != null
+                            ? <span className="text-yellow-500 font-semibold">{tec.calificacionPromedio.toFixed(1)} ⭐</span>
+                            : <span className="text-gray-400 text-xs">—</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* ── Trabajos por categoría ── */}
+      <TrabajosPorCategoriaSection trabajosPorCategoria={trabajosPorCategoria} />
 
       {/* ── Rentabilidad por Técnico ── */}
       <section>

@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { FileText, CheckCircle, XCircle, Clock, DollarSign, AlertCircle } from 'lucide-react'
+import { FileText, CheckCircle, XCircle, Clock, DollarSign, AlertCircle, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { EstadoPresupuesto } from '@/shared/types/enums'
 import { getEstadoPresupuestoColor, getEstadoPresupuestoLabel } from '@/shared/utils/colors'
@@ -27,8 +27,22 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
   const [loading, setLoading] = useState(false)
   const [modalAprobar, setModalAprobar] = useState<PresupuestoConDetalle | null>(null)
   const [gastosAdmin, setGastosAdmin] = useState('')
+  const [busqueda, setBusqueda] = useState('')
 
-  const pendientesAprobacion = presupuestos.filter(p => p.estado_presupuesto === EstadoPresupuesto.ENVIADO)
+  const filtrar = (lista: PresupuestoConDetalle[]) => {
+    if (!busqueda.trim()) return lista
+    const q = busqueda.toLowerCase()
+    return lista.filter(p =>
+      String(p.id_presupuesto).includes(q) ||
+      String(p.id_incidente).includes(q) ||
+      p.descripcion_detallada?.toLowerCase().includes(q) ||
+      p.estado_presupuesto?.toLowerCase().includes(q) ||
+      String(p.costo_total).includes(q) ||
+      p.incidentes?.categoria?.toLowerCase().includes(q)
+    )
+  }
+
+  const pendientesAprobacion = filtrar(presupuestos.filter(p => p.estado_presupuesto === EstadoPresupuesto.ENVIADO))
 
   const handleAprobar = async () => {
     if (!modalAprobar) return
@@ -211,6 +225,18 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
         </Card>
       </div>
 
+      {/* Buscador global */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Buscar por ID, incidente, descripción, estado, categoría..."
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300"
+        />
+      </div>
+
       <Tabs defaultValue={pendientesAprobacion.length > 0 ? 'por_aprobar' : 'todos'}>
         <TabsList>
           <TabsTrigger value="por_aprobar" className="flex items-center gap-2">
@@ -255,7 +281,7 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {renderTabla(presupuestos)}
+              {renderTabla(filtrar(presupuestos))}
             </CardContent>
           </Card>
         </TabsContent>

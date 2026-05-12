@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { CheckCircle2, XCircle, Star, Eye, Power, Filter, Edit } from 'lucide-react'
+import { CheckCircle2, XCircle, Star, Eye, Power, Filter, Edit, Search } from 'lucide-react'
 import { Paginacion } from '@/components/ui/paginacion'
 import TecnicoCalificacionesDialog from './TecnicoCalificacionesDialog'
 import {
@@ -52,6 +52,7 @@ export default function TecnicosTab() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('activos')
   const [filtroEspecialidad, setFiltroEspecialidad] = useState<string>('todas')
+  const [busqueda, setBusqueda] = useState('')
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState<{
     id: number
     nombre: string
@@ -211,14 +212,12 @@ export default function TecnicosTab() {
   const [pagina, setPagina] = useState(1)
 
   const tecnicosFiltrados = tecnicos.filter((tecnico) => {
-    // Filtro por estado - convertir a booleano para manejar tanto números como booleanos
     const estaActivo = Boolean(tecnico.esta_activo)
     const cumpleEstado =
       filtroEstado === 'todos' ||
       (filtroEstado === 'activos' && estaActivo) ||
       (filtroEstado === 'inactivos' && !estaActivo)
 
-    // Filtro por especialidad (chequea todas las especialidades del técnico)
     const esps = tecnico.especialidades?.length
       ? tecnico.especialidades
       : tecnico.especialidad ? [tecnico.especialidad] : []
@@ -226,7 +225,14 @@ export default function TecnicosTab() {
       filtroEspecialidad === 'todas' ||
       esps.includes(filtroEspecialidad)
 
-    return cumpleEstado && cumpleEspecialidad
+    const q = busqueda.toLowerCase().trim()
+    const cumpleBusqueda = !q ||
+      tecnico.nombre.toLowerCase().includes(q) ||
+      tecnico.apellido.toLowerCase().includes(q) ||
+      tecnico.correo_electronico.toLowerCase().includes(q) ||
+      (tecnico.dni ?? '').toLowerCase().includes(q)
+
+    return cumpleEstado && cumpleEspecialidad && cumpleBusqueda
   })
 
   const tecnicosPaginados = tecnicosFiltrados.slice((pagina - 1) * 10, pagina * 10)
@@ -272,6 +278,18 @@ export default function TecnicosTab() {
           {/* Filtros */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <Filter className="h-4 w-4 text-gray-500 hidden sm:block" />
+
+            {/* Búsqueda por texto */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, email, DNI..."
+                value={busqueda}
+                onChange={e => { setBusqueda(e.target.value); setPagina(1) }}
+                className="pl-9 pr-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-full sm:w-[220px]"
+              />
+            </div>
 
             {/* Filtro de Estado */}
             <Select value={filtroEstado} onValueChange={(value: any) => { setFiltroEstado(value); setPagina(1) }}>

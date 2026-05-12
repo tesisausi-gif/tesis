@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog'
 import {
   FileCheck, User, Wrench, ExternalLink, CheckCircle2, XCircle, Star,
-  FileText, Loader2, AlertTriangle, ChevronRight, Clock, History,
+  FileText, Loader2, AlertTriangle, ChevronRight, Clock, History, Search,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -128,10 +128,32 @@ export function ConformidadesContent({ conformidades, historial }: Conformidades
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [vista, setVista] = useState<'pendientes' | 'historial'>('pendientes')
+  const [busqueda, setBusqueda] = useState('')
   const [pagina, setPagina] = useState(1)
 
   const listaActiva = vista === 'pendientes' ? conformidades : historial
-  const conformidadesPaginadas = listaActiva.slice((pagina - 1) * 10, pagina * 10)
+
+  const listaFiltrada = busqueda.trim()
+    ? listaActiva.filter(conf => {
+        const q = busqueda.toLowerCase()
+        const inc = conf.incidentes
+        const asig = Array.isArray(inc?.asignaciones_tecnico)
+          ? inc.asignaciones_tecnico[0] : null
+        const tec = asig?.tecnicos
+        const cli = inc?.clientes
+        return (
+          String(conf.id_incidente).includes(q) ||
+          inc?.descripcion_problema?.toLowerCase().includes(q) ||
+          inc?.categoria?.toLowerCase().includes(q) ||
+          cli?.nombre?.toLowerCase().includes(q) ||
+          cli?.apellido?.toLowerCase().includes(q) ||
+          tec?.nombre?.toLowerCase().includes(q) ||
+          tec?.apellido?.toLowerCase().includes(q)
+        )
+      })
+    : listaActiva
+
+  const conformidadesPaginadas = listaFiltrada.slice((pagina - 1) * 10, pagina * 10)
 
   useEffect(() => {
     const supabase = createClient()
@@ -260,19 +282,33 @@ export function ConformidadesContent({ conformidades, historial }: Conformidades
         })}
       </div>
 
-      {listaActiva.length === 0 ? (
+      {/* Buscador */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Buscar por incidente, cliente, técnico, categoría..."
+          value={busqueda}
+          onChange={e => { setBusqueda(e.target.value); setPagina(1) }}
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300"
+        />
+      </div>
+
+      {listaFiltrada.length === 0 ? (
         <Card className="border-dashed border-2 border-gray-300">
           <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
             <div className="rounded-full bg-green-100 p-4 mb-4">
               <FileCheck className="h-12 w-12 text-green-500" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {vista === 'pendientes' ? 'No hay conformidades pendientes' : 'Sin historial de conformidades'}
+              {busqueda.trim() ? 'Sin resultados para la búsqueda' : vista === 'pendientes' ? 'No hay conformidades pendientes' : 'Sin historial de conformidades'}
             </h3>
             <p className="text-sm text-gray-600 max-w-md">
-              {vista === 'pendientes'
-                ? 'Cuando un técnico suba una foto de conformidad firmada, aparecerá aquí para tu revisión.'
-                : 'Las conformidades aprobadas aparecerán aquí.'}
+              {busqueda.trim()
+                ? 'Probá con otros términos de búsqueda.'
+                : vista === 'pendientes'
+                  ? 'Cuando un técnico suba una foto de conformidad firmada, aparecerá aquí para tu revisión.'
+                  : 'Las conformidades aprobadas aparecerán aquí.'}
             </p>
           </CardContent>
         </Card>
@@ -344,7 +380,7 @@ export function ConformidadesContent({ conformidades, historial }: Conformidades
             )
           })}
         </div>
-        <Paginacion pagina={pagina} total={listaActiva.length} onChange={setPagina} />
+        <Paginacion pagina={pagina} total={listaFiltrada.length} onChange={setPagina} />
         </>
       )}
 

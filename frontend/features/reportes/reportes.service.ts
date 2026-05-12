@@ -607,6 +607,157 @@ export async function getRentabilidadTecnicos(): Promise<RentabilidadTecnico[]> 
   return Object.values(result).sort((a, b) => b.totalCobradoCliente - a.totalCobradoCliente)
 }
 
+// ─── Cobro promedio por técnico ───────────────────────────────────────────────
+
+export interface CobroPromedioPorTecnico {
+  id_tecnico: number
+  nombre: string
+  apellido: string
+  cantidadTrabajos: number
+  totalPagadoTecnico: number
+  promedioCobroPorTrabajo: number
+  calificacionPromedio: number | null
+}
+
+export async function getCobroPromedioPorTecnico(): Promise<CobroPromedioPorTecnico[]> {
+  const supabase = createAdminClient()
+
+  const [pagosRes, calRes, tecRes] = await Promise.all([
+    supabase.from('pagos_tecnicos').select('id_tecnico, monto_pago'),
+    supabase.from('calificaciones').select('id_tecnico, puntuacion'),
+    supabase.from('tecnicos').select('id_tecnico, nombre, apellido'),
+  ])
+
+  const pagos = (pagosRes.data || []) as any[]
+  const cals = (calRes.data || []) as any[]
+  const tecnicos = (tecRes.data || []) as any[]
+
+  const tecMap: Record<number, { nombre: string; apellido: string }> = {}
+  for (const t of tecnicos) tecMap[t.id_tecnico] = t
+
+  const result: Record<number, CobroPromedioPorTecnico> = {}
+  for (const p of pagos) {
+    if (!result[p.id_tecnico]) {
+      const tec = tecMap[p.id_tecnico]
+      if (!tec) continue
+      result[p.id_tecnico] = {
+        id_tecnico: p.id_tecnico, nombre: tec.nombre, apellido: tec.apellido,
+        cantidadTrabajos: 0, totalPagadoTecnico: 0, promedioCobroPorTrabajo: 0, calificacionPromedio: null,
+      }
+    }
+    result[p.id_tecnico].cantidadTrabajos++
+    result[p.id_tecnico].totalPagadoTecnico += Number(p.monto_pago)
+  }
+
+  const calMap: Record<number, number[]> = {}
+  for (const c of cals) {
+    if (!calMap[c.id_tecnico]) calMap[c.id_tecnico] = []
+    calMap[c.id_tecnico].push(c.puntuacion)
+  }
+
+  for (const item of Object.values(result)) {
+    item.promedioCobroPorTrabajo = item.cantidadTrabajos > 0 ? item.totalPagadoTecnico / item.cantidadTrabajos : 0
+    const cs = calMap[item.id_tecnico]
+    item.calificacionPromedio = cs?.length ? cs.reduce((s, c) => s + c, 0) / cs.length : null
+  }
+
+  return Object.values(result).sort((a, b) => b.promedioCobroPorTrabajo - a.promedioCobroPorTrabajo)
+}
+
+// ─── Trabajos por categoría ───────────────────────────────────────────────────
+
+export interface TrabajoCategoriaItem {
+  id_incidente: number
+  fecha_creacion: string
+  estado_actual: string
+  nombre_tecnico: string
+  apellido_tecnico: string
+  calificacion: number | null
+  costo_materiales: number | null
+  costo_mano_obra: number | null
+  costo_total: number | null
+  monto_cobro_cliente: number | null
+  monto_pago_tecnico: number | null
+}
+
+export interface TrabajosPorCategoria {
+  categoria: string
+  totalTrabajos: number
+  calificacionPromedio: number | null
+  montoTotalCobrado: number
+  montoTotalPagado: number
+  trabajos: TrabajoCategoriaItem[]
+}
+
+export async function getTrabajosPorCategoria(): Promise<TrabajosPorCategoria[]> {
+  const supabase = createAdminClient()
+
+  const [incRes, asigRes, presRes, cobroRes, pagoRes, calRes] = await Promise.all([
+    supabase.from('incidentes').select('id_incidente, categoria, fecha_creacion, estado_actual'),
+    supabase.from('asignaciones_tecnico').select('id_incidente, id_tecnico, estado_asignacion, tecnicos(nombre, apellido)').in('estado_asignacion', ['completada', 'aceptada', 'en_curso']),
+    supabase.from('presupuestos').select('id_incidente, costo_materiales, costo_mano_obra, costo_total').eq('estado_presupuesto', 'aprobado'),
+    supabase.from('cobros_clientes').select('id_incidente, monto_cobro'),
+    supabase.from('pagos_tecnicos').select('id_incidente, monto_pago'),
+    supabase.from('calificaciones').select('id_incidente, puntuacion'),
+  ])
+
+  const incidentes = (incRes.data || []) as any[]
+  const asignaciones = (asigRes.data || []) as any[]
+  const presupuestos = (presRes.data || []) as any[]
+  const cobros = (cobroRes.data || []) as any[]
+  const pagos = (pagoRes.data || []) as any[]
+  const calificaciones = (calRes.data || []) as any[]
+
+  const asigMap: Record<number, any> = {}
+  for (const a of asignaciones) asigMap[a.id_incidente] = a
+  const presMap: Record<number, any> = {}
+  for (const p of presupuestos) presMap[p.id_incidente] = p
+  const cobroMap: Record<number, number> = {}
+  for (const c of cobros) cobroMap[c.id_incidente] = Number(c.monto_cobro)
+  const pagoMap: Record<number, number> = {}
+  for (const p of pagos) pagoMap[p.id_incidente] = Number(p.monto_pago)
+  const calMap: Record<number, number> = {}
+  for (const c of calificaciones) calMap[c.id_incidente] = c.puntuacion
+
+  const byCategoria: Record<string, TrabajoCategoriaItem[]> = {}
+  for (const inc of incidentes) {
+    const asig = asigMap[inc.id_incidente]
+    if (!asig) continue
+    const tec = Array.isArray(asig.tecnicos) ? asig.tecnicos[0] : asig.tecnicos
+    if (!tec) continue
+    const cat = inc.categoria || 'Sin categoría'
+    if (!byCategoria[cat]) byCategoria[cat] = []
+    const pres = presMap[inc.id_incidente]
+    byCategoria[cat].push({
+      id_incidente: inc.id_incidente,
+      fecha_creacion: inc.fecha_creacion,
+      estado_actual: inc.estado_actual,
+      nombre_tecnico: tec.nombre,
+      apellido_tecnico: tec.apellido,
+      calificacion: calMap[inc.id_incidente] ?? null,
+      costo_materiales: pres?.costo_materiales ?? null,
+      costo_mano_obra: pres?.costo_mano_obra ?? null,
+      costo_total: pres?.costo_total ?? null,
+      monto_cobro_cliente: cobroMap[inc.id_incidente] ?? null,
+      monto_pago_tecnico: pagoMap[inc.id_incidente] ?? null,
+    })
+  }
+
+  return Object.entries(byCategoria)
+    .map(([categoria, trabajos]) => {
+      const cs = trabajos.filter(t => t.calificacion !== null).map(t => t.calificacion!)
+      return {
+        categoria,
+        totalTrabajos: trabajos.length,
+        calificacionPromedio: cs.length > 0 ? cs.reduce((s, c) => s + c, 0) / cs.length : null,
+        montoTotalCobrado: trabajos.reduce((s, t) => s + (t.monto_cobro_cliente ?? 0), 0),
+        montoTotalPagado: trabajos.reduce((s, t) => s + (t.monto_pago_tecnico ?? 0), 0),
+        trabajos: trabajos.sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime()),
+      }
+    })
+    .sort((a, b) => b.totalTrabajos - a.totalTrabajos)
+}
+
 // ─── Carga conjunta ───────────────────────────────────────────────────────────
 
 export async function getReportesCompletos() {
@@ -622,6 +773,8 @@ export async function getReportesCompletos() {
     tiempoResolucionPorCategoria,
     reincidenciaPorPropiedad,
     rentabilidadTecnicos,
+    cobroPromedioPorTecnico,
+    trabajosPorCategoria,
   ] = await Promise.all([
     getRendimientoTecnicos(),
     getEmbudoConversion(),
@@ -634,6 +787,8 @@ export async function getReportesCompletos() {
     getTiempoResolucionPorCategoria(),
     getReincidenciaPorPropiedad(),
     getRentabilidadTecnicos(),
+    getCobroPromedioPorTecnico(),
+    getTrabajosPorCategoria(),
   ])
 
   return {
@@ -648,6 +803,8 @@ export async function getReportesCompletos() {
     tiempoResolucionPorCategoria,
     reincidenciaPorPropiedad,
     rentabilidadTecnicos,
+    cobroPromedioPorTecnico,
+    trabajosPorCategoria,
   }
 }
 

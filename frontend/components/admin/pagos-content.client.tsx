@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select'
 import {
   DollarSign, CreditCard, Calendar, FileText, Receipt, Wrench,
-  CheckCircle2, Clock, User, Banknote, ArrowLeftRight, History, Loader2,
+  CheckCircle2, Clock, User, Banknote, ArrowLeftRight, History, Loader2, Search,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -148,10 +148,28 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
   const [cobrarDialog, setCobrarDialog] = useState<PendienteCobroCliente | null>(null)
   const [formPago, setFormPago] = useState<MetodoPagoData>(METODO_INICIAL)
   const [vista, setVista] = useState<'pendientes' | 'historial'>('pendientes')
+  const [busqueda, setBusqueda] = useState('')
   const [paginaPendientes, setPaginaPendientes] = useState(1)
   const [paginaRealizados, setPaginaRealizados] = useState(1)
+
+  const realizadosFiltrados = busqueda.trim()
+    ? realizados.filter(c => {
+        const q = busqueda.toLowerCase()
+        return (
+          String(c.id_incidente).includes(q) ||
+          c.nombre_cliente?.toLowerCase().includes(q) ||
+          c.apellido_cliente?.toLowerCase().includes(q) ||
+          c.descripcion_problema?.toLowerCase().includes(q) ||
+          c.metodo_pago?.toLowerCase().includes(q) ||
+          String(c.monto_cobro).includes(q) ||
+          c.referencia_pago?.toLowerCase().includes(q) ||
+          c.banco?.toLowerCase().includes(q)
+        )
+      })
+    : realizados
+
   const pendientesPag = pendientes.slice((paginaPendientes - 1) * 10, paginaPendientes * 10)
-  const realizadosPag = realizados.slice((paginaRealizados - 1) * 10, paginaRealizados * 10)
+  const realizadosPag = realizadosFiltrados.slice((paginaRealizados - 1) * 10, paginaRealizados * 10)
 
   const totalPendiente = pendientes.reduce((s,p) => s + p.monto_cobro, 0)
   const totalCobrado = realizados.reduce((s,c) => s + Number(c.monto_cobro), 0)
@@ -259,11 +277,21 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
       )}
 
       {vista === 'historial' && (
-        <div>
-          {realizados.length === 0 ? (
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por cliente, incidente, método, monto..."
+              value={busqueda}
+              onChange={e => { setBusqueda(e.target.value); setPaginaRealizados(1) }}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+          </div>
+          {realizadosFiltrados.length === 0 ? (
             <Card className="border-dashed border-2 border-gray-200"><CardContent className="flex flex-col items-center py-8 text-center">
               <History className="h-10 w-10 text-gray-300 mb-2"/>
-              <p className="text-gray-500 font-medium">Sin cobros registrados</p>
+              <p className="text-gray-500 font-medium">{busqueda.trim() ? 'Sin resultados para la búsqueda' : 'Sin cobros registrados'}</p>
             </CardContent></Card>
           ) : (
             <>
@@ -290,7 +318,7 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
                 </CardContent></Card>
               ))}
             </div>
-            <Paginacion pagina={paginaRealizados} total={realizados.length} onChange={setPaginaRealizados} />
+            <Paginacion pagina={paginaRealizados} total={realizadosFiltrados.length} onChange={setPaginaRealizados} />
             </>
           )}
         </div>
@@ -324,10 +352,28 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
   const [pagarDialog, setPagarDialog] = useState<PendientePagoTecnico | null>(null)
   const [formPago, setFormPago] = useState<MetodoPagoData>(METODO_INICIAL)
   const [vista, setVista] = useState<'pendientes' | 'historial'>('pendientes')
+  const [busqueda, setBusqueda] = useState('')
   const [paginaPendientes, setPaginaPendientes] = useState(1)
   const [paginaRealizados, setPaginaRealizados] = useState(1)
+
+  const realizadosFiltrados = busqueda.trim()
+    ? realizados.filter(p => {
+        const q = busqueda.toLowerCase()
+        return (
+          String(p.id_incidente).includes(q) ||
+          p.nombre_tecnico?.toLowerCase().includes(q) ||
+          p.apellido_tecnico?.toLowerCase().includes(q) ||
+          p.descripcion_problema?.toLowerCase().includes(q) ||
+          p.metodo_pago?.toLowerCase().includes(q) ||
+          String(p.monto_pago).includes(q) ||
+          p.referencia_pago?.toLowerCase().includes(q) ||
+          p.banco?.toLowerCase().includes(q)
+        )
+      })
+    : realizados
+
   const pendientesPag = pendientes.slice((paginaPendientes - 1) * 10, paginaPendientes * 10)
-  const realizadosPag = realizados.slice((paginaRealizados - 1) * 10, paginaRealizados * 10)
+  const realizadosPag = realizadosFiltrados.slice((paginaRealizados - 1) * 10, paginaRealizados * 10)
 
   // Estado para timeline
   const [timeline, setTimeline] = useState<EventoTimeline[] | null>(null)
@@ -457,11 +503,21 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
       )}
 
       {vista === 'historial' && (
-        <div>
-          {realizados.length === 0 ? (
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por técnico, incidente, método, monto..."
+              value={busqueda}
+              onChange={e => { setBusqueda(e.target.value); setPaginaRealizados(1) }}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+          </div>
+          {realizadosFiltrados.length === 0 ? (
             <Card className="border-dashed border-2 border-gray-200"><CardContent className="flex flex-col items-center py-8 text-center">
               <History className="h-10 w-10 text-gray-300 mb-2"/>
-              <p className="text-gray-500 font-medium">Sin pagos registrados</p>
+              <p className="text-gray-500 font-medium">{busqueda.trim() ? 'Sin resultados para la búsqueda' : 'Sin pagos registrados'}</p>
             </CardContent></Card>
           ) : (
             <>
@@ -488,7 +544,7 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
                 </CardContent></Card>
               ))}
             </div>
-            <Paginacion pagina={paginaRealizados} total={realizados.length} onChange={setPaginaRealizados} />
+            <Paginacion pagina={paginaRealizados} total={realizadosFiltrados.length} onChange={setPaginaRealizados} />
             </>
           )}
         </div>
@@ -578,13 +634,41 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
     | { tipo: 'cliente'; fecha: string; item: CobroClienteRegistrado }
 
   const [pagina, setPagina] = useState(1)
+  const [busqueda, setBusqueda] = useState('')
 
   const items: RegistroItem[] = [
     ...realizadosTecnicos.map(p => ({ tipo: 'tecnico' as const, fecha: p.fecha_pago, item: p })),
     ...realizadosCobroCliente.map(c => ({ tipo: 'cliente' as const, fecha: c.fecha_cobro, item: c })),
   ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
 
-  const itemsPag = items.slice((pagina - 1) * 10, pagina * 10)
+  const itemsFiltrados = busqueda.trim()
+    ? items.filter(entry => {
+        const q = busqueda.toLowerCase()
+        if (entry.tipo === 'tecnico') {
+          const p = entry.item
+          return (
+            String(p.id_incidente).includes(q) ||
+            p.nombre_tecnico?.toLowerCase().includes(q) ||
+            p.apellido_tecnico?.toLowerCase().includes(q) ||
+            p.descripcion_problema?.toLowerCase().includes(q) ||
+            p.metodo_pago?.toLowerCase().includes(q) ||
+            String(p.monto_pago).includes(q)
+          )
+        } else {
+          const c = entry.item
+          return (
+            String(c.id_incidente).includes(q) ||
+            c.nombre_cliente?.toLowerCase().includes(q) ||
+            c.apellido_cliente?.toLowerCase().includes(q) ||
+            c.descripcion_problema?.toLowerCase().includes(q) ||
+            c.metodo_pago?.toLowerCase().includes(q) ||
+            String(c.monto_cobro).includes(q)
+          )
+        }
+      })
+    : items
+
+  const itemsPag = itemsFiltrados.slice((pagina - 1) * 10, pagina * 10)
 
   if (items.length === 0) {
     return (
@@ -597,6 +681,19 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
 
   return (
     <div className="space-y-3">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Buscar por nombre, incidente, método, monto..."
+          value={busqueda}
+          onChange={e => { setBusqueda(e.target.value); setPagina(1) }}
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300"
+        />
+      </div>
+      {itemsFiltrados.length === 0 && busqueda.trim() && (
+        <p className="text-center text-sm text-gray-400 py-4">Sin resultados para la búsqueda</p>
+      )}
       {itemsPag.map((entry, i) => {
         if (entry.tipo === 'tecnico') {
           const p = entry.item
@@ -646,7 +743,7 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
           )
         }
       })}
-      <Paginacion pagina={pagina} total={items.length} onChange={setPagina} />
+      <Paginacion pagina={pagina} total={itemsFiltrados.length} onChange={setPagina} />
     </div>
   )
 }
