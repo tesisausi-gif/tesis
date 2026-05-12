@@ -50,7 +50,7 @@ import {
   X,
   Check,
 } from 'lucide-react'
-import { CategoriaIncidente, EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
+import { EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { InspeccionesList } from './inspecciones-list'
 import { CalificacionTecnico } from '@/components/cliente/calificacion-tecnico'
 import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
@@ -61,7 +61,7 @@ import {
   actualizarIncidente,
 } from '@/features/incidentes/incidentes.service'
 import { crearAsignacion, completarAsignacion } from '@/features/asignaciones/asignaciones.service'
-import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
+import { getTecnicosParaAsignacion, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
 import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rechazarPresupuesto, responderOportunidadTecnico } from '@/features/presupuestos/presupuestos.service'
 import { getConformidadDelIncidente, crearConformidadPorTecnico, aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
 import { crearAvance } from '@/features/avances/avances.service'
@@ -383,7 +383,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const fileInputRef = useRef<HTMLInputElement>(null)
   const comprobanteInputRef = useRef<HTMLInputElement>(null)
 
-  const CATEGORIAS = Object.values(CategoriaIncidente) as string[]
+  const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([])
 
   useEffect(() => {
     if (open && incidenteId) {
@@ -391,6 +391,9 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       cargarIncidente()
       if (rol === 'admin') {
         cargarTecnicos()
+        getEspecialidadesActivas().then((data) => {
+          setCategoriasDisponibles(data.map((e: { nombre: string }) => e.nombre))
+        }).catch(() => {})
       }
     }
   }, [open, incidenteId, initialTab])
@@ -1505,7 +1508,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__NONE__">Sin categoría</SelectItem>
-                          {CATEGORIAS.map((cat) => (
+                          {categoriasDisponibles.map((cat) => (
                             <SelectItem key={cat} value={cat}>
                               {cat}
                             </SelectItem>

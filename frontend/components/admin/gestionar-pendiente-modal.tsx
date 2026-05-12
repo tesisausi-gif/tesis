@@ -32,13 +32,12 @@ import {
   Wrench,
   Clock,
 } from 'lucide-react'
-import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
+import { getTecnicosParaAsignacion, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { actualizarIncidente } from '@/features/incidentes/incidentes.service'
 import { getFranjasDisponibilidad, getConflictosTecnicos } from '@/features/disponibilidad/disponibilidad.service'
 import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
-import { CategoriaIncidente } from '@/shared/types/enums'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
 
@@ -48,8 +47,6 @@ interface GestionarPendienteModalProps {
   incidente: IncidenteConCliente
   onGestionExito: () => void
 }
-
-const CATEGORIAS = Object.values(CategoriaIncidente)
 
 function StepperHeader({ paso }: { paso: 1 | 2 | 3 }) {
   const pasos = ['Categorización', 'Solicitud de asignación', 'Confirmación']
@@ -164,8 +161,9 @@ export function GestionarPendienteModal({
   const [asignando, setAsignando] = useState(false)
   const [franjas, setFranjas] = useState<FranjaInput[]>([])
   const [conflictos, setConflictos] = useState<Record<number, boolean>>({})
+  const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([])
 
-  // Reset al abrir
+  // Reset al abrir + cargar categorías activas desde DB
   useEffect(() => {
     if (open) {
       setPaso(1)
@@ -173,6 +171,14 @@ export function GestionarPendienteModal({
       setTecnicoSeleccionado(null)
       setTecnicos([])
       setErrorTecnicos(false)
+      getEspecialidadesActivas().then((data) => {
+        const nombres = data.map((e: { nombre: string }) => e.nombre)
+        // Si el incidente ya tiene una categoría deshabilitada, incluirla para no perder el valor
+        if (incidente.categoria && !nombres.includes(incidente.categoria)) {
+          nombres.unshift(incidente.categoria)
+        }
+        setCategoriasDisponibles(nombres)
+      }).catch(() => {})
     }
   }, [open, incidente.id_incidente])
 
@@ -315,7 +321,7 @@ export function GestionarPendienteModal({
                   <SelectValue placeholder="Seleccioná una categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIAS.map((cat) => (
+                  {categoriasDisponibles.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
