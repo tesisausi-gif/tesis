@@ -47,6 +47,8 @@ import {
   CheckCircle2,
   Upload,
   ImageIcon,
+  X,
+  Check,
 } from 'lucide-react'
 import { CategoriaIncidente, EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { InspeccionesList } from './inspecciones-list'
@@ -60,7 +62,7 @@ import {
 } from '@/features/incidentes/incidentes.service'
 import { crearAsignacion, completarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion } from '@/features/usuarios/usuarios.service'
-import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rechazarPresupuesto } from '@/features/presupuestos/presupuestos.service'
+import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rechazarPresupuesto, responderOportunidadTecnico } from '@/features/presupuestos/presupuestos.service'
 import { getConformidadDelIncidente, crearConformidadPorTecnico, aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
 import { crearAvance } from '@/features/avances/avances.service'
 import { getFranjasDisponibilidad, getCompromisoDeAsignacion, guardarCompromisoTecnico } from '@/features/disponibilidad/disponibilidad.service'
@@ -357,6 +359,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [presAlternativas, setPresAlternativas] = useState('')
   const [presInspeccionId, setPresInspeccionId] = useState('')
   const [savingPresupuesto, setSavingPresupuesto] = useState(false)
+  const [savingOportunidad, setSavingOportunidad] = useState(false)
 
   // State para acciones de admin (aprobar/rechazar presupuesto y conformidad)
   const [gastosAdmin, setGastosAdmin] = useState('')
@@ -1029,6 +1032,22 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     }
   }
 
+  const handleResponderOportunidad = async (idPresupuesto: number, aceptar: boolean) => {
+    setSavingOportunidad(true)
+    try {
+      const res = await responderOportunidadTecnico(idPresupuesto, aceptar)
+      if (res.success) {
+        toast.success(aceptar ? 'Aceptaste hacer un nuevo presupuesto' : 'Respondiste al cliente')
+        await cargarIncidente()
+        onUpdate?.()
+      } else {
+        toast.error(res.error ?? 'Error al responder')
+      }
+    } finally {
+      setSavingOportunidad(false)
+    }
+  }
+
   const handleAprobarConformidad = async (idConformidad: number) => {
     if (puntuacionAdmin < 1 || puntuacionAdmin > 5) {
       toast.error('La calificación debe ser entre 1 y 5')
@@ -1605,6 +1624,18 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
               <div className="mt-4 space-y-4">
                 {(() => {
                   const tienePresupuestoActivo = presupuestosActivos.length > 0
+                  // Presupuesto rechazado donde el cliente dio otra oportunidad y el técnico aún no respondió
+                  const presOportunidadPendiente = presupuestos.find(p =>
+                    p.estado_presupuesto === EstadoPresupuesto.RECHAZADO &&
+                    (p as any).decision_cliente === 'otra_oportunidad' &&
+                    !(p as any).decision_tecnico
+                  )
+                  // El técnico aceptó rehacer → mostrar formulario directamente
+                  const presOportunidadAceptada = presupuestos.find(p =>
+                    p.estado_presupuesto === EstadoPresupuesto.RECHAZADO &&
+                    (p as any).decision_cliente === 'otra_oportunidad' &&
+                    (p as any).decision_tecnico === 'acepta'
+                  )
                   return (
                     <>
                       {presupuestosActivos.length > 0 && (
@@ -1660,7 +1691,73 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           })}
                         </div>
                       )}
-                      {!tienePresupuestoActivo && (inspeccionesActivas.length === 0 ? (
+
+                      {/* Tarjeta de decisión: cliente rechazó y da otra oportunidad */}
+                      {!tienePresupuestoActivo && presOportunidadPendiente && (
+                        <div className="rounded-xl border-2 border-orange-300 bg-orange-50 overflow-hidden">
+                          <div className="bg-orange-500 px-4 py-3 flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-white flex-shrink-0" />
+                            <p className="text-white font-bold text-sm">El cliente rechazó tu presupuesto</p>
+                          </div>
+                          <div className="p-4 space-y-3">
+                            <div className="rounded-lg bg-white border border-orange-200 p-3 space-y-1.5">
+                              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Presupuesto #{(presOportunidadPendiente as any).id_presupuesto}</p>
+                              <p className="text-sm text-gray-700">{(presOportunidadPendiente as any).descripcion_detallada}</p>
+                              <div className="flex gap-4 pt-1">
+                                {(presOportunidadPendiente as any).costo_materiales != null && (
+                                  <div>
+                                    <p className="text-xs text-gray-400">Materiales</p>
+                                    <p className="text-xs font-semibold">${((presOportunidadPendiente as any).costo_materiales ?? 0).toLocaleString()}</p>
+                                  </div>
+                                )}
+                                {(presOportunidadPendiente as any).costo_mano_obra != null && (
+                                  <div>
+                                    <p className="text-xs text-gray-400">Mano de obra</p>
+                                    <p className="text-xs font-semibold">${((presOportunidadPendiente as any).costo_mano_obra ?? 0).toLocaleString()}</p>
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="text-xs text-gray-400">Total</p>
+                                  <p className="text-xs font-bold">${((presOportunidadPendiente as any).costo_total ?? 0).toLocaleString()}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {(presOportunidadPendiente as any).nota_rechazo_cliente && (
+                              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+                                <p className="text-xs font-semibold text-amber-700 mb-1">Comentarios del cliente:</p>
+                                <p className="text-sm text-amber-900 italic">&ldquo;{(presOportunidadPendiente as any).nota_rechazo_cliente}&rdquo;</p>
+                              </div>
+                            )}
+
+                            <p className="text-sm font-semibold text-gray-700">¿Podés enviar un nuevo presupuesto?</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button
+                                onClick={() => handleResponderOportunidad((presOportunidadPendiente as any).id_presupuesto, true)}
+                                disabled={savingOportunidad}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 gap-1.5 text-xs"
+                              >
+                                {savingOportunidad ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                                Sí, acepto
+                              </Button>
+                              <Button
+                                onClick={() => handleResponderOportunidad((presOportunidadPendiente as any).id_presupuesto, false)}
+                                disabled={savingOportunidad}
+                                size="sm"
+                                variant="outline"
+                                className="border-red-300 text-red-700 hover:bg-red-50 gap-1.5 text-xs"
+                              >
+                                {savingOportunidad ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                                No puedo
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Formulario de presupuesto: sin activo y sin oportunidad pendiente de respuesta */}
+                      {!tienePresupuestoActivo && !presOportunidadPendiente && (inspeccionesActivas.length === 0 ? (
                         <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 flex items-start gap-3">
                           <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
                           <div>
@@ -1670,10 +1767,16 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                         </div>
                       ) : (
                         <div className="space-y-5">
+                          {presOportunidadAceptada && (
+                            <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-800 flex items-start gap-2">
+                              <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                              <p>Aceptaste enviar un nuevo presupuesto. Completá el formulario a continuación.</p>
+                            </div>
+                          )}
                           <div className="space-y-3">
                             <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
                               <FileText className="h-4 w-4" />
-                              Nuevo Presupuesto
+                              {presOportunidadAceptada ? 'Nuevo Presupuesto' : 'Nuevo Presupuesto'}
                             </h4>
                       <div className="space-y-2">
                         <Label>Descripción detallada <span className="text-red-500">*</span></Label>

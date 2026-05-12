@@ -26,6 +26,9 @@ const PRESUPUESTO_SELECT = `
   alternativas_reparacion,
   fecha_creacion,
   fecha_modificacion,
+  nota_rechazo_cliente,
+  decision_cliente,
+  decision_tecnico,
   incidentes (
     id_incidente,
     descripcion_problema,
@@ -669,5 +672,170 @@ export async function rechazarPresupuestoCliente(
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al rechazar presupuesto' }
+  }
+}
+
+/**
+ * Cliente rechaza el primer presupuesto y elige qué hacer:
+ *   'nuevo_tecnico'     → incidente vuelve a pendiente, se busca otro técnico
+ *   'otra_oportunidad'  → se notifica al técnico para que decida si rehace el presupuesto
+ */
+export async function rechazarPresupuestoConDecision(
+  idPresupuesto: number,
+  decision: 'nuevo_tecnico' | 'otra_oportunidad',
+  nota?: string,
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+    const supabaseAdmin = (await import('@/shared/lib/supabase/admin')).createAdminClient()
+
+    const presupuesto = await getPresupuesto(idPresupuesto)
+    if (!presupuesto) return { success: false, error: 'Presupuesto no encontrado' }
+    if (presupuesto.estado_presupuesto !== EstadoPresupuesto.APROBADO_ADMIN) {
+      return { success: false, error: 'El presupuesto no puede ser rechazado en este estado' }
+    }
+
+    // Si ya hay un presupuesto aprobado es adicional → flujo original
+    const { data: presAprobados } = await supabaseAdmin
+      .from('presupuestos')
+      .select('id_presupuesto')
+      .eq('id_incidente', presupuesto.id_incidente)
+      .eq('estado_presupuesto', EstadoPresupuesto.APROBADO)
+      .neq('id_presupuesto', idPresupuesto)
+    if (presAprobados && presAprobados.length > 0) {
+      return rechazarPresupuestoCliente(idPresupuesto, nota)
+    }
+
+    const { error } = await supabase
+      .from('presupuestos')
+      .update({
+        estado_presupuesto: EstadoPresupuesto.RECHAZADO,
+        nota_rechazo_cliente: nota ?? null,
+        decision_cliente: decision,
+      })
+      .eq('id_presupuesto', idPresupuesto)
+
+    if (error) return { success: false, error: error.message }
+
+    const idIncidente = presupuesto.id_incidente
+
+    if (decision === 'nuevo_tecnico') {
+      const { data: asig } = await supabaseAdmin
+        .from('asignaciones_tecnico')
+        .select('id_asignacion')
+        .eq('id_incidente', idIncidente)
+        .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
+        .maybeSingle()
+      if (asig) {
+        await supabaseAdmin.from('asignaciones_tecnico').update({ estado_asignacion: 'rechazada' }).eq('id_asignacion', asig.id_asignacion)
+      }
+      await supabaseAdmin.from('incidentes').update({ estado_actual: 'pendiente' }).eq('id_incidente', idIncidente)
+
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionAdmin({
+          tipo: 'presupuesto_rechazado_cliente',
+          titulo: 'Presupuesto rechazado — cliente solicita nuevo técnico',
+          mensaje: `El cliente rechazó el presupuesto del incidente #${idIncidente} y solicita un técnico diferente. Reasignación urgente.`,
+          id_incidente: idIncidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear */ }
+    } else {
+      // otra_oportunidad: notificar al técnico
+      const { data: asigConTecnico } = await supabaseAdmin
+        .from('asignaciones_tecnico')
+        .select('id_tecnico')
+        .eq('id_incidente', idIncidente)
+        .in('estado_asignacion', ['aceptada', 'en_curso'])
+        .maybeSingle()
+
+      if (asigConTecnico?.id_tecnico) {
+        try {
+          const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+          await crearNotificacion({
+            id_tecnico: asigConTecnico.id_tecnico,
+            tipo: 'presupuesto_rechazado_oportunidad',
+            titulo: 'El cliente rechazó tu presupuesto pero te da otra oportunidad',
+            mensaje: `El cliente del incidente #${idIncidente} rechazó tu presupuesto${nota ? ' con comentarios' : ''}. Revisá los detalles y decidí si podés enviar uno nuevo.`,
+            id_incidente: idIncidente,
+            id_presupuesto: idPresupuesto,
+          })
+        } catch { /* no bloquear */ }
+      }
+    }
+
+    return { success: true, data: undefined }
+  } catch {
+    return { success: false, error: 'Error inesperado al rechazar presupuesto' }
+  }
+}
+
+/**
+ * Técnico responde si acepta o no hacer un nuevo presupuesto
+ * cuando el cliente le dio otra oportunidad.
+ *   aceptar = true  → decision_tecnico = 'acepta', puede enviar un nuevo presupuesto
+ *   aceptar = false → decision_tecnico = 'rechaza', incidente vuelve a pendiente con alerta
+ */
+export async function responderOportunidadTecnico(
+  idPresupuesto: number,
+  aceptar: boolean,
+): Promise<ActionResult> {
+  try {
+    const supabaseAdmin = (await import('@/shared/lib/supabase/admin')).createAdminClient()
+
+    const { data: pres, error: errPres } = await supabaseAdmin
+      .from('presupuestos')
+      .select('id_incidente, decision_cliente')
+      .eq('id_presupuesto', idPresupuesto)
+      .single()
+
+    if (errPres || !pres) return { success: false, error: 'Presupuesto no encontrado' }
+    if (pres.decision_cliente !== 'otra_oportunidad') {
+      return { success: false, error: 'Este presupuesto no está esperando respuesta del técnico' }
+    }
+
+    const { error } = await supabaseAdmin
+      .from('presupuestos')
+      .update({ decision_tecnico: aceptar ? 'acepta' : 'rechaza' })
+      .eq('id_presupuesto', idPresupuesto)
+
+    if (error) return { success: false, error: error.message }
+
+    if (!aceptar) {
+      const idIncidente = pres.id_incidente
+
+      const { data: asig } = await supabaseAdmin
+        .from('asignaciones_tecnico')
+        .select('id_asignacion, id_tecnico, tecnicos(nombre, apellido)')
+        .eq('id_incidente', idIncidente)
+        .in('estado_asignacion', ['aceptada', 'en_curso'])
+        .maybeSingle()
+
+      if (asig) {
+        await supabaseAdmin
+          .from('asignaciones_tecnico')
+          .update({ estado_asignacion: 'rechazada', fecha_rechazo: new Date().toISOString() })
+          .eq('id_asignacion', asig.id_asignacion)
+      }
+      await supabaseAdmin.from('incidentes').update({ estado_actual: 'pendiente' }).eq('id_incidente', idIncidente)
+
+      try {
+        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        const tec = (asig?.tecnicos as any)
+        const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
+        await crearNotificacionAdmin({
+          tipo: 'tecnico_rechaza_represupuestar',
+          titulo: 'Técnico rechazó hacer un nuevo presupuesto',
+          mensaje: `${tecNombre} rechazó hacer un nuevo presupuesto para el incidente #${idIncidente}. Requiere reasignación urgente.`,
+          id_incidente: idIncidente,
+          id_presupuesto: idPresupuesto,
+        })
+      } catch { /* no bloquear */ }
+    }
+
+    return { success: true, data: undefined }
+  } catch {
+    return { success: false, error: 'Error inesperado al responder la oportunidad' }
   }
 }

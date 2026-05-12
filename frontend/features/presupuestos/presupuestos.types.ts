@@ -20,6 +20,9 @@ export interface PresupuestoBase {
   alternativas_reparacion?: string | null
   fecha_creacion?: string
   fecha_modificacion?: string
+  nota_rechazo_cliente?: string | null
+  decision_cliente?: 'nuevo_tecnico' | 'otra_oportunidad' | null
+  decision_tecnico?: 'acepta' | 'rechaza' | null
 }
 
 export interface Presupuesto extends PresupuestoBase {
