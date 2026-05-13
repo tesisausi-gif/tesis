@@ -7,19 +7,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle, Phone, Mail } from 'lucide-react'
+import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle, Phone, Mail, CalendarDays } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { aceptarAsignacion, rechazarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import type { Asignacion } from '@/features/asignaciones/asignaciones.types'
+import type { FranjaDisponibilidad } from '@/features/disponibilidad/disponibilidad.types'
 
 interface DisponiblesContentProps {
   asignaciones: Asignacion[]
+  franjasPorIncidente: Record<number, FranjaDisponibilidad[]>
 }
 
-export function DisponiblesContent({ asignaciones: asignacionesIniciales }: DisponiblesContentProps) {
+export function DisponiblesContent({ asignaciones: asignacionesIniciales, franjasPorIncidente }: DisponiblesContentProps) {
   const router = useRouter()
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>(asignacionesIniciales)
   const [procesando, setProcesando] = useState(false)
@@ -186,17 +188,53 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales }: Disp
                   <p className="text-sm text-gray-700">{asignacion.incidentes.descripcion_problema}</p>
                 </div>
 
-                {asignacion.incidentes.disponibilidad && (
-                  <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-                    <p className="text-xs text-green-700 font-medium mb-1 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Disponibilidad del cliente:
-                    </p>
-                    <p className="text-sm text-green-800 whitespace-pre-line">
-                      {asignacion.incidentes.disponibilidad}
-                    </p>
-                  </div>
-                )}
+                {(() => {
+                  const franjas = franjasPorIncidente[asignacion.id_incidente] ?? []
+                  const textoLibre = asignacion.incidentes.disponibilidad
+                  if (franjas.length === 0 && !textoLibre) return null
+
+                  // Agrupar franjas por fecha
+                  const porFecha: Record<string, FranjaDisponibilidad[]> = {}
+                  for (const f of franjas) {
+                    if (!porFecha[f.fecha]) porFecha[f.fecha] = []
+                    porFecha[f.fecha].push(f)
+                  }
+
+                  return (
+                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg space-y-2">
+                      <p className="text-xs text-amber-700 font-semibold flex items-center gap-1">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        Disponibilidad del cliente
+                      </p>
+
+                      {/* Franjas estructuradas por fecha */}
+                      {franjas.length > 0 && (
+                        <div className="space-y-1.5">
+                          {Object.entries(porFecha).map(([fecha, slots]) => {
+                            const d = new Date(fecha + 'T00:00:00')
+                            const label = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+                            return (
+                              <div key={fecha} className="flex items-start gap-2">
+                                <div className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5" />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-amber-900 capitalize">{label}</p>
+                                  <p className="text-xs text-amber-700">
+                                    {slots.map(s => `${s.hora_inicio}–${s.hora_fin}`).join(' · ')}
+                                  </p>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {/* Fallback: texto libre */}
+                      {textoLibre && franjas.length === 0 && (
+                        <p className="text-xs text-amber-800 whitespace-pre-line">{textoLibre}</p>
+                      )}
+                    </div>
+                  )
+                })()}
 
                 {asignacion.incidentes.clientes && (
                   <div className="bg-blue-50 border border-blue-200 rounded-md p-2.5 space-y-1.5">
@@ -274,18 +312,51 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales }: Disp
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Aprobar asignación?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {asignacionSeleccionada?.incidentes && (
-                <>
-                  Estás por aprobar la asignación para el incidente #{asignacionSeleccionada.incidentes.id_incidente}.
-                  <br /><br />
-                  <strong>Ubicación:</strong> {getDireccion(asignacionSeleccionada.incidentes)}
-                  <br />
-                  <strong>Categoría:</strong> {asignacionSeleccionada.incidentes.categoria || 'No especificada'}
-                  <br /><br />
-                  El incidente quedará asignado a tu usuario.
-                </>
-              )}
+            <AlertDialogDescription asChild>
+              <div>
+              {asignacionSeleccionada?.incidentes && (() => {
+                const franjas = franjasPorIncidente[asignacionSeleccionada.id_incidente] ?? []
+                const porFecha: Record<string, FranjaDisponibilidad[]> = {}
+                for (const f of franjas) {
+                  if (!porFecha[f.fecha]) porFecha[f.fecha] = []
+                  porFecha[f.fecha].push(f)
+                }
+                return (
+                  <div className="space-y-3 text-sm">
+                    <p>
+                      Estás por aprobar la asignación para el incidente <strong>#{asignacionSeleccionada.incidentes.id_incidente}</strong>.
+                    </p>
+                    <div className="space-y-1 text-xs">
+                      <p><strong>Ubicación:</strong> {getDireccion(asignacionSeleccionada.incidentes)}</p>
+                      <p><strong>Categoría:</strong> {asignacionSeleccionada.incidentes.categoria || 'No especificada'}</p>
+                    </div>
+                    {(franjas.length > 0 || asignacionSeleccionada.incidentes.disponibilidad) && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5 space-y-1">
+                        <p className="text-xs font-semibold text-amber-700 flex items-center gap-1">
+                          <CalendarDays className="h-3 w-3" />
+                          Disponibilidad del cliente
+                        </p>
+                        {franjas.length > 0 ? (
+                          Object.entries(porFecha).map(([fecha, slots]) => {
+                            const d = new Date(fecha + 'T00:00:00')
+                            const label = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+                            return (
+                              <p key={fecha} className="text-xs text-amber-800">
+                                <span className="capitalize font-medium">{label}:</span>{' '}
+                                {slots.map(s => `${s.hora_inicio}–${s.hora_fin}`).join(' · ')}
+                              </p>
+                            )
+                          })
+                        ) : (
+                          <p className="text-xs text-amber-800">{asignacionSeleccionada.incidentes.disponibilidad}</p>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500">El incidente quedará asignado a tu usuario.</p>
+                  </div>
+                )
+              })()}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

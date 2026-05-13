@@ -37,6 +37,25 @@ export async function getFranjasDisponibilidad(idIncidente: number): Promise<Fra
   return (data ?? []) as FranjaDisponibilidad[]
 }
 
+export async function getFranjasParaIncidentes(
+  ids: number[],
+): Promise<Record<number, FranjaDisponibilidad[]>> {
+  if (ids.length === 0) return {}
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('franjas_disponibilidad')
+    .select('*')
+    .in('id_incidente', ids)
+    .order('fecha')
+    .order('hora_inicio')
+  const resultado: Record<number, FranjaDisponibilidad[]> = {}
+  for (const f of (data ?? []) as FranjaDisponibilidad[]) {
+    if (!resultado[f.id_incidente]) resultado[f.id_incidente] = []
+    resultado[f.id_incidente].push(f)
+  }
+  return resultado
+}
+
 // ── Compromisos de visita (técnico) ─────────────────────────────────────────
 
 export async function guardarCompromisoTecnico(
