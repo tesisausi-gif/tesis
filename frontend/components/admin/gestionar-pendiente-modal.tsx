@@ -279,7 +279,7 @@ export function GestionarPendienteModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent className="w-full max-w-[min(42rem,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wrench className="h-5 w-5 text-blue-600" />
