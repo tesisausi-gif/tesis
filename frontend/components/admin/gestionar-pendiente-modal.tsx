@@ -51,30 +51,29 @@ interface GestionarPendienteModalProps {
 function StepperHeader({ paso }: { paso: 1 | 2 | 3 }) {
   const pasos = ['Categoría', 'Asignación', 'Confirmación']
   return (
-    <div className="flex items-center mb-6 px-1">
-      {pasos.map((label, i) => {
-        const num = (i + 1) as 1 | 2 | 3
-        const done = paso > num
-        const active = paso === num
-        return (
-          <div key={num} className="flex items-center flex-1 last:flex-none min-w-0">
-            <div className="flex flex-col items-center gap-1 min-w-0 flex-shrink-0">
+    <div className="mb-5">
+      <div className="flex items-center w-full">
+        {([1, 2, 3] as const).map((num) => {
+          const done = paso > num
+          const active = paso === num
+          return (
+            <div key={num} className="contents">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0
                   ${done ? 'bg-blue-600 text-white' : active ? 'bg-blue-600 text-white ring-2 ring-blue-200' : 'bg-gray-200 text-gray-500'}`}
               >
                 {done ? <CheckCircle className="h-4 w-4" /> : num}
               </div>
-              <span className={`text-[11px] text-center leading-tight ${active ? 'text-blue-700 font-medium' : done ? 'text-blue-500' : 'text-gray-400'}`}>
-                {label}
-              </span>
+              {num < 3 && (
+                <div className={`flex-1 h-0.5 mx-2 ${paso > num ? 'bg-blue-600' : 'bg-gray-200'}`} />
+              )}
             </div>
-            {i < pasos.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-2 mb-4 min-w-0 ${paso > num ? 'bg-blue-600' : 'bg-gray-200'}`} />
-            )}
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
+      <p className={`text-xs text-center mt-2 font-medium ${paso === 1 ? 'text-blue-700' : paso === 2 ? 'text-blue-700' : 'text-blue-700'}`}>
+        Paso {paso}: {pasos[paso - 1]}
+      </p>
     </div>
   )
 }
