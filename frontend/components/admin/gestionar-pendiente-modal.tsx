@@ -51,7 +51,7 @@ interface GestionarPendienteModalProps {
 function StepperHeader({ paso }: { paso: 1 | 2 | 3 }) {
   const pasos = ['Categoría', 'Asignación', 'Confirmación']
   return (
-    <div className="mb-5">
+    <div className="mb-5 min-w-0">
       <div className="flex items-center w-full">
         {([1, 2, 3] as const).map((num) => {
           const done = paso > num
@@ -278,7 +278,7 @@ export function GestionarPendienteModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-full max-w-[min(42rem,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent className="w-full !max-w-[min(42rem,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wrench className="h-5 w-5 text-blue-600" />
@@ -293,7 +293,7 @@ export function GestionarPendienteModal({
 
         {/* ────── PASO 1: CATEGORIZACIÓN ────── */}
         {paso === 1 && (
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0 overflow-hidden">
             <IncidenteInfoCard incidente={incidente} />
 
             <div className="space-y-2">
@@ -344,11 +344,11 @@ export function GestionarPendienteModal({
 
         {/* ────── PASO 2: ASIGNACIÓN DE TÉCNICO ────── */}
         {paso === 2 && (
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0 overflow-hidden">
             <IncidenteInfoCard incidente={{ ...incidente, categoria }} compact />
 
             {/* Disponibilidad del cliente — calendario */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0 overflow-hidden">
               <p className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5 text-amber-500" />
                 Disponibilidad del cliente
@@ -505,7 +505,7 @@ export function GestionarPendienteModal({
 
         {/* ────── PASO 3: CONFIRMACIÓN ────── */}
         {paso === 3 && (
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0 overflow-hidden">
             <Card className="bg-green-50 border-green-200">
               <CardContent className="pt-6 pb-5 flex flex-col items-center text-center gap-3">
                 <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
