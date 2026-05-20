@@ -620,6 +620,7 @@ export async function crearEmpleado(data: {
         dni: data.dni,
         direccion: data.direccion,
         especialidad: data.especialidad,
+        ...(data.rol === 'cliente' ? { debe_cambiar_password: true } : {}),
       },
     })
 
