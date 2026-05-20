@@ -26,10 +26,18 @@ function TecnicoNavComponent() {
   const [counts, setCounts] = useState<TecnicoBadgeCounts>({ disponibles: 0, trabajos: 0, pagos: 0, notificaciones: 0 })
 
   useEffect(() => {
-    getTecnicoBadgeCounts()
-      .then(setCounts)
-      .catch(() => {})
-  }, [pathname])
+    const refresh = () => getTecnicoBadgeCounts().then(setCounts).catch(() => {})
+    refresh()
+
+    const channel = supabase
+      .channel('tecnico-badges-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'asignaciones_tecnico' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conformidades' }, refresh)
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogout = useCallback(async () => {
     const { error } = await supabase.auth.signOut()

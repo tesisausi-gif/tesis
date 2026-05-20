@@ -14,7 +14,7 @@ type BadgeKey = keyof ClienteBadgeCounts
 
 const navItems: { title: string; icon: React.ElementType; href: string; badge?: BadgeKey }[] = [
   { title: 'Inicio', icon: Home, href: '/cliente' },
-  { title: 'Incidentes', icon: AlertCircle, href: '/cliente/incidentes' },
+  { title: 'Incidentes', icon: AlertCircle, href: '/cliente/incidentes', badge: 'presupuestos' },
   { title: 'Inmuebles', icon: Building2, href: '/cliente/propiedades' },
   { title: 'Perfil', icon: User, href: '/cliente/perfil' },
 ]
@@ -26,10 +26,17 @@ function ClienteNavComponent() {
   const [counts, setCounts] = useState<ClienteBadgeCounts>({ presupuestos: 0, pagos: 0, notificaciones: 0 })
 
   useEffect(() => {
-    getClienteBadgeCounts()
-      .then(setCounts)
-      .catch(() => {})
-  }, [pathname])
+    const refresh = () => getClienteBadgeCounts().then(setCounts).catch(() => {})
+    refresh()
+
+    const channel = supabase
+      .channel('cliente-badges-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cobros_clientes' }, refresh)
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogout = useCallback(async () => {
     const { error } = await supabase.auth.signOut()

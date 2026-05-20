@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   MapPin, ClipboardList, Clock, Wrench, FileText, CheckCircle, AlertTriangle, XCircle,
+  Phone, Mail, ChevronDown, ChevronUp, AlertCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -41,6 +42,44 @@ function formatFecha(raw: string | null | undefined): string {
   } catch {
     return ''
   }
+}
+
+// ── Próximo paso por estado ────────────────────────────────────────────────────
+
+interface ProximoPaso {
+  mensaje: string
+  urgente: boolean
+}
+
+function getProximoPaso(
+  asig: AsignacionTecnico,
+  estadoPresupuesto: string | undefined,
+  conformidad: { url_documento: string | null } | undefined,
+): ProximoPaso | null {
+  const estadoInc = asig.incidentes?.estado_actual ?? ''
+  const estadoAsig = asig.estado_asignacion
+
+  if (['finalizado', 'resuelto'].includes(estadoInc)) return null
+
+  if (!estadoPresupuesto) {
+    return { mensaje: 'Cargá el presupuesto para continuar', urgente: true }
+  }
+  if (estadoPresupuesto === 'enviado') {
+    return { mensaje: 'Presupuesto enviado — esperando aprobación del administrador', urgente: false }
+  }
+  if (estadoPresupuesto === 'aprobado_admin') {
+    return { mensaje: 'Admin aprobó — esperando aprobación del cliente', urgente: false }
+  }
+  if (estadoPresupuesto === 'rechazado') {
+    return { mensaje: 'Presupuesto rechazado — revisalo y volvé a enviar', urgente: true }
+  }
+  if (estadoPresupuesto === 'aprobado') {
+    if (!conformidad?.url_documento) {
+      return { mensaje: 'Subí la conformidad para finalizar el trabajo', urgente: true }
+    }
+    return { mensaje: 'Conformidad subida — esperando firma del cliente', urgente: false }
+  }
+  return null
 }
 
 // ── Mapa de estado visual (mismo patrón que cliente) ─────────────────────────
@@ -82,6 +121,7 @@ export function TrabajosContent({
   const [modalOpen, setModalOpen] = useState(false)
   const [cancelDialog, setCancelDialog] = useState<AsignacionTecnico | null>(null)
   const [isCancelling, setIsCancelling] = useState(false)
+  const [contactoExpandido, setContactoExpandido] = useState<number | null>(null)
 
   const abrirModal = (id: number, tab = 'detalles') => {
     setIncidenteSeleccionado(id)
@@ -163,6 +203,7 @@ export function TrabajosContent({
   const renderCard = (asig: AsignacionTecnico) => {
     const incidente = asig.incidentes
     const inmueble = incidente?.inmuebles
+    const cliente = incidente?.clientes
     const key = getStatusKey(asig)
     const cfg = STATUS_CONFIG[key] ?? STATUS_CONFIG.aceptada
     const { Icon } = cfg
@@ -173,13 +214,18 @@ export function TrabajosContent({
     const ubicacion = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
     const direccion = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
 
+    const estadoPres = estadoPresupuestoPorIncidente[asig.id_incidente]
+    const conformidad = conformidadesPorIncidente[asig.id_incidente]
+    const proximoPaso = getProximoPaso(asig, estadoPres, conformidad)
+    const contactoAbierto = contactoExpandido === asig.id_asignacion
+
     return (
       <div
         key={asig.id_asignacion}
         className={`bg-white rounded-2xl border-l-4 shadow-sm overflow-hidden ${cfg.borderColor}`}
       >
         <div className="px-4 py-4">
-          {/* Fila 1: ID + estado + flecha */}
+          {/* Fila 1: ID + estado */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-sm font-bold text-gray-900 shrink-0">Incidente #{asig.id_incidente}</span>
@@ -190,14 +236,28 @@ export function TrabajosContent({
             </div>
           </div>
 
-          {/* Fila 2: Descripción */}
+          {/* Próximo paso */}
+          {proximoPaso && (
+            <div className={`flex items-start gap-2 rounded-lg px-3 py-2 mb-3 ${
+              proximoPaso.urgente
+                ? 'bg-orange-50 border border-orange-200'
+                : 'bg-blue-50 border border-blue-100'
+            }`}>
+              <AlertCircle className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${proximoPaso.urgente ? 'text-orange-500' : 'text-blue-400'}`} />
+              <p className={`text-xs font-medium leading-snug ${proximoPaso.urgente ? 'text-orange-700' : 'text-blue-600'}`}>
+                {proximoPaso.mensaje}
+              </p>
+            </div>
+          )}
+
+          {/* Descripción */}
           {incidente?.descripcion_problema && (
             <p className="text-sm text-gray-700 line-clamp-2 mb-3 leading-snug">
               {incidente.descripcion_problema}
             </p>
           )}
 
-          {/* Fila 3: Dirección + fecha */}
+          {/* Dirección + fecha */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 text-xs text-gray-400 min-w-0">
               <MapPin className="w-3 h-3 shrink-0" />
@@ -208,12 +268,48 @@ export function TrabajosContent({
             </span>
           </div>
 
-          {/* Fila 4: Categoría */}
-          {incidente?.categoria && (
-            <div className="mt-2">
+          {/* Categoría + contacto toggle */}
+          <div className="flex items-center justify-between mt-2">
+            {incidente?.categoria && (
               <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                 {incidente.categoria}
               </span>
+            )}
+            {cliente && (
+              <button
+                onClick={() => setContactoExpandido(contactoAbierto ? null : asig.id_asignacion)}
+                className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full hover:bg-blue-100 transition-colors ml-auto"
+              >
+                Contacto cliente
+                {contactoAbierto ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+            )}
+          </div>
+
+          {/* Contacto expandible */}
+          {contactoAbierto && cliente && (
+            <div className="mt-2 bg-blue-50 border border-blue-100 rounded-xl p-3 space-y-1.5">
+              <p className="text-xs font-semibold text-blue-800">
+                {cliente.nombre} {cliente.apellido}
+              </p>
+              {cliente.telefono && (
+                <a
+                  href={`tel:${cliente.telefono}`}
+                  className="flex items-center gap-2 text-xs text-blue-700 hover:text-blue-900"
+                >
+                  <Phone className="w-3 h-3 shrink-0" />
+                  {cliente.telefono}
+                </a>
+              )}
+              {cliente.correo_electronico && (
+                <a
+                  href={`mailto:${cliente.correo_electronico}`}
+                  className="flex items-center gap-2 text-xs text-blue-700 hover:text-blue-900 break-all"
+                >
+                  <Mail className="w-3 h-3 shrink-0" />
+                  {cliente.correo_electronico}
+                </a>
+              )}
             </div>
           )}
         </div>
