@@ -1,52 +1,37 @@
 'use server'
 
-/**
- * Servicio de envío de emails transaccionales.
- * Requiere la variable de entorno RESEND_API_KEY.
- */
+import nodemailer from 'nodemailer'
 
-import { Resend } from 'resend'
+const APP_URL = 'https://tesis-three-drab.vercel.app'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://tesis.vercel.app'
-// onboarding@resend.dev funciona sin verificar dominio propio
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-
-function getResend() {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) throw new Error('RESEND_API_KEY no configurada')
-  return new Resend(apiKey)
+function getTransport() {
+  const user = process.env.GMAIL_USER
+  const pass = process.env.GMAIL_APP_PASSWORD
+  if (!user || !pass) throw new Error('GMAIL_USER o GMAIL_APP_PASSWORD no configuradas')
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass },
+  })
 }
 
-
-export async function enviarEmailBienvenida({
+export async function enviarCredencialesTecnico({
   destinatario,
   nombre,
   apellido,
   passwordTemporal,
-  rol,
 }: {
   destinatario: string
   nombre: string
   apellido: string
   passwordTemporal: string
-  rol: 'tecnico' | 'cliente'
 }): Promise<void> {
-  const resend = getResend()
-
-  const rolLabel = rol === 'tecnico' ? 'técnico' : 'cliente'
-  const dashboardPath = rol === 'tecnico' ? '/tecnico' : '/cliente'
-  const loginUrl = `${SITE_URL}/login`
-  const appUrl = `${SITE_URL}${dashboardPath}`
-
-  const subject = `Tu cuenta en Sistema ISBA fue aprobada`
+  const transport = getTransport()
 
   const html = `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f4f5; margin: 0; padding: 24px; }
     .container { max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -54,21 +39,14 @@ export async function enviarEmailBienvenida({
     .header h1 { color: #fff; margin: 0; font-size: 20px; font-weight: 600; }
     .header p { color: #94a3b8; margin: 4px 0 0; font-size: 13px; }
     .body { padding: 32px; }
-    .greeting { font-size: 16px; color: #1e293b; margin-bottom: 16px; }
-    .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; }
-    .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
-    .info-row:last-child { border-bottom: none; padding-bottom: 0; }
-    .info-label { color: #64748b; }
-    .info-value { color: #1e293b; font-weight: 600; font-family: monospace; }
-    .password-box { background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
-    .password-box p { margin: 0 0 8px; font-size: 13px; color: #92400e; }
-    .password-value { font-family: monospace; font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: 2px; }
-    .warning { font-size: 12px; color: #b45309; margin-top: 8px; display: block; }
-    .btn { display: inline-block; background: #2563eb; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; margin: 8px 4px; }
-    .btn-outline { background: transparent; border: 2px solid #2563eb; color: #2563eb; }
-    .buttons { text-align: center; margin: 24px 0; }
-    .footer { padding: 20px 32px; border-top: 1px solid #e2e8f0; text-align: center; }
-    .footer p { font-size: 12px; color: #94a3b8; margin: 0; }
+    .creds { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    .row { padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-size: 14px; display: flex; justify-content: space-between; }
+    .row:last-child { border-bottom: none; padding-bottom: 0; }
+    .label { color: #64748b; }
+    .value { color: #1e293b; font-weight: 700; font-family: monospace; }
+    .warning { background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 18px; margin: 20px 0; font-size: 13px; color: #92400e; }
+    .btn { display: block; background: #2563eb; color: #fff; text-decoration: none; padding: 14px 0; border-radius: 8px; font-size: 16px; font-weight: 600; text-align: center; margin: 24px 0; }
+    .footer { padding: 20px 32px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 12px; color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -78,133 +56,36 @@ export async function enviarEmailBienvenida({
       <p>Gestión de Incidentes</p>
     </div>
     <div class="body">
-      <p class="greeting">Hola <strong>${nombre} ${apellido}</strong>,</p>
+      <p style="font-size:16px;color:#1e293b;">Hola <strong>${nombre} ${apellido}</strong>,</p>
       <p style="color:#475569;font-size:14px;line-height:1.6;">
-        Tu solicitud de registro como <strong>${rolLabel}</strong> fue aprobada.
-        Ya podés acceder al sistema con las siguientes credenciales:
+        Tu solicitud de registro como <strong>técnico</strong> fue aprobada. Podés ingresar al sistema con las siguientes credenciales:
       </p>
-
-      <div class="info-box">
-        <div class="info-row">
-          <span class="info-label">Correo electrónico</span>
-          <span class="info-value">${destinatario}</span>
+      <div class="creds">
+        <div class="row">
+          <span class="label">Correo</span>
+          <span class="value">${destinatario}</span>
         </div>
-        <div class="info-row">
-          <span class="info-label">Rol</span>
-          <span class="info-value">${rolLabel.charAt(0).toUpperCase() + rolLabel.slice(1)}</span>
+        <div class="row">
+          <span class="label">Contraseña temporal</span>
+          <span class="value">${passwordTemporal}</span>
         </div>
       </div>
-
-      <div class="password-box">
-        <p>Tu contraseña temporal:</p>
-        <div class="password-value">${passwordTemporal}</div>
-        <span class="warning">⚠️ Deberás cambiarla obligatoriamente en tu primer inicio de sesión.</span>
+      <div class="warning">
+        ⚠️ Al ingresar por primera vez se te pedirá que cambies la contraseña obligatoriamente.
       </div>
-
-      <div class="buttons">
-        <a href="${loginUrl}" class="btn">Iniciar Sesión</a>
-      </div>
-
-      <p style="font-size:13px;color:#64748b;line-height:1.6;">
-        Si tenés problemas para acceder, copiá este enlace en tu navegador:<br>
-        <a href="${loginUrl}" style="color:#2563eb;word-break:break-all;">${loginUrl}</a>
-      </p>
+      <a href="${APP_URL}/login" class="btn">Ingresar al sistema</a>
     </div>
     <div class="footer">
-      <p>Este es un correo automático del Sistema ISBA. No respondas a este mensaje.</p>
+      Este es un correo automático del Sistema ISBA. No respondas a este mensaje.
     </div>
   </div>
 </body>
-</html>
-  `.trim()
+</html>`.trim()
 
-  await resend.emails.send({
-    from: FROM_EMAIL,
+  await transport.sendMail({
+    from: `Sistema ISBA <${process.env.GMAIL_USER}>`,
     to: destinatario,
-    subject,
-    html,
-  })
-}
-
-export async function enviarMagicLinkTecnico({
-  destinatario,
-  nombre,
-  apellido,
-  magicLink,
-}: {
-  destinatario: string
-  nombre: string
-  apellido: string
-  magicLink: string
-}): Promise<void> {
-  const resend = getResend()
-
-  const subject = `Tu cuenta en Sistema ISBA fue aprobada — Accedé ahora`
-
-  const html = `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f4f5; margin: 0; padding: 24px; }
-    .container { max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .header { background: #1e293b; padding: 28px 32px; text-align: center; }
-    .header h1 { color: #fff; margin: 0; font-size: 20px; font-weight: 600; }
-    .header p { color: #94a3b8; margin: 4px 0 0; font-size: 13px; }
-    .body { padding: 32px; }
-    .greeting { font-size: 16px; color: #1e293b; margin-bottom: 16px; }
-    .notice { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 14px; color: #166534; line-height: 1.6; }
-    .btn { display: inline-block; background: #2563eb; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; }
-    .buttons { text-align: center; margin: 28px 0; }
-    .link-fallback { font-size: 12px; color: #64748b; line-height: 1.6; margin-top: 16px; }
-    .footer { padding: 20px 32px; border-top: 1px solid #e2e8f0; text-align: center; }
-    .footer p { font-size: 12px; color: #94a3b8; margin: 0; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Sistema ISBA</h1>
-      <p>Gestión de Incidentes</p>
-    </div>
-    <div class="body">
-      <p class="greeting">Hola <strong>${nombre} ${apellido}</strong>,</p>
-      <p style="color:#475569;font-size:14px;line-height:1.6;">
-        Tu solicitud de registro como <strong>técnico</strong> fue aprobada.
-        Hacé clic en el botón para ingresar al sistema:
-      </p>
-
-      <div class="buttons">
-        <a href="${magicLink}" class="btn">Ingresar al sistema</a>
-      </div>
-
-      <div class="notice">
-        Al ingresar por primera vez se te pedirá que establezcas tu propia contraseña.
-      </div>
-
-      <p class="link-fallback">
-        Si el botón no funciona, copiá este enlace en tu navegador:<br>
-        <a href="${magicLink}" style="color:#2563eb;word-break:break-all;">${magicLink}</a>
-      </p>
-      <p class="link-fallback" style="margin-top:12px;">
-        ⚠️ Este enlace es de un solo uso y expira en 24 horas.
-      </p>
-    </div>
-    <div class="footer">
-      <p>Este es un correo automático del Sistema ISBA. No respondas a este mensaje.</p>
-    </div>
-  </div>
-</body>
-</html>
-  `.trim()
-
-  await resend.emails.send({
-    from: FROM_EMAIL,
-    to: destinatario,
-    subject,
+    subject: 'Tu cuenta en Sistema ISBA fue aprobada',
     html,
   })
 }

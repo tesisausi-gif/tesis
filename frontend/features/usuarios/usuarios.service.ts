@@ -359,28 +359,33 @@ export async function aprobarSolicitudTecnico(
     return { success: false, error: 'Solicitud no encontrada' }
   }
 
-  const siteUrl = 'https://tesis-three-drab.vercel.app'
+  // Contraseña temporal legible (obligatoriamente cambiada en el primer login)
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  const passwordTemporal = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
 
-  // 2. Invitar al usuario: Supabase crea la cuenta Y manda el email con magic link
-  //    Usamos rol 'gestor' para que el trigger solo inserte en `usuarios` (no en `tecnicos`)
-  const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-    solicitud.email,
-    {
-      data: {
-        nombre: solicitud.nombre,
-        apellido: solicitud.apellido,
-        rol: 'gestor',
-        debe_cambiar_password: true,
-      },
-      redirectTo: `${siteUrl}/auth/confirm?next=/tecnico`,
-    }
-  )
+  // 2. Crear usuario en Supabase Auth. Rol 'gestor' para que el trigger
+  //    solo inserte en `usuarios` (sin tocar `tecnicos`).
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email: solicitud.email,
+    password: passwordTemporal,
+    email_confirm: true,
+    user_metadata: {
+      nombre: solicitud.nombre,
+      apellido: solicitud.apellido,
+      rol: 'gestor',
+      debe_cambiar_password: true,
+    },
+  })
 
-  if (inviteError || !inviteData?.user) {
-    return { success: false, error: inviteError?.message || 'No se pudo crear el usuario' }
+  if (authError) {
+    return { success: false, error: authError.message }
   }
 
-  const authUserId = inviteData.user.id
+  if (!authData.user) {
+    return { success: false, error: 'No se pudo crear el usuario' }
+  }
+
+  const authUserId = authData.user.id
 
   // 3. Insertar manualmente en `tecnicos`
   const { data: tecnicoInsert, error: tecnicoError } = await supabase
@@ -426,6 +431,19 @@ export async function aprobarSolicitudTecnico(
       fecha_aprobacion: new Date().toISOString(),
     })
     .eq('id_solicitud', solicitudId)
+
+  // 6. Enviar email con credenciales (fire-and-forget)
+  try {
+    const { enviarCredencialesTecnico } = await import('@/features/email/email.service')
+    await enviarCredencialesTecnico({
+      destinatario: solicitud.email,
+      nombre: solicitud.nombre,
+      apellido: solicitud.apellido,
+      passwordTemporal,
+    })
+  } catch (emailError) {
+    console.error('[email] Error al enviar credenciales:', emailError)
+  }
 
   return { success: true, data: undefined }
 }
