@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import type { ActionResult } from '@/shared/types'
-import type { FranjaDisponibilidad, CompromisoTecnico } from './disponibilidad.types'
+import type { FranjaDisponibilidad, CompromisoTecnico, CompromisoAgenda } from './disponibilidad.types'
 
 // ── Franjas de disponibilidad (cliente) ──────────────────────────────────────
 
@@ -139,6 +139,26 @@ export async function getCompromisoDeAsignacion(idAsignacion: number): Promise<C
     .eq('estado', 'programado')
     .maybeSingle()
   return data as CompromisoTecnico | null
+}
+
+export async function getCompromisosDelTecnico(idTecnico: number): Promise<CompromisoAgenda[]> {
+  if (!idTecnico) return []
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('compromisos_tecnico')
+    .select(`
+      *,
+      incidentes(
+        descripcion_problema,
+        categoria,
+        inmuebles(calle, altura, barrio, localidad)
+      )
+    `)
+    .eq('id_tecnico', idTecnico)
+    .eq('estado', 'programado')
+    .order('fecha_visita')
+    .order('hora_inicio')
+  return (data ?? []) as unknown as CompromisoAgenda[]
 }
 
 export async function liberarCompromisoDeIncidente(idIncidente: number): Promise<void> {

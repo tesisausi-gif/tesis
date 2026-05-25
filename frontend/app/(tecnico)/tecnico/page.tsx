@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { getTecnicoBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 import { getNotificacionesTecnico } from '@/features/notificaciones/notificaciones-inapp.service'
 import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
+import { getCompromisosDelTecnico } from '@/features/disponibilidad/disponibilidad.service'
+import { AgendaTecnico } from '@/components/tecnico/agenda-tecnico.client'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,9 +30,10 @@ export default async function TecnicoDashboard() {
     .select('incidentes(estado_actual)')
     .eq('id_tecnico', tecnico?.id_tecnico)
 
-  const [badgeCounts, notificaciones] = await Promise.all([
+  const [badgeCounts, notificaciones, compromisos] = await Promise.all([
     getTecnicoBadgeCounts().catch(() => ({ disponibles: 0, trabajos: 0, pagos: 0, notificaciones: 0 })),
     getNotificacionesTecnico().catch(() => []),
+    getCompromisosDelTecnico(tecnico?.id_tecnico ?? 0).catch(() => []),
   ])
 
   // Contar por estado_actual del incidente
@@ -150,6 +153,9 @@ export default async function TecnicoDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Agenda */}
+      <AgendaTecnico compromisos={compromisos} />
 
       {/* Notificaciones */}
       <Card className="border-2">
