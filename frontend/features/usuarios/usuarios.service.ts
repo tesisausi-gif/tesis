@@ -372,6 +372,7 @@ export async function aprobarSolicitudTecnico(
       nombre: solicitud.nombre,
       apellido: solicitud.apellido,
       rol: 'gestor', // Neutral: trigger solo crea registro en `usuarios`
+      debe_cambiar_password: true,
     },
   })
 
@@ -413,7 +414,7 @@ export async function aprobarSolicitudTecnico(
   //    y activar bandera de cambio obligatorio de contraseña
   const { error: updError } = await supabase
     .from('usuarios')
-    .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico, debe_cambiar_password: false })
+    .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico, debe_cambiar_password: true })
     .eq('id', authUserId)
 
   if (updError) {
