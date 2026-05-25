@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { es } from 'date-fns/locale'
 import { format, parseISO, isToday, isBefore, startOfDay, isValid } from 'date-fns'
 import {
-  CalendarDays, MapPin, Clock, ChevronLeft, ChevronRight, ExternalLink,
+  CalendarDays, MapPin, Clock, ChevronLeft, ChevronRight, ExternalLink, X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,6 +14,8 @@ import type { FranjaAgenda } from '@/features/disponibilidad/disponibilidad.type
 
 interface AgendaTecnicoProps {
   franjas: FranjaAgenda[]
+  /** Omite el Card wrapper — para usar dentro de un Dialog */
+  embedded?: boolean
 }
 
 function getAddress(f: FranjaAgenda): string | null {
@@ -35,8 +37,6 @@ function FranjaCard({ franja: f, past = false }: { franja: FranjaAgenda; past?: 
       }`}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0 space-y-1.5">
-
-            {/* Franja horaria + categoría */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="flex items-center gap-1 text-[11px] font-semibold bg-blue-600 text-white px-2 py-0.5 rounded-full">
                 <Clock className="w-3 h-3" />
@@ -48,13 +48,9 @@ function FranjaCard({ franja: f, past = false }: { franja: FranjaAgenda; past?: 
                 </span>
               )}
             </div>
-
-            {/* Incidente + descripción */}
             <p className="text-xs font-semibold text-slate-700 truncate">
               #{f.id_incidente} · {f.incidentes?.descripcion_problema ?? 'Sin descripción'}
             </p>
-
-            {/* Dirección */}
             {address && (
               <div className="flex items-center gap-1 text-[11px] text-slate-500">
                 <MapPin className="w-3 h-3 shrink-0" />
@@ -69,12 +65,10 @@ function FranjaCard({ franja: f, past = false }: { franja: FranjaAgenda; past?: 
   )
 }
 
-export function AgendaTecnico({ franjas }: AgendaTecnicoProps) {
+function AgendaContent({ franjas }: { franjas: FranjaAgenda[] }) {
   const [diaSeleccionado, setDiaSeleccionado] = useState<Date | undefined>(undefined)
-  const fechaRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const hoy = startOfDay(new Date())
 
-  // Agrupar franjas por fecha
   const porFecha: Record<string, FranjaAgenda[]> = {}
   for (const f of franjas) {
     if (!porFecha[f.fecha]) porFecha[f.fecha] = []
@@ -84,44 +78,156 @@ export function AgendaTecnico({ franjas }: AgendaTecnicoProps) {
   const futuras = fechasOrdenadas.filter(f => { try { return !isBefore(parseISO(f), hoy) } catch { return true } })
   const pasadas = fechasOrdenadas.filter(f => { try { return isBefore(parseISO(f), hoy) } catch { return false } })
 
-  // Días con disponibilidad del cliente
   const diasConFranja = franjas
     .map(f => { try { const d = parseISO(f.fecha); return isValid(d) ? d : null } catch { return null } })
     .filter((d): d is Date => d !== null)
 
+  const selectedIso = diaSeleccionado ? format(diaSeleccionado, 'yyyy-MM-dd') : null
+
   const handleDayClick = (day: Date | undefined) => {
     if (!day) return
-    setDiaSeleccionado(day)
     const iso = format(day, 'yyyy-MM-dd')
-    setTimeout(() => {
-      fechaRefs.current.get(iso)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 50)
+    setDiaSeleccionado(prev => prev && format(prev, 'yyyy-MM-dd') === iso ? undefined : day)
   }
 
-  // Estado vacío
-  if (franjas.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="pb-3 pt-4 px-5">
-          <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-              <CalendarDays className="h-4 w-4 text-blue-600" />
-            </div>
-            Mi Agenda
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 text-center space-y-2">
-          <CalendarDays className="h-10 w-10 text-slate-200 mx-auto" />
-          <p className="text-sm font-medium text-slate-500">No tenés visitas pendientes</p>
-          <p className="text-xs text-slate-400">
-            Tus incidentes asignados aparecerán acá con los horarios que eligió el cliente
+  // Cuando hay día seleccionado, mostrar solo ese día; si no, mostrar todo
+  const fechasAMostrar = selectedIso && porFecha[selectedIso]
+    ? [selectedIso]
+    : futuras
+
+  return (
+    <div className="space-y-4">
+      {/* Calendario */}
+      <div className="flex justify-center rounded-xl border border-slate-100 bg-slate-50/50 p-3">
+        <DayPicker
+          locale={es}
+          mode="single"
+          selected={diaSeleccionado}
+          onSelect={handleDayClick}
+          modifiers={{ conFranja: diasConFranja }}
+          modifiersClassNames={{ conFranja: '!bg-blue-600 !text-white !rounded-full !font-bold' }}
+          components={{
+            Chevron: ({ orientation }: { orientation?: string }) =>
+              orientation === 'left'
+                ? <ChevronLeft className="h-4 w-4" />
+                : <ChevronRight className="h-4 w-4" />,
+          }}
+          classNames={{
+            months: 'flex flex-col',
+            month: 'space-y-2',
+            month_caption: 'flex justify-center pt-1 relative items-center pb-1',
+            caption_label: 'text-sm font-medium capitalize',
+            nav: 'flex items-center gap-1',
+            button_previous: 'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
+            button_next:     'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
+            month_grid: 'border-collapse',
+            weekdays: 'flex',
+            weekday: 'text-gray-400 rounded-md w-8 font-normal text-[0.65rem] text-center py-1',
+            week: 'flex mt-1',
+            day: 'h-8 w-8 text-center text-sm p-0 relative',
+            day_button: 'h-8 w-8 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors text-sm',
+            selected: '!ring-2 !ring-blue-400 !ring-offset-1',
+            today: '!text-blue-600 !font-bold',
+            outside: 'text-gray-300 opacity-50',
+            disabled: 'text-gray-300 opacity-40 cursor-not-allowed',
+          }}
+        />
+      </div>
+
+      <p className="text-[11px] text-center text-slate-400 flex items-center justify-center gap-1.5">
+        <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600" />
+        disponibilidad del cliente · tocá un día para filtrar
+      </p>
+
+      {/* Indicador de filtro activo */}
+      {selectedIso && (
+        <div className="flex items-center justify-between px-0.5">
+          <span className="text-xs font-semibold text-blue-700 capitalize">
+            {format(parseISO(selectedIso), "EEEE d 'de' MMMM", { locale: es })}
+          </span>
+          <button
+            onClick={() => setDiaSeleccionado(undefined)}
+            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X className="w-3 h-3" />
+            Ver todos
+          </button>
+        </div>
+      )}
+
+      {/* Lista filtrada o completa */}
+      {fechasAMostrar.length > 0 ? (
+        <div className="space-y-4">
+          {fechasAMostrar.map(fecha => {
+            const esHoy = isToday(parseISO(fecha))
+            return (
+              <div key={fecha}>
+                {!selectedIso && (
+                  <div className="flex items-center gap-2 mb-2 px-0.5">
+                    <span className={`text-xs font-semibold capitalize ${esHoy ? 'text-blue-700' : 'text-slate-600'}`}>
+                      {format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es })}
+                    </span>
+                    {esHoy && (
+                      <span className="text-[10px] bg-blue-600 text-white rounded-full px-1.5 py-0.5 font-bold leading-none">
+                        HOY
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {porFecha[fecha].map(f => (
+                    <FranjaCard key={f.id_franja} franja={f} />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : selectedIso ? (
+        <p className="text-center text-sm text-slate-400 py-4">Sin incidentes para este día</p>
+      ) : null}
+
+      {/* Pasadas — solo cuando no hay filtro activo */}
+      {!selectedIso && pasadas.length > 0 && (
+        <div className="pt-2 border-t border-slate-100">
+          <p className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold mb-3">
+            Anteriores sin cerrar
           </p>
-        </CardContent>
-      </Card>
-    )
-  }
+          <div className="space-y-4 opacity-60">
+            {pasadas.map(fecha => (
+              <div key={fecha}>
+                <p className="text-xs text-slate-500 capitalize mb-2">
+                  {format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es })}
+                </p>
+                <div className="space-y-2">
+                  {porFecha[fecha].map(f => (
+                    <FranjaCard key={f.id_franja} franja={f} past />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
-  const selectedIso = diaSeleccionado ? format(diaSeleccionado, 'yyyy-MM-dd') : null
+export function AgendaTecnico({ franjas, embedded = false }: AgendaTecnicoProps) {
+  const isEmpty = franjas.length === 0
+
+  if (embedded) {
+    if (isEmpty) {
+      return (
+        <div className="text-center space-y-2 py-4">
+          <CalendarDays className="h-10 w-10 text-slate-200 mx-auto" />
+          <p className="text-sm font-medium text-slate-500">Sin visitas pendientes</p>
+          <p className="text-xs text-slate-400">Los incidentes asignados aparecerán acá con los horarios del cliente</p>
+        </div>
+      )
+    }
+    return <AgendaContent franjas={franjas} />
+  }
 
   return (
     <Card>
@@ -133,110 +239,28 @@ export function AgendaTecnico({ franjas }: AgendaTecnicoProps) {
             </div>
             Mi Agenda
           </CardTitle>
-          <Badge className="bg-blue-100 text-blue-700 text-xs font-semibold">
-            {Object.keys(porFecha).length} día{Object.keys(porFecha).length !== 1 ? 's' : ''}
-          </Badge>
+          {!isEmpty && (
+            <Badge className="bg-blue-100 text-blue-700 text-xs font-semibold">
+              {Object.keys(
+                franjas.reduce((acc, f) => ({ ...acc, [f.fecha]: true }), {} as Record<string, boolean>)
+              ).length} día{Object.keys(
+                franjas.reduce((acc, f) => ({ ...acc, [f.fecha]: true }), {} as Record<string, boolean>)
+              ).length !== 1 ? 's' : ''}
+            </Badge>
+          )}
         </div>
       </CardHeader>
-
-      <CardContent className="px-5 pb-5 space-y-4">
-
-        {/* ── Calendario ── */}
-        <div className="flex justify-center rounded-xl border border-slate-100 bg-slate-50/50 p-3">
-          <DayPicker
-            locale={es}
-            mode="single"
-            selected={diaSeleccionado}
-            onSelect={handleDayClick}
-            modifiers={{ conFranja: diasConFranja }}
-            modifiersClassNames={{ conFranja: '!bg-blue-600 !text-white !rounded-full !font-bold' }}
-            components={{
-              Chevron: ({ orientation }: { orientation?: string }) =>
-                orientation === 'left'
-                  ? <ChevronLeft className="h-4 w-4" />
-                  : <ChevronRight className="h-4 w-4" />,
-            }}
-            classNames={{
-              months: 'flex flex-col',
-              month: 'space-y-2',
-              month_caption: 'flex justify-center pt-1 relative items-center pb-1',
-              caption_label: 'text-sm font-medium capitalize',
-              nav: 'flex items-center gap-1',
-              button_previous: 'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
-              button_next:     'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
-              month_grid: 'border-collapse',
-              weekdays: 'flex',
-              weekday: 'text-gray-400 rounded-md w-8 font-normal text-[0.65rem] text-center py-1',
-              week: 'flex mt-1',
-              day: 'h-8 w-8 text-center text-sm p-0 relative',
-              day_button: 'h-8 w-8 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors text-sm',
-              selected: '!ring-2 !ring-blue-400 !ring-offset-1',
-              today: '!text-blue-600 !font-bold',
-              outside: 'text-gray-300 opacity-50',
-              disabled: 'text-gray-300 opacity-40 cursor-not-allowed',
-            }}
-          />
-        </div>
-
-        <p className="text-[11px] text-center text-slate-400 flex items-center justify-center gap-1.5">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600" />
-          días con disponibilidad del cliente · tocá un día para ir directo
-        </p>
-
-        {/* ── Días futuros ── */}
-        {futuras.length > 0 && (
-          <div className="space-y-4">
-            {futuras.map(fecha => {
-              const esHoy = isToday(parseISO(fecha))
-              const esSeleccionado = fecha === selectedIso
-              return (
-                <div
-                  key={fecha}
-                  ref={el => { if (el) fechaRefs.current.set(fecha, el); else fechaRefs.current.delete(fecha) }}
-                  className={`rounded-xl transition-all ${esSeleccionado ? 'ring-2 ring-blue-300 ring-offset-2' : ''}`}
-                >
-                  <div className="flex items-center gap-2 mb-2 px-0.5">
-                    <span className={`text-xs font-semibold capitalize ${esHoy ? 'text-blue-700' : 'text-slate-600'}`}>
-                      {format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es })}
-                    </span>
-                    {esHoy && (
-                      <span className="text-[10px] bg-blue-600 text-white rounded-full px-1.5 py-0.5 font-bold leading-none">
-                        HOY
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {porFecha[fecha].map(f => (
-                      <FranjaCard key={f.id_franja} franja={f} />
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* ── Pasadas sin cerrar ── */}
-        {pasadas.length > 0 && (
-          <div className="pt-2 border-t border-slate-100">
-            <p className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold mb-3">
-              Anteriores sin cerrar
+      <CardContent className="px-5 pb-5">
+        {isEmpty ? (
+          <div className="text-center space-y-2 py-2">
+            <CalendarDays className="h-10 w-10 text-slate-200 mx-auto" />
+            <p className="text-sm font-medium text-slate-500">No tenés visitas pendientes</p>
+            <p className="text-xs text-slate-400">
+              Tus incidentes asignados aparecerán acá con los horarios que eligió el cliente
             </p>
-            <div className="space-y-4 opacity-60">
-              {pasadas.map(fecha => (
-                <div key={fecha}>
-                  <p className="text-xs text-slate-500 capitalize mb-2">
-                    {format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es })}
-                  </p>
-                  <div className="space-y-2">
-                    {porFecha[fecha].map(f => (
-                      <FranjaCard key={f.id_franja} franja={f} past />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
+        ) : (
+          <AgendaContent franjas={franjas} />
         )}
       </CardContent>
     </Card>
