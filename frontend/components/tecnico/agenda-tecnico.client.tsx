@@ -10,22 +10,22 @@ import {
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import type { CompromisoAgenda } from '@/features/disponibilidad/disponibilidad.types'
+import type { FranjaAgenda } from '@/features/disponibilidad/disponibilidad.types'
 
 interface AgendaTecnicoProps {
-  compromisos: CompromisoAgenda[]
+  franjas: FranjaAgenda[]
 }
 
-function getAddress(c: CompromisoAgenda): string | null {
-  const inm = c.incidentes?.inmuebles
+function getAddress(f: FranjaAgenda): string | null {
+  const inm = f.incidentes?.inmuebles
   if (!inm) return null
   const partes = [inm.calle, inm.altura].filter(Boolean).join(' ')
   const ub = [inm.barrio, inm.localidad].filter(Boolean).join(', ')
   return ub ? `${partes}, ${ub}` : partes || null
 }
 
-function VisitaCard({ compromiso: c, past = false }: { compromiso: CompromisoAgenda; past?: boolean }) {
-  const address = getAddress(c)
+function FranjaCard({ franja: f, past = false }: { franja: FranjaAgenda; past?: boolean }) {
+  const address = getAddress(f)
   return (
     <Link href="/tecnico/trabajos">
       <div className={`rounded-xl border p-3 transition-colors ${
@@ -36,25 +36,25 @@ function VisitaCard({ compromiso: c, past = false }: { compromiso: CompromisoAge
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0 space-y-1.5">
 
-            {/* Time + category */}
+            {/* Franja horaria + categoría */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="flex items-center gap-1 text-[11px] font-semibold bg-blue-600 text-white px-2 py-0.5 rounded-full">
                 <Clock className="w-3 h-3" />
-                {c.hora_inicio} – {c.hora_fin_estimada}
+                {f.hora_inicio} – {f.hora_fin}
               </span>
-              {c.incidentes?.categoria && (
+              {f.incidentes?.categoria && (
                 <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                  {c.incidentes.categoria}
+                  {f.incidentes.categoria}
                 </span>
               )}
             </div>
 
-            {/* Incident + description */}
+            {/* Incidente + descripción */}
             <p className="text-xs font-semibold text-slate-700 truncate">
-              #{c.id_incidente} · {c.incidentes?.descripcion_problema ?? 'Sin descripción'}
+              #{f.id_incidente} · {f.incidentes?.descripcion_problema ?? 'Sin descripción'}
             </p>
 
-            {/* Address */}
+            {/* Dirección */}
             {address && (
               <div className="flex items-center gap-1 text-[11px] text-slate-500">
                 <MapPin className="w-3 h-3 shrink-0" />
@@ -69,24 +69,24 @@ function VisitaCard({ compromiso: c, past = false }: { compromiso: CompromisoAge
   )
 }
 
-export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
+export function AgendaTecnico({ franjas }: AgendaTecnicoProps) {
   const [diaSeleccionado, setDiaSeleccionado] = useState<Date | undefined>(undefined)
   const fechaRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const hoy = startOfDay(new Date())
 
-  // Group by date
-  const porFecha: Record<string, CompromisoAgenda[]> = {}
-  for (const c of compromisos) {
-    if (!porFecha[c.fecha_visita]) porFecha[c.fecha_visita] = []
-    porFecha[c.fecha_visita].push(c)
+  // Agrupar franjas por fecha
+  const porFecha: Record<string, FranjaAgenda[]> = {}
+  for (const f of franjas) {
+    if (!porFecha[f.fecha]) porFecha[f.fecha] = []
+    porFecha[f.fecha].push(f)
   }
   const fechasOrdenadas = Object.keys(porFecha).sort()
   const futuras = fechasOrdenadas.filter(f => { try { return !isBefore(parseISO(f), hoy) } catch { return true } })
   const pasadas = fechasOrdenadas.filter(f => { try { return isBefore(parseISO(f), hoy) } catch { return false } })
 
-  // Calendar modifiers — días con compromisos
-  const diasConCompromiso = compromisos
-    .map(c => { try { const d = parseISO(c.fecha_visita); return isValid(d) ? d : null } catch { return null } })
+  // Días con disponibilidad del cliente
+  const diasConFranja = franjas
+    .map(f => { try { const d = parseISO(f.fecha); return isValid(d) ? d : null } catch { return null } })
     .filter((d): d is Date => d !== null)
 
   const handleDayClick = (day: Date | undefined) => {
@@ -98,8 +98,8 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
     }, 50)
   }
 
-  // Empty state
-  if (compromisos.length === 0) {
+  // Estado vacío
+  if (franjas.length === 0) {
     return (
       <Card>
         <CardHeader className="pb-3 pt-4 px-5">
@@ -112,13 +112,9 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
         </CardHeader>
         <CardContent className="px-5 pb-5 text-center space-y-2">
           <CalendarDays className="h-10 w-10 text-slate-200 mx-auto" />
-          <p className="text-sm font-medium text-slate-500">No tenés visitas programadas</p>
+          <p className="text-sm font-medium text-slate-500">No tenés visitas pendientes</p>
           <p className="text-xs text-slate-400">
-            Desde{' '}
-            <Link href="/tecnico/trabajos" className="text-blue-600 underline">
-              Trabajos
-            </Link>{' '}
-            podés coordinar el horario con el cliente
+            Tus incidentes asignados aparecerán acá con los horarios que eligió el cliente
           </p>
         </CardContent>
       </Card>
@@ -138,7 +134,7 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
             Mi Agenda
           </CardTitle>
           <Badge className="bg-blue-100 text-blue-700 text-xs font-semibold">
-            {compromisos.length} visita{compromisos.length !== 1 ? 's' : ''}
+            {Object.keys(porFecha).length} día{Object.keys(porFecha).length !== 1 ? 's' : ''}
           </Badge>
         </div>
       </CardHeader>
@@ -152,8 +148,8 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
             mode="single"
             selected={diaSeleccionado}
             onSelect={handleDayClick}
-            modifiers={{ comprometido: diasConCompromiso }}
-            modifiersClassNames={{ comprometido: '!bg-blue-600 !text-white !rounded-full !font-bold' }}
+            modifiers={{ conFranja: diasConFranja }}
+            modifiersClassNames={{ conFranja: '!bg-blue-600 !text-white !rounded-full !font-bold' }}
             components={{
               Chevron: ({ orientation }: { orientation?: string }) =>
                 orientation === 'left'
@@ -184,10 +180,10 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
 
         <p className="text-[11px] text-center text-slate-400 flex items-center justify-center gap-1.5">
           <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600" />
-          días con visita programada · tocá un día para ir directo
+          días con disponibilidad del cliente · tocá un día para ir directo
         </p>
 
-        {/* ── Lista: visitas futuras ── */}
+        {/* ── Días futuros ── */}
         {futuras.length > 0 && (
           <div className="space-y-4">
             {futuras.map(fecha => {
@@ -199,7 +195,6 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
                   ref={el => { if (el) fechaRefs.current.set(fecha, el); else fechaRefs.current.delete(fecha) }}
                   className={`rounded-xl transition-all ${esSeleccionado ? 'ring-2 ring-blue-300 ring-offset-2' : ''}`}
                 >
-                  {/* Date header */}
                   <div className="flex items-center gap-2 mb-2 px-0.5">
                     <span className={`text-xs font-semibold capitalize ${esHoy ? 'text-blue-700' : 'text-slate-600'}`}>
                       {format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es })}
@@ -210,11 +205,9 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
                       </span>
                     )}
                   </div>
-
-                  {/* Visit cards for this day */}
                   <div className="space-y-2">
-                    {porFecha[fecha].map(c => (
-                      <VisitaCard key={c.id_asignacion} compromiso={c} />
+                    {porFecha[fecha].map(f => (
+                      <FranjaCard key={f.id_franja} franja={f} />
                     ))}
                   </div>
                 </div>
@@ -223,7 +216,7 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
           </div>
         )}
 
-        {/* ── Visitas pasadas no cerradas (edge case) ── */}
+        {/* ── Pasadas sin cerrar ── */}
         {pasadas.length > 0 && (
           <div className="pt-2 border-t border-slate-100">
             <p className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold mb-3">
@@ -236,8 +229,8 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
                     {format(parseISO(fecha), "EEEE d 'de' MMMM", { locale: es })}
                   </p>
                   <div className="space-y-2">
-                    {porFecha[fecha].map(c => (
-                      <VisitaCard key={c.id_asignacion} compromiso={c} past />
+                    {porFecha[fecha].map(f => (
+                      <FranjaCard key={f.id_franja} franja={f} past />
                     ))}
                   </div>
                 </div>

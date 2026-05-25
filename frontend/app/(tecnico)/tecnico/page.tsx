@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { getTecnicoBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 import { getNotificacionesTecnico } from '@/features/notificaciones/notificaciones-inapp.service'
 import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
-import { getCompromisosDelTecnico } from '@/features/disponibilidad/disponibilidad.service'
+import { getFranjasAgendaTecnico } from '@/features/disponibilidad/disponibilidad.service'
 import { AgendaTecnico } from '@/components/tecnico/agenda-tecnico.client'
 
 export const dynamic = 'force-dynamic'
@@ -33,7 +33,7 @@ export default async function TecnicoDashboard() {
   const [badgeCounts, notificaciones, compromisos] = await Promise.all([
     getTecnicoBadgeCounts().catch(() => ({ disponibles: 0, trabajos: 0, pagos: 0, notificaciones: 0 })),
     getNotificacionesTecnico().catch(() => []),
-    getCompromisosDelTecnico(tecnico?.id_tecnico ?? 0).catch(() => []),
+    getFranjasAgendaTecnico(tecnico?.id_tecnico ?? 0).catch(() => []),
   ])
 
   // Contar por estado_actual del incidente
@@ -155,7 +155,7 @@ export default async function TecnicoDashboard() {
       </Card>
 
       {/* Agenda */}
-      <AgendaTecnico compromisos={compromisos} />
+      <AgendaTecnico franjas={compromisos} />
 
       {/* Notificaciones */}
       <Card className="border-2">

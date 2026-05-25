@@ -16,8 +16,14 @@ export interface CompromisoTecnico {
   hora_fin_estimada: string // 'HH:MM'
 }
 
-// Visita programada con join a incidente + inmueble — para la vista de agenda del técnico
-export interface CompromisoAgenda extends CompromisoTecnico {
+// Franja del cliente + incidente asignado — para la agenda del técnico
+export interface FranjaAgenda {
+  id_franja: number
+  id_incidente: number
+  id_asignacion: number
+  fecha: string       // 'YYYY-MM-DD'
+  hora_inicio: string // 'HH:MM'
+  hora_fin: string    // 'HH:MM'
   incidentes: {
     descripcion_problema: string
     categoria: string | null
