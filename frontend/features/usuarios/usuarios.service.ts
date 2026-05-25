@@ -9,7 +9,6 @@
 
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
-import { enviarMagicLinkTecnico } from '@/features/email/email.service'
 import type { Usuario, Cliente, Tecnico, TecnicoActivo } from './usuarios.types'
 import type { ActionResult } from '@/shared/types'
 
@@ -360,33 +359,28 @@ export async function aprobarSolicitudTecnico(
     return { success: false, error: 'Solicitud no encontrada' }
   }
 
-  // Contraseña aleatoria: el técnico nunca la usará (accede via magic link)
-  const passwordInterna = crypto.randomUUID()
+  const siteUrl = 'https://tesis-three-drab.vercel.app'
 
-  // 2. Crear usuario en Supabase Auth con rol 'gestor' para que el trigger
-  //    solo inserte en `usuarios` (sin tocar `tecnicos`) — evita fallos del trigger.
-  //    Luego insertamos manualmente en `tecnicos` y actualizamos `usuarios`.
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: solicitud.email,
-    password: passwordInterna,
-    email_confirm: true,
-    user_metadata: {
-      nombre: solicitud.nombre,
-      apellido: solicitud.apellido,
-      rol: 'gestor', // Neutral: trigger solo crea registro en `usuarios`
-      debe_cambiar_password: true,
-    },
-  })
+  // 2. Invitar al usuario: Supabase crea la cuenta Y manda el email con magic link
+  //    Usamos rol 'gestor' para que el trigger solo inserte en `usuarios` (no en `tecnicos`)
+  const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
+    solicitud.email,
+    {
+      data: {
+        nombre: solicitud.nombre,
+        apellido: solicitud.apellido,
+        rol: 'gestor',
+        debe_cambiar_password: true,
+      },
+      redirectTo: `${siteUrl}/auth/confirm?next=/tecnico`,
+    }
+  )
 
-  if (authError) {
-    return { success: false, error: authError.message }
+  if (inviteError || !inviteData?.user) {
+    return { success: false, error: inviteError?.message || 'No se pudo crear el usuario' }
   }
 
-  if (!authData.user) {
-    return { success: false, error: 'No se pudo crear el usuario' }
-  }
-
-  const authUserId = authData.user.id
+  const authUserId = inviteData.user.id
 
   // 3. Insertar manualmente en `tecnicos`
   const { data: tecnicoInsert, error: tecnicoError } = await supabase
@@ -412,8 +406,7 @@ export async function aprobarSolicitudTecnico(
     return { success: false, error: 'Error al crear perfil de técnico' }
   }
 
-  // 4. Actualizar el registro en `usuarios`: cambiar rol a 'tecnico', vincular id_tecnico
-  //    y activar bandera de cambio obligatorio de contraseña
+  // 4. Actualizar `usuarios`: rol a 'tecnico', vincular id_tecnico, marcar cambio de contraseña
   const { error: updError } = await supabase
     .from('usuarios')
     .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico, debe_cambiar_password: true })
@@ -433,35 +426,6 @@ export async function aprobarSolicitudTecnico(
       fecha_aprobacion: new Date().toISOString(),
     })
     .eq('id_solicitud', solicitudId)
-
-  // 6. Generar magic link y enviar email (fire-and-forget)
-  try {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://tesis.vercel.app'
-    console.log('[email] paso 1 - siteUrl:', siteUrl, '| resend key existe:', !!process.env.RESEND_API_KEY)
-
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: solicitud.email,
-      options: { redirectTo: `${siteUrl}/tecnico` },
-    })
-
-    console.log('[email] paso 2 - linkError:', linkError, '| action_link existe:', !!linkData?.properties?.action_link)
-
-    if (linkError || !linkData?.properties?.action_link) {
-      console.error('[email] Error al generar magic link:', linkError)
-    } else {
-      console.log('[email] paso 3 - enviando a:', solicitud.email)
-      await enviarMagicLinkTecnico({
-        destinatario: solicitud.email,
-        nombre: solicitud.nombre,
-        apellido: solicitud.apellido,
-        magicLink: linkData.properties.action_link,
-      })
-      console.log('[email] paso 4 - email enviado OK')
-    }
-  } catch (emailError) {
-    console.error('[email] Error inesperado:', emailError)
-  }
 
   return { success: true, data: undefined }
 }
