@@ -11,7 +11,16 @@ import {
   BarChart2, FileText, TrendingUp, Layers,
   ChevronDown, ChevronUp,
 } from 'lucide-react'
+import Link from 'next/link'
 import type { ReportesData, TrabajosPorCategoria, TrabajoCategoriaItem } from '@/features/reportes/reportes.service'
+
+function NavLink({ href, children, className = '' }: { href: string; children: React.ReactNode; className?: string }) {
+  return (
+    <Link href={href} className={`hover:text-blue-600 hover:underline transition-colors ${className}`}>
+      {children}
+    </Link>
+  )
+}
 
 // ─── Tooltip sobre el título ──────────────────────────────────────────────────
 
@@ -119,9 +128,17 @@ function TrabajosPorCategoriaSection({ data }: { data: TrabajosPorCategoria[] })
                   <tbody className="divide-y divide-gray-100">
                     {cat.trabajos.map((t: TrabajoCategoriaItem) => (
                       <tr key={t.id_incidente} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 font-medium text-gray-700">#{t.id_incidente}</td>
+                        <td className="px-4 py-2 font-medium">
+                          <NavLink href="/dashboard/incidentes" className="text-blue-700 font-medium">
+                            #{t.id_incidente}
+                          </NavLink>
+                        </td>
                         <td className="px-4 py-2 text-gray-500">{fmtFecha(t.fecha_creacion)}</td>
-                        <td className="px-4 py-2 text-gray-700">{t.nombre_tecnico} {t.apellido_tecnico}</td>
+                        <td className="px-4 py-2">
+                          <NavLink href="/dashboard/tecnicos" className="text-gray-700">
+                            {t.nombre_tecnico} {t.apellido_tecnico}
+                          </NavLink>
+                        </td>
                         <td className="px-4 py-2 text-right">
                           {t.calificacion != null ? <span className="text-yellow-500 font-semibold">{t.calificacion} ⭐</span> : <span className="text-gray-300">—</span>}
                         </td>
@@ -350,9 +367,11 @@ export function ReportesContent({ data }: { data: ReportesData }) {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {reincidenciaPorPropiedad.map(prop => (
-                  <div key={prop.id_propiedad} className="flex items-start justify-between gap-3 p-2.5 rounded-lg bg-gray-50 border">
+                  <div key={prop.id_propiedad} className="flex items-start justify-between gap-3 p-2.5 rounded-lg bg-gray-50 border hover:border-blue-200 transition-colors">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{prop.direccion}</p>
+                      <NavLink href={`/inmueble/${prop.id_propiedad}`} className="text-sm font-medium text-gray-800 truncate block">
+                        {prop.direccion}
+                      </NavLink>
                       {prop.categoriaMasFrecuente && (
                         <p className="text-xs text-gray-500 mt-0.5">
                           Más frecuente: <span className="font-medium text-rose-600">{prop.categoriaMasFrecuente}</span> ({prop.cantCategoriaMasFrecuente}x)
@@ -416,7 +435,7 @@ export function ReportesContent({ data }: { data: ReportesData }) {
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className={`text-xs font-bold w-4 text-center shrink-0 ${idx === 0 ? 'text-yellow-500' : 'text-gray-400'}`}>#{idx + 1}</span>
-                          <span className="text-sm font-medium truncate">{tec.nombre} {tec.apellido}</span>
+                          <NavLink href="/dashboard/tecnicos" className="text-sm font-medium truncate">{tec.nombre} {tec.apellido}</NavLink>
                           {tec.especialidad && <span className="text-[10px] text-gray-400 shrink-0">({tec.especialidad})</span>}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-500 shrink-0">
@@ -460,7 +479,7 @@ export function ReportesContent({ data }: { data: ReportesData }) {
                     <tbody className="divide-y divide-gray-100">
                       {cobroPromedioPorTecnico.filter(t => tecnicoMatch(t.nombre, t.apellido)).map((tec) => (
                         <tr key={tec.id_tecnico} className="hover:bg-gray-50">
-                          <td className="py-2 pr-3 font-medium text-gray-800">{tec.nombre} {tec.apellido}</td>
+                          <td className="py-2 pr-3 font-medium text-gray-800"><NavLink href="/dashboard/tecnicos">{tec.nombre} {tec.apellido}</NavLink></td>
                           <td className="py-2 pr-3 text-right text-gray-600">{tec.cantidadTrabajos}</td>
                           <td className="py-2 pr-3 text-right text-gray-700">{AR.format(tec.totalPagadoTecnico)}</td>
                           <td className="py-2 text-right font-bold text-emerald-700">{AR.format(tec.promedioCobroPorTrabajo)}</td>
@@ -495,7 +514,7 @@ export function ReportesContent({ data }: { data: ReportesData }) {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <span className={`text-xs font-bold w-4 text-center ${idx === 0 ? 'text-yellow-500' : 'text-gray-400'}`}>#{idx + 1}</span>
-                        <span className="text-sm font-medium text-gray-800">{tec.nombre} {tec.apellido}</span>
+                        <NavLink href="/dashboard/tecnicos" className="text-sm font-medium text-gray-800">{tec.nombre} {tec.apellido}</NavLink>
                         <span className="text-xs text-gray-400">{tec.cantidadTrabajos} trabajos</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">

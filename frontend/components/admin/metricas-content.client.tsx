@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  BarChart2, Clock, Users, AlertTriangle,
+  BarChart2, Clock, Users,
   Tag, Filter, Loader2, CheckCircle2, TrendingUp,
 } from 'lucide-react'
+import Link from 'next/link'
 
 function TitleTooltip({ children, texto }: { children: React.ReactNode; texto: string }) {
   return (
@@ -64,8 +65,6 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
   const [customHasta, setCustomHasta] = useState('')
   const [cargando, setCargando] = useState(false)
 
-  const agingCriticos = reportes.agingIncidentes.filter(i => i.diasDesdeCreacion >= 7).length
-
   const aplicarFiltro = async (p: Periodo) => {
     setPeriodo(p)
     if (p === 'custom') return
@@ -115,16 +114,6 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
           </div>
         )}
       </div>
-
-      {/* Banner de alerta aging */}
-      {agingCriticos > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>
-            <strong>{agingCriticos} incidente{agingCriticos !== 1 ? 's' : ''}</strong> sin resolver hace más de 7 días — ver detalle en <strong>Incidentes sin Resolver</strong> más abajo.
-          </span>
-        </div>
-      )}
 
       {/* Filtro de período */}
       <Card className="border-slate-200">
@@ -235,9 +224,11 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
           </CardHeader>
           <CardContent className="px-5 pb-4">
             <div className="text-base font-bold text-violet-700 truncate leading-tight mt-1">
-              {metricas.topTecnicos[0]
-                ? `${metricas.topTecnicos[0].nombre} ${metricas.topTecnicos[0].apellido}`
-                : '—'}
+              {metricas.topTecnicos[0] ? (
+                <Link href="/dashboard/tecnicos" className="hover:underline hover:text-violet-900 transition-colors">
+                  {metricas.topTecnicos[0].nombre} {metricas.topTecnicos[0].apellido}
+                </Link>
+              ) : '—'}
             </div>
             <p className="text-xs text-slate-400 mt-1">
               {metricas.topTecnicos[0]
@@ -358,9 +349,9 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
                   return (
                     <div key={`${tec.nombre}_${tec.apellido}`} className="flex items-center gap-3">
                       <span className={`text-sm font-bold w-5 text-center shrink-0 ${medallaColor}`}>#{idx + 1}</span>
-                      <span className="text-sm font-medium truncate flex-1 min-w-0">
+                      <Link href="/dashboard/tecnicos" className="text-sm font-medium truncate flex-1 min-w-0 hover:text-blue-600 hover:underline transition-colors">
                         {tec.nombre} {tec.apellido}
-                      </span>
+                      </Link>
                       <div className="w-28 flex items-center gap-2 shrink-0">
                         <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div className={`h-full rounded-full ${barColor} transition-all duration-500`} style={{ width: `${pct}%` }} />
