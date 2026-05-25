@@ -98,7 +98,7 @@ function AgendaContent({ franjas }: { franjas: FranjaAgenda[] }) {
   return (
     <div className="space-y-4">
       {/* Calendario */}
-      <div className="flex justify-center rounded-xl border border-slate-100 bg-slate-50/50 p-3">
+      <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-2 overflow-hidden">
         <DayPicker
           locale={es}
           mode="single"
@@ -113,19 +113,20 @@ function AgendaContent({ franjas }: { franjas: FranjaAgenda[] }) {
                 : <ChevronRight className="h-4 w-4" />,
           }}
           classNames={{
-            months: 'flex flex-col',
-            month: 'space-y-2',
-            month_caption: 'flex justify-center pt-1 relative items-center pb-1',
+            root: 'w-full',
+            months: 'w-full flex flex-col',
+            month: 'w-full space-y-1',
+            month_caption: 'flex justify-center pt-1 relative items-center pb-1 px-8',
             caption_label: 'text-sm font-medium capitalize',
             nav: 'flex items-center gap-1',
-            button_previous: 'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
-            button_next:     'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
-            month_grid: 'border-collapse',
-            weekdays: 'flex',
-            weekday: 'text-gray-400 rounded-md w-8 font-normal text-[0.65rem] text-center py-1',
-            week: 'flex mt-1',
-            day: 'h-8 w-8 text-center text-sm p-0 relative',
-            day_button: 'h-8 w-8 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors text-sm',
+            button_previous: 'absolute left-0 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
+            button_next:     'absolute right-0 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
+            month_grid: 'w-full border-collapse',
+            weekdays: 'flex w-full',
+            weekday: 'flex-1 text-gray-400 font-normal text-[0.65rem] text-center py-1',
+            week: 'flex w-full mt-0.5',
+            day: 'flex-1 h-8 text-center text-sm p-0 relative',
+            day_button: 'w-full h-8 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors text-sm',
             selected: '!ring-2 !ring-blue-400 !ring-offset-1',
             today: '!text-blue-600 !font-bold',
             outside: 'text-gray-300 opacity-50',
@@ -230,8 +231,8 @@ export function AgendaTecnico({ franjas, embedded = false }: AgendaTecnicoProps)
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3 pt-4 px-5">
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3 pt-4 px-4 sm:px-5">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
@@ -250,7 +251,7 @@ export function AgendaTecnico({ franjas, embedded = false }: AgendaTecnicoProps)
           )}
         </div>
       </CardHeader>
-      <CardContent className="px-5 pb-5">
+      <CardContent className="px-3 sm:px-5 pb-5">
         {isEmpty ? (
           <div className="text-center space-y-2 py-2">
             <CalendarDays className="h-10 w-10 text-slate-200 mx-auto" />
