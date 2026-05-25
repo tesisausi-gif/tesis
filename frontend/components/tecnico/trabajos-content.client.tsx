@@ -339,6 +339,7 @@ export function TrabajosContent({
             <AgendaTecnicoModal
               idTecnico={asig.id_tecnico}
               triggerLabel="Ver Mi Agenda"
+              rol="tecnico"
               triggerClassName="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors text-xs font-semibold"
             />
           </div>

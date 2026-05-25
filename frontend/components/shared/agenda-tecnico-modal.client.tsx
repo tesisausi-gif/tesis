@@ -10,10 +10,9 @@ import type { FranjaAgenda } from '@/features/disponibilidad/disponibilidad.type
 interface AgendaTecnicoModalProps {
   idTecnico: number
   nombreTecnico?: string
-  /** Clases CSS del botón trigger */
   triggerClassName?: string
-  /** Texto del trigger */
   triggerLabel?: string
+  rol?: 'tecnico' | 'admin'
 }
 
 export function AgendaTecnicoModal({
@@ -21,6 +20,7 @@ export function AgendaTecnicoModal({
   nombreTecnico,
   triggerClassName,
   triggerLabel = 'Ver Agenda',
+  rol = 'admin',
 }: AgendaTecnicoModalProps) {
   const [open, setOpen] = useState(false)
   const [franjas, setFranjas] = useState<FranjaAgenda[] | null>(null)
@@ -63,7 +63,7 @@ export function AgendaTecnicoModal({
             Cargando agenda…
           </div>
         ) : (
-          <AgendaTecnico franjas={franjas ?? []} embedded />
+          <AgendaTecnico franjas={franjas ?? []} embedded rol={rol} />
         )}
       </DialogContent>
     </Dialog>
