@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import { Loader2, FileSpreadsheet, Download, BarChart3, TrendingUp, Users, Build
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { FilaFechasPicker } from '@/components/ui/date-picker-informes'
 import { toast } from 'sonner'
+import { getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
 import {
   getTecnicosSelect,
   getInmueblesSelect,
@@ -28,7 +29,6 @@ import {
   getR12IndicadoresGlobales,
   getR13MediosDePago,
 } from '@/features/exportar/exportar.service'
-import { CategoriaIncidente } from '@/shared/types/enums'
 import type {
   TecnicoSelect, InmuebleSelect,
   R1Resultado, R2Resultado, R3Resultado, R4Resultado, R5Resultado, R6Resultado,
@@ -78,7 +78,15 @@ function KpiCard({ label, valor, sub }: { label: string; valor: string; sub?: st
 // FilaFechas ahora usa el DatePicker con calendario (ver date-picker-informes.tsx)
 
 function SelectCategoria({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const cats = Object.values(CategoriaIncidente)
+  const [cats, setCats] = useState<string[]>([])
+  const loaded = useRef(false)
+  useEffect(() => {
+    if (loaded.current) return
+    loaded.current = true
+    getEspecialidadesActivas()
+      .then(data => setCats(data.map((e: { nombre: string }) => e.nombre)))
+      .catch(() => {})
+  }, [])
   return (
     <div className="space-y-1">
       <Label className="text-xs">Categoría</Label>

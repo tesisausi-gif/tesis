@@ -208,6 +208,15 @@ export function ReportesContent({ data }: ReportesContentProps) {
   return (
     <div className="space-y-8">
 
+      {/* ── Bloque: Operativo ── */}
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 px-2">Operativo</span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+      </div>
+
       {/* ── KPIs Administrativos ── */}
       <section>
         <div className="flex items-center gap-2 mb-4">
@@ -442,6 +451,15 @@ export function ReportesContent({ data }: ReportesContentProps) {
         </Card>
       </section>
 
+      {/* ── Bloque: Rendimiento & Calidad ── */}
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 px-2">Rendimiento & Calidad</span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+      </div>
+
       {/* ── Rendimiento Técnicos + Satisfacción en grid ── */}
       <div className="grid gap-6 lg:grid-cols-2">
 
@@ -674,6 +692,15 @@ export function ReportesContent({ data }: ReportesContentProps) {
             </CardContent>
           </Card>
         </section>
+      </div>
+
+      {/* ── Bloque: Financiero ── */}
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 px-2">Financiero</span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
       </div>
 
       {/* ── Cobro promedio por técnico ── */}

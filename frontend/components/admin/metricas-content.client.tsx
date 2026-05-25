@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { BarChart2, Clock, TrendingUp, Users, AlertCircle, Tag, Filter, Loader2, FileSpreadsheet, LineChart } from 'lucide-react'
+import {
+  BarChart2, Clock, Users, AlertTriangle, Tag,
+  Filter, Loader2, FileSpreadsheet, LineChart,
+  CheckCircle2, TrendingUp, ShieldAlert,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import type { MetricasDashboard } from '@/features/incidentes/incidentes.types'
@@ -30,20 +34,22 @@ function fechaDesde(periodo: Periodo): string | null {
   return ahora.toISOString().slice(0, 10)
 }
 
-function BarraHorizontal({ valor, maximo, color = 'bg-blue-500', showLabel = true }: { valor: number; maximo: number; color?: string; showLabel?: boolean }) {
-  const pct = maximo > 0 ? Math.round((valor / maximo) * 100) : 0
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${color}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      {showLabel && <span className="text-sm font-medium w-6 text-right text-gray-700">{valor}</span>}
-    </div>
-  )
+const PRIO_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  urgente: { label: 'Urgente', color: 'text-red-700',    bg: 'bg-red-50 border-red-200' },
+  alta:    { label: 'Alta',    color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
+  media:   { label: 'Media',   color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' },
+  baja:    { label: 'Baja',    color: 'text-green-700',  bg: 'bg-green-50 border-green-200' },
 }
+
+const PERIODOS: { valor: Periodo; label: string }[] = [
+  { valor: 'todo', label: 'Todo' },
+  { valor: '7d',   label: '7 días' },
+  { valor: '30d',  label: '30 días' },
+  { valor: '90d',  label: '90 días' },
+  { valor: '6m',   label: '6 meses' },
+  { valor: '1y',   label: '1 año' },
+  { valor: 'custom', label: 'Personalizado' },
+]
 
 export function MetricasContent({ metricas: metricasIniciales, reportes }: MetricasContentProps) {
   const [metricas, setMetricas] = useState(metricasIniciales)
@@ -52,9 +58,11 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
   const [customHasta, setCustomHasta] = useState('')
   const [cargando, setCargando] = useState(false)
 
+  const agingCriticos = reportes.agingIncidentes.filter(i => i.diasDesdeCreacion >= 7).length
+
   const aplicarFiltro = async (p: Periodo) => {
     setPeriodo(p)
-    if (p === 'custom') return // espera inputs manuales
+    if (p === 'custom') return
     setCargando(true)
     try {
       const desde = fechaDesde(p)
@@ -83,245 +91,334 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
     }
   }
 
-  const maxMes = Math.max(...metricas.incidentesPorMes.map(m => m.total), 1)
+  const maxMes       = Math.max(...metricas.incidentesPorMes.map(m => m.total), 1)
   const maxCategoria = Math.max(...metricas.distribucionCategorias.map(c => c.count), 1)
 
-  const PERIODOS: { valor: Periodo; label: string }[] = [
-    { valor: 'todo', label: 'Todo' },
-    { valor: '7d', label: '7 días' },
-    { valor: '30d', label: '30 días' },
-    { valor: '90d', label: '90 días' },
-    { valor: '6m', label: '6 meses' },
-    { valor: '1y', label: '1 año' },
-    { valor: 'custom', label: 'Personalizado' },
-  ]
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="space-y-5">
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Métricas e Informes</h2>
-          <p className="text-muted-foreground">Análisis de rendimiento y reportes exportables</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Métricas e Informes</h2>
+          <p className="text-sm text-muted-foreground">Análisis de rendimiento y reportes exportables del sistema ISBA</p>
         </div>
-        {cargando && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
-      </div>
-
-    <Tabs defaultValue="metricas">
-      <TabsList className="mb-4">
-        <TabsTrigger value="metricas" className="gap-2"><BarChart2 className="h-4 w-4" />Métricas</TabsTrigger>
-        <TabsTrigger value="reportes" className="gap-2"><LineChart className="h-4 w-4" />Reportes</TabsTrigger>
-        <TabsTrigger value="informes" className="gap-2"><FileSpreadsheet className="h-4 w-4" />Informes</TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="informes">
-        <ExportarContent />
-      </TabsContent>
-
-      <TabsContent value="reportes">
-        <ReportesContent data={reportes} />
-      </TabsContent>
-
-      <TabsContent value="metricas" className="space-y-6">
-
-      {/* Filtro de período */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filtrar por período
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {PERIODOS.map(p => (
-              <Button
-                key={p.valor}
-                size="sm"
-                variant={periodo === p.valor ? 'default' : 'outline'}
-                onClick={() => aplicarFiltro(p.valor)}
-                disabled={cargando}
-              >
-                {p.label}
-              </Button>
-            ))}
+        {cargando && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Actualizando...
           </div>
-          {periodo === 'custom' && (
-            <div className="flex flex-wrap gap-3 items-end pt-1">
-              <div className="space-y-1">
-                <Label className="text-xs">Desde</Label>
-                <Input type="date" value={customDesde} onChange={e => setCustomDesde(e.target.value)} className="w-36 h-8 text-sm" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Hasta</Label>
-                <Input type="date" value={customHasta} onChange={e => setCustomHasta(e.target.value)} className="w-36 h-8 text-sm" />
-              </div>
-              <Button size="sm" onClick={aplicarFiltroCustom} disabled={cargando || (!customDesde && !customHasta)}>
-                Aplicar
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Tarjetas de resumen */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Incidentes</CardTitle>
-            <AlertCircle className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{metricas.totalIncidentes}</div>
-            <p className="text-xs text-muted-foreground">En el sistema</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tiempo Promedio Resolución</CardTitle>
-            <Clock className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">
-              {metricas.tiempoPromedioResolucion > 0 ? `${metricas.tiempoPromedioResolucion}d` : '—'}
-            </div>
-            <p className="text-xs text-muted-foreground">Días promedio hasta cierre</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Top Técnico</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold text-purple-600 truncate">
-              {metricas.topTecnicos[0]
-                ? `${metricas.topTecnicos[0].nombre} ${metricas.topTecnicos[0].apellido}`
-                : '—'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {metricas.topTecnicos[0]
-                ? `${metricas.topTecnicos[0].incidentesResueltos} incidentes resueltos`
-                : 'Sin datos'}
-            </p>
-          </CardContent>
-        </Card>
+        )}
       </div>
 
-      {/* Gráfico de barras - Incidentes por mes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart2 className="h-5 w-5 text-blue-600" />
-            Incidentes por Mes
-          </CardTitle>
-          <CardDescription>Últimos 6 meses — total vs resueltos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {metricas.incidentesPorMes.every(m => m.total === 0) ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Sin datos en los últimos 6 meses</p>
-          ) : (
-            <div className="space-y-3">
-              {metricas.incidentesPorMes.map((item) => (
-                <div key={item.mes}>
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
-                    <span className="font-medium capitalize">{item.mes}</span>
-                    <span>{item.resueltos}/{item.total}</span>
-                  </div>
-                  {/* Barra total */}
-                  <div className="relative h-5 bg-gray-100 rounded overflow-hidden">
-                    <div
-                      className="absolute inset-y-0 left-0 bg-blue-200 rounded transition-all duration-500"
-                      style={{ width: `${maxMes > 0 ? (item.total / maxMes) * 100 : 0}%` }}
-                    />
-                    <div
-                      className="absolute inset-y-0 left-0 bg-green-500 rounded transition-all duration-500"
-                      style={{ width: `${maxMes > 0 ? (item.resueltos / maxMes) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-              <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-blue-200 inline-block" /> Total</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500 inline-block" /> Resueltos</span>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Banner de alerta aging */}
+      {agingCriticos > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>
+            <strong>{agingCriticos} incidente{agingCriticos !== 1 ? 's' : ''}</strong> sin resolver hace más de 7 días — revisá la pestaña <strong>Reportes</strong> para ver el detalle.
+          </span>
+        </div>
+      )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Distribución por Categoría */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-orange-600" />
-              Por Categoría
-            </CardTitle>
-            <CardDescription>Distribución de incidentes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {metricas.distribucionCategorias.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Sin datos</p>
-            ) : (
-              <div className="space-y-3">
-                {metricas.distribucionCategorias.map((item) => (
-                  <div key={item.categoria}>
-                    <div className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span className="truncate max-w-[60%]">{item.categoria}</span>
-                      <span className="font-medium">{item.count}</span>
-                    </div>
-                    <BarraHorizontal valor={item.count} maximo={maxCategoria} color="bg-orange-400" showLabel={false} />
-                  </div>
+      {/* Tabs */}
+      <Tabs defaultValue="metricas">
+        <TabsList className="bg-slate-100 p-1 h-auto gap-1">
+          <TabsTrigger value="metricas" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <BarChart2 className="h-4 w-4" /> Métricas
+          </TabsTrigger>
+          <TabsTrigger value="reportes" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <LineChart className="h-4 w-4" /> Reportes
+          </TabsTrigger>
+          <TabsTrigger value="informes" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <FileSpreadsheet className="h-4 w-4" /> Informes
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ── Tab Métricas ── */}
+        <TabsContent value="metricas" className="mt-5 space-y-5">
+
+          {/* Filtro de período */}
+          <Card className="border-slate-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
+                <Filter className="h-4 w-4" /> Filtrar por período
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {PERIODOS.map(p => (
+                  <Button
+                    key={p.valor}
+                    size="sm"
+                    variant={periodo === p.valor ? 'default' : 'outline'}
+                    onClick={() => aplicarFiltro(p.valor)}
+                    disabled={cargando}
+                    className={periodo === p.valor ? 'bg-blue-700 hover:bg-blue-800' : ''}
+                  >
+                    {p.label}
+                  </Button>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+              {periodo === 'custom' && (
+                <div className="flex flex-wrap gap-3 items-end pt-1">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Desde</Label>
+                    <Input type="date" value={customDesde} onChange={e => setCustomDesde(e.target.value)} className="w-36 h-8 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Hasta</Label>
+                    <Input type="date" value={customHasta} onChange={e => setCustomHasta(e.target.value)} className="w-36 h-8 text-sm" />
+                  </div>
+                  <Button size="sm" onClick={aplicarFiltroCustom} disabled={cargando || (!customDesde && !customHasta)} className="bg-blue-700 hover:bg-blue-800">
+                    Aplicar
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-      </div>
+          {/* KPI Cards — 4 métricas clave */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-      {/* Ranking de Técnicos */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-purple-600" />
-            Ranking de Técnicos
-          </CardTitle>
-          <CardDescription>Por incidentes resueltos (asignaciones completadas)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {metricas.topTecnicos.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">No hay asignaciones completadas aún</p>
-          ) : (
-            <div className="space-y-3">
-              {metricas.topTecnicos.map((tec, idx) => {
-                const maxResueltos = metricas.topTecnicos[0].incidentesResueltos
-                return (
-                  <div key={`${tec.nombre}_${tec.apellido}`} className="flex items-center gap-3">
-                    <span className={`text-sm font-bold w-5 text-center ${idx === 0 ? 'text-yellow-500' : idx === 1 ? 'text-gray-400' : idx === 2 ? 'text-orange-700' : 'text-gray-400'}`}>
-                      #{idx + 1}
-                    </span>
-                    <span className="text-sm font-medium w-36 truncate">
-                      {tec.nombre} {tec.apellido}
-                    </span>
-                    <div className="flex-1">
-                      <BarraHorizontal
-                        valor={tec.incidentesResueltos}
-                        maximo={maxResueltos}
-                        color={idx === 0 ? 'bg-yellow-400' : 'bg-purple-400'}
-                      />
+            <Card className="border-l-4 border-l-blue-600 bg-gradient-to-br from-white to-blue-50/40">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+                <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Incidentes</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <BarChart2 className="h-4 w-4 text-blue-600" />
+                </div>
+              </CardHeader>
+              <CardContent className="px-5 pb-4">
+                <div className="text-3xl font-bold text-blue-700">{metricas.totalIncidentes}</div>
+                <p className="text-xs text-slate-400 mt-1">registrados en el período</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-teal-500 bg-gradient-to-br from-white to-teal-50/40">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+                <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tiempo Prom. Resolución</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-teal-600" />
+                </div>
+              </CardHeader>
+              <CardContent className="px-5 pb-4">
+                <div className="text-3xl font-bold text-teal-700">
+                  {metricas.tiempoPromedioResolucion > 0 ? `${metricas.tiempoPromedioResolucion}d` : '—'}
+                </div>
+                <p className="text-xs text-slate-400 mt-1">días hasta cierre</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-green-50/40">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+                <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tasa de Resolución</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                </div>
+              </CardHeader>
+              <CardContent className="px-5 pb-4">
+                <div className="text-3xl font-bold text-green-700">{reportes.kpisAdministrativos.racioResolucion}%</div>
+                <p className="text-xs text-slate-400 mt-1">incidentes resueltos / total</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-violet-500 bg-gradient-to-br from-white to-violet-50/40">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+                <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Top Técnico</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-violet-600" />
+                </div>
+              </CardHeader>
+              <CardContent className="px-5 pb-4">
+                <div className="text-base font-bold text-violet-700 truncate leading-tight mt-1">
+                  {metricas.topTecnicos[0]
+                    ? `${metricas.topTecnicos[0].nombre} ${metricas.topTecnicos[0].apellido}`
+                    : '—'}
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  {metricas.topTecnicos[0]
+                    ? `${metricas.topTecnicos[0].incidentesResueltos} incidentes resueltos`
+                    : 'Sin asignaciones completadas'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Incidentes por mes + Distribución por prioridad */}
+          <div className="grid gap-4 lg:grid-cols-3">
+
+            {/* Incidentes por mes — ocupa 2/3 */}
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                  Incidentes por Mes
+                </CardTitle>
+                <CardDescription>Últimos 6 meses — total vs. resueltos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {metricas.incidentesPorMes.every(m => m.total === 0) ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">Sin datos en los últimos 6 meses</p>
+                ) : (
+                  <div className="space-y-3">
+                    {metricas.incidentesPorMes.map(item => (
+                      <div key={item.mes}>
+                        <div className="flex justify-between text-xs text-slate-500 mb-1">
+                          <span className="font-medium capitalize">{item.mes}</span>
+                          <span className="tabular-nums">
+                            <span className="text-green-600 font-semibold">{item.resueltos}</span>
+                            <span className="text-slate-300 mx-1">/</span>
+                            <span>{item.total}</span>
+                          </span>
+                        </div>
+                        <div className="relative h-5 bg-slate-100 rounded overflow-hidden">
+                          <div
+                            className="absolute inset-y-0 left-0 bg-blue-100 rounded transition-all duration-500"
+                            style={{ width: `${maxMes > 0 ? (item.total / maxMes) * 100 : 0}%` }}
+                          />
+                          <div
+                            className="absolute inset-y-0 left-0 bg-blue-600 rounded transition-all duration-500"
+                            style={{ width: `${maxMes > 0 ? (item.resueltos / maxMes) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded bg-blue-100 inline-block" /> Total</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded bg-blue-600 inline-block" /> Resueltos</span>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      </TabsContent>
-    </Tabs>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Distribución por prioridad — ocupa 1/3 */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <ShieldAlert className="h-4 w-4 text-amber-600" />
+                  Por Prioridad
+                </CardTitle>
+                <CardDescription>Distribución de urgencias</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {metricas.distribucionPrioridades.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">Sin datos</p>
+                ) : (
+                  <div className="space-y-3">
+                    {metricas.distribucionPrioridades.map(item => {
+                      const cfg = PRIO_CONFIG[item.prioridad.toLowerCase()] ?? { label: item.prioridad, color: 'text-slate-700', bg: 'bg-slate-50 border-slate-200' }
+                      const total = metricas.distribucionPrioridades.reduce((s, p) => s + p.count, 0)
+                      const pct = total > 0 ? Math.round((item.count / total) * 100) : 0
+                      return (
+                        <div key={item.prioridad} className={`flex items-center justify-between p-2.5 rounded-lg border ${cfg.bg}`}>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-lg font-bold ${cfg.color}`}>{item.count}</span>
+                            <span className="text-[10px] text-slate-400 w-8 text-right">{pct}%</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Por Categoría + Ranking Técnicos */}
+          <div className="grid gap-4 lg:grid-cols-2">
+
+            {/* Distribución por categoría */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Tag className="h-4 w-4 text-amber-600" />
+                  Por Categoría
+                </CardTitle>
+                <CardDescription>Volumen de incidentes por tipo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {metricas.distribucionCategorias.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">Sin datos</p>
+                ) : (
+                  <div className="space-y-3">
+                    {metricas.distribucionCategorias.map(item => {
+                      const pct = maxCategoria > 0 ? Math.round((item.count / maxCategoria) * 100) : 0
+                      return (
+                        <div key={item.categoria}>
+                          <div className="flex justify-between text-xs text-slate-600 mb-1">
+                            <span className="truncate max-w-[65%] font-medium">{item.categoria}</span>
+                            <span className="font-bold tabular-nums">{item.count}</span>
+                          </div>
+                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-amber-500 transition-all duration-500"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Ranking técnicos */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Users className="h-4 w-4 text-violet-600" />
+                  Ranking de Técnicos
+                </CardTitle>
+                <CardDescription>Por incidentes resueltos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {metricas.topTecnicos.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">No hay asignaciones completadas aún</p>
+                ) : (
+                  <div className="space-y-3">
+                    {metricas.topTecnicos.map((tec, idx) => {
+                      const maxResueltos = metricas.topTecnicos[0].incidentesResueltos
+                      const pct = maxResueltos > 0 ? Math.round((tec.incidentesResueltos / maxResueltos) * 100) : 0
+                      const medallaColor = idx === 0 ? 'text-yellow-500' : idx === 1 ? 'text-slate-400' : idx === 2 ? 'text-amber-700' : 'text-slate-300'
+                      const barColor = idx === 0 ? 'bg-yellow-400' : 'bg-violet-400'
+                      return (
+                        <div key={`${tec.nombre}_${tec.apellido}`} className="flex items-center gap-3">
+                          <span className={`text-sm font-bold w-5 text-center shrink-0 ${medallaColor}`}>#{idx + 1}</span>
+                          <span className="text-sm font-medium truncate flex-1 min-w-0">
+                            {tec.nombre} {tec.apellido}
+                          </span>
+                          <div className="w-28 flex items-center gap-2 shrink-0">
+                            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${barColor} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-600 w-4 text-right tabular-nums">{tec.incidentesResueltos}</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+        </TabsContent>
+
+        {/* ── Tab Reportes ── */}
+        <TabsContent value="reportes" className="mt-5">
+          <ReportesContent data={reportes} />
+        </TabsContent>
+
+        {/* ── Tab Informes ── */}
+        <TabsContent value="informes" className="mt-5">
+          <ExportarContent />
+        </TabsContent>
+
+      </Tabs>
     </div>
   )
 }
