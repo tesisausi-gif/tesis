@@ -10,21 +10,23 @@ import { Badge } from '@/components/ui/badge'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { FranjaAgenda } from '@/features/disponibilidad/disponibilidad.types'
 
-// Mismas classNames que CalendarioDisponibilidad (probadas y funcionando)
+// Celdas flex-1 + w-full en filas para que el calendario se adapte a cualquier ancho
+// sin recortar la columna del domingo (7×32px fijos no caben en modales estrechos)
 const DAY_PICKER_CLASSES = {
-  months: 'flex flex-col',
-  month: 'space-y-2',
+  root: 'w-full',
+  months: 'flex flex-col w-full',
+  month: 'w-full space-y-1',
   month_caption: 'flex justify-center pt-1 relative items-center pb-1',
   caption_label: 'text-sm font-medium capitalize',
   nav: 'flex items-center gap-1',
   button_previous: 'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
   button_next:     'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
-  month_grid: 'border-collapse',
-  weekdays: 'flex',
-  weekday: 'text-gray-400 rounded-md w-8 font-normal text-[0.65rem] text-center py-1',
-  week: 'flex mt-1',
-  day: 'h-8 w-8 text-center text-sm p-0 relative',
-  day_button: 'h-8 w-8 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors text-sm',
+  month_grid: 'w-full border-collapse',
+  weekdays: 'flex w-full',
+  weekday: 'flex-1 text-gray-400 font-normal text-[0.65rem] text-center py-1 min-w-0',
+  week: 'flex w-full mt-1',
+  day: 'flex-1 h-8 text-center text-sm p-0 relative min-w-0',
+  day_button: 'w-full h-8 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors text-sm',
   selected: '!ring-2 !ring-blue-400 !ring-offset-1',
   today: '!text-blue-600 !font-bold',
   outside: 'text-gray-300 opacity-50',
@@ -120,7 +122,9 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
     setDiaSeleccionado(prev => prev && format(prev, 'yyyy-MM-dd') === iso ? undefined : day)
   }
 
-  const fechasAMostrar = selectedIso && porFecha[selectedIso] ? [selectedIso] : futuras
+  const fechasAMostrar = selectedIso
+    ? (porFecha[selectedIso] ? [selectedIso] : [])
+    : futuras
 
   return (
     <>
@@ -144,9 +148,9 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
           />
         </div>
 
-        <p className="text-[11px] text-center text-slate-400 flex items-center justify-center gap-1.5">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600" />
-          disponibilidad del cliente · tocá un día para filtrar
+        <p className="text-[11px] text-center text-slate-400 flex flex-wrap items-center justify-center gap-1.5">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
+          <span>disponibilidad del cliente · tocá un día para filtrar</span>
         </p>
 
         {/* Indicador de día filtrado activo */}
