@@ -249,9 +249,11 @@ export default function ClientePerfil() {
                   <Input
                     id="dni"
                     value={dni}
-                    onChange={(e) => setDni(e.target.value)}
+                    onChange={(e) => setDni(e.target.value.replace(/\D/g, ''))}
                     disabled={submitting}
                     placeholder="12345678"
+                    inputMode="numeric"
+                    maxLength={8}
                   />
                 </div>
                 <div className="space-y-2">
@@ -259,9 +261,10 @@ export default function ClientePerfil() {
                   <Input
                     id="telefono"
                     value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
+                    onChange={(e) => setTelefono(e.target.value.replace(/[^0-9+]/g, ''))}
                     disabled={submitting}
-                    placeholder="+54 9 11 1234-5678"
+                    placeholder="+54911..."
+                    inputMode="tel"
                   />
                 </div>
               </div>

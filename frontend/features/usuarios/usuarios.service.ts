@@ -9,6 +9,7 @@
 
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
+import { enviarEmailBienvenida } from '@/features/email/email.service'
 import type { Usuario, Cliente, Tecnico, TecnicoActivo } from './usuarios.types'
 import type { ActionResult } from '@/shared/types'
 
@@ -434,7 +435,6 @@ export async function aprobarSolicitudTecnico(
 
   // 6. Enviar email con credenciales al técnico (fire-and-forget)
   try {
-    const { enviarEmailBienvenida } = await import('@/features/email/email.service')
     await enviarEmailBienvenida({
       destinatario: solicitud.email,
       nombre: solicitud.nombre,
@@ -443,7 +443,6 @@ export async function aprobarSolicitudTecnico(
       rol: 'tecnico',
     })
   } catch (emailError) {
-    // No bloquear el flujo si el email falla
     console.error('[aprobarSolicitudTecnico] Error al enviar email:', emailError)
   }
 
