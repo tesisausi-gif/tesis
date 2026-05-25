@@ -482,10 +482,11 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
                 <Input
                   id="altura"
                   value={altura}
-                  onChange={(e) => setAltura(e.target.value)}
+                  onChange={(e) => setAltura(e.target.value.replace(/\D/g, ''))}
                   placeholder="Ej: 1234"
                   required
                   disabled={submitting}
+                  inputMode="numeric"
                 />
               </div>
             </div>
@@ -501,9 +502,10 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
                   <Input
                     id="piso"
                     value={piso}
-                    onChange={(e) => setPiso(e.target.value)}
+                    onChange={(e) => setPiso(e.target.value.replace(/\D/g, ''))}
                     placeholder="Opcional"
                     disabled={submitting}
+                    inputMode="numeric"
                   />
                 </div>
 

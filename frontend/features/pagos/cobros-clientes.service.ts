@@ -281,3 +281,65 @@ export async function getMisCobrosComoCliente(): Promise<{ pendientes: MiCobroPe
 }
 
 import { requireClienteId } from '@/features/auth/auth.service'
+
+/**
+ * Pagos de un incidente específico del cliente actual.
+ */
+export async function getMisPagosDeIncidente(idIncidente: number): Promise<{
+  pendiente: MiCobroPendiente | null
+  realizados: MiCobroRealizado[]
+}> {
+  const supabase = await createClient()
+  const idCliente = await requireClienteId()
+
+  // Presupuesto aprobado de este incidente, verificando que sea del cliente
+  const { data: pres } = await supabase
+    .from('presupuestos')
+    .select(`
+      id_presupuesto, id_incidente, costo_total, fecha_creacion,
+      incidentes!inner (descripcion_problema, categoria, id_cliente_reporta)
+    `)
+    .eq('id_incidente', idIncidente)
+    .eq('estado_presupuesto', 'aprobado')
+    .eq('incidentes.id_cliente_reporta', idCliente)
+    .maybeSingle()
+
+  if (!pres) return { pendiente: null, realizados: [] }
+
+  const { data: cobros } = await supabase
+    .from('cobros_clientes')
+    .select(`
+      id_cobro, id_incidente, id_presupuesto,
+      monto_cobro, metodo_pago, referencia_pago, banco, cuotas, observaciones, fecha_cobro
+    `)
+    .eq('id_incidente', idIncidente)
+    .order('fecha_cobro', { ascending: false })
+
+  const cobradoIds = new Set((cobros || []).map((c: any) => c.id_presupuesto))
+  const inc = pres.incidentes as any
+
+  const pendiente: MiCobroPendiente | null = cobradoIds.has(pres.id_presupuesto) ? null : {
+    id_presupuesto: pres.id_presupuesto,
+    id_incidente: pres.id_incidente,
+    descripcion_problema: inc?.descripcion_problema || '',
+    categoria: inc?.categoria || null,
+    monto_a_pagar: Number(pres.costo_total) || 0,
+    fecha_presupuesto: pres.fecha_creacion,
+  }
+
+  const realizados: MiCobroRealizado[] = (cobros || []).map((c: any) => ({
+    id_cobro: c.id_cobro,
+    id_incidente: c.id_incidente,
+    id_presupuesto: c.id_presupuesto,
+    monto_cobro: Number(c.monto_cobro) || 0,
+    metodo_pago: c.metodo_pago,
+    referencia_pago: c.referencia_pago,
+    banco: c.banco,
+    cuotas: c.cuotas,
+    observaciones: c.observaciones,
+    fecha_cobro: c.fecha_cobro,
+    descripcion_problema: inc?.descripcion_problema || null,
+  }))
+
+  return { pendiente, realizados }
+}

@@ -177,9 +177,10 @@ export function TecnicoPerfilContent({ tecnico, email }: Props) {
                 <Input
                   id="telefono"
                   value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
+                  onChange={(e) => setTelefono(e.target.value.replace(/[^0-9+]/g, ''))}
                   disabled={submitting}
-                  placeholder="+54 9 11 1234-5678"
+                  placeholder="+54911..."
+                  inputMode="tel"
                 />
               </div>
               <div className="space-y-2">

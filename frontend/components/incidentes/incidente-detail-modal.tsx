@@ -71,6 +71,8 @@ import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import type { CompromisoTecnico } from '@/features/disponibilidad/disponibilidad.types'
 import { createClient } from '@/shared/lib/supabase/client'
 import { PresupuestosClienteList } from '@/components/cliente/presupuestos-cliente-list'
+import { getMisPagosDeIncidente } from '@/features/pagos/cobros-clientes.service'
+import type { MiCobroPendiente, MiCobroRealizado } from '@/features/pagos/cobros-clientes.service'
 import type { Presupuesto } from '@/features/presupuestos/presupuestos.types'
 import type { Conformidad } from '@/features/conformidades/conformidades.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
@@ -384,10 +386,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const comprobanteInputRef = useRef<HTMLInputElement>(null)
 
   const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([])
+  const [pagosIncidente, setPagosIncidente] = useState<{ pendiente: MiCobroPendiente | null, realizados: MiCobroRealizado[] } | null>(null)
+  const [cargandoPagos, setCargandoPagos] = useState(false)
 
   useEffect(() => {
     if (open && incidenteId) {
       setActiveTab(initialTab ?? 'detalles')
+      setPagosIncidente(null)
       cargarIncidente()
       if (rol === 'admin') {
         cargarTecnicos()
@@ -397,6 +402,16 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       }
     }
   }, [open, incidenteId, initialTab])
+
+  useEffect(() => {
+    if (activeTab === 'pagos' && rol === 'cliente' && incidenteId && !pagosIncidente) {
+      setCargandoPagos(true)
+      getMisPagosDeIncidente(incidenteId)
+        .then(setPagosIncidente)
+        .catch(() => setPagosIncidente({ pendiente: null, realizados: [] }))
+        .finally(() => setCargandoPagos(false))
+    }
+  }, [activeTab, rol, incidenteId])
 
   const cargarTecnicos = async () => {
     try {
@@ -1131,6 +1146,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => a.estado_asignacion !== 'rechazada')
           const hasClientePresupuesto = rol === 'cliente' && presupuestos.length > 0
           const hasCalificacion = rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO
+          const hasPagosTab = rol === 'cliente' && (incidente.estado_actual === 'resuelto' || incidente.estado_actual === 'finalizado')
           const hasAdminStepperTabs = rol === 'admin' && asignaciones.some(a =>
             ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
           )
@@ -1220,6 +1236,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   { id: 'detalles', label: 'Detalles' },
                   { id: 'timeline', label: 'Timeline' },
                   ...(hasClientePresupuesto ? [{ id: 'presupuesto', label: 'Presupuesto' }] : []),
+                  ...(hasPagosTab ? [{ id: 'pagos', label: 'Pagos' }] : []),
                   ...(hasCalificacion ? [{ id: 'calificacion', label: 'Calificar' }] : []),
                 ].map(tab => (
                   <button
@@ -2471,6 +2488,89 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   presupuestos={presupuestos as any}
                   onPresupuestoActualizado={() => cargarIncidente()}
                 />
+              </div>
+            )}
+
+            {/* Tab Pagos (para clientes con incidente resuelto/finalizado) */}
+            {hasPagosTab && activeTab === 'pagos' && (
+              <div className="mt-4 space-y-4">
+                {cargandoPagos ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : pagosIncidente ? (
+                  <>
+                    {/* Pago pendiente */}
+                    {pagosIncidente.pendiente && (
+                      <div className="rounded-xl border-2 border-orange-200 bg-orange-50 overflow-hidden">
+                        <div className="bg-orange-500 px-4 py-3 flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-white flex-shrink-0" />
+                          <p className="text-white font-bold text-sm">Pago pendiente</p>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Monto a pagar</span>
+                            <span className="text-2xl font-bold text-orange-600">
+                              ${pagosIncidente.pendiente.monto_a_pagar.toLocaleString('es-AR')}
+                            </span>
+                          </div>
+                          <div className="rounded-lg bg-white border border-orange-100 px-3 py-2.5 flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 text-orange-400 flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-gray-600">
+                              La administración te contactará para coordinar la forma y fecha de pago.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Historial de pagos */}
+                    {pagosIncidente.realizados.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          Historial de pagos
+                        </h4>
+                        {pagosIncidente.realizados.map(r => (
+                          <div key={r.id_cobro} className="rounded-xl border border-green-200 bg-green-50 p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600">Monto pagado</span>
+                              <span className="text-xl font-bold text-green-600">
+                                ${r.monto_cobro.toLocaleString('es-AR')}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <DollarSign className="h-4 w-4 text-gray-400" />
+                              <span className="capitalize">{r.metodo_pago}</span>
+                              {r.banco && <span className="text-gray-400">• {r.banco}</span>}
+                              {r.cuotas && r.cuotas > 1 && <span className="text-gray-400">• {r.cuotas} cuotas</span>}
+                            </div>
+                            {r.referencia_pago && (
+                              <p className="text-xs text-gray-500">Ref: <span className="font-mono">{r.referencia_pago}</span></p>
+                            )}
+                            {r.observaciones && (
+                              <p className="text-xs text-gray-500 italic">{r.observaciones}</p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              Pagado el {format(new Date(r.fecha_cobro), "d 'de' MMMM yyyy", { locale: es })}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Sin movimientos */}
+                    {!pagosIncidente.pendiente && pagosIncidente.realizados.length === 0 && (
+                      <div className="text-center py-10">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                          <DollarSign className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-600">Sin movimientos aún</p>
+                        <p className="text-xs text-gray-400 mt-1">El cobro se generará una vez confirmado el servicio.</p>
+                      </div>
+                    )}
+                  </>
+                ) : null}
               </div>
             )}
 
