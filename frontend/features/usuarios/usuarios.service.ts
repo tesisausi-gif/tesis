@@ -437,24 +437,30 @@ export async function aprobarSolicitudTecnico(
   // 6. Generar magic link y enviar email (fire-and-forget)
   try {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://tesis.vercel.app'
+    console.log('[email] paso 1 - siteUrl:', siteUrl, '| resend key existe:', !!process.env.RESEND_API_KEY)
+
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: solicitud.email,
       options: { redirectTo: `${siteUrl}/tecnico` },
     })
 
+    console.log('[email] paso 2 - linkError:', linkError, '| action_link existe:', !!linkData?.properties?.action_link)
+
     if (linkError || !linkData?.properties?.action_link) {
-      console.error('[aprobarSolicitudTecnico] Error al generar magic link:', linkError)
+      console.error('[email] Error al generar magic link:', linkError)
     } else {
+      console.log('[email] paso 3 - enviando a:', solicitud.email)
       await enviarMagicLinkTecnico({
         destinatario: solicitud.email,
         nombre: solicitud.nombre,
         apellido: solicitud.apellido,
         magicLink: linkData.properties.action_link,
       })
+      console.log('[email] paso 4 - email enviado OK')
     }
   } catch (emailError) {
-    console.error('[aprobarSolicitudTecnico] Error al enviar email:', emailError)
+    console.error('[email] Error inesperado:', emailError)
   }
 
   return { success: true, data: undefined }
