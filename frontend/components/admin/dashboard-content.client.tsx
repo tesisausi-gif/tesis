@@ -164,61 +164,71 @@ export function DashboardContent({ stats: initialStats, incidentesRecientes: ini
 
       {/* Stats Cards - Primera fila: Incidentes */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Incidentes Pendientes</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+        <Card className="border-l-4 border-l-amber-500 bg-gradient-to-br from-white to-amber-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Incidentes Pendientes</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-amber-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-yellow-600">{stats.incidentesPendientes}</div>
-            <p className="text-xs text-muted-foreground">Requieren atención</p>
+          <CardContent className="px-5 pb-4">
+            <div className="text-3xl font-bold tabular-nums text-amber-700">{stats.incidentesPendientes}</div>
+            <p className="text-xs text-slate-400 mt-1">Requieren atención</p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Incidentes En Proceso</CardTitle>
-            <AlertCircle className="h-4 w-4 text-blue-600" />
+        <Card className="border-l-4 border-l-blue-500 bg-gradient-to-br from-white to-blue-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Incidentes En Proceso</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{stats.incidentesEnProceso}</div>
-            <p className="text-xs text-muted-foreground">Siendo atendidos</p>
+          <CardContent className="px-5 pb-4">
+            <div className="text-3xl font-bold tabular-nums text-blue-700">{stats.incidentesEnProceso}</div>
+            <p className="text-xs text-slate-400 mt-1">Siendo atendidos</p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Incidentes Finalizados</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+        <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-green-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Incidentes Finalizados</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">{stats.incidentesResueltos}</div>
-            <p className="text-xs text-muted-foreground">Completados</p>
+          <CardContent className="px-5 pb-4">
+            <div className="text-3xl font-bold tabular-nums text-green-700">{stats.incidentesResueltos}</div>
+            <p className="text-xs text-slate-400 mt-1">Completados</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Stats Cards - Segunda fila: Entidades */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
+        <Card className="border-l-4 border-l-violet-500 bg-gradient-to-br from-white to-violet-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Clientes</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
+              <Users className="h-4 w-4 text-violet-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.clientes}</div>
-            <p className="text-xs text-muted-foreground">Clientes activos</p>
+          <CardContent className="px-5 pb-4">
+            <div className="text-2xl font-bold tabular-nums text-violet-700">{stats.clientes}</div>
+            <p className="text-xs text-slate-400 mt-1">Clientes activos</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Técnicos</CardTitle>
-            <Wrench className="h-4 w-4 text-orange-600" />
+        <Card className="border-l-4 border-l-orange-500 bg-gradient-to-br from-white to-orange-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Técnicos</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+              <Wrench className="h-4 w-4 text-orange-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.tecnicos}</div>
-            <p className="text-xs text-muted-foreground">Técnicos activos</p>
+          <CardContent className="px-5 pb-4">
+            <div className="text-2xl font-bold tabular-nums text-orange-700">{stats.tecnicos}</div>
+            <p className="text-xs text-slate-400 mt-1">Técnicos activos</p>
           </CardContent>
         </Card>
       </div>

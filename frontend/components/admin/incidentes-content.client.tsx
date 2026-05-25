@@ -213,16 +213,17 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       </div>
 
       {/* Stats strip */}
-      <div className="grid grid-cols-4 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <div className="grid grid-cols-4 bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
         {[
-          { label: 'Pendientes',   count: porEstado.pendiente.length,             color: 'text-amber-500' },
-          { label: 'Asig. Solicitada', count: porEstado.asignacion_solicitada.length, color: 'text-blue-500' },
-          { label: 'En Proceso',   count: porEstado.en_proceso.length,            color: 'text-orange-500' },
-          { label: 'Finalizados',  count: porEstado.finalizado.length,            color: 'text-green-500' },
+          { label: 'Pendientes',       count: porEstado.pendiente.length,             color: 'text-amber-600',  dot: 'bg-amber-400' },
+          { label: 'Asig. Solicitada', count: porEstado.asignacion_solicitada.length, color: 'text-blue-600',   dot: 'bg-blue-400' },
+          { label: 'En Proceso',       count: porEstado.en_proceso.length,            color: 'text-orange-600', dot: 'bg-orange-400' },
+          { label: 'Finalizados',      count: porEstado.finalizado.length,            color: 'text-green-600',  dot: 'bg-green-400' },
         ].map((stat, i) => (
-          <div key={stat.label} className={`flex flex-col items-center justify-center py-4 ${i < 3 ? 'border-r border-gray-100' : ''}`}>
-            <span className={`text-2xl font-bold ${stat.color}`}>{stat.count}</span>
-            <span className="text-[10px] text-gray-400 font-medium leading-tight text-center mt-0.5">{stat.label}</span>
+          <div key={stat.label} className={`flex flex-col items-center justify-center py-4 ${i < 3 ? 'border-r border-slate-100' : ''}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${stat.dot} mb-1.5`} />
+            <span className={`text-2xl font-bold tabular-nums ${stat.color}`}>{stat.count}</span>
+            <span className="text-[10px] text-slate-400 font-medium leading-tight text-center mt-0.5">{stat.label}</span>
           </div>
         ))}
       </div>
@@ -238,22 +239,22 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             className="pl-10"
           />
         </div>
-        <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
           {filtros.map(({ id, label, count, Icon }) => {
             const active = filtro === id
             return (
               <button
                 key={id}
                 onClick={() => setFiltro(id)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-                  active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 {label}
                 {count > 0 && (
                   <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
-                    active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                    active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'
                   }`}>
                     {count}
                   </span>

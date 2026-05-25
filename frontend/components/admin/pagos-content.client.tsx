@@ -202,20 +202,20 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <Card className="border-amber-200 bg-amber-50"><CardContent className="pt-4 pb-3 text-center">
-          <p className="text-xs text-amber-700 mb-1">Pendiente de cobro</p>
-          <p className="text-2xl font-bold text-amber-800">{fmt$(totalPendiente)}</p>
-          <p className="text-xs text-amber-600 mt-0.5">{pendientes.length} cliente{pendientes.length!==1?'s':''}</p>
+        <Card className="border-l-4 border-l-amber-500 bg-gradient-to-br from-white to-amber-50/40"><CardContent className="pt-4 pb-3 text-center">
+          <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Pendiente de cobro</p>
+          <p className="text-2xl font-bold tabular-nums text-amber-700">{fmt$(totalPendiente)}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{pendientes.length} cliente{pendientes.length!==1?'s':''}</p>
         </CardContent></Card>
-        <Card className="border-green-200 bg-green-50"><CardContent className="pt-4 pb-3 text-center">
-          <p className="text-xs text-green-700 mb-1">Total cobrado</p>
-          <p className="text-2xl font-bold text-green-800">{fmt$(totalCobrado)}</p>
-          <p className="text-xs text-green-600 mt-0.5">{realizados.length} cobro{realizados.length!==1?'s':''}</p>
+        <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-green-50/40"><CardContent className="pt-4 pb-3 text-center">
+          <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Total cobrado</p>
+          <p className="text-2xl font-bold tabular-nums text-green-700">{fmt$(totalCobrado)}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{realizados.length} cobro{realizados.length!==1?'s':''}</p>
         </CardContent></Card>
       </div>
 
       {/* Píldoras de filtro */}
-      <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
         {[
           { id: 'pendientes' as const, label: 'Pendientes de cobro', count: pendientes.length, Icon: Clock },
           { id: 'historial'  as const, label: 'Historial de cobros',  count: realizados.length, Icon: History },
@@ -223,14 +223,14 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
           const active = vista === id
           return (
             <button key={id} onClick={() => setVista(id)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-                active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
               }`}>
               <Icon className="w-3.5 h-3.5" />
               {label}
               {count > 0 && (
                 <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
-                  active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                  active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'
                 }`}>{count}</span>
               )}
             </button>

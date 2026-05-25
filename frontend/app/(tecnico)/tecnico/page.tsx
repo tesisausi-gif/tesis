@@ -87,65 +87,65 @@ export default async function TecnicoDashboard() {
 
       {/* Contadores por estado */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Pendientes</CardTitle>
-              <Clock className="h-4 w-4 md:h-5 md:w-5 text-gray-500" />
+        <Card className="border-l-4 border-l-amber-500 bg-gradient-to-br from-white to-amber-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Pendientes</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-amber-600" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-gray-700">{cntPendiente}</div>
+          <CardContent className="px-5 pb-4">
+            <div className="text-2xl font-bold tabular-nums text-amber-700">{cntPendiente}</div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Asignados</CardTitle>
-              <UserCheck className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
+        <Card className="border-l-4 border-l-blue-500 bg-gradient-to-br from-white to-blue-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Asignados</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <UserCheck className="h-4 w-4 text-blue-600" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-blue-600">{cntAsignado}</div>
+          <CardContent className="px-5 pb-4">
+            <div className="text-2xl font-bold tabular-nums text-blue-700">{cntAsignado}</div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">En proceso</CardTitle>
-              <Wrench className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
+        <Card className="border-l-4 border-l-orange-500 bg-gradient-to-br from-white to-orange-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">En proceso</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+              <Wrench className="h-4 w-4 text-orange-600" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-orange-600">{cntEnProceso}</div>
+          <CardContent className="px-5 pb-4">
+            <div className="text-2xl font-bold tabular-nums text-orange-700">{cntEnProceso}</div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xs md:text-sm font-medium text-gray-600">Finalizado</CardTitle>
-              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
+        <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-green-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Finalizado</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-green-600">{cntFinalizado}</div>
+          <CardContent className="px-5 pb-4">
+            <div className="text-2xl font-bold tabular-nums text-green-700">{cntFinalizado}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Calificación */}
-      <Card className="hover:shadow-lg transition-shadow">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-gray-600">Calificación promedio</CardTitle>
-            <Star className="h-5 w-5 text-yellow-500" />
+      <Card className="border-l-4 border-l-yellow-400 bg-gradient-to-br from-white to-yellow-50/40">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+          <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Calificación promedio</CardTitle>
+          <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+            <Star className="h-4 w-4 text-yellow-600" />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-yellow-600">
+        <CardContent className="px-5 pb-4">
+          <div className="text-3xl font-bold tabular-nums text-yellow-700">
             {tecnico?.calificacion_promedio ? `${tecnico.calificacion_promedio.toFixed(1)} ★` : '—'}
           </div>
         </CardContent>

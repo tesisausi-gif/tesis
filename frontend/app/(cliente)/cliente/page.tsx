@@ -107,36 +107,24 @@ export default async function ClienteDashboard() {
         <CardContent className="space-y-4">
           {/* Estadísticas de Incidentes */}
           <div className="grid grid-cols-2 gap-2 md:gap-3 sm:grid-cols-4">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-2xl md:text-3xl font-bold text-gray-700 flex items-center justify-center gap-1">
-                <Clock className="h-4 w-4 md:h-5 md:w-5 text-gray-500" />
-                {cntPendiente}
-              </div>
-              <p className="text-xs md:text-sm text-gray-600 mt-1">Pendientes</p>
+            <div className="p-3 rounded-lg border-l-4 border-l-amber-400 bg-amber-50/50">
+              <div className="text-2xl md:text-3xl font-bold tabular-nums text-amber-700">{cntPendiente}</div>
+              <p className="text-xs md:text-sm text-slate-500 mt-1">Pendientes</p>
             </div>
 
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl md:text-3xl font-bold text-blue-600 flex items-center justify-center gap-1">
-                <UserCheck className="h-4 w-4 md:h-5 md:w-5" />
-                {cntAsignado}
-              </div>
-              <p className="text-xs md:text-sm text-blue-700 mt-1">Asignados</p>
+            <div className="p-3 rounded-lg border-l-4 border-l-blue-400 bg-blue-50/50">
+              <div className="text-2xl md:text-3xl font-bold tabular-nums text-blue-700">{cntAsignado}</div>
+              <p className="text-xs md:text-sm text-slate-500 mt-1">Asignados</p>
             </div>
 
-            <div className="text-center p-3 bg-orange-50 rounded-lg">
-              <div className="text-2xl md:text-3xl font-bold text-orange-600 flex items-center justify-center gap-1">
-                <Wrench className="h-4 w-4 md:h-5 md:w-5" />
-                {cntEnProceso}
-              </div>
-              <p className="text-xs md:text-sm text-orange-700 mt-1">En proceso</p>
+            <div className="p-3 rounded-lg border-l-4 border-l-orange-400 bg-orange-50/50">
+              <div className="text-2xl md:text-3xl font-bold tabular-nums text-orange-700">{cntEnProceso}</div>
+              <p className="text-xs md:text-sm text-slate-500 mt-1">En proceso</p>
             </div>
 
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl md:text-3xl font-bold text-green-600 flex items-center justify-center gap-1">
-                <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
-                {cntFinalizado}
-              </div>
-              <p className="text-xs md:text-sm text-green-700 mt-1">Finalizado</p>
+            <div className="p-3 rounded-lg border-l-4 border-l-green-400 bg-green-50/50">
+              <div className="text-2xl md:text-3xl font-bold tabular-nums text-green-700">{cntFinalizado}</div>
+              <p className="text-xs md:text-sm text-slate-500 mt-1">Finalizado</p>
             </div>
           </div>
 
