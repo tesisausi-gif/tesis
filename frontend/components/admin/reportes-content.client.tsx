@@ -4,15 +4,33 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import {
   Activity, Wrench, Star, DollarSign,
-  TrendingDown, Clock, Building2, RefreshCcw, Timer,
-  AlertTriangle, CheckCircle, ShieldCheck, Search,
+  TrendingDown, Building2, RefreshCcw, Timer,
+  CheckCircle, ShieldCheck, Search,
   BarChart2, FileText, TrendingUp, Layers,
   ChevronDown, ChevronUp,
 } from 'lucide-react'
 import type { ReportesData, TrabajosPorCategoria, TrabajoCategoriaItem } from '@/features/reportes/reportes.service'
+
+// ─── Tooltip sobre el título ──────────────────────────────────────────────────
+
+function TitleTooltip({ children, texto }: { children: React.ReactNode; texto: string }) {
+  return (
+    <span className="relative group cursor-default">
+      <span className="border-b border-dotted border-slate-400 leading-none">{children}</span>
+      <span className="
+        absolute z-50 bottom-full left-0 mb-2 w-64
+        rounded-lg bg-slate-900 text-white text-xs p-3 shadow-xl leading-relaxed
+        opacity-0 group-hover:opacity-100 transition-opacity duration-150
+        pointer-events-none normal-case font-normal tracking-normal whitespace-normal
+      ">
+        {texto}
+        <span className="absolute top-full left-4 border-4 border-transparent border-t-slate-900" />
+      </span>
+    </span>
+  )
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -38,10 +56,6 @@ const ESTADO_COLOR: Record<string, string> = {
   borrador: 'bg-gray-100 text-gray-700', enviado: 'bg-blue-100 text-blue-700',
   aprobado_admin: 'bg-indigo-100 text-indigo-700', aprobado: 'bg-green-100 text-green-700',
   rechazado: 'bg-red-100 text-red-700', vencido: 'bg-yellow-100 text-yellow-700',
-}
-const PRIO_COLOR: Record<string, string> = {
-  urgente: 'bg-red-100 text-red-700', alta: 'bg-orange-100 text-orange-700',
-  media: 'bg-yellow-100 text-yellow-700', baja: 'bg-green-100 text-green-700',
 }
 const TIPO_PAGO_LABEL: Record<string, string> = {
   adelanto: 'Adelanto', parcial: 'Parcial', total: 'Total', reembolso: 'Reembolso',
@@ -131,21 +145,32 @@ function TrabajosPorCategoriaSection({ data }: { data: TrabajosPorCategoria[] })
 
 // ─── Cabecera de Grupo ────────────────────────────────────────────────────────
 
+const GROUP_STYLES: Record<string, { border: string; bg: string; text: string }> = {
+  blue:   { border: 'border-blue-400',   bg: 'bg-blue-100',   text: 'text-blue-600'   },
+  amber:  { border: 'border-amber-400',  bg: 'bg-amber-100',  text: 'text-amber-600'  },
+  violet: { border: 'border-violet-400', bg: 'bg-violet-100', text: 'text-violet-600' },
+  green:  { border: 'border-green-400',  bg: 'bg-green-100',  text: 'text-green-600'  },
+}
+
 function GrupoHeader({
-  icon: Icon, titulo, descripcion, color,
+  icon: Icon, titulo, descripcion, color, tooltip,
 }: {
   icon: React.ElementType
   titulo: string
   descripcion: string
-  color: string
+  color: keyof typeof GROUP_STYLES
+  tooltip: string
 }) {
+  const s = GROUP_STYLES[color]
   return (
-    <div className={`flex items-center gap-3 pb-3 border-b-2 ${color}`}>
-      <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${color.replace('border-b-2 ', '').replace('border-', 'bg-').replace('-400', '-100')}`}>
-        <Icon className={`h-5 w-5 ${color.replace('border-b-2 ', '').replace('border-', 'text-').replace('-400', '-600')}`} />
+    <div className={`flex items-center gap-3 pb-3 border-b-2 ${s.border}`}>
+      <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${s.bg}`}>
+        <Icon className={`h-5 w-5 ${s.text}`} />
       </div>
       <div>
-        <h2 className="text-base font-bold text-slate-800">{titulo}</h2>
+        <h2 className="text-base font-bold text-slate-800">
+          <TitleTooltip texto={tooltip}>{titulo}</TitleTooltip>
+        </h2>
         <p className="text-xs text-slate-500">{descripcion}</p>
       </div>
     </div>
@@ -156,21 +181,14 @@ function GrupoHeader({
 
 export function ReportesContent({ data }: { data: ReportesData }) {
   const {
-    rendimientoTecnicos, embudoConversion, agingIncidentes,
+    rendimientoTecnicos, embudoConversion,
     estadoFinanciero, presupuestosPorEstado, incidentesPorTipoInmueble,
     satisfaccionCliente, kpisAdministrativos, tiempoResolucionPorCategoria,
     reincidenciaPorPropiedad, rentabilidadTecnicos, cobroPromedioPorTecnico,
     trabajosPorCategoria,
   } = data
 
-  // Filtros interactivos
-  const [filtroPrioridad, setFiltroPrioridad] = useState<string>('todos')
   const [busquedaTecnico, setBusquedaTecnico] = useState('')
-
-  // Datos derivados
-  const agingFiltrado = filtroPrioridad === 'todos'
-    ? agingIncidentes
-    : agingIncidentes.filter(i => (i.nivel_prioridad ?? '').toLowerCase() === filtroPrioridad)
 
   const tecnicoMatch = (nombre: string, apellido: string) =>
     busquedaTecnico === '' ||
@@ -179,33 +197,32 @@ export function ReportesContent({ data }: { data: ReportesData }) {
   const maxTec = Math.max(...rendimientoTecnicos.map(t => t.totalAsignaciones), 1)
   const maxDiasResolucion = Math.max(...tiempoResolucionPorCategoria.map(c => c.diasPromedio), 1)
   const maxRentabilidad = Math.max(...rentabilidadTecnicos.map(t => t.totalCobradoCliente), 1)
-  const agingCriticos = agingIncidentes.filter(i => i.diasDesdeCreacion >= 7).length
-
-  const PRIORIDADES = ['todos', 'urgente', 'alta', 'media', 'baja']
 
   return (
     <div className="space-y-10">
 
       {/* ══════════════════════════════════════════════════════════════
           GRUPO 1 — INCIDENTES
-          Todo lo que habla del estado y flujo de los incidentes
       ══════════════════════════════════════════════════════════════ */}
       <div className="space-y-5">
         <GrupoHeader
           icon={Activity}
           titulo="Incidentes"
-          descripcion="Estado, flujo y distribución de todos los incidentes del sistema"
-          color="border-blue-400"
+          descripcion="Estado y flujo de todos los incidentes del sistema"
+          color="blue"
+          tooltip="Todo lo que necesitás saber sobre el estado de los incidentes: por dónde avanzan, en qué tipo de propiedades ocurren, qué tipos tardan más y cuáles se repiten."
         />
 
-        {/* Embudo de conversión — full width */}
+        {/* Embudo de conversión */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <TrendingDown className="h-4 w-4 text-blue-600" />
-              Embudo de conversión
+              <TrendingDown className="h-4 w-4 text-blue-600 shrink-0" />
+              <TitleTooltip texto="¿Dónde se traban los incidentes? Muestra cuántos pasan por cada etapa del proceso. Si muchos entran pero pocos se cierran, hay un cuello de botella aquí.">
+                Embudo de conversión
+              </TitleTooltip>
             </CardTitle>
-            <CardDescription>Cuántos incidentes pasan por cada etapa — identifica cuellos de botella</CardDescription>
+            <CardDescription>Cuántos incidentes pasan por cada etapa del proceso</CardDescription>
           </CardHeader>
           <CardContent>
             {embudoConversion.length === 0 ? (
@@ -237,89 +254,18 @@ export function ReportesContent({ data }: { data: ReportesData }) {
           </CardContent>
         </Card>
 
-        {/* Aging + Tipo de Inmueble */}
+        {/* Tipo de inmueble + Tiempo de resolución */}
         <div className="grid gap-5 lg:grid-cols-2">
 
-          {/* Sin resolver (Aging) — con filtro de prioridad */}
-          <Card className={agingCriticos > 0 ? 'border-red-200' : ''}>
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                    <Clock className="h-4 w-4 text-red-600" />
-                    Sin resolver
-                    {agingCriticos > 0 && (
-                      <Badge className="bg-red-100 text-red-700 text-[10px] font-semibold">
-                        {agingCriticos} críticos
-                      </Badge>
-                    )}
-                  </CardTitle>
-                  <CardDescription>Incidentes activos — ordenados por tiempo sin resolución</CardDescription>
-                </div>
-              </div>
-              {/* Filtro de prioridad */}
-              <div className="flex flex-wrap gap-1.5 pt-2">
-                {PRIORIDADES.map(p => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setFiltroPrioridad(p)}
-                    className={`text-[11px] px-2.5 py-1 rounded-full font-medium transition-colors capitalize ${
-                      filtroPrioridad === p
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {p === 'todos' ? 'Todos' : p}
-                  </button>
-                ))}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {agingFiltrado.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  {filtroPrioridad === 'todos' ? 'Sin incidentes activos' : `Sin incidentes de prioridad "${filtroPrioridad}"`}
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-72 overflow-y-auto">
-                  {agingFiltrado.map(inc => (
-                    <div
-                      key={inc.id_incidente}
-                      className={`flex items-start justify-between gap-3 p-2 rounded-lg ${inc.diasDesdeCreacion >= 7 ? 'bg-red-50' : 'bg-gray-50'}`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                          <span className="text-xs font-bold text-gray-500">#{inc.id_incidente}</span>
-                          {inc.nivel_prioridad && (
-                            <Badge className={`text-[10px] py-0 ${PRIO_COLOR[inc.nivel_prioridad] || 'bg-gray-100 text-gray-600'}`}>
-                              {inc.nivel_prioridad}
-                            </Badge>
-                          )}
-                          {!inc.tieneTecnico && (
-                            <Badge className="text-[10px] py-0 bg-orange-100 text-orange-700">Sin técnico</Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-600 truncate">{inc.descripcion_problema}</p>
-                        <p className="text-[10px] text-gray-400">{inc.clienteNombre}</p>
-                      </div>
-                      <div className={`text-sm font-bold whitespace-nowrap shrink-0 ${inc.diasDesdeCreacion >= 7 ? 'text-red-600' : 'text-gray-500'}`}>
-                        {inc.diasDesdeCreacion}d
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Por tipo de inmueble */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Building2 className="h-4 w-4 text-emerald-600" />
-                Por tipo de inmueble
+                <Building2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <TitleTooltip texto="¿En qué tipo de propiedades ocurren más problemas? Muestra si las casas, departamentos u otros generan más incidentes y en qué estado están cada uno.">
+                  Por tipo de inmueble
+                </TitleTooltip>
               </CardTitle>
-              <CardDescription>Dónde se concentran los incidentes y en qué estado están</CardDescription>
+              <CardDescription>Dónde se concentran los incidentes y cómo van resolviéndose</CardDescription>
             </CardHeader>
             <CardContent>
               {incidentesPorTipoInmueble.length === 0 ? (
@@ -337,9 +283,9 @@ export function ReportesContent({ data }: { data: ReportesData }) {
                         </div>
                       </div>
                       <div className="flex h-3 rounded-full overflow-hidden gap-0.5">
-                        {tipo.resueltos > 0 && <div className="bg-green-400 transition-all" style={{ width: `${(tipo.resueltos / tipo.totalIncidentes) * 100}%` }} />}
-                        {tipo.enProceso > 0 && <div className="bg-blue-400 transition-all" style={{ width: `${(tipo.enProceso / tipo.totalIncidentes) * 100}%` }} />}
-                        {tipo.pendientes > 0 && <div className="bg-yellow-400 transition-all" style={{ width: `${(tipo.pendientes / tipo.totalIncidentes) * 100}%` }} />}
+                        {tipo.resueltos > 0 && <div className="bg-green-400" style={{ width: `${(tipo.resueltos / tipo.totalIncidentes) * 100}%` }} />}
+                        {tipo.enProceso > 0 && <div className="bg-blue-400" style={{ width: `${(tipo.enProceso / tipo.totalIncidentes) * 100}%` }} />}
+                        {tipo.pendientes > 0 && <div className="bg-yellow-400" style={{ width: `${(tipo.pendientes / tipo.totalIncidentes) * 100}%` }} />}
                       </div>
                     </div>
                   ))}
@@ -352,19 +298,16 @@ export function ReportesContent({ data }: { data: ReportesData }) {
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Tiempo de resolución + Reincidencia */}
-        <div className="grid gap-5 lg:grid-cols-2">
-
-          {/* Tiempo de resolución por categoría */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Timer className="h-4 w-4 text-cyan-600" />
-                Tiempo de resolución por categoría
+                <Timer className="h-4 w-4 text-cyan-600 shrink-0" />
+                <TitleTooltip texto="¿Qué tipos de problemas tardan más en resolverse? Muestra el promedio de días por categoría. Los más lentos son los que necesitan más recursos o técnicos especializados.">
+                  Tiempo de resolución por categoría
+                </TitleTooltip>
               </CardTitle>
-              <CardDescription>Qué tipos de problemas tardan más — útil para ajustar SLAs</CardDescription>
+              <CardDescription>Promedio de días hasta el cierre, por tipo de problema</CardDescription>
             </CardHeader>
             <CardContent>
               {tiempoResolucionPorCategoria.length === 0 ? (
@@ -388,56 +331,58 @@ export function ReportesContent({ data }: { data: ReportesData }) {
               )}
             </CardContent>
           </Card>
-
-          {/* Reincidencia por propiedad */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <RefreshCcw className="h-4 w-4 text-rose-600" />
-                Reincidencia por propiedad
-              </CardTitle>
-              <CardDescription>Propiedades con múltiples incidentes del mismo tipo — señal de problema estructural</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {reincidenciaPorPropiedad.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Sin propiedades con reincidencias</p>
-              ) : (
-                <div className="space-y-3 max-h-72 overflow-y-auto">
-                  {reincidenciaPorPropiedad.map(prop => (
-                    <div key={prop.id_propiedad} className="flex items-start justify-between gap-3 p-2.5 rounded-lg bg-gray-50 border">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{prop.direccion}</p>
-                        {prop.categoriaMasFrecuente && (
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            Más frecuente: <span className="font-medium text-rose-600">{prop.categoriaMasFrecuente}</span> ({prop.cantCategoriaMasFrecuente}x)
-                          </p>
-                        )}
-                      </div>
-                      <Badge className="bg-rose-100 text-rose-700 text-xs whitespace-nowrap shrink-0">
-                        {prop.totalIncidentes} incidentes
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
+
+        {/* Reincidencia */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <RefreshCcw className="h-4 w-4 text-rose-600 shrink-0" />
+              <TitleTooltip texto="¿Hay propiedades con el mismo problema una y otra vez? Si una propiedad aparece acá, significa que el problema no se resolvió bien la primera vez y hay que encarar una solución definitiva.">
+                Reincidencia por propiedad
+              </TitleTooltip>
+            </CardTitle>
+            <CardDescription>Propiedades con incidentes repetidos del mismo tipo</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {reincidenciaPorPropiedad.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Sin propiedades con reincidencias</p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {reincidenciaPorPropiedad.map(prop => (
+                  <div key={prop.id_propiedad} className="flex items-start justify-between gap-3 p-2.5 rounded-lg bg-gray-50 border">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{prop.direccion}</p>
+                      {prop.categoriaMasFrecuente && (
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Más frecuente: <span className="font-medium text-rose-600">{prop.categoriaMasFrecuente}</span> ({prop.cantCategoriaMasFrecuente}x)
+                        </p>
+                      )}
+                    </div>
+                    <Badge className="bg-rose-100 text-rose-700 text-xs whitespace-nowrap shrink-0">
+                      {prop.totalIncidentes} incidentes
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
           GRUPO 2 — TÉCNICOS
-          Rendimiento, productividad y economía de cada técnico
       ══════════════════════════════════════════════════════════════ */}
       <div className="space-y-5">
         <GrupoHeader
           icon={Wrench}
           titulo="Técnicos"
           descripcion="Rendimiento, productividad y economía de cada técnico"
-          color="border-amber-400"
+          color="amber"
+          tooltip="Todo sobre los técnicos: quién trabaja más rápido, quién genera más margen y cuánto cobra en promedio. Te ayuda a tomar mejores decisiones al asignar trabajos."
         />
 
-        {/* Buscador de técnico — filtra todas las subsecciones */}
+        {/* Buscador — filtra todas las subsecciones */}
         <div className="relative max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <Input
@@ -451,14 +396,15 @@ export function ReportesContent({ data }: { data: ReportesData }) {
         {/* Rendimiento + Cobro promedio */}
         <div className="grid gap-5 lg:grid-cols-2">
 
-          {/* Rendimiento */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Activity className="h-4 w-4 text-amber-600" />
-                Rendimiento
+                <Activity className="h-4 w-4 text-amber-600 shrink-0" />
+                <TitleTooltip texto="¿Quién trabaja mejor? Ordena a los técnicos por incidentes completados, qué tan rápido aceptan los trabajos y la calificación que les dan los clientes.">
+                  Rendimiento
+                </TitleTooltip>
               </CardTitle>
-              <CardDescription>Velocidad de aceptación, trabajos completados y calificación</CardDescription>
+              <CardDescription>Trabajos completados, tasa de aceptación y calificación del cliente</CardDescription>
             </CardHeader>
             <CardContent>
               {rendimientoTecnicos.filter(t => tecnicoMatch(t.nombre, t.apellido)).length === 0 ? (
@@ -474,9 +420,7 @@ export function ReportesContent({ data }: { data: ReportesData }) {
                           {tec.especialidad && <span className="text-[10px] text-gray-400 shrink-0">({tec.especialidad})</span>}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-500 shrink-0">
-                          {tec.calificacionPromedio !== null && (
-                            <span className="text-yellow-500 font-medium">⭐ {tec.calificacionPromedio}</span>
-                          )}
+                          {tec.calificacionPromedio !== null && <span className="text-yellow-500 font-medium">⭐ {tec.calificacionPromedio}</span>}
                           <span className="text-green-600 font-medium">{tec.completadas} compl.</span>
                           <span className="text-blue-600">{tec.tasaAceptacion}%</span>
                         </div>
@@ -489,14 +433,15 @@ export function ReportesContent({ data }: { data: ReportesData }) {
             </CardContent>
           </Card>
 
-          {/* Cobro promedio */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <DollarSign className="h-4 w-4 text-emerald-600" />
-                Cobro promedio por trabajo
+                <DollarSign className="h-4 w-4 text-emerald-600 shrink-0" />
+                <TitleTooltip texto="¿Cuánto cobra en promedio cada técnico por trabajo? Permite comparar costos entre técnicos y detectar si los mejor calificados también tienen honorarios más altos.">
+                  Cobro promedio por trabajo
+                </TitleTooltip>
               </CardTitle>
-              <CardDescription>Cuánto cobra en promedio cada técnico por trabajo completado</CardDescription>
+              <CardDescription>Total facturado y promedio por trabajo completado</CardDescription>
             </CardHeader>
             <CardContent>
               {cobroPromedioPorTecnico.filter(t => tecnicoMatch(t.nombre, t.apellido)).length === 0 ? (
@@ -533,10 +478,12 @@ export function ReportesContent({ data }: { data: ReportesData }) {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <TrendingUp className="h-4 w-4 text-violet-600" />
-              Rentabilidad por técnico
+              <TrendingUp className="h-4 w-4 text-violet-600 shrink-0" />
+              <TitleTooltip texto="¿Cuánto margen deja cada técnico? Compara lo que se le cobró al cliente con lo que se le pagó al técnico. Un margen alto significa que ese técnico es más rentable para el negocio.">
+                Rentabilidad por técnico
+              </TitleTooltip>
             </CardTitle>
-            <CardDescription>Margen generado por cada técnico — lo cobrado al cliente vs. lo pagado al técnico</CardDescription>
+            <CardDescription>Cobrado al cliente vs. pagado al técnico — margen real por persona</CardDescription>
           </CardHeader>
           <CardContent>
             {rentabilidadTecnicos.filter(t => tecnicoMatch(t.nombre, t.apellido)).length === 0 ? (
@@ -573,9 +520,12 @@ export function ReportesContent({ data }: { data: ReportesData }) {
         {/* Trabajos por categoría */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Layers className="h-4 w-4 text-indigo-600" />
-            <h3 className="text-sm font-semibold text-slate-700">Trabajos por categoría</h3>
-            <span className="text-xs text-slate-400">— detalle por técnico, costos y calificaciones</span>
+            <Layers className="h-4 w-4 text-indigo-600 shrink-0" />
+            <h3 className="text-sm font-semibold text-slate-700">
+              <TitleTooltip texto="El detalle más completo: para cada tipo de problema, muestra qué técnicos trabajaron, cuánto costó cada trabajo y qué calificación recibieron. Hacé clic en una categoría para ver el desglose.">
+                Trabajos por categoría
+              </TitleTooltip>
+            </h3>
           </div>
           <TrabajosPorCategoriaSection data={trabajosPorCategoria} />
         </div>
@@ -589,17 +539,19 @@ export function ReportesContent({ data }: { data: ReportesData }) {
           icon={Star}
           titulo="Clientes & KPIs Operativos"
           descripcion="Satisfacción del cliente e indicadores clave del sistema"
-          color="border-violet-400"
+          color="violet"
+          tooltip="Cómo perciben los clientes el servicio y qué tan bien está funcionando el sistema en general. Son los números que resumen si el negocio está yendo bien."
         />
 
         <div className="grid gap-5 lg:grid-cols-2">
 
-          {/* Satisfacción del cliente */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Star className="h-4 w-4 text-yellow-500" />
-                Satisfacción del cliente
+                <Star className="h-4 w-4 text-yellow-500 shrink-0" />
+                <TitleTooltip texto="¿Qué tan contentos quedaron los clientes? Muestra las calificaciones que dejaron tras cada resolución y si el problema quedó realmente solucionado.">
+                  Satisfacción del cliente
+                </TitleTooltip>
               </CardTitle>
               <CardDescription>Calificaciones post-resolución y tasa de conformidad firmada</CardDescription>
             </CardHeader>
@@ -651,14 +603,15 @@ export function ReportesContent({ data }: { data: ReportesData }) {
             </CardContent>
           </Card>
 
-          {/* KPIs administrativos */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <BarChart2 className="h-4 w-4 text-indigo-600" />
-                KPIs operativos
+                <BarChart2 className="h-4 w-4 text-indigo-600 shrink-0" />
+                <TitleTooltip texto="El pulso del sistema: cuántos incidentes están abiertos ahora, cuántos presupuestos están esperando tu aprobación y cuánto tardan en asignarse los técnicos.">
+                  KPIs operativos
+                </TitleTooltip>
               </CardTitle>
-              <CardDescription>Indicadores globales de operación y carga del sistema</CardDescription>
+              <CardDescription>Indicadores clave de la operación diaria del sistema</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -701,24 +654,25 @@ export function ReportesContent({ data }: { data: ReportesData }) {
 
       {/* ══════════════════════════════════════════════════════════════
           GRUPO 4 — FINANCIERO
-          Estado de cobros, presupuestos y flujo de dinero
       ══════════════════════════════════════════════════════════════ */}
       <div className="space-y-5">
         <GrupoHeader
           icon={DollarSign}
           titulo="Financiero"
           descripcion="Cobros, presupuestos y posición financiera del sistema"
-          color="border-green-400"
+          color="green"
+          tooltip="Todo el dinero en juego: cuánto se presupuestó, cuánto se cobró, cuánto está pendiente y en qué etapa está cada presupuesto. Esencial para saber si el negocio está siendo rentable."
         />
 
         <div className="grid gap-5 lg:grid-cols-2">
 
-          {/* Estado financiero */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <DollarSign className="h-4 w-4 text-green-600" />
-                Estado financiero global
+                <DollarSign className="h-4 w-4 text-green-600 shrink-0" />
+                <TitleTooltip texto="¿Cuánto dinero hay en juego en total? Muestra lo que se presupuestó, lo que se cobró efectivamente y cuánto todavía está pendiente de cobrar. Es la posición financiera real del sistema.">
+                  Estado financiero global
+                </TitleTooltip>
               </CardTitle>
               <CardDescription>Posición consolidada de cobros y saldos pendientes</CardDescription>
             </CardHeader>
@@ -754,14 +708,15 @@ export function ReportesContent({ data }: { data: ReportesData }) {
             </CardContent>
           </Card>
 
-          {/* Presupuestos por estado */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <FileText className="h-4 w-4 text-purple-600" />
-                Presupuestos por estado
+                <FileText className="h-4 w-4 text-purple-600 shrink-0" />
+                <TitleTooltip texto="¿En qué etapa está cada presupuesto? Los 'vencidos' son trabajos que ya se hicieron pero nunca se cobraron — son dinero que se puede recuperar si se actúa ahora.">
+                  Presupuestos por estado
+                </TitleTooltip>
               </CardTitle>
-              <CardDescription>Pipeline de presupuestos — los vencidos representan trabajo sin cobrar</CardDescription>
+              <CardDescription>Pipeline de presupuestos — los vencidos requieren acción inmediata</CardDescription>
             </CardHeader>
             <CardContent>
               {presupuestosPorEstado.length === 0 ? (

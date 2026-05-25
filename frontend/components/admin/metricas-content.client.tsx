@@ -9,6 +9,23 @@ import {
   BarChart2, Clock, Users, AlertTriangle,
   Tag, Filter, Loader2, CheckCircle2, TrendingUp,
 } from 'lucide-react'
+
+function TitleTooltip({ children, texto }: { children: React.ReactNode; texto: string }) {
+  return (
+    <span className="relative group cursor-default">
+      <span className="border-b border-dotted border-slate-400 leading-none">{children}</span>
+      <span className="
+        absolute z-50 bottom-full left-0 mb-2 w-64
+        rounded-lg bg-slate-900 text-white text-xs p-3 shadow-xl leading-relaxed
+        opacity-0 group-hover:opacity-100 transition-opacity duration-150
+        pointer-events-none normal-case font-normal tracking-normal whitespace-normal
+      ">
+        {texto}
+        <span className="absolute top-full left-4 border-4 border-transparent border-t-slate-900" />
+      </span>
+    </span>
+  )
+}
 import { toast } from 'sonner'
 import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import type { MetricasDashboard } from '@/features/incidentes/incidentes.types'
@@ -154,7 +171,11 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
         <Card className="border-l-4 border-l-blue-600 bg-gradient-to-br from-white to-blue-50/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Incidentes</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <TitleTooltip texto="Cuántos incidentes se crearon en el período que seleccionaste con el filtro de arriba. Es el volumen total de trabajo que entró al sistema.">
+                Total Incidentes
+              </TitleTooltip>
+            </CardTitle>
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
               <BarChart2 className="h-4 w-4 text-blue-600" />
             </div>
@@ -167,7 +188,11 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
         <Card className="border-l-4 border-l-teal-500 bg-gradient-to-br from-white to-teal-50/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tiempo Prom. Resolución</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <TitleTooltip texto="En promedio, cuántos días pasan desde que se crea un incidente hasta que se cierra. Cuanto más bajo, más rápido se resuelven los problemas.">
+                Tiempo Prom. Resolución
+              </TitleTooltip>
+            </CardTitle>
             <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
               <Clock className="h-4 w-4 text-teal-600" />
             </div>
@@ -182,7 +207,11 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
         <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-green-50/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tasa de Resolución</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <TitleTooltip texto="De cada 100 incidentes registrados, cuántos se cerraron con éxito. Cuanto más cerca del 100%, mejor está funcionando el sistema.">
+                Tasa de Resolución
+              </TitleTooltip>
+            </CardTitle>
             <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
             </div>
@@ -195,7 +224,11 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
         <Card className="border-l-4 border-l-violet-500 bg-gradient-to-br from-white to-violet-50/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Top Técnico</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <TitleTooltip texto="El técnico con más incidentes resueltos en el período seleccionado. Un indicador rápido de quién está liderando el equipo.">
+                Top Técnico
+              </TitleTooltip>
+            </CardTitle>
             <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
               <Users className="h-4 w-4 text-violet-600" />
             </div>
@@ -220,7 +253,9 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <TrendingUp className="h-4 w-4 text-blue-600" />
-            Incidentes por Mes
+            <TitleTooltip texto="Evolución mes a mes de cuántos incidentes se abrieron y cuántos se cerraron. Si la barra azul oscura (resueltos) crece, el equipo está mejorando su capacidad de respuesta.">
+              Incidentes por Mes
+            </TitleTooltip>
           </CardTitle>
           <CardDescription>Últimos 6 meses — total vs. resueltos</CardDescription>
         </CardHeader>
@@ -267,7 +302,9 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Tag className="h-4 w-4 text-amber-600" />
-              Por Categoría
+              <TitleTooltip texto="Qué tipos de problemas se reportan más. La barra más larga es la categoría más demandada — útil para saber en qué especialidades tener más técnicos disponibles.">
+                Por Categoría
+              </TitleTooltip>
             </CardTitle>
             <CardDescription>Volumen de incidentes por tipo</CardDescription>
           </CardHeader>
@@ -302,7 +339,9 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Users className="h-4 w-4 text-violet-600" />
-              Ranking de Técnicos
+              <TitleTooltip texto="Los técnicos ordenados de mayor a menor por incidentes resueltos. Muestra quién lleva más trabajo completado en el período seleccionado.">
+                Ranking de Técnicos
+              </TitleTooltip>
             </CardTitle>
             <CardDescription>Por incidentes resueltos</CardDescription>
           </CardHeader>
