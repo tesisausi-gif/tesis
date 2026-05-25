@@ -9,7 +9,7 @@
 
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
-import { enviarEmailBienvenida } from '@/features/email/email.service'
+import { enviarMagicLinkTecnico } from '@/features/email/email.service'
 import type { Usuario, Cliente, Tecnico, TecnicoActivo } from './usuarios.types'
 import type { ActionResult } from '@/shared/types'
 
@@ -360,14 +360,15 @@ export async function aprobarSolicitudTecnico(
     return { success: false, error: 'Solicitud no encontrada' }
   }
 
-  const passwordTemporal = 'tecnico123'
+  // Contraseña aleatoria: el técnico nunca la usará (accede via magic link)
+  const passwordInterna = crypto.randomUUID()
 
   // 2. Crear usuario en Supabase Auth con rol 'gestor' para que el trigger
   //    solo inserte en `usuarios` (sin tocar `tecnicos`) — evita fallos del trigger.
   //    Luego insertamos manualmente en `tecnicos` y actualizamos `usuarios`.
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: solicitud.email,
-    password: passwordTemporal,
+    password: passwordInterna,
     email_confirm: true,
     user_metadata: {
       nombre: solicitud.nombre,
@@ -433,15 +434,25 @@ export async function aprobarSolicitudTecnico(
     })
     .eq('id_solicitud', solicitudId)
 
-  // 6. Enviar email con credenciales al técnico (fire-and-forget)
+  // 6. Generar magic link y enviar email (fire-and-forget)
   try {
-    await enviarEmailBienvenida({
-      destinatario: solicitud.email,
-      nombre: solicitud.nombre,
-      apellido: solicitud.apellido,
-      passwordTemporal,
-      rol: 'tecnico',
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://tesis.vercel.app'
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: solicitud.email,
+      options: { redirectTo: `${siteUrl}/tecnico` },
     })
+
+    if (linkError || !linkData?.properties?.action_link) {
+      console.error('[aprobarSolicitudTecnico] Error al generar magic link:', linkError)
+    } else {
+      await enviarMagicLinkTecnico({
+        destinatario: solicitud.email,
+        nombre: solicitud.nombre,
+        apellido: solicitud.apellido,
+        magicLink: linkData.properties.action_link,
+      })
+    }
   } catch (emailError) {
     console.error('[aprobarSolicitudTecnico] Error al enviar email:', emailError)
   }

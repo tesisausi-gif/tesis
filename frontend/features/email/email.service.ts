@@ -8,7 +8,8 @@
 import { Resend } from 'resend'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://tesis.vercel.app'
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Sistema ISBA <noreply@isba.com>'
+// onboarding@resend.dev funciona sin verificar dominio propio
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
 function getResend() {
   const apiKey = process.env.RESEND_API_KEY
@@ -107,6 +108,89 @@ export async function enviarEmailBienvenida({
       <p style="font-size:13px;color:#64748b;line-height:1.6;">
         Si tenés problemas para acceder, copiá este enlace en tu navegador:<br>
         <a href="${loginUrl}" style="color:#2563eb;word-break:break-all;">${loginUrl}</a>
+      </p>
+    </div>
+    <div class="footer">
+      <p>Este es un correo automático del Sistema ISBA. No respondas a este mensaje.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: destinatario,
+    subject,
+    html,
+  })
+}
+
+export async function enviarMagicLinkTecnico({
+  destinatario,
+  nombre,
+  apellido,
+  magicLink,
+}: {
+  destinatario: string
+  nombre: string
+  apellido: string
+  magicLink: string
+}): Promise<void> {
+  const resend = getResend()
+
+  const subject = `Tu cuenta en Sistema ISBA fue aprobada — Accedé ahora`
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f4f5; margin: 0; padding: 24px; }
+    .container { max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .header { background: #1e293b; padding: 28px 32px; text-align: center; }
+    .header h1 { color: #fff; margin: 0; font-size: 20px; font-weight: 600; }
+    .header p { color: #94a3b8; margin: 4px 0 0; font-size: 13px; }
+    .body { padding: 32px; }
+    .greeting { font-size: 16px; color: #1e293b; margin-bottom: 16px; }
+    .notice { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 14px; color: #166534; line-height: 1.6; }
+    .btn { display: inline-block; background: #2563eb; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; }
+    .buttons { text-align: center; margin: 28px 0; }
+    .link-fallback { font-size: 12px; color: #64748b; line-height: 1.6; margin-top: 16px; }
+    .footer { padding: 20px 32px; border-top: 1px solid #e2e8f0; text-align: center; }
+    .footer p { font-size: 12px; color: #94a3b8; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Sistema ISBA</h1>
+      <p>Gestión de Incidentes</p>
+    </div>
+    <div class="body">
+      <p class="greeting">Hola <strong>${nombre} ${apellido}</strong>,</p>
+      <p style="color:#475569;font-size:14px;line-height:1.6;">
+        Tu solicitud de registro como <strong>técnico</strong> fue aprobada.
+        Hacé clic en el botón para ingresar al sistema:
+      </p>
+
+      <div class="buttons">
+        <a href="${magicLink}" class="btn">Ingresar al sistema</a>
+      </div>
+
+      <div class="notice">
+        Al ingresar por primera vez se te pedirá que establezcas tu propia contraseña.
+      </div>
+
+      <p class="link-fallback">
+        Si el botón no funciona, copiá este enlace en tu navegador:<br>
+        <a href="${magicLink}" style="color:#2563eb;word-break:break-all;">${magicLink}</a>
+      </p>
+      <p class="link-fallback" style="margin-top:12px;">
+        ⚠️ Este enlace es de un solo uso y expira en 24 horas.
       </p>
     </div>
     <div class="footer">
