@@ -41,8 +41,8 @@ const menuItems: { title: string; icon: React.ElementType; href: string; badge?:
   { title: 'Técnicos', icon: Wrench, href: '/dashboard/tecnicos', badge: 'solicitudes' },
   { title: 'Empleados', icon: UserCog, href: '/dashboard/usuarios' },
   { title: 'Presupuestos', icon: DollarSign, href: '/dashboard/presupuestos', badge: 'presupuestos' },
-  { title: 'Pagos', icon: FileCheck, href: '/dashboard/pagos', badge: 'pagos' },
   { title: 'Conformidades', icon: ClipboardCheck, href: '/dashboard/conformidades', badge: 'conformidades' },
+  { title: 'Pagos', icon: FileCheck, href: '/dashboard/pagos', badge: 'pagos' },
   { title: 'Métricas e Informes', icon: BarChart2, href: '/dashboard/metricas' },
 ]
 
