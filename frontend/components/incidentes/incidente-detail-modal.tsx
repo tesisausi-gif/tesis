@@ -1318,7 +1318,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                             fecha_visita: fecha,
                             hora_inicio: horaInicio,
                             hora_fin_estimada: horaFin,
-                            estado: 'programado',
                           })
                         } else {
                           toast.error(res.error ?? 'Error al programar visita')

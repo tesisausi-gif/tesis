@@ -214,7 +214,7 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
                   {/* Visit cards for this day */}
                   <div className="space-y-2">
                     {porFecha[fecha].map(c => (
-                      <VisitaCard key={c.id_compromiso ?? `${c.id_incidente}-${c.hora_inicio}`} compromiso={c} />
+                      <VisitaCard key={c.id_asignacion} compromiso={c} />
                     ))}
                   </div>
                 </div>
@@ -237,7 +237,7 @@ export function AgendaTecnico({ compromisos }: AgendaTecnicoProps) {
                   </p>
                   <div className="space-y-2">
                     {porFecha[fecha].map(c => (
-                      <VisitaCard key={c.id_compromiso ?? `${c.id_incidente}-${c.hora_inicio}`} compromiso={c} past />
+                      <VisitaCard key={c.id_asignacion} compromiso={c} past />
                     ))}
                   </div>
                 </div>

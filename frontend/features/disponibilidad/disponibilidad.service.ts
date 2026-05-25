@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import type { ActionResult } from '@/shared/types'
-import type { FranjaDisponibilidad, CompromisoTecnico, CompromisoAgenda } from './disponibilidad.types'
+import type { FranjaDisponibilidad, CompromisoAgenda } from './disponibilidad.types'
 
 // ── Franjas de disponibilidad (cliente) ──────────────────────────────────────
 
@@ -57,11 +57,27 @@ export async function getFranjasParaIncidentes(
 }
 
 // ── Compromisos de visita (técnico) ─────────────────────────────────────────
+// Los datos se guardan directamente en asignaciones_tecnico:
+//   fecha_visita_programada TIMESTAMPTZ  →  fecha + hora_inicio
+//   hora_fin_programada     TIME         →  hora_fin_estimada
+
+function parsearCompromiso(a: any): import('./disponibilidad.types').CompromisoTecnico | null {
+  if (!a.fecha_visita_programada || !a.hora_fin_programada) return null
+  const dt = a.fecha_visita_programada as string
+  return {
+    id_asignacion:    a.id_asignacion,
+    id_incidente:     a.id_incidente,
+    id_tecnico:       a.id_tecnico,
+    fecha_visita:     dt.slice(0, 10),
+    hora_inicio:      dt.slice(11, 16),
+    hora_fin_estimada: (a.hora_fin_programada as string).slice(0, 5),
+  }
+}
 
 export async function guardarCompromisoTecnico(
   idAsignacion: number,
   idIncidente: number,
-  idTecnico: number,
+  _idTecnico: number,
   fechaVisita: string,
   horaInicio: string,
   horaFin: string,
@@ -69,29 +85,15 @@ export async function guardarCompromisoTecnico(
   try {
     const supabase = createAdminClient()
 
-    // Cancelar compromiso anterior si existe
-    await supabase
-      .from('compromisos_tecnico')
-      .update({ estado: 'cancelado' })
-      .eq('id_asignacion', idAsignacion)
-      .eq('estado', 'programado')
-
-    const { error } = await supabase.from('compromisos_tecnico').insert({
-      id_asignacion: idAsignacion,
-      id_incidente: idIncidente,
-      id_tecnico: idTecnico,
-      fecha_visita: fechaVisita,
-      hora_inicio: horaInicio,
-      hora_fin_estimada: horaFin,
-      estado: 'programado',
-    })
-    if (error) return { success: false, error: error.message }
-
-    // Actualizar fecha_visita_programada en la asignacion
-    await supabase
+    const { error } = await supabase
       .from('asignaciones_tecnico')
-      .update({ fecha_visita_programada: `${fechaVisita}T${horaInicio}:00` })
+      .update({
+        fecha_visita_programada: `${fechaVisita}T${horaInicio}:00`,
+        hora_fin_programada: horaFin,
+      })
       .eq('id_asignacion', idAsignacion)
+
+    if (error) return { success: false, error: error.message }
 
     // Notificaciones
     try {
@@ -130,24 +132,27 @@ export async function guardarCompromisoTecnico(
   }
 }
 
-export async function getCompromisoDeAsignacion(idAsignacion: number): Promise<CompromisoTecnico | null> {
+export async function getCompromisoDeAsignacion(idAsignacion: number): Promise<import('./disponibilidad.types').CompromisoTecnico | null> {
   const supabase = createAdminClient()
   const { data } = await supabase
-    .from('compromisos_tecnico')
-    .select('*')
+    .from('asignaciones_tecnico')
+    .select('id_asignacion, id_incidente, id_tecnico, fecha_visita_programada, hora_fin_programada')
     .eq('id_asignacion', idAsignacion)
-    .eq('estado', 'programado')
+    .not('fecha_visita_programada', 'is', null)
+    .not('hora_fin_programada', 'is', null)
     .maybeSingle()
-  return data as CompromisoTecnico | null
+  if (!data) return null
+  return parsearCompromiso(data)
 }
 
 export async function getCompromisosDelTecnico(idTecnico: number): Promise<CompromisoAgenda[]> {
   if (!idTecnico) return []
   const supabase = createAdminClient()
   const { data } = await supabase
-    .from('compromisos_tecnico')
+    .from('asignaciones_tecnico')
     .select(`
-      *,
+      id_asignacion, id_incidente, id_tecnico,
+      fecha_visita_programada, hora_fin_programada,
       incidentes(
         descripcion_problema,
         categoria,
@@ -155,19 +160,24 @@ export async function getCompromisosDelTecnico(idTecnico: number): Promise<Compr
       )
     `)
     .eq('id_tecnico', idTecnico)
-    .eq('estado', 'programado')
-    .order('fecha_visita')
-    .order('hora_inicio')
-  return (data ?? []) as unknown as CompromisoAgenda[]
+    .not('fecha_visita_programada', 'is', null)
+    .not('hora_fin_programada', 'is', null)
+    .order('fecha_visita_programada')
+  return (data ?? [])
+    .map((a: any) => {
+      const base = parsearCompromiso(a)
+      if (!base) return null
+      return { ...base, incidentes: a.incidentes ?? null }
+    })
+    .filter((x): x is CompromisoAgenda => x !== null)
 }
 
 export async function liberarCompromisoDeIncidente(idIncidente: number): Promise<void> {
   const supabase = createAdminClient()
   await supabase
-    .from('compromisos_tecnico')
-    .update({ estado: 'completado' })
+    .from('asignaciones_tecnico')
+    .update({ fecha_visita_programada: null, hora_fin_programada: null })
     .eq('id_incidente', idIncidente)
-    .eq('estado', 'programado')
 }
 
 // ── Detección de conflictos ──────────────────────────────────────────────────
@@ -190,25 +200,28 @@ export async function getConflictosTecnicos(
 
   if (!franjas || franjas.length === 0) return {}
 
-  // Todos los compromisos activos
+  // Visitas programadas activas (leen de asignaciones_tecnico)
   const { data: compromisos } = await supabase
-    .from('compromisos_tecnico')
-    .select('id_tecnico, fecha_visita, hora_inicio, hora_fin_estimada')
-    .eq('estado', 'programado')
+    .from('asignaciones_tecnico')
+    .select('id_tecnico, fecha_visita_programada, hora_fin_programada')
+    .not('fecha_visita_programada', 'is', null)
+    .not('hora_fin_programada', 'is', null)
 
   if (!compromisos) return {}
 
   const resultado: Record<number, boolean> = {}
 
   for (const comp of compromisos) {
-    if (resultado[comp.id_tecnico]) continue // ya marcado como conflicto
+    if (resultado[comp.id_tecnico]) continue
+    const dt = comp.fecha_visita_programada as string
+    const compFecha  = dt.slice(0, 10)
+    const compInicio = dt.slice(11, 16)
+    const compFin    = (comp.hora_fin_programada as string).slice(0, 5)
     for (const franja of franjas) {
-      if (comp.fecha_visita !== franja.fecha) continue
-      // Hay superposición de horario si NO se cumple: comp.fin <= franja.inicio || comp.inicio >= franja.fin
-      const compInicio = comp.hora_inicio
-      const compFin    = comp.hora_fin_estimada
-      const fInicio    = franja.hora_inicio
-      const fFin       = franja.hora_fin
+      if (compFecha !== franja.fecha) continue
+      // Hay superposición si NO se cumple: comp.fin <= franja.inicio || comp.inicio >= franja.fin
+      const fInicio = franja.hora_inicio
+      const fFin    = franja.hora_fin
       const hayConflicto = !(compFin <= fInicio || compInicio >= fFin)
       if (hayConflicto) {
         resultado[comp.id_tecnico] = true
