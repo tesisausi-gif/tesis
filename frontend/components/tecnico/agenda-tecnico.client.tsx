@@ -127,9 +127,15 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
   return (
     <>
       <div className="space-y-4">
-        {/* Calendario — overflow-hidden en el contenedor para evitar scroll horizontal */}
-        {/* Arbitrary variants fuerzan 7 columnas iguales independientemente del CSS de DayPicker */}
-        <div className="rdp-agenda-wrapper rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden p-3">
+        <div
+          className="rdp-agenda-wrapper rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden p-3"
+          style={{
+            '--rdp-day-width': '2rem',
+            '--rdp-day-height': '2rem',
+            '--rdp-day_button-width': '1.875rem',
+            '--rdp-day_button-height': '1.875rem',
+          } as React.CSSProperties}
+        >
           <DayPicker
             locale={es}
             mode="single"
