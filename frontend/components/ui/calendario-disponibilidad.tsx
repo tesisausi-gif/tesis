@@ -404,7 +404,7 @@ export function CalendarioDisponibilidad({
           : <ChevronRight className="h-4 w-4" />,
     },
     classNames: {
-      months: 'flex flex-col',
+      months: 'flex flex-col w-fit mx-auto',
       month: 'space-y-2',
       month_caption: 'flex justify-center pt-1 relative items-center pb-1',
       caption_label: 'text-sm font-medium capitalize',
