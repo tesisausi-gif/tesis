@@ -227,9 +227,9 @@ export default function TecnicosTab() {
 
     const q = busqueda.toLowerCase().trim()
     const cumpleBusqueda = !q ||
-      tecnico.nombre.toLowerCase().includes(q) ||
-      tecnico.apellido.toLowerCase().includes(q) ||
-      tecnico.correo_electronico.toLowerCase().includes(q) ||
+      (tecnico.nombre ?? '').toLowerCase().includes(q) ||
+      (tecnico.apellido ?? '').toLowerCase().includes(q) ||
+      (tecnico.correo_electronico ?? '').toLowerCase().includes(q) ||
       (tecnico.dni ?? '').toLowerCase().includes(q)
 
     return cumpleEstado && cumpleEspecialidad && cumpleBusqueda
@@ -328,8 +328,9 @@ export default function TecnicosTab() {
             No hay técnicos registrados
           </p>
         ) : tecnicosFiltrados.length === 0 ? (
-          <p className="text-center text-gray-600 py-4">
-            No hay técnicos
+          <p className="text-center text-gray-500 py-8">
+            No se encontraron técnicos
+            {busqueda && ` para "${busqueda}"`}
             {filtroEstado !== 'todos' && ` ${filtroEstado}`}
             {filtroEspecialidad !== 'todas' && ` con especialidad "${filtroEspecialidad}"`}
           </p>
