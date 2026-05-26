@@ -50,7 +50,7 @@ export function AgendaTecnicoModal({
           {triggerLabel}
         </button>
       </DialogTrigger>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm max-h-[85vh] overflow-x-hidden overflow-y-auto p-4">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm max-h-[85vh] overflow-x-hidden overflow-y-auto p-4 block">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <CalendarDays className="w-4 h-4 text-blue-600 shrink-0" />

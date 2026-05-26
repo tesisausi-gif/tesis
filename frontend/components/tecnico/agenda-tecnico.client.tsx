@@ -19,7 +19,7 @@ const DAY_PICKER_CLASSES = {
   nav: 'flex items-center gap-1',
   button_previous: 'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
   button_next:     'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
-  month_grid: 'border-separate border-spacing-0',
+  month_grid: 'w-full border-separate border-spacing-0',
   weekdays: '',
   weekday: 'text-gray-400 font-normal text-[0.65rem] text-center py-1',
   week: '',
