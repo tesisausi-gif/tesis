@@ -430,13 +430,13 @@ export function CalendarioDisponibilidad({
       {/* ── MODO EDITAR ── */}
       {modo === 'editar' && (
         <>
-          <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center">
             <DayPicker
               {...dayPickerCommon}
               mode="multiple"
               selected={selectedDates}
               onSelect={handleSelectDates}
-              disabled={{ before: new Date() }}
+              disabled={{ before: (() => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(0,0,0,0); return d; })() }}
             />
           </div>
           <p className="text-[11px] text-gray-400 text-center">
