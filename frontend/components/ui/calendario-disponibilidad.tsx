@@ -406,8 +406,8 @@ export function CalendarioDisponibilidad({
     classNames: {
       months: 'flex flex-col',
       month: 'space-y-2',
-      month_caption: 'flex items-center py-1',
-      caption_label: 'flex-1 text-center text-sm font-medium capitalize',
+      month_caption: 'flex items-center justify-center gap-2 py-1',
+      caption_label: 'text-sm font-medium capitalize',
       nav: 'contents',
       button_previous: 'h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50 order-first',
       button_next: 'h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50 order-last',
