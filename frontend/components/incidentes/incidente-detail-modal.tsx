@@ -73,6 +73,8 @@ import { createClient } from '@/shared/lib/supabase/client'
 import { PresupuestosClienteList } from '@/components/cliente/presupuestos-cliente-list'
 import { getMisPagosDeIncidente } from '@/features/pagos/cobros-clientes.service'
 import type { MiCobroPendiente, MiCobroRealizado } from '@/features/pagos/cobros-clientes.service'
+import { getMisPagosTecnicoDeIncidente } from '@/features/pagos/pagos-tecnicos.service'
+import type { MiPagoPendiente, MiPagoRecibido } from '@/features/pagos/pagos-tecnicos.service'
 import type { Presupuesto } from '@/features/presupuestos/presupuestos.types'
 import type { Conformidad } from '@/features/conformidades/conformidades.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
@@ -387,12 +389,14 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
   const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([])
   const [pagosIncidente, setPagosIncidente] = useState<{ pendiente: MiCobroPendiente | null, realizados: MiCobroRealizado[] } | null>(null)
+  const [pagosTecnicoIncidente, setPagosTecnicoIncidente] = useState<{ pendiente: MiPagoPendiente | null, recibidos: MiPagoRecibido[] } | null>(null)
   const [cargandoPagos, setCargandoPagos] = useState(false)
 
   useEffect(() => {
     if (open && incidenteId) {
       setActiveTab(initialTab ?? 'detalles')
       setPagosIncidente(null)
+      setPagosTecnicoIncidente(null)
       cargarIncidente()
       if (rol === 'admin') {
         cargarTecnicos()
@@ -404,12 +408,20 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   }, [open, incidenteId, initialTab])
 
   useEffect(() => {
-    if (activeTab === 'pagos' && rol === 'cliente' && incidenteId && !pagosIncidente) {
-      setCargandoPagos(true)
-      getMisPagosDeIncidente(incidenteId)
-        .then(setPagosIncidente)
-        .catch(() => setPagosIncidente({ pendiente: null, realizados: [] }))
-        .finally(() => setCargandoPagos(false))
+    if (activeTab === 'pagos' && incidenteId) {
+      if (rol === 'cliente' && !pagosIncidente) {
+        setCargandoPagos(true)
+        getMisPagosDeIncidente(incidenteId)
+          .then(setPagosIncidente)
+          .catch(() => setPagosIncidente({ pendiente: null, realizados: [] }))
+          .finally(() => setCargandoPagos(false))
+      } else if (rol === 'tecnico' && !pagosTecnicoIncidente) {
+        setCargandoPagos(true)
+        getMisPagosTecnicoDeIncidente(incidenteId)
+          .then(setPagosTecnicoIncidente)
+          .catch(() => setPagosTecnicoIncidente({ pendiente: null, recibidos: [] }))
+          .finally(() => setCargandoPagos(false))
+      }
     }
   }, [activeTab, rol, incidenteId])
 
@@ -1147,6 +1159,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           const hasClientePresupuesto = rol === 'cliente' && presupuestos.length > 0
           const hasCalificacion = rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO
           const hasPagosTab = rol === 'cliente' && (incidente.estado_actual === 'resuelto' || incidente.estado_actual === 'finalizado')
+          const hasPagosTecnicoTab = rol === 'tecnico' && conformidad?.url_documento
           const hasAdminStepperTabs = rol === 'admin' && asignaciones.some(a =>
             ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
           )
@@ -1226,6 +1239,18 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             {hasTecnicoTabs && !hideTabs && (
               <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
                 <StepperTecnico steps={steps} activeTab={activeTab} onStepClick={setActiveTab} />
+                {hasPagosTecnicoTab && (
+                  <div className="mt-2 pt-2 border-t border-gray-100 flex">
+                    <button
+                      onClick={() => setActiveTab('pagos')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                        activeTab === 'pagos' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      }`}
+                    >
+                      Pagos
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1580,7 +1605,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   incidenteId={incidente.id_incidente}
                   idTecnico={asignaciones.find(a => a.estado_asignacion !== 'rechazada')?.id_tecnico || 0}
                   inspecciones={inspeccionesActivas}
-                  puedeCrearNueva={presupuestos.some(p => p.estado_presupuesto === EstadoPresupuesto.RECHAZADO)}
+                  puedeCrearNueva={presupuestos.some(p => p.estado_presupuesto === EstadoPresupuesto.RECHAZADO) && !conformidad?.url_documento}
                   onInspeccionCreated={() => cargarIncidente()}
                   onInspeccionDeleted={() => cargarIncidente()}
                 />
@@ -2515,6 +2540,99 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                         </div>
                         <p className="text-sm font-medium text-gray-600">Sin movimientos aún</p>
                         <p className="text-xs text-gray-400 mt-1">El cobro se generará una vez confirmado el servicio.</p>
+                      </div>
+                    )}
+                  </>
+                ) : null}
+              </div>
+            )}
+
+            {/* Tab Pagos (para técnicos cuando subieron la conformidad) */}
+            {hasPagosTecnicoTab && activeTab === 'pagos' && (
+              <div className="mt-4 space-y-4">
+                {cargandoPagos ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  </div>
+                ) : pagosTecnicoIncidente ? (
+                  <>
+                    {/* Pago pendiente de cobrar */}
+                    {pagosTecnicoIncidente.pendiente && (
+                      <div className="rounded-xl border-2 border-amber-200 bg-amber-50 overflow-hidden">
+                        <div className="bg-amber-500 px-4 py-3 flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-white flex-shrink-0" />
+                          <p className="text-white font-bold text-sm">Pago pendiente de recibir</p>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Monto a recibir</span>
+                            <span className="text-2xl font-bold text-amber-600">
+                              ${pagosTecnicoIncidente.pendiente.monto_a_recibir.toLocaleString('es-AR')}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="bg-white rounded-lg border border-amber-100 px-3 py-2">
+                              <p className="text-xs text-gray-500">Materiales</p>
+                              <p className="font-semibold">${pagosTecnicoIncidente.pendiente.costo_materiales.toLocaleString('es-AR')}</p>
+                            </div>
+                            <div className="bg-white rounded-lg border border-amber-100 px-3 py-2">
+                              <p className="text-xs text-gray-500">Mano de obra</p>
+                              <p className="font-semibold">${pagosTecnicoIncidente.pendiente.costo_mano_obra.toLocaleString('es-AR')}</p>
+                            </div>
+                          </div>
+                          <div className="rounded-lg bg-white border border-amber-100 px-3 py-2.5 flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-gray-600">
+                              La administración coordinará el pago una vez cerrado el incidente.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pagos recibidos */}
+                    {pagosTecnicoIncidente.recibidos.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          Pagos recibidos
+                        </h4>
+                        {pagosTecnicoIncidente.recibidos.map(r => (
+                          <div key={r.id_pago_tecnico} className="rounded-xl border border-green-200 bg-green-50 p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600">Monto recibido</span>
+                              <span className="text-xl font-bold text-green-600">
+                                ${r.monto_pago.toLocaleString('es-AR')}
+                              </span>
+                            </div>
+                            {r.metodo_pago && (
+                              <div className="flex items-center gap-2 text-sm text-gray-700">
+                                <DollarSign className="h-4 w-4 text-gray-400" />
+                                <span className="capitalize">{r.metodo_pago}</span>
+                                {r.banco && <span className="text-gray-400">• {r.banco}</span>}
+                                {r.cuotas && r.cuotas > 1 && <span className="text-gray-400">• {r.cuotas} cuotas</span>}
+                              </div>
+                            )}
+                            {r.referencia_pago && (
+                              <p className="text-xs text-gray-500">Ref: <span className="font-mono">{r.referencia_pago}</span></p>
+                            )}
+                            {r.observaciones && (
+                              <p className="text-xs text-gray-500 italic">{r.observaciones}</p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              Recibido el {format(new Date(r.fecha_pago), "d 'de' MMMM yyyy", { locale: es })}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {!pagosTecnicoIncidente.pendiente && pagosTecnicoIncidente.recibidos.length === 0 && (
+                      <div className="text-center py-10">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                          <DollarSign className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-600">Sin movimientos aún</p>
                       </div>
                     )}
                   </>
