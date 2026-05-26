@@ -31,14 +31,6 @@ const DAY_PICKER_CLASSES = {
   disabled: 'text-gray-300 opacity-40 cursor-not-allowed',
 } as const
 
-// Inline styles fuerzan el layout responsive sin importar la especificidad CSS del contenedor
-const DAY_PICKER_STYLES = {
-  root:       { width: '100%' },
-  months:     { width: '100%', maxWidth: 'none' },
-  month:      { width: '100%' },
-  month_grid: { width: '100%', tableLayout: 'fixed' as const },
-}
-
 interface AgendaTecnicoProps {
   franjas: FranjaAgenda[]
   embedded?: boolean
@@ -136,7 +128,8 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
     <>
       <div className="space-y-4">
         {/* Calendario — overflow-hidden en el contenedor para evitar scroll horizontal */}
-        <div className="rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden p-3">
+        {/* Arbitrary variants fuerzan 7 columnas iguales independientemente del CSS de DayPicker */}
+        <div className="rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden p-3 [&_.rdp-months]:!w-full [&_.rdp-months]:![max-width:none] [&_table]:!w-full [&_table]:![table-layout:fixed] [&_th]:!w-auto [&_td]:!w-auto">
           <DayPicker
             locale={es}
             mode="single"
@@ -151,7 +144,6 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
                   : <ChevronRight className="h-4 w-4" />,
             }}
             classNames={DAY_PICKER_CLASSES}
-            styles={DAY_PICKER_STYLES}
           />
         </div>
 
