@@ -42,7 +42,7 @@ export default function TecnicoLayout({
         </main>
         <AIHelpChat />
       </div>
-      {debeCambiarPassword && <CambiarPasswordPrimerAccesoTecnico />}
+      {debeCambiarPassword && <CambiarPasswordPrimerAccesoTecnico onSuccess={() => setDebeCambiarPassword(false)} />}
     </PageTransitionProvider>
   )
 }

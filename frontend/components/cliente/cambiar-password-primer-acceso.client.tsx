@@ -5,7 +5,7 @@ import { KeyRound, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { toast } from 'sonner'
 
-export function CambiarPasswordPrimerAcceso() {
+export function CambiarPasswordPrimerAcceso({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState('')
   const [confirmar, setConfirmar] = useState('')
   const [verPassword, setVerPassword] = useState(false)
@@ -33,8 +33,7 @@ export function CambiarPasswordPrimerAcceso() {
       }
 
       toast.success('Contraseña actualizada')
-      // Recargar para que el layout detecte el flag limpio
-      window.location.reload()
+      onSuccess()
     } finally {
       setGuardando(false)
     }

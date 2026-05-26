@@ -42,7 +42,7 @@ export default function ClienteLayout({
         </main>
         <AIHelpChat />
       </div>
-      {debeCambiarPassword && <CambiarPasswordPrimerAcceso />}
+      {debeCambiarPassword && <CambiarPasswordPrimerAcceso onSuccess={() => setDebeCambiarPassword(false)} />}
     </PageTransitionProvider>
   )
 }
