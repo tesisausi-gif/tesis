@@ -19,10 +19,10 @@ const DAY_PICKER_CLASSES = {
   nav: 'flex items-center gap-1',
   button_previous: 'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
   button_next:     'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
-  month_grid: 'w-full table-fixed',
+  month_grid: 'border-separate border-spacing-0',
   weekdays: '',
   weekday: 'text-gray-400 font-normal text-[0.65rem] text-center py-1',
-  week: 'mt-1',
+  week: '',
   day: 'h-8 text-center text-sm p-0',
   day_button: 'w-full h-8 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors text-sm',
   selected: '!ring-2 !ring-blue-400 !ring-offset-1',
@@ -30,6 +30,14 @@ const DAY_PICKER_CLASSES = {
   outside: 'text-gray-300 opacity-50',
   disabled: 'text-gray-300 opacity-40 cursor-not-allowed',
 } as const
+
+// Inline styles fuerzan el layout responsive sin importar la especificidad CSS del contenedor
+const DAY_PICKER_STYLES = {
+  root:       { width: '100%' },
+  months:     { width: '100%', maxWidth: 'none' },
+  month:      { width: '100%' },
+  month_grid: { width: '100%', tableLayout: 'fixed' as const },
+}
 
 interface AgendaTecnicoProps {
   franjas: FranjaAgenda[]
@@ -143,6 +151,7 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
                   : <ChevronRight className="h-4 w-4" />,
             }}
             classNames={DAY_PICKER_CLASSES}
+            styles={DAY_PICKER_STYLES}
           />
         </div>
 
