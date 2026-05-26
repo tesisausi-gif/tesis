@@ -320,3 +320,62 @@ export async function getMisPagosComoTecnico(): Promise<{ pendientes: MiPagoPend
 }
 
 import { requireTecnicoId } from '@/features/auth/auth.service'
+
+/**
+ * Pago pendiente y recibidos del técnico actual para un incidente específico.
+ */
+export async function getMisPagosTecnicoDeIncidente(idIncidente: number): Promise<{
+  pendiente: MiPagoPendiente | null
+  recibidos: MiPagoRecibido[]
+}> {
+  const supabase = await createClient()
+  const idTecnico = await requireTecnicoId()
+
+  const { data: pres } = await supabase
+    .from('presupuestos')
+    .select('id_presupuesto, id_incidente, costo_materiales, costo_mano_obra, fecha_creacion, incidentes(descripcion_problema, categoria)')
+    .eq('id_incidente', idIncidente)
+    .eq('estado_presupuesto', 'aprobado')
+    .maybeSingle()
+
+  if (!pres) return { pendiente: null, recibidos: [] }
+
+  const { data: pagos } = await supabase
+    .from('pagos_tecnicos')
+    .select('id_pago_tecnico, id_incidente, id_presupuesto, monto_pago, metodo_pago, referencia_pago, banco, cuotas, observaciones, fecha_pago')
+    .eq('id_incidente', idIncidente)
+    .eq('id_tecnico', idTecnico)
+    .order('fecha_pago', { ascending: false })
+
+  const pagadosIds = new Set((pagos || []).map((p: any) => p.id_presupuesto))
+  const inc = pres.incidentes as any
+  const mat = Number(pres.costo_materiales) || 0
+  const mdo = Number(pres.costo_mano_obra) || 0
+
+  const pendiente: MiPagoPendiente | null = pagadosIds.has(pres.id_presupuesto) ? null : {
+    id_presupuesto: pres.id_presupuesto,
+    id_incidente: pres.id_incidente,
+    descripcion_problema: inc?.descripcion_problema || '',
+    categoria: inc?.categoria || null,
+    costo_materiales: mat,
+    costo_mano_obra: mdo,
+    monto_a_recibir: mat + mdo,
+    fecha_presupuesto: pres.fecha_creacion,
+  }
+
+  const recibidos: MiPagoRecibido[] = (pagos || []).map((p: any) => ({
+    id_pago_tecnico: p.id_pago_tecnico,
+    id_incidente: p.id_incidente,
+    id_presupuesto: p.id_presupuesto,
+    monto_pago: Number(p.monto_pago) || 0,
+    metodo_pago: p.metodo_pago,
+    referencia_pago: p.referencia_pago,
+    banco: p.banco,
+    cuotas: p.cuotas,
+    observaciones: p.observaciones,
+    fecha_pago: p.fecha_pago,
+    descripcion_problema: inc?.descripcion_problema || null,
+  }))
+
+  return { pendiente, recibidos }
+}
