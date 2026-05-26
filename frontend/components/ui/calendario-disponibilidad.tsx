@@ -397,6 +397,7 @@ export function CalendarioDisponibilidad({
 
   const dayPickerCommon = {
     locale: es,
+    navLayout: 'around' as const,
     components: {
       Chevron: ({ orientation }: { orientation?: string }) =>
         orientation === 'left'
@@ -404,14 +405,15 @@ export function CalendarioDisponibilidad({
           : <ChevronRight className="h-4 w-4" />,
     },
     classNames: {
+      root: 'w-fit mx-auto',
       months: 'flex flex-col',
-      month: 'space-y-2',
-      month_caption: 'flex items-center justify-center gap-2 py-1',
+      month: 'relative',
+      month_caption: 'flex justify-center items-center py-1 px-8',
       caption_label: 'text-sm font-medium capitalize',
-      nav: 'contents',
-      button_previous: 'h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50 order-first',
-      button_next: 'h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50 order-last',
-      month_grid: 'border-collapse',
+      nav: 'hidden',
+      button_previous: 'absolute top-0.5 left-0 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
+      button_next: 'absolute top-0.5 right-0 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
+      month_grid: 'border-collapse mt-2',
       weekdays: 'flex',
       weekday: 'text-gray-400 rounded-md w-8 font-normal text-[0.65rem] text-center py-1',
       week: 'flex mt-1',
