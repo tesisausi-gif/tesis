@@ -40,6 +40,7 @@ import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibili
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
+import { AgendaTecnicoModal } from '@/components/shared/agenda-tecnico-modal.client'
 
 interface GestionarPendienteModalProps {
   open: boolean
@@ -445,10 +446,16 @@ export function GestionarPendienteModal({
                           )}
                         </div>
 
-                        {/* Rating + trabajos */}
-                        <div className="shrink-0 text-right space-y-0.5">
+                        {/* Rating + trabajos + agenda */}
+                        <div className="shrink-0 text-right space-y-1">
                           <StarRating value={t.calificacion_promedio} />
                           <p className="text-xs text-gray-400">{t.cantidad_trabajos_realizados} trabajo{t.cantidad_trabajos_realizados !== 1 ? 's' : ''}</p>
+                          <AgendaTecnicoModal
+                            idTecnico={t.id_tecnico}
+                            nombreTecnico={`${t.nombre} ${t.apellido}`}
+                            triggerLabel="Agenda"
+                            triggerClassName="flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full hover:bg-blue-100 transition-colors"
+                          />
                         </div>
                       </div>
                     )

@@ -202,20 +202,20 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <Card className="border-amber-200 bg-amber-50"><CardContent className="pt-4 pb-3 text-center">
-          <p className="text-xs text-amber-700 mb-1">Pendiente de cobro</p>
-          <p className="text-2xl font-bold text-amber-800">{fmt$(totalPendiente)}</p>
-          <p className="text-xs text-amber-600 mt-0.5">{pendientes.length} cliente{pendientes.length!==1?'s':''}</p>
+        <Card className="border-l-4 border-l-amber-500 bg-gradient-to-br from-white to-amber-50/40"><CardContent className="pt-4 pb-3 text-center">
+          <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Pendiente de cobro</p>
+          <p className="text-2xl font-bold tabular-nums text-amber-700">{fmt$(totalPendiente)}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{pendientes.length} cliente{pendientes.length!==1?'s':''}</p>
         </CardContent></Card>
-        <Card className="border-green-200 bg-green-50"><CardContent className="pt-4 pb-3 text-center">
-          <p className="text-xs text-green-700 mb-1">Total cobrado</p>
-          <p className="text-2xl font-bold text-green-800">{fmt$(totalCobrado)}</p>
-          <p className="text-xs text-green-600 mt-0.5">{realizados.length} cobro{realizados.length!==1?'s':''}</p>
+        <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-green-50/40"><CardContent className="pt-4 pb-3 text-center">
+          <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Total cobrado</p>
+          <p className="text-2xl font-bold tabular-nums text-green-700">{fmt$(totalCobrado)}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{realizados.length} cobro{realizados.length!==1?'s':''}</p>
         </CardContent></Card>
       </div>
 
       {/* Píldoras de filtro */}
-      <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
         {[
           { id: 'pendientes' as const, label: 'Pendientes de cobro', count: pendientes.length, Icon: Clock },
           { id: 'historial'  as const, label: 'Historial de cobros',  count: realizados.length, Icon: History },
@@ -223,14 +223,14 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
           const active = vista === id
           return (
             <button key={id} onClick={() => setVista(id)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-                active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
               }`}>
               <Icon className="w-3.5 h-3.5" />
               {label}
               {count > 0 && (
                 <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
-                  active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                  active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'
                 }`}>{count}</span>
               )}
             </button>
@@ -432,7 +432,7 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
         </CardContent></Card>
       </div>
       {/* Píldoras de filtro */}
-      <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
         {[
           { id: 'pendientes' as const, label: 'Pendientes de pago', count: pendientes.length, Icon: Clock },
           { id: 'historial'  as const, label: 'Historial de pagos',  count: realizados.length, Icon: History },
@@ -440,14 +440,14 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
           const active = vista === id
           return (
             <button key={id} onClick={() => setVista(id)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-                active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
               }`}>
               <Icon className="w-3.5 h-3.5" />
               {label}
               {count > 0 && (
                 <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
-                  active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                  active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'
                 }`}>{count}</span>
               )}
             </button>
@@ -783,21 +783,21 @@ export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendiente
         <p className="text-gray-600 text-sm mt-1">Gestión de cobros a clientes y pagos a técnicos</p>
       </div>
       <Tabs defaultValue="cobros-clientes">
-        <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="cobros-clientes" className="gap-1.5">
-            <DollarSign className="h-4 w-4"/>Cobros a Clientes
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
+          <TabsTrigger value="cobros-clientes" className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">
+            <DollarSign className="h-3.5 w-3.5"/>Cobros a Clientes
             {pendientesCobroCliente.length > 0 && (
-              <span className="ml-1 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{pendientesCobroCliente.length}</span>
+              <span className="ml-0.5 text-[10px] font-bold rounded-full px-1.5 py-px bg-amber-100 text-amber-700">{pendientesCobroCliente.length}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="pagos-tecnicos" className="gap-1.5">
-            <Wrench className="h-4 w-4"/>Pagos a Técnicos
+          <TabsTrigger value="pagos-tecnicos" className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">
+            <Wrench className="h-3.5 w-3.5"/>Pagos a Técnicos
             {pendientesTecnicos.length > 0 && (
-              <span className="ml-1 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{pendientesTecnicos.length}</span>
+              <span className="ml-0.5 text-[10px] font-bold rounded-full px-1.5 py-px bg-amber-100 text-amber-700">{pendientesTecnicos.length}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="registro" className="gap-1.5">
-            <FileText className="h-4 w-4"/>Registro histórico
+          <TabsTrigger value="registro" className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">
+            <FileText className="h-3.5 w-3.5"/>Registro histórico
           </TabsTrigger>
         </TabsList>
         <TabsContent value="cobros-clientes" className="mt-4">

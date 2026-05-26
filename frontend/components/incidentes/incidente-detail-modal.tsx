@@ -1231,7 +1231,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
             {/* Nav pills para cliente */}
             {rol === 'cliente' && !hideTabs && (
-              <div className="flex gap-1 mb-4 flex-wrap">
+              <div className="flex gap-1 mb-4 flex-wrap bg-slate-100 p-1 rounded-xl">
                 {[
                   { id: 'detalles', label: 'Detalles' },
                   { id: 'timeline', label: 'Timeline' },
@@ -1242,10 +1242,10 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
                       activeTab === tab.id
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
                     }`}
                   >
                     {tab.label}
@@ -1293,58 +1293,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   <p className="text-xs text-gray-400 italic">Sin disponibilidad registrada</p>
                 )}
               </div>
-
-              {/* Sección de programar visita — solo para técnico con asignación activa */}
-              {rol === 'tecnico' && (() => {
-                const asigActiva = asignaciones.find(a =>
-                  ['aceptada', 'en_curso'].includes(a.estado_asignacion)
-                ) as any
-                if (!asigActiva) return null
-                return (
-                  <div className="space-y-2">
-                    <Separator />
-                    <h4 className="font-semibold text-sm text-gray-700 flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-blue-500" />
-                      Programar mi visita
-                    </h4>
-                    <CalendarioDisponibilidad
-                      modo="comprometer"
-                      franjas={franjas}
-                      compromisoActual={compromiso ? {
-                        fecha_visita: compromiso.fecha_visita,
-                        hora_inicio: compromiso.hora_inicio,
-                        hora_fin_estimada: compromiso.hora_fin_estimada,
-                      } : null}
-                      onComprometer={async ({ fecha, horaInicio, horaFin }) => {
-                        const res = await guardarCompromisoTecnico(
-                          asigActiva.id_asignacion,
-                          incidente.id_incidente,
-                          asigActiva.id_tecnico,
-                          fecha,
-                          horaInicio,
-                          horaFin,
-                        )
-                        if (res.success) {
-                          toast.success('Visita programada', {
-                            description: `${fecha} de ${horaInicio} a ${horaFin}`,
-                          })
-                          setCompromiso({
-                            id_asignacion: asigActiva.id_asignacion,
-                            id_incidente: incidente.id_incidente,
-                            id_tecnico: asigActiva.id_tecnico,
-                            fecha_visita: fecha,
-                            hora_inicio: horaInicio,
-                            hora_fin_estimada: horaFin,
-                            estado: 'programado',
-                          })
-                        } else {
-                          toast.error(res.error ?? 'Error al programar visita')
-                        }
-                      }}
-                    />
-                  </div>
-                )
-              })()}
 
               <Separator />
 

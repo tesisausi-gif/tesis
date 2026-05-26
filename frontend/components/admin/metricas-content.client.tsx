@@ -6,9 +6,27 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  BarChart2, Clock, Users, AlertTriangle,
-  Tag, Filter, Loader2, CheckCircle2, TrendingUp, ShieldAlert,
+  BarChart2, Clock, Users,
+  Tag, Filter, Loader2, CheckCircle2, TrendingUp,
 } from 'lucide-react'
+import Link from 'next/link'
+
+function TitleTooltip({ children, texto }: { children: React.ReactNode; texto: string }) {
+  return (
+    <span className="relative group cursor-default">
+      <span className="border-b border-dotted border-slate-400 leading-none">{children}</span>
+      <span className="
+        absolute z-50 bottom-full left-0 mb-2 w-64
+        rounded-lg bg-slate-900 text-white text-xs p-3 shadow-xl leading-relaxed
+        opacity-0 group-hover:opacity-100 transition-opacity duration-150
+        pointer-events-none normal-case font-normal tracking-normal whitespace-normal
+      ">
+        {texto}
+        <span className="absolute top-full left-4 border-4 border-transparent border-t-slate-900" />
+      </span>
+    </span>
+  )
+}
 import { toast } from 'sonner'
 import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import type { MetricasDashboard } from '@/features/incidentes/incidentes.types'
@@ -30,13 +48,6 @@ function fechaDesde(periodo: Periodo): string | null {
   return ahora.toISOString().slice(0, 10)
 }
 
-const PRIO_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  urgente: { label: 'Urgente', color: 'text-red-700',    bg: 'bg-red-50 border-red-200' },
-  alta:    { label: 'Alta',    color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
-  media:   { label: 'Media',   color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' },
-  baja:    { label: 'Baja',    color: 'text-green-700',  bg: 'bg-green-50 border-green-200' },
-}
-
 const PERIODOS: { valor: Periodo; label: string }[] = [
   { valor: 'todo', label: 'Todo' },
   { valor: '7d',   label: '7 días' },
@@ -53,8 +64,6 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
   const [customDesde, setCustomDesde] = useState('')
   const [customHasta, setCustomHasta] = useState('')
   const [cargando, setCargando] = useState(false)
-
-  const agingCriticos = reportes.agingIncidentes.filter(i => i.diasDesdeCreacion >= 7).length
 
   const aplicarFiltro = async (p: Periodo) => {
     setPeriodo(p)
@@ -87,7 +96,7 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
     }
   }
 
-  const maxMes       = Math.max(...metricas.incidentesPorMes.map(m => m.total), 1)
+  const maxMes = Math.max(...metricas.incidentesPorMes.map(m => m.total), 1)
   const maxCategoria = Math.max(...metricas.distribucionCategorias.map(c => c.count), 1)
 
   return (
@@ -106,16 +115,6 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
         )}
       </div>
 
-      {/* Banner de alerta aging */}
-      {agingCriticos > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>
-            <strong>{agingCriticos} incidente{agingCriticos !== 1 ? 's' : ''}</strong> sin resolver hace más de 7 días — ver detalle en <strong>Incidentes sin Resolver</strong> más abajo.
-          </span>
-        </div>
-      )}
-
       {/* Filtro de período */}
       <Card className="border-slate-200">
         <CardHeader className="pb-3">
@@ -124,18 +123,20 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl">
             {PERIODOS.map(p => (
-              <Button
+              <button
                 key={p.valor}
-                size="sm"
-                variant={periodo === p.valor ? 'default' : 'outline'}
                 onClick={() => aplicarFiltro(p.valor)}
                 disabled={cargando}
-                className={periodo === p.valor ? 'bg-blue-700 hover:bg-blue-800' : ''}
+                className={`flex-shrink-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 ${
+                  periodo === p.valor
+                    ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                }`}
               >
                 {p.label}
-              </Button>
+              </button>
             ))}
           </div>
           {periodo === 'custom' && (
@@ -161,7 +162,11 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
         <Card className="border-l-4 border-l-blue-600 bg-gradient-to-br from-white to-blue-50/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Incidentes</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <TitleTooltip texto="Cuántos incidentes se crearon en el período que seleccionaste con el filtro de arriba. Es el volumen total de trabajo que entró al sistema.">
+                Total Incidentes
+              </TitleTooltip>
+            </CardTitle>
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
               <BarChart2 className="h-4 w-4 text-blue-600" />
             </div>
@@ -174,7 +179,11 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
         <Card className="border-l-4 border-l-teal-500 bg-gradient-to-br from-white to-teal-50/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tiempo Prom. Resolución</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <TitleTooltip texto="En promedio, cuántos días pasan desde que se crea un incidente hasta que se cierra. Cuanto más bajo, más rápido se resuelven los problemas.">
+                Tiempo Prom. Resolución
+              </TitleTooltip>
+            </CardTitle>
             <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
               <Clock className="h-4 w-4 text-teal-600" />
             </div>
@@ -189,7 +198,11 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
         <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-green-50/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tasa de Resolución</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <TitleTooltip texto="De cada 100 incidentes registrados, cuántos se cerraron con éxito. Cuanto más cerca del 100%, mejor está funcionando el sistema.">
+                Tasa de Resolución
+              </TitleTooltip>
+            </CardTitle>
             <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
             </div>
@@ -202,16 +215,22 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
         <Card className="border-l-4 border-l-violet-500 bg-gradient-to-br from-white to-violet-50/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Top Técnico</CardTitle>
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <TitleTooltip texto="El técnico con más incidentes resueltos en el período seleccionado. Un indicador rápido de quién está liderando el equipo.">
+                Top Técnico
+              </TitleTooltip>
+            </CardTitle>
             <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
               <Users className="h-4 w-4 text-violet-600" />
             </div>
           </CardHeader>
           <CardContent className="px-5 pb-4">
             <div className="text-base font-bold text-violet-700 truncate leading-tight mt-1">
-              {metricas.topTecnicos[0]
-                ? `${metricas.topTecnicos[0].nombre} ${metricas.topTecnicos[0].apellido}`
-                : '—'}
+              {metricas.topTecnicos[0] ? (
+                <Link href="/dashboard/tecnicos" className="hover:underline hover:text-violet-900 transition-colors">
+                  {metricas.topTecnicos[0].nombre} {metricas.topTecnicos[0].apellido}
+                </Link>
+              ) : '—'}
             </div>
             <p className="text-xs text-slate-400 mt-1">
               {metricas.topTecnicos[0]
@@ -222,85 +241,52 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
         </Card>
       </div>
 
-      {/* Incidentes por mes + Distribución por prioridad */}
-      <div className="grid gap-4 lg:grid-cols-3">
-
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
+      {/* Incidentes por mes */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="h-4 w-4 text-blue-600" />
+            <TitleTooltip texto="Evolución mes a mes de cuántos incidentes se abrieron y cuántos se cerraron. Si la barra azul oscura (resueltos) crece, el equipo está mejorando su capacidad de respuesta.">
               Incidentes por Mes
-            </CardTitle>
-            <CardDescription>Últimos 6 meses — total vs. resueltos</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {metricas.incidentesPorMes.every(m => m.total === 0) ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Sin datos en los últimos 6 meses</p>
-            ) : (
-              <div className="space-y-3">
-                {metricas.incidentesPorMes.map(item => (
-                  <div key={item.mes}>
-                    <div className="flex justify-between text-xs text-slate-500 mb-1">
-                      <span className="font-medium capitalize">{item.mes}</span>
-                      <span className="tabular-nums">
-                        <span className="text-green-600 font-semibold">{item.resueltos}</span>
-                        <span className="text-slate-300 mx-1">/</span>
-                        <span>{item.total}</span>
-                      </span>
-                    </div>
-                    <div className="relative h-5 bg-slate-100 rounded overflow-hidden">
-                      <div
-                        className="absolute inset-y-0 left-0 bg-blue-100 rounded transition-all duration-500"
-                        style={{ width: `${maxMes > 0 ? (item.total / maxMes) * 100 : 0}%` }}
-                      />
-                      <div
-                        className="absolute inset-y-0 left-0 bg-blue-600 rounded transition-all duration-500"
-                        style={{ width: `${maxMes > 0 ? (item.resueltos / maxMes) * 100 : 0}%` }}
-                      />
-                    </div>
+            </TitleTooltip>
+          </CardTitle>
+          <CardDescription>Últimos 6 meses — total vs. resueltos</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {metricas.incidentesPorMes.every(m => m.total === 0) ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Sin datos en los últimos 6 meses</p>
+          ) : (
+            <div className="space-y-3">
+              {metricas.incidentesPorMes.map(item => (
+                <div key={item.mes}>
+                  <div className="flex justify-between text-xs text-slate-500 mb-1">
+                    <span className="font-medium capitalize">{item.mes}</span>
+                    <span className="tabular-nums">
+                      <span className="text-green-600 font-semibold">{item.resueltos}</span>
+                      <span className="text-slate-300 mx-1">/</span>
+                      <span>{item.total}</span>
+                    </span>
                   </div>
-                ))}
-                <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded bg-blue-100 inline-block" /> Total</span>
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded bg-blue-600 inline-block" /> Resueltos</span>
+                  <div className="relative h-5 bg-slate-100 rounded overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-blue-100 rounded transition-all duration-500"
+                      style={{ width: `${maxMes > 0 ? (item.total / maxMes) * 100 : 0}%` }}
+                    />
+                    <div
+                      className="absolute inset-y-0 left-0 bg-blue-600 rounded transition-all duration-500"
+                      style={{ width: `${maxMes > 0 ? (item.resueltos / maxMes) * 100 : 0}%` }}
+                    />
+                  </div>
                 </div>
+              ))}
+              <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
+                <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded bg-blue-100 inline-block" /> Total</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-2 rounded bg-blue-600 inline-block" /> Resueltos</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldAlert className="h-4 w-4 text-amber-600" />
-              Por Prioridad
-            </CardTitle>
-            <CardDescription>Distribución de urgencias</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {metricas.distribucionPrioridades.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Sin datos</p>
-            ) : (
-              <div className="space-y-3">
-                {metricas.distribucionPrioridades.map(item => {
-                  const cfg = PRIO_CONFIG[item.prioridad.toLowerCase()] ?? { label: item.prioridad, color: 'text-slate-700', bg: 'bg-slate-50 border-slate-200' }
-                  const total = metricas.distribucionPrioridades.reduce((s, p) => s + p.count, 0)
-                  const pct = total > 0 ? Math.round((item.count / total) * 100) : 0
-                  return (
-                    <div key={item.prioridad} className={`flex items-center justify-between p-2.5 rounded-lg border ${cfg.bg}`}>
-                      <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-lg font-bold ${cfg.color}`}>{item.count}</span>
-                        <span className="text-[10px] text-slate-400 w-8 text-right">{pct}%</span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Por Categoría + Ranking Técnicos */}
       <div className="grid gap-4 lg:grid-cols-2">
@@ -309,7 +295,9 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Tag className="h-4 w-4 text-amber-600" />
-              Por Categoría
+              <TitleTooltip texto="Qué tipos de problemas se reportan más. La barra más larga es la categoría más demandada — útil para saber en qué especialidades tener más técnicos disponibles.">
+                Por Categoría
+              </TitleTooltip>
             </CardTitle>
             <CardDescription>Volumen de incidentes por tipo</CardDescription>
           </CardHeader>
@@ -344,7 +332,9 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Users className="h-4 w-4 text-violet-600" />
-              Ranking de Técnicos
+              <TitleTooltip texto="Los técnicos ordenados de mayor a menor por incidentes resueltos. Muestra quién lleva más trabajo completado en el período seleccionado.">
+                Ranking de Técnicos
+              </TitleTooltip>
             </CardTitle>
             <CardDescription>Por incidentes resueltos</CardDescription>
           </CardHeader>
@@ -361,9 +351,9 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
                   return (
                     <div key={`${tec.nombre}_${tec.apellido}`} className="flex items-center gap-3">
                       <span className={`text-sm font-bold w-5 text-center shrink-0 ${medallaColor}`}>#{idx + 1}</span>
-                      <span className="text-sm font-medium truncate flex-1 min-w-0">
+                      <Link href="/dashboard/tecnicos" className="text-sm font-medium truncate flex-1 min-w-0 hover:text-blue-600 hover:underline transition-colors">
                         {tec.nombre} {tec.apellido}
-                      </span>
+                      </Link>
                       <div className="w-28 flex items-center gap-2 shrink-0">
                         <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div className={`h-full rounded-full ${barColor} transition-all duration-500`} style={{ width: `${pct}%` }} />

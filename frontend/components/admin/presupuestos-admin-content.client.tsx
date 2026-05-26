@@ -191,36 +191,42 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-l-4 border-l-slate-400 bg-gradient-to-br from-white to-slate-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+              <FileText className="h-4 w-4 text-slate-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{presupuestos.length}</div>
-            <p className="text-xs text-muted-foreground">presupuestos registrados</p>
+          <CardContent className="px-5 pb-4">
+            <div className="text-2xl font-bold tabular-nums text-slate-700">{presupuestos.length}</div>
+            <p className="text-xs text-slate-400 mt-1">presupuestos registrados</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Por aprobar</CardTitle>
-            <Clock className="h-4 w-4 text-amber-600" />
+        <Card className="border-l-4 border-l-amber-500 bg-gradient-to-br from-white to-amber-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Por aprobar</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-amber-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{pendientesAprobacion.length}</div>
-            <p className="text-xs text-muted-foreground">esperan revisión</p>
+          <CardContent className="px-5 pb-4">
+            <div className="text-2xl font-bold tabular-nums text-amber-700">{pendientesAprobacion.length}</div>
+            <p className="text-xs text-slate-400 mt-1">esperan revisión</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Aprobados</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+        <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-green-50/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-5">
+            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wide">Aprobados</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+              <DollarSign className="h-4 w-4 text-green-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="px-5 pb-4">
+            <div className="text-2xl font-bold tabular-nums text-green-700">
               {presupuestos.filter(p => p.estado_presupuesto === EstadoPresupuesto.APROBADO).length}
             </div>
-            <p className="text-xs text-muted-foreground">finalizados</p>
+            <p className="text-xs text-slate-400 mt-1">finalizados</p>
           </CardContent>
         </Card>
       </div>
@@ -238,20 +244,20 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
       </div>
 
       <Tabs defaultValue={pendientesAprobacion.length > 0 ? 'por_aprobar' : 'todos'}>
-        <TabsList>
-          <TabsTrigger value="por_aprobar" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
+          <TabsTrigger value="por_aprobar" className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">
+            <Clock className="h-3.5 w-3.5" />
             Por aprobar
             {pendientesAprobacion.length > 0 && (
-              <Badge variant="secondary" className="ml-1 bg-amber-100 text-amber-800">
+              <span className="ml-0.5 text-[10px] font-bold rounded-full px-1.5 py-px bg-amber-100 text-amber-700">
                 {pendientesAprobacion.length}
-              </Badge>
+              </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="todos" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
+          <TabsTrigger value="todos" className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">
+            <FileText className="h-3.5 w-3.5" />
             Todos
-            <Badge variant="secondary" className="ml-1">{presupuestos.length}</Badge>
+            <span className="ml-0.5 text-[10px] font-bold rounded-full px-1.5 py-px bg-slate-200/60 text-slate-400">{presupuestos.length}</span>
           </TabsTrigger>
         </TabsList>
 

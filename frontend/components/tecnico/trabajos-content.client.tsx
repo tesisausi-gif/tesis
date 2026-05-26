@@ -6,10 +6,11 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   MapPin, ClipboardList, Clock, Wrench, FileText, CheckCircle, AlertTriangle, XCircle,
-  Phone, Mail, ChevronDown, ChevronUp, AlertCircle,
+  Phone, Mail, ChevronDown, ChevronUp, AlertCircle, CalendarDays,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
+import { AgendaTecnicoModal } from '@/components/shared/agenda-tecnico-modal.client'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
 import { createClient } from '@/shared/lib/supabase/client'
 import { cancelarAsignacionAceptada } from '@/features/asignaciones/asignaciones.service'
@@ -332,6 +333,18 @@ export function TrabajosContent({
           ))}
         </div>
 
+        {/* Ver Mi Agenda — solo para trabajos activos */}
+        {(asig.estado_asignacion === 'aceptada' || asig.estado_asignacion === 'en_curso') && (
+          <div className="flex border-t border-gray-100">
+            <AgendaTecnicoModal
+              idTecnico={idTecnico}
+              triggerLabel="Ver Mi Agenda"
+              rol="tecnico"
+              triggerClassName="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors text-xs font-semibold"
+            />
+          </div>
+        )}
+
         {/* Botón cancelar — solo para trabajos en curso (no completados) */}
         {(asig.estado_asignacion === 'aceptada' || asig.estado_asignacion === 'en_curso') && (
           <button
@@ -388,22 +401,22 @@ export function TrabajosContent({
           </div>
 
           {/* Filter chips */}
-          <div className="flex gap-2 px-4 py-3 overflow-x-auto bg-white border-b border-gray-100 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-1 px-4 py-3 overflow-x-auto bg-slate-100 border-b border-gray-100 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filtros.map(({ id, label, count, Icon }) => {
               const active = filtro === id
               return (
                 <button
                   key={id}
                   onClick={() => setFiltro(id)}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all active:scale-95 ${
-                    active ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   {label}
                   {count > 0 && (
                     <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
-                      active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                      active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'
                     }`}>
                       {count}
                     </span>

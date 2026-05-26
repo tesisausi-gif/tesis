@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { CheckCircle2, XCircle, Star, Eye, Power, Filter, Edit, Search } from 'lucide-react'
 import { Paginacion } from '@/components/ui/paginacion'
 import TecnicoCalificacionesDialog from './TecnicoCalificacionesDialog'
+import { AgendaTecnicoModal } from '@/components/shared/agenda-tecnico-modal.client'
 import {
   Dialog,
   DialogContent,
@@ -392,14 +393,22 @@ export default function TecnicosTab() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => abrirModalAcciones(tecnico)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <AgendaTecnicoModal
+                        idTecnico={tecnico.id_tecnico}
+                        nombreTecnico={`${tecnico.nombre} ${tecnico.apellido}`}
+                        triggerLabel="Agenda"
+                        triggerClassName="flex items-center gap-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => abrirModalAcciones(tecnico)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -67,10 +67,10 @@ const hoy = () => new Date().toISOString().slice(0, 10)
 
 function KpiCard({ label, valor, sub }: { label: string; valor: string; sub?: string }) {
   return (
-    <div className="rounded-lg border bg-blue-50 border-blue-200 p-3">
-      <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
-      <p className="text-xl font-bold text-blue-700 mt-0.5">{valor}</p>
-      {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+    <div className="rounded-lg border-l-4 border-l-blue-500 bg-gradient-to-br from-white to-blue-50/40 border border-slate-100 p-3">
+      <p className="text-xs text-slate-500 uppercase tracking-wide">{label}</p>
+      <p className="text-xl font-bold tabular-nums text-blue-700 mt-0.5">{valor}</p>
+      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -1483,9 +1483,9 @@ export function ExportarContent() {
 
       <TooltipProvider>
       <Tabs defaultValue="r1">
-        <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1 rounded-lg mb-2">
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl mb-2">
           {tabs.map(t => (
-            <TabsTrigger key={t.value} value={t.value} className="flex flex-col items-center gap-0 px-3 py-1.5 text-xs leading-tight h-auto">
+            <TabsTrigger key={t.value} value={t.value} className="flex flex-col items-center gap-0 px-3 py-1.5 text-xs leading-tight h-auto rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">
               <div className="flex items-center gap-1">
                 <span className="font-medium">{t.label}</span>
                 {t.info && (
