@@ -129,7 +129,7 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
       <div className="space-y-4">
         {/* Calendario — overflow-hidden en el contenedor para evitar scroll horizontal */}
         {/* Arbitrary variants fuerzan 7 columnas iguales independientemente del CSS de DayPicker */}
-        <div className="rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden p-3 [&_.rdp-months]:!w-full [&_.rdp-months]:![max-width:none] [&_table]:!w-full [&_table]:![table-layout:fixed] [&_th]:!w-auto [&_td]:!w-auto">
+        <div className="rdp-agenda-wrapper rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden p-3">
           <DayPicker
             locale={es}
             mode="single"

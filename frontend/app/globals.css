@@ -123,3 +123,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* AgendaTecnico: DayPicker responsive — 7 columnas iguales en cualquier ancho de contenedor */
+.rdp-agenda-wrapper .rdp-months {
+  width: 100% !important;
+  max-width: none !important;
+}
+.rdp-agenda-wrapper table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+.rdp-agenda-wrapper th,
+.rdp-agenda-wrapper td {
+  width: auto !important;
+}
+.rdp-agenda-wrapper .rdp-day_button {
+  width: 100% !important;
+}
