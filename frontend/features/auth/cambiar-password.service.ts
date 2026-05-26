@@ -20,18 +20,16 @@ export async function cambiarPasswordObligatorio(nuevaPassword: string): Promise
       return { success: false, error: 'No autenticado' }
     }
 
-    // Cambiar contraseña en Supabase Auth
-    const { error: pwError } = await supabase.auth.updateUser({ password: nuevaPassword })
+    // Cambiar contraseña y limpiar flag en user_metadata (para que el layout no muestre overlay)
+    const { error: pwError } = await supabase.auth.updateUser({
+      password: nuevaPassword,
+      data: { debe_cambiar_password: false },
+    })
     if (pwError) return { success: false, error: pwError.message }
 
-    // Desactivar flag (requiere admin client para bypass RLS)
+    // Limpiar flag también en la tabla usuarios
     const admin = createAdminClient()
-    const { error: flagError } = await admin
-      .from('usuarios')
-      .update({ debe_cambiar_password: false })
-      .eq('id', user.id)
-
-    if (flagError) return { success: false, error: flagError.message }
+    await admin.from('usuarios').update({ debe_cambiar_password: false }).eq('id', user.id)
 
     return { success: true, data: undefined }
   } catch {
