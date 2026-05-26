@@ -337,7 +337,7 @@ export function TrabajosContent({
         {(asig.estado_asignacion === 'aceptada' || asig.estado_asignacion === 'en_curso') && (
           <div className="flex border-t border-gray-100">
             <AgendaTecnicoModal
-              idTecnico={asig.id_tecnico}
+              idTecnico={idTecnico}
               triggerLabel="Ver Mi Agenda"
               rol="tecnico"
               triggerClassName="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors text-xs font-semibold"

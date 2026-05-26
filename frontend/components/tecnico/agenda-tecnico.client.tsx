@@ -10,22 +10,20 @@ import { Badge } from '@/components/ui/badge'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { FranjaAgenda } from '@/features/disponibilidad/disponibilidad.types'
 
-// Celdas flex-1 + w-full en filas para que el calendario se adapte a cualquier ancho
-// sin recortar la columna del domingo (7×32px fijos no caben en modales estrechos)
 const DAY_PICKER_CLASSES = {
   root: 'w-full',
-  months: 'flex flex-col w-full',
+  months: 'w-full',
   month: 'w-full space-y-1',
   month_caption: 'flex justify-center pt-1 relative items-center pb-1',
   caption_label: 'text-sm font-medium capitalize',
   nav: 'flex items-center gap-1',
   button_previous: 'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
   button_next:     'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-50',
-  month_grid: 'w-full border-collapse',
-  weekdays: 'flex w-full',
-  weekday: 'flex-1 text-gray-400 font-normal text-[0.65rem] text-center py-1 min-w-0',
-  week: 'flex w-full mt-1',
-  day: 'flex-1 h-8 text-center text-sm p-0 relative min-w-0',
+  month_grid: 'w-full table-fixed',
+  weekdays: '',
+  weekday: 'text-gray-400 font-normal text-[0.65rem] text-center py-1',
+  week: 'mt-1',
+  day: 'h-8 text-center text-sm p-0',
   day_button: 'w-full h-8 p-0 font-normal rounded-full hover:bg-gray-100 transition-colors text-sm',
   selected: '!ring-2 !ring-blue-400 !ring-offset-1',
   today: '!text-blue-600 !font-bold',
@@ -130,7 +128,7 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
     <>
       <div className="space-y-4">
         {/* Calendario — overflow-hidden en el contenedor para evitar scroll horizontal */}
-        <div className="rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden flex justify-center p-3">
+        <div className="rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden p-3">
           <DayPicker
             locale={es}
             mode="single"
