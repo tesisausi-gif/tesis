@@ -377,7 +377,7 @@ export function TrabajosContent({
             {[
               { label: 'Aceptados',  count: counts.aceptada,   color: 'text-blue-500' },
               { label: 'En curso',   count: counts.en_curso,   color: 'text-orange-500' },
-              { label: 'Revisión',   count: counts.pendiente,  color: 'text-amber-500' },
+              { label: 'Revisión',   count: counts.pendiente,  color: 'text-purple-500' },
               { label: 'Finaliz.',   count: counts.finalizado, color: 'text-green-500' },
             ].map(stat => (
               <div key={stat.label} className="flex flex-col items-center justify-center py-3 border-r border-gray-100 last:border-0">
@@ -414,15 +414,51 @@ export function TrabajosContent({
           </div>
 
           {/* Lista */}
-          <div className="px-4 pt-3 space-y-3">
-            {listaFiltrada.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 text-sm">
-                No hay incidentes en este estado
-              </div>
-            ) : (
-              listaFiltrada.map(a => renderCard(a))
-            )}
-          </div>
+          {listaFiltrada.length === 0 ? (
+            <div className="px-4 pt-3 text-center py-12 text-gray-400 text-sm">
+              No hay incidentes en este estado
+            </div>
+          ) : filtro === 'en_proceso' ? (
+            /* ── Vista agrupada para En Proceso ── */
+            <div className="px-4 pt-3 space-y-6">
+              {[
+                {
+                  key: 'aceptada',
+                  label: 'Asignaciones por iniciar',
+                  headerCls: 'text-blue-700 bg-blue-50 border-blue-200',
+                  dotCls: 'bg-blue-500 animate-pulse',
+                  items: listaFiltrada.filter(a => getStatusKey(a) === 'aceptada'),
+                },
+                {
+                  key: 'en_curso',
+                  label: 'Trabajo en progreso',
+                  headerCls: 'text-orange-700 bg-orange-50 border-orange-200',
+                  dotCls: 'bg-orange-400',
+                  items: listaFiltrada.filter(a => getStatusKey(a) === 'en_curso'),
+                },
+                {
+                  key: 'completada_pendiente',
+                  label: 'En revisión final',
+                  headerCls: 'text-purple-700 bg-purple-50 border-purple-200',
+                  dotCls: 'bg-purple-500 animate-pulse',
+                  items: listaFiltrada.filter(a => getStatusKey(a) === 'completada_pendiente'),
+                },
+              ].filter(g => g.items.length > 0).map(grupo => (
+                <div key={grupo.key}>
+                  <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${grupo.headerCls}`}>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${grupo.dotCls}`} />
+                    <span className="text-xs font-bold">{grupo.label}</span>
+                    <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
+                  </div>
+                  <div className="space-y-3">{grupo.items.map(a => renderCard(a))}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 pt-3 space-y-3">
+              {listaFiltrada.map(a => renderCard(a))}
+            </div>
+          )}
         </>
       )}
 

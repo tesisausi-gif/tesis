@@ -155,124 +155,124 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
           </div>
 
           {/* ── Incident list ────────────────────────── */}
-          <div className="px-4 pt-3 space-y-3">
-            {incidentesFiltrados.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 text-sm">
-                No hay incidentes en este estado
-              </div>
-            ) : (
-              incidentesFiltrados.map(incidente => {
-                // asignacion_solicitada se muestra como "Pendiente" para el cliente
-                const estadoDisplay = incidente.estado_actual === 'asignacion_solicitada' ? 'pendiente' : incidente.estado_actual
-                const estadoCfg = ESTADO_INCIDENTE_CONFIG[estadoDisplay] ?? ESTADO_INCIDENTE_CONFIG.pendiente
-                const Icon = ICON_BY_ESTADO[estadoDisplay] ?? Clock
-                const inmueble = incidente.inmuebles
-                const direccionPartes = inmueble
-                  ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
-                  : ''
-                const ubicacion = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
-                const direccion = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
-                const tienePresupuestoPendiente = pendientesPresupuesto.has(incidente.id_incidente)
-                const tieneConformidadSubida = incidentesConConformidadSubida.includes(incidente.id_incidente)
+          {(() => {
+            const renderCard = (incidente: (typeof incidentesFiltrados)[0]) => {
+              const estadoDisplay = incidente.estado_actual === 'asignacion_solicitada' ? 'pendiente' : incidente.estado_actual
+              const estadoCfg = ESTADO_INCIDENTE_CONFIG[estadoDisplay] ?? ESTADO_INCIDENTE_CONFIG.pendiente
+              const Icon = ICON_BY_ESTADO[estadoDisplay] ?? Clock
+              const inmueble = incidente.inmuebles
+              const dir = [inmueble?.calle, inmueble?.altura, inmueble?.piso && `Piso ${inmueble.piso}`, inmueble?.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
+              const ubi = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
+              const direccion = ubi ? `${dir}, ${ubi}` : dir || 'Sin dirección'
+              const tienePresupuestoPendiente = pendientesPresupuesto.has(incidente.id_incidente)
+              const tieneConformidadSubida = incidentesConConformidadSubida.includes(incidente.id_incidente)
 
-                return (
-                  <div
-                    key={incidente.id_incidente}
-                    className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${estadoCfg.bgGradient} to-white ${estadoCfg.stripe}`}
-                  >
-                    {/* Banner: presupuesto para aprobar */}
-                    {tienePresupuestoPendiente && (
-                      <div className="flex items-center gap-2 bg-amber-500 px-4 py-2">
-                        <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
-                        <span className="text-xs font-bold text-white">Presupuesto listo — tocá para revisar</span>
+              return (
+                <div key={incidente.id_incidente} className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${estadoCfg.bgGradient} to-white ${estadoCfg.stripe}`}>
+                  {tienePresupuestoPendiente && (
+                    <div className="flex items-center gap-2 bg-amber-500 px-4 py-2">
+                      <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
+                      <span className="text-xs font-bold text-white">Presupuesto listo — tocá para revisar</span>
+                    </div>
+                  )}
+                  <div className="px-4 py-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{incidente.id_incidente}</span>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${estadoCfg.badge}`}>
+                        <Icon className="w-2.5 h-2.5" />
+                        {estadoCfg.labelCliente}
+                      </span>
+                    </div>
+                    {incidente.estado_actual === 'en_proceso' && !tienePresupuestoPendiente && (() => {
+                      const sub = tieneConformidadSubida ? SUB_ESTADO_EN_PROCESO.revision_conformidad : SUB_ESTADO_EN_PROCESO.en_progreso
+                      return (
+                        <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg mb-2 w-fit ${sub.pill}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sub.dot}`} />
+                          {sub.labelCliente}
+                        </div>
+                      )
+                    })()}
+                    <p className="text-[15px] font-semibold text-slate-800 line-clamp-2 mb-2.5 leading-snug">{incidente.descripcion_problema}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1 text-xs text-slate-400 min-w-0">
+                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{direccion}</span>
+                      </div>
+                      <span className="text-[11px] text-slate-400 flex-shrink-0 tabular-nums">
+                        {incidente.fecha_registro ? format(new Date(incidente.fecha_registro), 'dd MMM yy', { locale: es }) : ''}
+                      </span>
+                    </div>
+                    {incidente.categoria && (
+                      <div className="mt-2">
+                        <span className="text-[10px] font-medium text-slate-500 bg-white/70 border border-slate-200 px-2 py-0.5 rounded-full">{incidente.categoria}</span>
                       </div>
                     )}
-
-                    <div className="px-4 py-4">
-                      {/* Row 1: ID + estado principal */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{incidente.id_incidente}</span>
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${estadoCfg.badge}`}>
-                          <Icon className="w-2.5 h-2.5" />
-                          {estadoCfg.labelCliente}
-                        </span>
-                      </div>
-
-                      {/* Sub-estado dentro de "En proceso" — solo 2 variantes */}
-                      {incidente.estado_actual === 'en_proceso' && !tienePresupuestoPendiente && (() => {
-                        const sub = tieneConformidadSubida
-                          ? SUB_ESTADO_EN_PROCESO.revision_conformidad
-                          : SUB_ESTADO_EN_PROCESO.en_progreso
-                        return (
-                          <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg mb-2 w-fit ${sub.pill}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sub.dot}`} />
-                            {sub.labelCliente}
-                          </div>
-                        )
-                      })()}
-
-                      {/* Row 2: Description — hero */}
-                      <p className="text-[15px] font-semibold text-slate-800 line-clamp-2 mb-2.5 leading-snug">
-                        {incidente.descripcion_problema}
-                      </p>
-
-                      {/* Row 3: Address + date */}
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1 text-xs text-slate-400 min-w-0">
-                          <MapPin className="w-3 h-3 flex-shrink-0" />
-                          <span className="truncate">{direccion}</span>
-                        </div>
-                        <span className="text-[11px] text-slate-400 flex-shrink-0 tabular-nums">
-                          {incidente.fecha_registro ? format(new Date(incidente.fecha_registro), 'dd MMM yy', { locale: es }) : ''}
-                        </span>
-                      </div>
-
-                      {/* Row 4: Category pill */}
-                      {incidente.categoria && (
-                        <div className="mt-2">
-                          <span className="text-[10px] font-medium text-slate-500 bg-white/70 border border-slate-200 px-2 py-0.5 rounded-full">
-                            {incidente.categoria}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* ── Acciones — 3 chips ─────────────── */}
-                    <div className="flex border-t border-white/60">
-                      <button
-                        onClick={() => abrirModal(incidente.id_incidente, 'detalles')}
-                        className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
-                      >
-                        <FileText className="w-4 h-4 text-slate-500" />
-                        <span className="text-[10px] font-semibold text-slate-500">Detalles</span>
-                      </button>
-                      <button
-                        onClick={() => abrirModal(incidente.id_incidente, 'timeline')}
-                        className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
-                      >
-                        <Clock className="w-4 h-4 text-blue-500" />
-                        <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
-                      </button>
-                      <button
-                        onClick={() => tienePresupuestoPendiente && abrirModal(incidente.id_incidente, 'presupuesto')}
-                        disabled={!tienePresupuestoPendiente}
-                        className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
-                          tienePresupuestoPendiente
-                            ? 'hover:bg-amber-50/60 active:bg-amber-100/60 text-amber-600'
-                            : 'opacity-30 cursor-not-allowed text-slate-400'
-                        }`}
-                      >
-                        <Bell className={`w-4 h-4 ${tienePresupuestoPendiente ? 'animate-pulse' : ''}`} />
-                        <span className="text-[10px] font-semibold">
-                          {tienePresupuestoPendiente ? 'Presupuesto' : 'Gestión'}
-                        </span>
-                      </button>
-                    </div>
                   </div>
-                )
-              })
-            )}
-          </div>
+                  <div className="flex border-t border-white/60">
+                    <button onClick={() => abrirModal(incidente.id_incidente, 'detalles')} className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60">
+                      <FileText className="w-4 h-4 text-slate-500" />
+                      <span className="text-[10px] font-semibold text-slate-500">Detalles</span>
+                    </button>
+                    <button onClick={() => abrirModal(incidente.id_incidente, 'timeline')} className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60">
+                      <Clock className="w-4 h-4 text-blue-500" />
+                      <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
+                    </button>
+                    <button onClick={() => tienePresupuestoPendiente && abrirModal(incidente.id_incidente, 'presupuesto')} disabled={!tienePresupuestoPendiente} className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${tienePresupuestoPendiente ? 'hover:bg-amber-50/60 active:bg-amber-100/60 text-amber-600' : 'opacity-30 cursor-not-allowed text-slate-400'}`}>
+                      <Bell className={`w-4 h-4 ${tienePresupuestoPendiente ? 'animate-pulse' : ''}`} />
+                      <span className="text-[10px] font-semibold">{tienePresupuestoPendiente ? 'Presupuesto' : 'Gestión'}</span>
+                    </button>
+                  </div>
+                </div>
+              )
+            }
+
+            if (incidentesFiltrados.length === 0) {
+              return <div className="px-4 pt-3 text-center py-12 text-gray-400 text-sm">No hay incidentes en este estado</div>
+            }
+
+            if (filtro === 'en_proceso') {
+              const grupos = [
+                {
+                  key: 'presupuesto',
+                  label: 'Presupuesto para aprobar',
+                  headerCls: 'text-amber-700 bg-amber-50 border-amber-200',
+                  dotCls: 'bg-amber-500 animate-pulse',
+                  items: incidentesFiltrados.filter(i => pendientesPresupuesto.has(i.id_incidente)),
+                },
+                {
+                  key: 'revision',
+                  label: 'En revisión final',
+                  headerCls: 'text-purple-700 bg-purple-50 border-purple-200',
+                  dotCls: 'bg-purple-500 animate-pulse',
+                  items: incidentesFiltrados.filter(i => !pendientesPresupuesto.has(i.id_incidente) && incidentesConConformidadSubida.includes(i.id_incidente)),
+                },
+                {
+                  key: 'progreso',
+                  label: 'Trabajo en progreso',
+                  headerCls: 'text-orange-700 bg-orange-50 border-orange-200',
+                  dotCls: 'bg-orange-400',
+                  items: incidentesFiltrados.filter(i => !pendientesPresupuesto.has(i.id_incidente) && !incidentesConConformidadSubida.includes(i.id_incidente)),
+                },
+              ].filter(g => g.items.length > 0)
+
+              return (
+                <div className="px-4 pt-3 space-y-6">
+                  {grupos.map(grupo => (
+                    <div key={grupo.key}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${grupo.headerCls}`}>
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${grupo.dotCls}`} />
+                        <span className="text-xs font-bold">{grupo.label}</span>
+                        <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
+                      </div>
+                      <div className="space-y-3">{grupo.items.map(renderCard)}</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            }
+
+            return <div className="px-4 pt-3 space-y-3">{incidentesFiltrados.map(renderCard)}</div>
+          })()}
         </>
       )}
 

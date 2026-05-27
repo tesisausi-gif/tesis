@@ -1,7 +1,6 @@
 import { createClient } from '@/shared/lib/supabase/server'
 import {
-  AlertCircle, Plus, ArrowRight, Clock, CheckCircle2,
-  FileText, Send, Wrench, Bell,
+  AlertCircle, Plus, ArrowRight, FileText, Bell,
 } from 'lucide-react'
 import Link from 'next/link'
 import { getClienteBadgeCounts } from '@/features/notificaciones/badge-counts.service'
@@ -20,20 +19,11 @@ export default async function ClienteDashboard() {
     .eq('id', user.id)
     .single()
 
-  const { data: incidentes } = await supabase
-    .from('incidentes')
-    .select('id_incidente, estado_actual')
-    .eq('id_cliente_reporta', usuario?.id_cliente)
-
   const { data: inmuebles } = await supabase
     .from('inmuebles')
     .select('id_inmueble')
     .eq('id_cliente', usuario?.id_cliente)
 
-  const cntPendiente  = incidentes?.filter(i => i.estado_actual === 'pendiente').length ?? 0
-  const cntAsignado   = incidentes?.filter(i => i.estado_actual === 'asignacion_solicitada').length ?? 0
-  const cntEnProceso  = incidentes?.filter(i => i.estado_actual === 'en_proceso').length ?? 0
-  const cntFinalizado = incidentes?.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto').length ?? 0
   const totalInmuebles = inmuebles?.length ?? 0
 
   const [badgeCounts, notificaciones] = await Promise.all([
@@ -91,49 +81,6 @@ export default async function ClienteDashboard() {
             </div>
           </Link>
         )}
-
-        {/* ── Stats de incidentes ───────────────────────── */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <Link href="/cliente/incidentes?filtro=pendiente">
-            <div className="rounded-2xl border-l-4 border-l-amber-400 bg-gradient-to-r from-amber-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
-              <div className="text-2xl font-bold tabular-nums text-amber-700">{cntPendiente}</div>
-              <div className="flex items-center gap-1 mt-1">
-                <Clock className="h-3 w-3 text-amber-500" />
-                <span className="text-[11px] text-slate-500">Pendientes</span>
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/cliente/incidentes?filtro=asignacion_solicitada">
-            <div className="rounded-2xl border-l-4 border-l-blue-400 bg-gradient-to-r from-blue-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
-              <div className="text-2xl font-bold tabular-nums text-blue-700">{cntAsignado}</div>
-              <div className="flex items-center gap-1 mt-1">
-                <Send className="h-3 w-3 text-blue-500" />
-                <span className="text-[11px] text-slate-500">Esp. técnico</span>
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/cliente/incidentes?filtro=en_proceso">
-            <div className="rounded-2xl border-l-4 border-l-orange-400 bg-gradient-to-r from-orange-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
-              <div className="text-2xl font-bold tabular-nums text-orange-700">{cntEnProceso}</div>
-              <div className="flex items-center gap-1 mt-1">
-                <Wrench className="h-3 w-3 text-orange-500" />
-                <span className="text-[11px] text-slate-500">En proceso</span>
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/cliente/incidentes?filtro=resuelto">
-            <div className="rounded-2xl border-l-4 border-l-emerald-400 bg-gradient-to-r from-emerald-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
-              <div className="text-2xl font-bold tabular-nums text-emerald-700">{cntFinalizado}</div>
-              <div className="flex items-center gap-1 mt-1">
-                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                <span className="text-[11px] text-slate-500">Finalizados</span>
-              </div>
-            </div>
-          </Link>
-        </div>
 
         {/* ── Acciones rápidas ─────────────────────────── */}
         <div className="space-y-2">

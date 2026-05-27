@@ -1,7 +1,7 @@
 import { createClient } from '@/shared/lib/supabase/server'
 import {
-  ClipboardList, CheckCircle2, Clock, Star,
-  UserCheck, Wrench, ArrowRight, Bell,
+  CheckCircle2, Star,
+  UserCheck, Wrench, Bell,
 } from 'lucide-react'
 import Link from 'next/link'
 import { getTecnicoBadgeCounts } from '@/features/notificaciones/badge-counts.service'
@@ -105,7 +105,7 @@ export default async function TecnicoDashboard() {
               <div className="text-2xl font-bold tabular-nums text-blue-700">{cntAsignado}</div>
               <div className="flex items-center gap-1 mt-1">
                 <UserCheck className="h-3 w-3 text-blue-500" />
-                <span className="text-[11px] text-slate-500">Asignados</span>
+                <span className="text-[11px] text-slate-500">Asig. pendientes</span>
               </div>
             </div>
           </Link>
@@ -145,32 +145,6 @@ export default async function TecnicoDashboard() {
             </div>
           </div>
         )}
-
-        {/* ── Acciones rápidas ────────────────────────── */}
-        <div className="space-y-2">
-          <Link href="/tecnico/disponibles">
-            <div className="rounded-2xl bg-white border border-slate-200 px-5 py-3.5 flex items-center justify-between shadow-sm active:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="h-7 w-7 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <ClipboardList className="h-3.5 w-3.5 text-blue-600" />
-                </div>
-                <span className="text-sm font-semibold text-slate-800">Ver trabajos disponibles</span>
-              </div>
-              <ArrowRight className="h-4 w-4 text-slate-400" />
-            </div>
-          </Link>
-          <Link href="/tecnico/trabajos">
-            <div className="rounded-2xl bg-white border border-slate-200 px-5 py-3.5 flex items-center justify-between shadow-sm active:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="h-7 w-7 rounded-lg bg-orange-100 flex items-center justify-center">
-                  <Wrench className="h-3.5 w-3.5 text-orange-600" />
-                </div>
-                <span className="text-sm font-semibold text-slate-800">Mis trabajos activos</span>
-              </div>
-              <ArrowRight className="h-4 w-4 text-slate-400" />
-            </div>
-          </Link>
-        </div>
 
         {/* ── Agenda ──────────────────────────────────── */}
         <AgendaTecnico franjas={compromisos} />
