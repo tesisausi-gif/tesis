@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, ClipboardList, User, LogOut, Wrench, Search } from 'lucide-react'
+import { Home, AlertCircle, User, LogOut, Wrench, Search } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -15,7 +15,7 @@ type BadgeKey = keyof TecnicoBadgeCounts
 const navItems: { title: string; icon: React.ElementType; href: string; badge?: BadgeKey }[] = [
   { title: 'Inicio', icon: Home, href: '/tecnico' },
   { title: 'Asignación', icon: Search, href: '/tecnico/disponibles', badge: 'disponibles' },
-  { title: 'Incidentes', icon: ClipboardList, href: '/tecnico/trabajos', badge: 'trabajos' },
+  { title: 'Incidentes', icon: AlertCircle, href: '/tecnico/trabajos', badge: 'trabajos' },
   { title: 'Perfil', icon: User, href: '/tecnico/perfil' },
 ]
 

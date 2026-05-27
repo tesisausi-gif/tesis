@@ -9,6 +9,7 @@ import { getNotificacionesTecnico } from '@/features/notificaciones/notificacion
 import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
 import { getFranjasAgendaTecnico } from '@/features/disponibilidad/disponibilidad.service'
 import { AgendaTecnico } from '@/components/tecnico/agenda-tecnico.client'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,10 +27,13 @@ export default async function TecnicoDashboard() {
 
   const tecnico = usuario?.tecnicos
 
-  const { data: asignaciones } = await supabase
-    .from('asignaciones_tecnico')
-    .select('incidentes(estado_actual)')
-    .eq('id_tecnico', tecnico?.id_tecnico)
+  const idTecnico = tecnico?.id_tecnico
+  const { data: asignaciones } = idTecnico
+    ? await supabase
+        .from('asignaciones_tecnico')
+        .select('incidentes(estado_actual)')
+        .eq('id_tecnico', idTecnico)
+    : { data: [] }
 
   const [badgeCounts, notificaciones, compromisos] = await Promise.all([
     getTecnicoBadgeCounts().catch(() => ({ disponibles: 0, trabajos: 0, pagos: 0, notificaciones: 0 })),
@@ -66,10 +70,25 @@ export default async function TecnicoDashboard() {
           <div className="h-10 w-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
             <span className="text-sm font-bold text-white">{iniciales}</span>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 leading-tight">
-              Hola, {tecnico?.nombre ?? 'Técnico'}
-            </h1>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-bold text-slate-900 leading-tight">
+                Hola, {tecnico?.nombre ?? 'Técnico'}
+              </h1>
+              {tecnico?.calificacion_promedio != null && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-200 cursor-default select-none">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      {tecnico.calificacion_promedio.toFixed(1)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    Tu calificación promedio
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
             {especialidadesLabel && (
               <p className="text-xs text-slate-400">{especialidadesLabel}</p>
             )}
@@ -99,55 +118,37 @@ export default async function TecnicoDashboard() {
         )}
 
         {/* ── Stats de trabajos ────────────────────────── */}
-        <div className="grid grid-cols-3 gap-2.5">
-          <Link href="/tecnico/disponibles">
-            <div className="rounded-2xl border-l-4 border-l-blue-400 bg-gradient-to-r from-blue-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
+        <div className="grid grid-cols-3 gap-2.5 items-stretch">
+          <Link href="/tecnico/disponibles" className="block">
+            <div className="rounded-2xl border-l-4 border-l-blue-400 bg-gradient-to-r from-blue-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow h-full">
               <div className="text-2xl font-bold tabular-nums text-blue-700">{cntAsignado}</div>
               <div className="flex items-center gap-1 mt-1">
-                <UserCheck className="h-3 w-3 text-blue-500" />
-                <span className="text-[11px] text-slate-500">Asig. pendientes</span>
+                <UserCheck className="h-3 w-3 text-blue-500 shrink-0" />
+                <span className="text-[11px] text-slate-500 leading-tight">Asig. pendientes</span>
               </div>
             </div>
           </Link>
 
-          <Link href="/tecnico/trabajos">
-            <div className="rounded-2xl border-l-4 border-l-orange-400 bg-gradient-to-r from-orange-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
+          <Link href="/tecnico/trabajos" className="block">
+            <div className="rounded-2xl border-l-4 border-l-orange-400 bg-gradient-to-r from-orange-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow h-full">
               <div className="text-2xl font-bold tabular-nums text-orange-700">{cntEnProceso}</div>
               <div className="flex items-center gap-1 mt-1">
-                <Wrench className="h-3 w-3 text-orange-500" />
-                <span className="text-[11px] text-slate-500">En proceso</span>
+                <Wrench className="h-3 w-3 text-orange-500 shrink-0" />
+                <span className="text-[11px] text-slate-500 leading-tight">En proceso</span>
               </div>
             </div>
           </Link>
 
-          <Link href="/tecnico/trabajos?filtro=resueltos">
-            <div className="rounded-2xl border-l-4 border-l-emerald-400 bg-gradient-to-r from-emerald-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
+          <Link href="/tecnico/trabajos?filtro=resueltos" className="block">
+            <div className="rounded-2xl border-l-4 border-l-emerald-400 bg-gradient-to-r from-emerald-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow h-full">
               <div className="text-2xl font-bold tabular-nums text-emerald-700">{cntFinalizado}</div>
               <div className="flex items-center gap-1 mt-1">
-                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                <span className="text-[11px] text-slate-500">Finalizados</span>
+                <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />
+                <span className="text-[11px] text-slate-500 leading-tight">Finalizados</span>
               </div>
             </div>
           </Link>
         </div>
-
-        {/* ── Calificación ────────────────────────────── */}
-        {tecnico?.calificacion_promedio != null && (
-          <div className="rounded-2xl bg-gradient-to-r from-yellow-50/60 to-white border-l-4 border-l-yellow-400 p-4 shadow-sm flex items-center gap-4">
-            <div className="h-9 w-9 rounded-xl bg-yellow-100 flex items-center justify-center shrink-0">
-              <Star className="h-4 w-4 text-yellow-600" />
-            </div>
-            <div>
-              <div className="text-xl font-bold tabular-nums text-yellow-700">
-                {tecnico.calificacion_promedio.toFixed(1)} <span className="text-base">★</span>
-              </div>
-              <p className="text-[11px] text-slate-400">Calificación promedio</p>
-            </div>
-          </div>
-        )}
-
-        {/* ── Agenda ──────────────────────────────────── */}
-        <AgendaTecnico franjas={compromisos} />
 
         {/* ── Notificaciones ──────────────────────────── */}
         <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
@@ -155,6 +156,9 @@ export default async function TecnicoDashboard() {
             <NotificacionesPanel notificaciones={notificaciones} rol="tecnico" />
           </div>
         </div>
+
+        {/* ── Agenda ──────────────────────────────────── */}
+        <AgendaTecnico franjas={compromisos} />
 
       </div>
     </div>

@@ -114,20 +114,6 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
         </div>
       ) : (
         <>
-          {/* ── Stats strip ─────────────────────────── */}
-          <div className="grid grid-cols-3 bg-white border-b border-gray-100">
-            {[
-              { label: 'Pendientes', count: porEstado.pendiente.length,  color: 'text-amber-500' },
-              { label: 'En proceso', count: porEstado.en_proceso.length, color: 'text-orange-500' },
-              { label: 'Finaliz.',   count: porEstado.resuelto.length,   color: 'text-green-500' },
-            ].map(stat => (
-              <div key={stat.label} className="flex flex-col items-center justify-center py-3 border-r border-gray-100 last:border-0">
-                <span className={`text-xl font-bold ${stat.color}`}>{stat.count}</span>
-                <span className="text-[9px] text-gray-400 font-medium leading-tight text-center mt-0.5">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-
           {/* ── Filter chips ────────────────────────── */}
           <div className="flex gap-1 px-4 py-3 overflow-x-auto bg-slate-100 border-b border-gray-100 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filtros.map(({ id, label, count, Icon }) => {

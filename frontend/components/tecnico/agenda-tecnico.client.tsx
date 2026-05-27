@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { es } from 'date-fns/locale'
-import { format, parseISO, isToday, isBefore, startOfDay, isValid } from 'date-fns'
-import { CalendarDays, MapPin, Clock, ChevronLeft, ChevronRight, X, Zap, ChevronDown } from 'lucide-react'
+import { format, parseISO, isToday, isBefore, startOfDay, isValid, addMonths, subMonths } from 'date-fns'
+import { CalendarDays, MapPin, Clock, X, Zap, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -16,9 +16,9 @@ const DAY_PICKER_CLASSES = {
   month: 'w-full space-y-0.5',
   month_caption: 'flex justify-center pt-1 relative items-center pb-2',
   caption_label: 'text-xs font-bold uppercase tracking-widest text-slate-500 capitalize',
-  nav: 'flex items-center gap-1',
-  button_previous: 'absolute left-0 h-9 w-9 p-0 flex items-center justify-center rounded-xl bg-slate-200 hover:bg-slate-300 active:bg-slate-300 transition-colors shadow-sm',
-  button_next:     'absolute right-0 h-9 w-9 p-0 flex items-center justify-center rounded-xl bg-slate-200 hover:bg-slate-300 active:bg-slate-300 transition-colors shadow-sm',
+  nav: 'hidden',
+  button_previous: 'hidden',
+  button_next: 'hidden',
   month_grid: 'w-full border-separate border-spacing-0',
   weekdays: '',
   weekday: 'text-slate-400 font-semibold text-[0.6rem] text-center py-1 uppercase tracking-widest',
@@ -133,8 +133,23 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
   const [diaSeleccionado, setDiaSeleccionado] = useState<Date | undefined>(undefined)
   const [incidenteAbiertoId, setIncidenteAbiertoId] = useState<number | null>(null)
   const [pasadasAbiertas, setPasadasAbiertas] = useState(false)
+  const [mes, setMes] = useState<Date>(new Date())
+  const touchStartX = useRef<number | null>(null)
   const hoy = startOfDay(new Date())
   const todayIso = format(hoy, 'yyyy-MM-dd')
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    if (Math.abs(dx) > 40) {
+      setMes(prev => dx < 0 ? addMonths(prev, 1) : subMonths(prev, 1))
+      setDiaSeleccionado(undefined)
+    }
+    touchStartX.current = null
+  }
 
   const porFecha: Record<string, FranjaAgenda[]> = {}
   for (const f of franjas) {
@@ -191,27 +206,25 @@ function AgendaContent({ franjas, rol }: { franjas: FranjaAgenda[]; rol: 'tecnic
 
         {/* Calendario */}
         <div
-          className="rdp-agenda-wrapper rounded-2xl border border-slate-100 bg-slate-50/40 p-3"
+          className="rdp-agenda-wrapper rounded-2xl border border-slate-100 bg-slate-50/40 p-3 select-none"
           style={{
             '--rdp-day-width': '2rem',
             '--rdp-day-height': '2rem',
             '--rdp-day_button-width': '1.875rem',
             '--rdp-day_button-height': '1.875rem',
           } as React.CSSProperties}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           <DayPicker
             locale={es}
             mode="single"
+            month={mes}
+            onMonthChange={setMes}
             selected={diaSeleccionado}
             onSelect={handleDayClick}
             modifiers={{ conFranja: diasConFranja }}
             modifiersClassNames={{ conFranja: '!bg-blue-600 !text-white !rounded-full !font-bold' }}
-            components={{
-              Chevron: ({ orientation }: { orientation?: string }) =>
-                orientation === 'left'
-                  ? <ChevronLeft className="h-4 w-4" />
-                  : <ChevronRight className="h-4 w-4" />,
-            }}
             classNames={DAY_PICKER_CLASSES}
           />
         </div>

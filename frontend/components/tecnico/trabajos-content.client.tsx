@@ -372,21 +372,6 @@ export function TrabajosContent({
         <EmptyState mensaje="Cuando aceptes una asignación, aparecerá aquí." />
       ) : (
         <>
-          {/* Stats strip */}
-          <div className="grid grid-cols-4 bg-white border-b border-gray-100">
-            {[
-              { label: 'Aceptados',  count: counts.aceptada,   color: 'text-blue-500' },
-              { label: 'En curso',   count: counts.en_curso,   color: 'text-orange-500' },
-              { label: 'Revisión',   count: counts.pendiente,  color: 'text-purple-500' },
-              { label: 'Finaliz.',   count: counts.finalizado, color: 'text-green-500' },
-            ].map(stat => (
-              <div key={stat.label} className="flex flex-col items-center justify-center py-3 border-r border-gray-100 last:border-0">
-                <span className={`text-xl font-bold ${stat.color}`}>{stat.count}</span>
-                <span className="text-[9px] text-gray-400 font-medium leading-tight text-center mt-0.5">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-
           {/* Filter chips */}
           <div className="flex gap-1 px-4 py-3 overflow-x-auto bg-slate-100 border-b border-gray-100 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filtros.map(({ id, label, count, Icon }) => {
