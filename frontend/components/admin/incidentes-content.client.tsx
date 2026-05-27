@@ -15,7 +15,7 @@ import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-m
 import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-modal'
 import type { IncidenteConClienteAdmin } from '@/features/incidentes/incidentes.types'
 import { Paginacion } from '@/components/ui/paginacion'
-import { ESTADO_INCIDENTE_CONFIG } from '@/shared/utils/colors'
+import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEnProceso } from '@/shared/utils/colors'
 
 interface IncidentesAdminContentProps {
   incidentes: IncidenteConClienteAdmin[]
@@ -33,9 +33,9 @@ const ICON_BY_ESTADO: Record<string, React.ElementType> = {
 type AccionPendiente =
   | { tipo: 'asignar' }
   | { tipo: 'reasignar' }
-  | { tipo: 'presupuesto' }
+  | { tipo: 'presupuesto_enviado' }
   | { tipo: 'presupuesto_cliente' }
-  | { tipo: 'conformidad' }
+  | { tipo: 'completada_pendiente' }
   | { tipo: 'conformidad_rechazada' }
   | { tipo: 'en_curso' }
   | { tipo: 'finalizado' }
@@ -56,11 +56,11 @@ function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
     const confRechazada = inc.conformidades?.find(c => c.esta_rechazada)
     if (confRechazada) return { tipo: 'conformidad_rechazada' }
     const presPendiente = inc.presupuestos?.find(p => p.estado_presupuesto === 'enviado')
-    if (presPendiente) return { tipo: 'presupuesto' }
+    if (presPendiente) return { tipo: 'presupuesto_enviado' }
     const presClientePendiente = inc.presupuestos?.find(p => p.estado_presupuesto === 'aprobado_admin')
     if (presClientePendiente) return { tipo: 'presupuesto_cliente' }
     const confPendiente = inc.conformidades?.find(c => c.url_documento && !c.esta_firmada && !c.esta_rechazada)
-    if (confPendiente) return { tipo: 'conformidad' }
+    if (confPendiente) return { tipo: 'completada_pendiente' }
     return { tipo: 'en_curso' }
   }
   if (estado === 'finalizado' || estado === 'resuelto') return { tipo: 'finalizado' }
@@ -76,12 +76,19 @@ const ACCION_CONFIG: Record<AccionPendiente['tipo'], {
 }> = {
   asignar:               { label: 'Asignar',       Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
   reasignar:             { label: 'Reasignar',     Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
-  presupuesto:           { label: 'Presupuesto',   Icon: FileText,      activeColor: 'text-amber-600',  pulse: true,  disabled: false },
+  presupuesto_enviado:   { label: 'Presupuesto',   Icon: FileText,      activeColor: 'text-amber-600',  pulse: true,  disabled: false },
   presupuesto_cliente:   { label: 'Esp. cliente',  Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
-  conformidad:           { label: 'Conformidad',   Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
+  completada_pendiente:  { label: 'Conformidad',   Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
   conformidad_rechazada: { label: 'Conf. rechaz.', Icon: XCircle,       activeColor: 'text-gray-300',   pulse: false, disabled: true  },
   en_curso:              { label: 'En Curso',      Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
   finalizado:            { label: 'Finalizado',    Icon: CheckCircle,   activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+}
+
+const BANNER_ICON_BY_ACCION: Partial<Record<AccionPendiente['tipo'], React.ElementType>> = {
+  presupuesto_enviado:   Bell,
+  presupuesto_cliente:   Clock,
+  completada_pendiente:  Bell,
+  conformidad_rechazada: XCircle,
 }
 
 function formatFecha(raw: string | null | undefined): string {
@@ -144,30 +151,18 @@ function IncidenteCard({
           <span className="text-xs font-bold text-white">Solicitud rechazada — reasignar técnico</span>
         </div>
       )}
-      {accion.tipo === 'presupuesto' && (
-        <div className="flex items-center gap-2 bg-amber-500 px-4 py-2">
-          <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
-          <span className="text-xs font-bold text-white">Presupuesto enviado — revisar y aprobar</span>
-        </div>
-      )}
-      {accion.tipo === 'presupuesto_cliente' && (
-        <div className="flex items-center gap-2 bg-yellow-500 px-4 py-2">
-          <Clock className="h-3.5 w-3.5 text-white flex-shrink-0" />
-          <span className="text-xs font-bold text-white">Presupuesto aprobado — aguarda decisión del cliente</span>
-        </div>
-      )}
-      {accion.tipo === 'conformidad' && (
-        <div className="flex items-center gap-2 bg-purple-600 px-4 py-2">
-          <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
-          <span className="text-xs font-bold text-white">Conformidad subida — revisar y aprobar</span>
-        </div>
-      )}
-      {accion.tipo === 'conformidad_rechazada' && (
-        <div className="flex items-center gap-2 bg-red-500 px-4 py-2">
-          <XCircle className="h-3.5 w-3.5 text-white flex-shrink-0" />
-          <span className="text-xs font-bold text-white">Conformidad rechazada — técnico debe re-subir</span>
-        </div>
-      )}
+      {(() => {
+        const bannerCfg = SUB_ESTADO_EN_PROCESO_CONFIG[accion.tipo as SubEstadoEnProceso]
+        if (!bannerCfg?.bannerBg) return null
+        const BannerIcon = BANNER_ICON_BY_ACCION[accion.tipo] ?? Bell
+        const pulse = accion.tipo === 'presupuesto_enviado' || accion.tipo === 'completada_pendiente'
+        return (
+          <div className={`flex items-center gap-2 ${bannerCfg.bannerBg} px-4 py-2`}>
+            <BannerIcon className={`h-3.5 w-3.5 text-white flex-shrink-0 ${pulse ? 'animate-pulse' : ''}`} />
+            <span className="text-xs font-bold text-white">{bannerCfg.bannerText}</span>
+          </div>
+        )
+      })()}
 
       <div className="px-4 py-4">
         <div className="flex items-center justify-between gap-2 mb-2">
@@ -305,9 +300,9 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     if (accion.tipo === 'asignar' || accion.tipo === 'reasignar') {
       setIncidenteParaGestionar(inc)
       setModalGestionarOpen(true)
-    } else if (accion.tipo === 'presupuesto') {
+    } else if (accion.tipo === 'presupuesto_enviado') {
       abrirModal(inc.id_incidente, 'presupuesto_admin')
-    } else if (accion.tipo === 'conformidad') {
+    } else if (accion.tipo === 'completada_pendiente') {
       abrirModal(inc.id_incidente, 'conformidad_admin')
     }
   }
@@ -438,82 +433,56 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       ) : filtro === 'en_proceso' ? (
         /* ── Vista agrupada para En Proceso ─────────────────────────────────── */
         <div className="space-y-6">
-          {[
-            {
-              key: 'presupuesto',
-              label: 'Presupuesto para revisar',
-              headerCls: 'text-amber-700 bg-amber-50 border-amber-200',
-              dotCls: 'bg-amber-500 animate-pulse',
-              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'presupuesto'),
-            },
-            {
-              key: 'presupuesto_cliente',
-              label: 'Aguarda aprobación del cliente',
-              headerCls: 'text-yellow-700 bg-yellow-50 border-yellow-200',
-              dotCls: 'bg-yellow-400',
-              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'presupuesto_cliente'),
-            },
-            {
-              key: 'conformidad',
-              label: 'Conformidad para revisar',
-              headerCls: 'text-purple-700 bg-purple-50 border-purple-200',
-              dotCls: 'bg-purple-500 animate-pulse',
-              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'conformidad'),
-            },
-            {
-              key: 'conformidad_rechazada',
-              label: 'Conformidad rechazada',
-              headerCls: 'text-red-700 bg-red-50 border-red-200',
-              dotCls: 'bg-red-500 animate-pulse',
-              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'conformidad_rechazada'),
-            },
-            {
-              key: 'en_curso',
-              label: 'Trabajo en progreso',
-              headerCls: 'text-orange-700 bg-orange-50 border-orange-200',
-              dotCls: 'bg-orange-400',
-              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'en_curso'),
-            },
-          ].filter(g => g.items.length > 0).map(grupo => (
-            <div key={grupo.key}>
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${grupo.headerCls}`}>
-                <span className={`w-2 h-2 rounded-full shrink-0 ${grupo.dotCls}`} />
-                <span className="text-xs font-bold">{grupo.label}</span>
-                <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {grupo.items.map(inc => {
-                  const accion = getAccionPendiente(inc)
-                  const accionCfg = ACCION_CONFIG[accion.tipo]
-                  const cfgKey = accion.tipo === 'reasignar' ? 'pendiente' : inc.estado_actual
-                  const cfg = ESTADO_INCIDENTE_CONFIG[cfgKey] ?? ESTADO_INCIDENTE_CONFIG.pendiente
-                  const Icon = ICON_BY_ESTADO[cfgKey] ?? Clock
-                  const isHighlighted = inc.id_incidente === highlightId
-                  const inmueble = inc.inmuebles
-                  const dir = [inmueble?.calle, inmueble?.altura].filter(Boolean).join(' ')
-                  const ubi = [inmueble?.barrio, inmueble?.localidad].filter(Boolean).join(', ')
-                  const direccion = ubi ? `${dir}, ${ubi}` : dir || 'Sin dirección'
-                  const tecnicoAsignado = inc.asignaciones_tecnico?.find(a =>
-                    ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
-                  )?.tecnicos
-                  return <IncidenteCard
-                    key={inc.id_incidente}
-                    inc={inc}
-                    cfg={cfg}
-                    Icon={Icon}
-                    accion={accion}
-                    accionCfg={accionCfg}
-                    isHighlighted={isHighlighted}
-                    direccion={direccion}
-                    tecnicoAsignado={tecnicoAsignado ?? null}
-                    highlightRefs={highlightRefs}
-                    onVerDetalle={abrirModal}
-                    onGestionar={handleGestionar}
-                  />
-                })}
-              </div>
-            </div>
-          ))}
+          {((['presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const)
+            .map(tipo => ({
+              tipo,
+              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo),
+            }))
+            .filter(g => g.items.length > 0)
+            .map(grupo => {
+              const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[grupo.tipo]
+              return (
+                <div key={grupo.tipo}>
+                  <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${gcfg.groupHeaderCls}`}>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${gcfg.groupDotCls}`} />
+                    <span className="text-xs font-bold">{gcfg.labelGrupo}</span>
+                    <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {grupo.items.map(inc => {
+                      const accion = getAccionPendiente(inc)
+                      const accionCfg = ACCION_CONFIG[accion.tipo]
+                      const cfgKey = accion.tipo === 'reasignar' ? 'pendiente' : inc.estado_actual
+                      const cfg = ESTADO_INCIDENTE_CONFIG[cfgKey] ?? ESTADO_INCIDENTE_CONFIG.pendiente
+                      const Icon = ICON_BY_ESTADO[cfgKey] ?? Clock
+                      const isHighlighted = inc.id_incidente === highlightId
+                      const inmueble = inc.inmuebles
+                      const dir = [inmueble?.calle, inmueble?.altura].filter(Boolean).join(' ')
+                      const ubi = [inmueble?.barrio, inmueble?.localidad].filter(Boolean).join(', ')
+                      const direccion = ubi ? `${dir}, ${ubi}` : dir || 'Sin dirección'
+                      const tecnicoAsignado = inc.asignaciones_tecnico?.find(a =>
+                        ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+                      )?.tecnicos
+                      return <IncidenteCard
+                        key={inc.id_incidente}
+                        inc={inc}
+                        cfg={cfg}
+                        Icon={Icon}
+                        accion={accion}
+                        accionCfg={accionCfg}
+                        isHighlighted={isHighlighted}
+                        direccion={direccion}
+                        tecnicoAsignado={tecnicoAsignado ?? null}
+                        highlightRefs={highlightRefs}
+                        onVerDetalle={abrirModal}
+                        onGestionar={handleGestionar}
+                      />
+                    })}
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
       ) : (
         /* ── Vista paginada normal ───────────────────────────────────────────── */

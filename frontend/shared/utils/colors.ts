@@ -54,9 +54,127 @@ export const ESTADO_INCIDENTE_CONFIG: Record<string, {
   },
 }
 
-// 1b. Sub-estados de "En proceso" — mismos colores en los 3 roles
-// "en_progreso" = trabajo activo, sin acción pendiente de nadie
-// "revision_conformidad" = técnico subió conformidad, admin debe revisar/firmar
+// ─────────────────────────────────────────────────────────────────────────────
+// 1b. Sub-estados de "En Proceso" — FUENTE ÚNICA para cards, grupos y timeline
+//
+// Cada clave es el identificador canónico del sub-estado:
+//   - Admin:    AccionPendiente['tipo'] para las variantes de en_proceso
+//   - Técnico:  valor devuelto por getStatusKey()
+//   - Timeline: referencia a timelineColor para el evento de entrada
+//
+// Para agregar un sub-estado nuevo:
+//   1. Agregar la entrada aquí
+//   2. Agregar la detección en getAccionPendiente() (admin) y getStatusKey() (técnico)
+//   3. Agregar el icono en ICON_BY_SUB_ESTADO de cada componente
+// ─────────────────────────────────────────────────────────────────────────────
+export type SubEstadoEnProceso =
+  | 'aceptada'
+  | 'presupuesto_enviado'
+  | 'presupuesto_cliente'
+  | 'en_curso'
+  | 'completada_pendiente'
+  | 'conformidad_rechazada'
+  | 'finalizado'
+
+export const SUB_ESTADO_EN_PROCESO_CONFIG: Record<SubEstadoEnProceso, {
+  labelGrupo: string       // label del header de sección (admin = técnico)
+  labelBadge: string       // label corto del badge en la card
+  stripe: string           // border-l-* de la card
+  bgGradient: string       // from-* del gradiente de la card
+  badge: string            // clases del badge inline
+  groupHeaderCls: string   // clases del div-header del grupo
+  groupDotCls: string      // clases del dot/pulse del grupo
+  bannerBg: string | null  // bg-* del banner superior (null = sin banner)
+  bannerText: string | null
+  timelineColor: string    // bg-* del evento que ENTRA a este sub-estado
+}> = {
+  aceptada: {
+    labelGrupo:    'Asignaciones por iniciar',
+    labelBadge:    'Por iniciar',
+    stripe:        'border-l-blue-400',
+    bgGradient:    'from-blue-50/50',
+    badge:         'bg-blue-100 text-blue-800 ring-blue-200',
+    groupHeaderCls:'text-blue-700 bg-blue-50 border-blue-200',
+    groupDotCls:   'bg-blue-500 animate-pulse',
+    bannerBg:      null,
+    bannerText:    null,
+    timelineColor: 'bg-orange-400',
+  },
+  presupuesto_enviado: {
+    labelGrupo:    'Presupuesto para revisar',
+    labelBadge:    'Presup. enviado',
+    stripe:        'border-l-amber-400',
+    bgGradient:    'from-amber-50/50',
+    badge:         'bg-amber-100 text-amber-800 ring-amber-200',
+    groupHeaderCls:'text-amber-700 bg-amber-50 border-amber-200',
+    groupDotCls:   'bg-amber-500 animate-pulse',
+    bannerBg:      'bg-amber-500',
+    bannerText:    'Presupuesto enviado — revisar y aprobar',
+    timelineColor: 'bg-amber-500',
+  },
+  presupuesto_cliente: {
+    labelGrupo:    'Aguarda aprobación del cliente',
+    labelBadge:    'Esp. cliente',
+    stripe:        'border-l-yellow-400',
+    bgGradient:    'from-yellow-50/50',
+    badge:         'bg-yellow-100 text-yellow-800 ring-yellow-200',
+    groupHeaderCls:'text-yellow-700 bg-yellow-50 border-yellow-200',
+    groupDotCls:   'bg-yellow-400',
+    bannerBg:      'bg-yellow-500',
+    bannerText:    'Presupuesto aprobado — aguarda decisión del cliente',
+    timelineColor: 'bg-yellow-500',
+  },
+  en_curso: {
+    labelGrupo:    'Trabajo en progreso',
+    labelBadge:    'En curso',
+    stripe:        'border-l-orange-400',
+    bgGradient:    'from-orange-50/50',
+    badge:         'bg-orange-100 text-orange-800 ring-orange-200',
+    groupHeaderCls:'text-orange-700 bg-orange-50 border-orange-200',
+    groupDotCls:   'bg-orange-400',
+    bannerBg:      null,
+    bannerText:    null,
+    timelineColor: 'bg-orange-400',
+  },
+  completada_pendiente: {
+    labelGrupo:    'Conformidad para revisar',
+    labelBadge:    'Conf. subida',
+    stripe:        'border-l-purple-400',
+    bgGradient:    'from-purple-50/50',
+    badge:         'bg-purple-100 text-purple-800 ring-purple-200',
+    groupHeaderCls:'text-purple-700 bg-purple-50 border-purple-200',
+    groupDotCls:   'bg-purple-500 animate-pulse',
+    bannerBg:      'bg-purple-600',
+    bannerText:    'Conformidad subida — revisar y aprobar',
+    timelineColor: 'bg-purple-500',
+  },
+  conformidad_rechazada: {
+    labelGrupo:    'Conformidad rechazada',
+    labelBadge:    'Conf. rechazada',
+    stripe:        'border-l-red-400',
+    bgGradient:    'from-red-50/50',
+    badge:         'bg-red-100 text-red-800 ring-red-200',
+    groupHeaderCls:'text-red-700 bg-red-50 border-red-200',
+    groupDotCls:   'bg-red-500 animate-pulse',
+    bannerBg:      'bg-red-500',
+    bannerText:    'Conformidad rechazada — técnico debe re-subir',
+    timelineColor: 'bg-red-500',
+  },
+  finalizado: {
+    labelGrupo:    'Finalizados',
+    labelBadge:    'Finalizado',
+    stripe:        'border-l-emerald-400',
+    bgGradient:    'from-emerald-50/50',
+    badge:         'bg-emerald-100 text-emerald-800 ring-emerald-200',
+    groupHeaderCls:'text-emerald-700 bg-emerald-50 border-emerald-200',
+    groupDotCls:   'bg-emerald-500',
+    bannerBg:      null,
+    bannerText:    null,
+    timelineColor: 'bg-emerald-500',
+  },
+}
+
+// Compat: usado por vista cliente (pills dentro de cards en pestaña "En proceso")
 export const SUB_ESTADO_EN_PROCESO = {
   en_progreso: {
     pill: 'bg-white border border-orange-300 text-orange-700',

@@ -13,7 +13,7 @@ import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-m
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
 import { createClient } from '@/shared/lib/supabase/client'
 import { cancelarAsignacionAceptada } from '@/features/asignaciones/asignaciones.service'
-import { SUB_ESTADO_EN_PROCESO } from '@/shared/utils/colors'
+import { SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEnProceso } from '@/shared/utils/colors'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -84,22 +84,16 @@ function getProximoPaso(
   return null
 }
 
-// ── Mapa de estado visual ─────────────────────────────────────────────────────
+// ── Iconos por sub-estado (los colores/labels vienen de SUB_ESTADO_EN_PROCESO_CONFIG) ──
 
-const STATUS_CONFIG: Record<string, {
-  label: string
-  stripe: string
-  gradientBg: string
-  badge: string
-  Icon: React.ElementType
-}> = {
-  aceptada:              { label: 'Por iniciar',     stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',           Icon: ClipboardList },
-  presupuesto_enviado:   { label: 'Presup. enviado', stripe: 'border-l-amber-400',   gradientBg: 'from-amber-50/50',   badge: 'bg-amber-100 text-amber-800 ring-amber-200',        Icon: FileText },
-  presupuesto_cliente:   { label: 'Esp. cliente',    stripe: 'border-l-yellow-400',  gradientBg: 'from-yellow-50/50',  badge: 'bg-yellow-100 text-yellow-800 ring-yellow-200',     Icon: Clock },
-  en_curso:              { label: 'En curso',         stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200',     Icon: Wrench },
-  completada_pendiente:  { label: 'Conf. subida',     stripe: 'border-l-purple-400',  gradientBg: 'from-purple-50/50',  badge: 'bg-purple-100 text-purple-800 ring-purple-200',     Icon: Clock },
-  conformidad_rechazada: { label: 'Conf. rechazada',  stripe: 'border-l-red-400',     gradientBg: 'from-red-50/50',     badge: 'bg-red-100 text-red-800 ring-red-200',              Icon: XCircle },
-  finalizado:            { label: 'Finalizado',       stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',   Icon: CheckCircle },
+const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
+  aceptada:              ClipboardList,
+  presupuesto_enviado:   FileText,
+  presupuesto_cliente:   Clock,
+  en_curso:              Wrench,
+  completada_pendiente:  Clock,
+  conformidad_rechazada: XCircle,
+  finalizado:            CheckCircle,
 }
 
 function getStatusKey(
@@ -215,9 +209,9 @@ export function TrabajosContent({
     const incidente = asig.incidentes
     const inmueble = incidente?.inmuebles
     const cliente = incidente?.clientes
-    const key = sk(asig)
-    const cfg = STATUS_CONFIG[key] ?? STATUS_CONFIG.aceptada
-    const { Icon } = cfg
+    const key = sk(asig) as SubEstadoEnProceso
+    const cfg = SUB_ESTADO_EN_PROCESO_CONFIG[key] ?? SUB_ESTADO_EN_PROCESO_CONFIG.aceptada
+    const Icon = ICON_BY_SUB_ESTADO[key] ?? ClipboardList
 
     const direccionPartes = inmueble
       ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
@@ -233,7 +227,7 @@ export function TrabajosContent({
     return (
       <div
         key={asig.id_asignacion}
-        className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${cfg.gradientBg} to-white ${cfg.stripe}`}
+        className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${cfg.bgGradient} to-white ${cfg.stripe}`}
       >
         <div className="px-4 py-4">
           {/* Fila 1: ID + estado */}
@@ -241,7 +235,7 @@ export function TrabajosContent({
             <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{asig.id_incidente}</span>
             <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${cfg.badge}`}>
               <Icon className="w-2.5 h-2.5" />
-              {cfg.label}
+              {cfg.labelBadge}
             </span>
           </div>
 
@@ -415,59 +409,26 @@ export function TrabajosContent({
           ) : filtro === 'en_proceso' ? (
             /* ── Vista agrupada para En Proceso ── */
             <div className="px-4 pt-3 space-y-6">
-              {[
-                {
-                  key: 'aceptada',
-                  label: 'Asignaciones por iniciar',
-                  headerCls: 'text-blue-700 bg-blue-50 border-blue-200',
-                  dotCls: 'bg-blue-500 animate-pulse',
-                  items: listaFiltrada.filter(a => sk(a) === 'aceptada'),
-                },
-                {
-                  key: 'presupuesto_enviado',
-                  label: 'Presupuesto para revisar',
-                  headerCls: 'text-amber-700 bg-amber-50 border-amber-200',
-                  dotCls: 'bg-amber-500 animate-pulse',
-                  items: listaFiltrada.filter(a => sk(a) === 'presupuesto_enviado'),
-                },
-                {
-                  key: 'presupuesto_cliente',
-                  label: 'Aguarda aprobación del cliente',
-                  headerCls: 'text-yellow-700 bg-yellow-50 border-yellow-200',
-                  dotCls: 'bg-yellow-400',
-                  items: listaFiltrada.filter(a => sk(a) === 'presupuesto_cliente'),
-                },
-                {
-                  key: 'en_curso',
-                  label: 'Trabajo en progreso',
-                  headerCls: 'text-orange-700 bg-orange-50 border-orange-200',
-                  dotCls: 'bg-orange-400',
-                  items: listaFiltrada.filter(a => sk(a) === 'en_curso'),
-                },
-                {
-                  key: 'completada_pendiente',
-                  label: 'Conformidad para revisar',
-                  headerCls: 'text-purple-700 bg-purple-50 border-purple-200',
-                  dotCls: 'bg-purple-500 animate-pulse',
-                  items: listaFiltrada.filter(a => sk(a) === 'completada_pendiente'),
-                },
-                {
-                  key: 'conformidad_rechazada',
-                  label: 'Conformidad rechazada',
-                  headerCls: 'text-red-700 bg-red-50 border-red-200',
-                  dotCls: 'bg-red-500 animate-pulse',
-                  items: listaFiltrada.filter(a => sk(a) === 'conformidad_rechazada'),
-                },
-              ].filter(g => g.items.length > 0).map(grupo => (
-                <div key={grupo.key}>
-                  <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${grupo.headerCls}`}>
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${grupo.dotCls}`} />
-                    <span className="text-xs font-bold">{grupo.label}</span>
-                    <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
-                  </div>
-                  <div className="space-y-3">{grupo.items.map(a => renderCard(a))}</div>
-                </div>
-              ))}
+              {((['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const)
+                .map(tipo => ({
+                  tipo,
+                  items: listaFiltrada.filter(a => sk(a) === tipo),
+                }))
+                .filter(g => g.items.length > 0)
+                .map(grupo => {
+                  const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[grupo.tipo]
+                  return (
+                    <div key={grupo.tipo}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${gcfg.groupHeaderCls}`}>
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${gcfg.groupDotCls}`} />
+                        <span className="text-xs font-bold">{gcfg.labelGrupo}</span>
+                        <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
+                      </div>
+                      <div className="space-y-3">{grupo.items.map(a => renderCard(a))}</div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           ) : (
             <div className="px-4 pt-3 space-y-3">

@@ -51,6 +51,7 @@ import {
   Check,
 } from 'lucide-react'
 import { EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
+import { SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
 import { InspeccionesList } from './inspecciones-list'
 import { CalificacionTecnico } from '@/components/cliente/calificacion-tecnico'
 import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
@@ -633,7 +634,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           descripcion: `La inmobiliaria te envió un presupuesto por $${(pres.costo_total ?? 0).toLocaleString()}`,
           fecha: pres.fecha_modificacion || pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
-          color: 'bg-cyan-500',
+          color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_enviado.timelineColor,
         })
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
           timelineEvents.push({
@@ -643,7 +644,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             descripcion: `Aprobaste el presupuesto por $${(pres.costo_total ?? 0).toLocaleString()}`,
             fecha: pres.fecha_aprobacion,
             icono: <CheckCircle className="h-4 w-4" />,
-            color: 'bg-green-500',
+            color: SUB_ESTADO_EN_PROCESO_CONFIG.en_curso.timelineColor,
           })
         }
       } else if (rolActual === 'tecnico') {
@@ -655,7 +656,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           descripcion: `Total: $${(pres.costo_total ?? 0).toLocaleString()}`,
           fecha: pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
-          color: 'bg-cyan-500',
+          color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_enviado.timelineColor,
         })
         if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
           timelineEvents.push({
@@ -665,7 +666,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             descripcion: `Total: $${(pres.costo_total ?? 0).toLocaleString()}`,
             fecha: pres.fecha_modificacion,
             icono: <CheckCircle className="h-4 w-4" />,
-            color: 'bg-green-500',
+            color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_cliente.timelineColor,
           })
         }
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
@@ -676,7 +677,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             descripcion: 'Ya podés comenzar el trabajo',
             fecha: pres.fecha_aprobacion,
             icono: <CheckCircle className="h-4 w-4" />,
-            color: 'bg-green-500',
+            color: SUB_ESTADO_EN_PROCESO_CONFIG.en_curso.timelineColor,
           })
         }
         if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
@@ -699,7 +700,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           descripcion: `Total: $${(pres.costo_total ?? 0).toLocaleString()}`,
           fecha: pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
-          color: 'bg-cyan-500',
+          color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_enviado.timelineColor,
         })
         if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
           timelineEvents.push({
@@ -709,7 +710,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             descripcion: `Costo final: $${(pres.costo_total ?? 0).toLocaleString()}`,
             fecha: pres.fecha_modificacion,
             icono: <CheckCircle className="h-4 w-4" />,
-            color: 'bg-amber-500',
+            color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_cliente.timelineColor,
           })
         }
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
@@ -720,7 +721,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             descripcion: 'El cliente autorizó el trabajo — incidente en proceso',
             fecha: pres.fecha_aprobacion,
             icono: <CheckCircle className="h-4 w-4" />,
-            color: 'bg-green-500',
+            color: SUB_ESTADO_EN_PROCESO_CONFIG.en_curso.timelineColor,
           })
         }
         if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
@@ -767,7 +768,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         descripcion: 'El técnico subió la foto de conformidad para revisión',
         fecha: conf.fecha_creacion,
         icono: <ClipboardList className="h-4 w-4" />,
-        color: 'bg-amber-500',
+        color: SUB_ESTADO_EN_PROCESO_CONFIG.completada_pendiente.timelineColor,
       })
 
       // Rechazada
@@ -779,7 +780,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           descripcion: rolActual === 'cliente' ? 'La administración solicitó una nueva foto' : 'La conformidad fue rechazada — técnico debe resubir',
           fecha: conf.fecha_rechazo,
           icono: <XCircle className="h-4 w-4" />,
-          color: 'bg-red-500',
+          color: SUB_ESTADO_EN_PROCESO_CONFIG.conformidad_rechazada.timelineColor,
         })
       }
 
