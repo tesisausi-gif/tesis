@@ -524,55 +524,59 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       const tecnicoNombre = `${asig.tecnicos?.nombre || ''} ${asig.tecnicos?.apellido || ''}`.trim()
       const desc = tecnicoNombre || 'Sin técnico'
 
-      // Evento de asignación (siempre)
+      // Solicitud enviada al técnico (pendiente de aceptación)
       timelineEvents.push({
         id: `asig-pendiente-${asig.id_asignacion}`,
         tipo: 'asignacion',
-        titulo: 'Técnico asignado',
+        titulo: 'Solicitud enviada al técnico',
         descripcion: desc,
         fecha: asig.fecha_asignacion,
         icono: <Wrench className="h-4 w-4" />,
-        color: 'bg-orange-400',
+        color: 'bg-blue-400',
       })
 
-      // Evento de aceptación
+      // Técnico aceptó → trabajo iniciado
       if (asig.fecha_aceptacion) {
         timelineEvents.push({
           id: `asig-aceptada-${asig.id_asignacion}`,
           tipo: 'asignacion',
-          titulo: 'Técnico aceptó la asignación',
+          titulo: 'Técnico aceptó — trabajo iniciado',
           descripcion: desc,
           fecha: asig.fecha_aceptacion,
           icono: <Wrench className="h-4 w-4" />,
-          color: 'bg-purple-500',
+          color: 'bg-orange-400',
         })
       }
 
-      // Evento de rechazo (solo visible para admin/técnico)
-      if (asig.fecha_rechazo && rolActual !== 'cliente') {
+      // Técnico rechazó la solicitud (solo admin/técnico)
+      if (asig.estado_asignacion === 'rechazada' && asig.fecha_rechazo && rolActual !== 'cliente') {
         timelineEvents.push({
           id: `asig-rechazada-${asig.id_asignacion}`,
           tipo: 'asignacion',
-          titulo: 'Técnico rechazó la asignación',
+          titulo: 'Técnico rechazó la solicitud',
           descripcion: desc,
           fecha: asig.fecha_rechazo,
-          icono: <Wrench className="h-4 w-4" />,
+          icono: <XCircle className="h-4 w-4" />,
           color: 'bg-red-500',
         })
       }
 
-      // Evento de trabajo completado
-      if (asig.estado_asignacion === 'completada') {
+      // Técnico canceló un trabajo ya aceptado (admin ve detalle, cliente ve mensaje genérico)
+      if (asig.estado_asignacion === 'cancelada' && asig.fecha_rechazo) {
         timelineEvents.push({
-          id: `asig-completada-${asig.id_asignacion}`,
+          id: `asig-cancelada-${asig.id_asignacion}`,
           tipo: 'asignacion',
-          titulo: 'Trabajo completado',
-          descripcion: desc,
-          fecha: asig.fecha_completado || asig.fecha_aceptacion || asig.fecha_asignacion,
-          icono: <Wrench className="h-4 w-4" />,
-          color: 'bg-green-500',
+          titulo: 'Técnico canceló el trabajo',
+          descripcion: rolActual === 'cliente'
+            ? 'El servicio volverá a asignarse'
+            : `${desc} — el incidente volvió a pendiente`,
+          fecha: asig.fecha_rechazo,
+          icono: <XCircle className="h-4 w-4" />,
+          color: 'bg-red-600',
         })
       }
+
+      // "completada" queda cubierto por los eventos de conformidad — no duplicar
     })
 
     // Cargar inspecciones, presupuestos, pagos, avances y conformidades para timeline
@@ -785,10 +789,10 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           id: `conf-aprobada-${conf.id_conformidad}`,
           tipo: 'conformidad',
           titulo: 'Conformidad aprobada',
-          descripcion: 'La administración aprobó la conformidad — incidente resuelto',
+          descripcion: 'La administración aprobó la conformidad — incidente finalizado',
           fecha: conf.fecha_conformidad,
           icono: <CheckCircle className="h-4 w-4" />,
-          color: 'bg-green-500',
+          color: 'bg-emerald-500',
         })
       }
     })
@@ -798,11 +802,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       timelineEvents.push({
         id: 'cierre',
         tipo: 'estado',
-        titulo: 'Incidente Cerrado',
-        descripcion: incidenteData.fue_resuelto ? 'Finalizado satisfactoriamente' : 'Cerrado sin resolución',
+        titulo: 'Incidente Finalizado',
+        descripcion: incidenteData.fue_resuelto ? 'Resuelto satisfactoriamente' : 'Cerrado sin resolución completa',
         fecha: incidenteData.fecha_cierre,
         icono: <CheckCircle className="h-4 w-4" />,
-        color: incidenteData.fue_resuelto ? 'bg-green-500' : 'bg-gray-500',
+        color: incidenteData.fue_resuelto ? 'bg-emerald-500' : 'bg-gray-500',
       })
     }
 
