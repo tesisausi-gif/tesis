@@ -370,22 +370,6 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
         <p className="text-gray-600 mt-1">Administrá y gestioná todos los incidentes reportados</p>
       </div>
 
-      {/* Stats strip */}
-      <div className="grid grid-cols-4 bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-        {[
-          { label: 'Pendientes',       count: porEstado.pendiente.length,             color: 'text-amber-600',  dot: 'bg-amber-400' },
-          { label: 'Asig. Solicitada', count: porEstado.asignacion_solicitada.length, color: 'text-blue-600',   dot: 'bg-blue-400' },
-          { label: 'En Proceso',       count: porEstado.en_proceso.length,            color: 'text-orange-600', dot: 'bg-orange-400' },
-          { label: 'Finalizados',      count: porEstado.finalizado.length,            color: 'text-green-600',  dot: 'bg-green-400' },
-        ].map((stat, i) => (
-          <div key={stat.label} className={`flex flex-col items-center justify-center py-4 ${i < 3 ? 'border-r border-slate-100' : ''}`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${stat.dot} mb-1.5`} />
-            <span className={`text-2xl font-bold tabular-nums ${stat.color}`}>{stat.count}</span>
-            <span className="text-[10px] text-slate-400 font-medium leading-tight text-center mt-0.5">{stat.label}</span>
-          </div>
-        ))}
-      </div>
-
       {/* Search + Filter chips */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 space-y-3">
         <div className="relative">

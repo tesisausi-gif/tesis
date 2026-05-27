@@ -46,7 +46,7 @@ export default async function TecnicoDashboard() {
     return (inc as any)?.estado_actual as string | undefined
   })
 
-  const cntAsignado   = estadosPorIncidente.filter(e => e === 'asignacion_solicitada').length
+  const cntAsignado   = badgeCounts.disponibles
   const cntEnProceso  = estadosPorIncidente.filter(e => e === 'en_proceso').length
   const cntFinalizado = estadosPorIncidente.filter(e => e === 'finalizado' || e === 'resuelto').length
 
@@ -124,7 +124,7 @@ export default async function TecnicoDashboard() {
               <div className="text-2xl font-bold tabular-nums text-blue-700">{cntAsignado}</div>
               <div className="flex items-center gap-1 mt-1">
                 <UserCheck className="h-3 w-3 text-blue-500 shrink-0" />
-                <span className="text-[11px] text-slate-500 leading-tight">Asig. pendientes</span>
+                <span className="text-[11px] text-slate-500 leading-tight">Asignaciones</span>
               </div>
             </div>
           </Link>

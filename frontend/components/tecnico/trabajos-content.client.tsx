@@ -95,7 +95,7 @@ const STATUS_CONFIG: Record<string, {
   aceptada:            { label: 'Aceptado',      stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',           Icon: ClipboardList },
   en_curso:            { label: 'En curso',       stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200',     Icon: Wrench },
   // purple = conformidad subida, alineado con admin (banner purple) y cliente (pill purple)
-  completada_pendiente:{ label: 'Pend. revisión', stripe: 'border-l-purple-400',  gradientBg: 'from-purple-50/50',  badge: 'bg-purple-100 text-purple-800 ring-purple-200',     Icon: Clock },
+  completada_pendiente:{ label: 'Conf. subida',   stripe: 'border-l-purple-400',  gradientBg: 'from-purple-50/50',  badge: 'bg-purple-100 text-purple-800 ring-purple-200',     Icon: Clock },
   finalizado:          { label: 'Finalizado',     stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',   Icon: CheckCircle },
 }
 
@@ -364,8 +364,8 @@ export function TrabajosContent({
 
       {/* Header */}
       <div className="bg-white px-5 pt-6 pb-5 border-b border-gray-100">
-        <h1 className="text-2xl font-bold text-gray-900 mb-0.5">Mis Trabajos</h1>
-        <p className="text-sm text-gray-400">Incidentes asignados a vos</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-0.5">Incidentes</h1>
+        <p className="text-sm text-gray-400">Mis trabajos</p>
       </div>
 
       {asignaciones.length === 0 ? (
@@ -423,7 +423,7 @@ export function TrabajosContent({
                 },
                 {
                   key: 'completada_pendiente',
-                  label: 'En revisión final',
+                  label: 'Conformidad para revisar',
                   headerCls: 'text-purple-700 bg-purple-50 border-purple-200',
                   dotCls: 'bg-purple-500 animate-pulse',
                   items: listaFiltrada.filter(a => getStatusKey(a) === 'completada_pendiente'),
