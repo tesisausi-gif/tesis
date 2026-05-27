@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AdminSidebar } from '@/components/admin/admin-sidebar'
 import { RealtimeNotificacionesAdmin } from '@/components/admin/realtime-notificaciones.client'
+import { AIHelpChat } from '@/components/ai-help-chat'
 
 export default function AdminLayout({
   children,
@@ -22,6 +23,7 @@ export default function AdminLayout({
           </div>
         </main>
       </div>
+      <AIHelpChat variant="admin" />
     </SidebarProvider>
   )
 }

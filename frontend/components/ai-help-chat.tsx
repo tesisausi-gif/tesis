@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { MessageCircle, X, Send, Bot } from 'lucide-react'
+import { Sparkles, X, Send, Bot } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Message {
@@ -60,7 +60,11 @@ const getAIResponse = (userMessage: string): string => {
   return 'Entiendo tu consulta. En este momento, puedo ayudarte con información sobre el registro de inmuebles, reporte de incidentes y navegación del sistema. ¿Podrías reformular tu pregunta o ser más específico sobre lo que necesitas?'
 }
 
-export function AIHelpChat() {
+interface AIHelpChatProps {
+  variant?: 'floating' | 'admin'
+}
+
+export function AIHelpChat({ variant = 'floating' }: AIHelpChatProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -214,8 +218,8 @@ export function AIHelpChat() {
 
   return (
     <>
-      {/* Botón flotante */}
-      {!isOpen && mounted && (
+      {/* Botón flotante (técnico / cliente) */}
+      {variant === 'floating' && !isOpen && mounted && (
         <button
           ref={buttonRef}
           onMouseDown={handleMouseDown}
@@ -229,9 +233,21 @@ export function AIHelpChat() {
             userSelect: 'none',
             WebkitUserSelect: 'none',
           }}
-          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 flex items-center justify-center border-0 z-[9999] cursor-grab active:cursor-grabbing transition-shadow animate-float"
+          className="h-12 w-12 rounded-full shadow-2xl hover:shadow-3xl bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 flex items-center justify-center border-0 z-[9999] cursor-grab active:cursor-grabbing transition-shadow animate-float"
         >
-          <MessageCircle className="h-5 w-5 text-white" />
+          <Bot className="h-6 w-6 text-white" />
+        </button>
+      )}
+
+      {/* Botón discreto admin (no flota, no arrastra) */}
+      {variant === 'admin' && !isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 h-10 w-10 rounded-full z-[9999] flex items-center justify-center bg-white border border-slate-200 shadow-md hover:shadow-lg hover:border-indigo-300 transition-all group"
+          title="Asistente IA"
+        >
+          <Bot className="h-4 w-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+          <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-indigo-400 border-2 border-white" />
         </button>
       )}
 
