@@ -112,6 +112,7 @@ function getStatusKey(
   if (['aceptada', 'en_curso'].includes(a.estado_asignacion)) {
     if (estadoPresupuesto === 'enviado') return 'presupuesto_enviado'
     if (estadoPresupuesto === 'aprobado_admin') return 'presupuesto_cliente'
+    if (estadoPresupuesto === 'aprobado') return 'en_curso'
   }
 
   return a.estado_asignacion

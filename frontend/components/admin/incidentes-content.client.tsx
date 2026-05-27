@@ -63,7 +63,8 @@ function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
     const confPendiente = inc.conformidades?.find(c => c.url_documento && !c.esta_firmada && !c.esta_rechazada)
     if (confPendiente) return { tipo: 'completada_pendiente' }
     const asigActiva = inc.asignaciones_tecnico?.find(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion))
-    if (asigActiva?.estado_asignacion === 'aceptada') return { tipo: 'aceptada' }
+    const presAprobado = inc.presupuestos?.find(p => p.estado_presupuesto === 'aprobado')
+    if (asigActiva?.estado_asignacion === 'aceptada' && !presAprobado) return { tipo: 'aceptada' }
     return { tipo: 'en_curso' }
   }
   if (estado === 'finalizado' || estado === 'resuelto') return { tipo: 'finalizado' }

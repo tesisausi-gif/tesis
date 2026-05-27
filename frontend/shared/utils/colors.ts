@@ -89,8 +89,8 @@ export const SUB_ESTADO_EN_PROCESO_CONFIG: Record<SubEstadoEnProceso, {
   timelineColor: string    // bg-* del evento que ENTRA a este sub-estado
 }> = {
   aceptada: {
-    labelGrupo:    'Asignaciones por iniciar',
-    labelBadge:    'Por iniciar',
+    labelGrupo:    'Técnico asignado',
+    labelBadge:    'Por comenzar',
     stripe:        'border-l-blue-400',
     bgGradient:    'from-blue-50/50',
     badge:         'bg-blue-100 text-blue-800 ring-blue-200',
