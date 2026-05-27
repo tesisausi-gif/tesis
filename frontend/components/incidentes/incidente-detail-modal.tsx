@@ -1835,12 +1835,58 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           rows={2}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Inspección vinculada <span className="text-red-500">*</span></Label>
-                        <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
-                          Inspección #{inspeccionesActivas[0]?.id_inspeccion} — {inspeccionesActivas[0] ? format(new Date(inspeccionesActivas[0].fecha_inspeccion), "dd/MM/yy", { locale: es }) : ''}
-                        </div>
-                      </div>
+                      {inspeccionesActivas[0] && (() => {
+                        const insp = inspeccionesActivas[0]
+                        return (
+                          <div className="space-y-2">
+                            <Label>Inspección vinculada <span className="text-red-500">*</span></Label>
+                            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-blue-700">Inspección #{insp.id_inspeccion}</span>
+                                {insp.fecha_inspeccion && (
+                                  <span className="text-xs text-blue-500">{format(new Date(insp.fecha_inspeccion), "dd/MM/yy", { locale: es })}</span>
+                                )}
+                              </div>
+                              {insp.descripcion_inspeccion && (
+                                <p className="text-xs text-blue-900">{insp.descripcion_inspeccion}</p>
+                              )}
+                              {(insp.causas_determinadas || insp.danos_ocasionados) && (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {insp.causas_determinadas && (
+                                    <div>
+                                      <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">Causas</p>
+                                      <p className="text-xs text-blue-800">{insp.causas_determinadas}</p>
+                                    </div>
+                                  )}
+                                  {insp.danos_ocasionados && (
+                                    <div>
+                                      <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">Daños</p>
+                                      <p className="text-xs text-blue-800">{insp.danos_ocasionados}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <div className="flex flex-wrap gap-3 pt-0.5">
+                                {insp.dias_estimados_trabajo != null && (
+                                  <span className="text-xs text-blue-700">⏱ {insp.dias_estimados_trabajo} día{insp.dias_estimados_trabajo !== 1 ? 's' : ''} est.</span>
+                                )}
+                                {insp.requiere_materiales === 1 && (
+                                  <span className="text-xs text-blue-700">🔧 Requiere materiales</span>
+                                )}
+                                {insp.requiere_ayudantes === 1 && insp.cantidad_ayudantes != null && (
+                                  <span className="text-xs text-blue-700">👷 {insp.cantidad_ayudantes} ayudante{insp.cantidad_ayudantes !== 1 ? 's' : ''}</span>
+                                )}
+                              </div>
+                              {insp.descripcion_materiales && (
+                                <div>
+                                  <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">Materiales necesarios</p>
+                                  <p className="text-xs text-blue-800">{insp.descripcion_materiales}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })()}
                             <Button
                               onClick={handleCrearPresupuesto}
                               disabled={savingPresupuesto || !presDescripcion.trim()}

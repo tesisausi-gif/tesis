@@ -103,14 +103,15 @@ const QUICK_ACTION_TECNICO: Record<SubEstadoEnProceso, {
   Icon: React.ElementType
   color: string
   disabled: boolean
+  tab: string
 }> = {
-  aceptada:              { label: 'Cargar presup.', Icon: FileText,     color: 'text-blue-600',   disabled: false },
-  presupuesto_enviado:   { label: 'Pend. admin',    Icon: Clock,        color: 'text-gray-300',   disabled: true  },
-  presupuesto_cliente:   { label: 'Pend. cliente',  Icon: Clock,        color: 'text-gray-300',   disabled: true  },
-  en_curso:              { label: 'Subir conform.', Icon: ClipboardList, color: 'text-purple-600', disabled: false },
-  completada_pendiente:  { label: 'Por revisar',    Icon: Clock,        color: 'text-gray-300',   disabled: true  },
-  conformidad_rechazada: { label: 'Resubir',        Icon: RefreshCw,    color: 'text-orange-600', disabled: false },
-  finalizado:            { label: 'Cobro pend.',    Icon: Clock,        color: 'text-gray-300',   disabled: true  },
+  aceptada:              { label: 'Cargar presup.', Icon: FileText,     color: 'text-blue-600',   disabled: false, tab: 'presupuesto'  },
+  presupuesto_enviado:   { label: 'Pend. admin',    Icon: Clock,        color: 'text-gray-300',   disabled: true,  tab: 'presupuesto'  },
+  presupuesto_cliente:   { label: 'Pend. cliente',  Icon: Clock,        color: 'text-gray-300',   disabled: true,  tab: 'presupuesto'  },
+  en_curso:              { label: 'Subir conform.', Icon: ClipboardList, color: 'text-purple-600', disabled: false, tab: 'conformidad'  },
+  completada_pendiente:  { label: 'Por revisar',    Icon: Clock,        color: 'text-gray-300',   disabled: true,  tab: 'conformidad'  },
+  conformidad_rechazada: { label: 'Resubir',        Icon: RefreshCw,    color: 'text-orange-600', disabled: false, tab: 'conformidad'  },
+  finalizado:            { label: 'Cobro pend.',    Icon: Clock,        color: 'text-gray-300',   disabled: true,  tab: 'inspecciones' },
 }
 
 function getStatusKey(
@@ -367,7 +368,7 @@ export function TrabajosContent({
             const qa = QUICK_ACTION_TECNICO[key as SubEstadoEnProceso] ?? QUICK_ACTION_TECNICO.aceptada
             return (
               <button
-                onClick={() => !qa.disabled && abrirModal(asig.id_incidente, 'inspecciones')}
+                onClick={() => !qa.disabled && abrirModal(asig.id_incidente, qa.tab)}
                 disabled={qa.disabled}
                 className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
                   qa.disabled ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/40 active:bg-white/60'
