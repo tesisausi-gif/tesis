@@ -33,6 +33,7 @@ const ICON_BY_ESTADO: Record<string, React.ElementType> = {
 type AccionPendiente =
   | { tipo: 'asignar' }
   | { tipo: 'reasignar' }
+  | { tipo: 'aceptada' }
   | { tipo: 'presupuesto_enviado' }
   | { tipo: 'presupuesto_cliente' }
   | { tipo: 'completada_pendiente' }
@@ -61,6 +62,8 @@ function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
     if (presClientePendiente) return { tipo: 'presupuesto_cliente' }
     const confPendiente = inc.conformidades?.find(c => c.url_documento && !c.esta_firmada && !c.esta_rechazada)
     if (confPendiente) return { tipo: 'completada_pendiente' }
+    const asigActiva = inc.asignaciones_tecnico?.find(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion))
+    if (asigActiva?.estado_asignacion === 'aceptada') return { tipo: 'aceptada' }
     return { tipo: 'en_curso' }
   }
   if (estado === 'finalizado' || estado === 'resuelto') return { tipo: 'finalizado' }
@@ -76,6 +79,7 @@ const ACCION_CONFIG: Record<AccionPendiente['tipo'], {
 }> = {
   asignar:               { label: 'Asignar',       Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
   reasignar:             { label: 'Reasignar',     Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
+  aceptada:              { label: 'Por iniciar',   Icon: ClipboardList, activeColor: 'text-gray-300',   pulse: false, disabled: true  },
   presupuesto_enviado:   { label: 'Presupuesto',   Icon: FileText,      activeColor: 'text-amber-600',  pulse: true,  disabled: false },
   presupuesto_cliente:   { label: 'Esp. cliente',  Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
   completada_pendiente:  { label: 'Conformidad',   Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
@@ -433,7 +437,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
       ) : filtro === 'en_proceso' ? (
         /* ── Vista agrupada para En Proceso ─────────────────────────────────── */
         <div className="space-y-6">
-          {((['presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const)
+          {((['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const)
             .map(tipo => ({
               tipo,
               items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo),
