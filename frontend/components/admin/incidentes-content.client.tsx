@@ -88,6 +88,149 @@ function formatFecha(raw: string | null | undefined): string {
   }
 }
 
+// ── Componente de card extraído para reutilizar en vista plana y agrupada ─────
+function IncidenteCard({
+  inc, cfg, Icon, accion, accionCfg, isHighlighted,
+  direccion, tecnicoAsignado, highlightRefs, onVerDetalle, onGestionar,
+}: {
+  inc: IncidenteConClienteAdmin
+  cfg: typeof import('@/shared/utils/colors').ESTADO_INCIDENTE_CONFIG[string]
+  Icon: React.ElementType
+  accion: AccionPendiente
+  accionCfg: typeof ACCION_CONFIG[keyof typeof ACCION_CONFIG]
+  isHighlighted: boolean
+  direccion: string
+  tecnicoAsignado: { nombre: string; apellido: string } | null
+  highlightRefs: React.MutableRefObject<Map<number, HTMLDivElement>>
+  onVerDetalle: (id: number, tab?: string) => void
+  onGestionar: (inc: IncidenteConClienteAdmin, accion: AccionPendiente) => void
+}) {
+  const rechazadaRecientemente = inc.estado_actual === 'asignacion_solicitada' &&
+    inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'rechazada')
+  const canceladaPorTecnico = inc.estado_actual === 'pendiente' &&
+    inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'cancelada')
+
+  return (
+    <div
+      key={inc.id_incidente}
+      ref={(el) => {
+        if (el) highlightRefs.current.set(inc.id_incidente, el)
+        else highlightRefs.current.delete(inc.id_incidente)
+      }}
+      className={`rounded-2xl border-l-4 shadow-sm overflow-hidden transition-shadow hover:shadow-md bg-gradient-to-r ${cfg.bgGradient} to-white ${cfg.stripe} ${
+        isHighlighted ? 'ring-2 ring-amber-400 ring-offset-1' : ''
+      }`}
+    >
+      {canceladaPorTecnico && (
+        <div className="flex items-center gap-2 bg-red-600 px-4 py-2.5">
+          <AlertTriangle className="h-4 w-4 text-yellow-300 animate-pulse flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <span className="text-xs font-bold text-white">Técnico canceló el trabajo</span>
+            <span className="text-red-200 text-xs ml-1.5">— Reasignar urgente</span>
+          </div>
+        </div>
+      )}
+      {rechazadaRecientemente && (
+        <div className="flex items-center gap-2 bg-red-500 px-4 py-2">
+          <XCircle className="h-3.5 w-3.5 text-white flex-shrink-0" />
+          <span className="text-xs font-bold text-white">Solicitud rechazada — reasignar técnico</span>
+        </div>
+      )}
+      {accion.tipo === 'presupuesto' && (
+        <div className="flex items-center gap-2 bg-amber-500 px-4 py-2">
+          <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
+          <span className="text-xs font-bold text-white">Presupuesto enviado — revisar y aprobar</span>
+        </div>
+      )}
+      {accion.tipo === 'conformidad' && (
+        <div className="flex items-center gap-2 bg-purple-600 px-4 py-2">
+          <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
+          <span className="text-xs font-bold text-white">Conformidad subida — revisar y aprobar</span>
+        </div>
+      )}
+
+      <div className="px-4 py-4">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{inc.id_incidente}</span>
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${cfg.badge}`}>
+              <Icon className="w-2.5 h-2.5" />
+              {cfg.labelAdmin}
+            </span>
+          </div>
+          {inc.nivel_prioridad === 'Urgente' && (
+            <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 ring-1 ring-inset ring-red-200 px-2 py-0.5 rounded-full shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              Urgente
+            </span>
+          )}
+          {inc.nivel_prioridad === 'Alta' && (
+            <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 ring-1 ring-inset ring-orange-200 px-2 py-0.5 rounded-full shrink-0">
+              Alta
+            </span>
+          )}
+        </div>
+        <p className="text-[15px] font-semibold text-slate-800 line-clamp-2 mb-2.5 leading-snug">
+          {inc.descripcion_problema}
+        </p>
+        {inc.clientes && (
+          <div className="flex items-center gap-1 text-xs text-slate-500 mb-2">
+            <User className="w-3 h-3 flex-shrink-0" />
+            <span>{inc.clientes.nombre} {inc.clientes.apellido}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1 text-xs text-slate-400 min-w-0">
+            <MapPin className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">{direccion}</span>
+          </div>
+          <span className="text-[11px] text-slate-400 shrink-0 tabular-nums">{formatFecha(inc.fecha_registro)}</span>
+        </div>
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          {inc.categoria && (
+            <span className="text-[10px] font-medium text-slate-500 bg-white/70 border border-slate-200 px-2 py-0.5 rounded-full">
+              {inc.categoria}
+            </span>
+          )}
+          {tecnicoAsignado && (
+            <span className="text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Wrench className="w-2.5 h-2.5" />
+              {tecnicoAsignado.nombre} {tecnicoAsignado.apellido}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex border-t border-white/60">
+        <button
+          onClick={() => onVerDetalle(inc.id_incidente, 'detalles')}
+          className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
+        >
+          <FileText className="w-4 h-4 text-slate-500" />
+          <span className="text-[10px] font-semibold text-slate-500">Detalles</span>
+        </button>
+        <button
+          onClick={() => onVerDetalle(inc.id_incidente, 'timeline')}
+          className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
+        >
+          <Clock className="w-4 h-4 text-blue-500" />
+          <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
+        </button>
+        <button
+          onClick={() => !accionCfg.disabled && onGestionar(inc, accion)}
+          disabled={accionCfg.disabled}
+          className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
+            accionCfg.disabled ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/40 active:bg-white/60'
+          } ${accionCfg.activeColor}`}
+        >
+          <accionCfg.Icon className={`w-4 h-4 ${accionCfg.pulse ? 'animate-pulse' : ''}`} />
+          <span className="text-[10px] font-semibold">{accionCfg.label}</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -288,180 +431,107 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             {busqueda ? 'Sin resultados para esa búsqueda' : 'No hay incidentes en este estado'}
           </p>
         </div>
-      ) : (
-        <>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {incidentesPaginados.map(inc => {
-            const accion = getAccionPendiente(inc)
-            const accionCfg = ACCION_CONFIG[accion.tipo]
-            // Reasignaciones usan siempre styling de pendiente (amber) aunque estado_actual sea asignacion_solicitada
-            const cfgKey = accion.tipo === 'reasignar' ? 'pendiente' : inc.estado_actual
-            const cfg = ESTADO_INCIDENTE_CONFIG[cfgKey] ?? ESTADO_INCIDENTE_CONFIG.pendiente
-            const Icon = ICON_BY_ESTADO[cfgKey] ?? Clock
-            const isHighlighted = inc.id_incidente === highlightId
-
-            const inmueble = inc.inmuebles
-            const direccionPartes = inmueble
-              ? [inmueble.calle, inmueble.altura].filter(Boolean).join(' ')
-              : ''
-            const ubicacion = inmueble
-              ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ')
-              : ''
-            const direccion = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
-
-            const tecnicoAsignado = inc.asignaciones_tecnico?.find(a =>
-              ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
-            )?.tecnicos
-
-            const rechazadaRecientemente = inc.estado_actual === 'asignacion_solicitada' &&
-              inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'rechazada')
-
-            const canceladaPorTecnico = inc.estado_actual === 'pendiente' &&
-              inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'cancelada')
-
-            return (
-              <div
-                key={inc.id_incidente}
-                ref={(el) => {
-                  if (el) highlightRefs.current.set(inc.id_incidente, el)
-                  else highlightRefs.current.delete(inc.id_incidente)
-                }}
-                className={`rounded-2xl border-l-4 shadow-sm overflow-hidden transition-shadow hover:shadow-md bg-gradient-to-r ${cfg.bgGradient} to-white ${cfg.stripe} ${
-                  isHighlighted ? 'ring-2 ring-amber-400 ring-offset-1' : ''
-                }`}
-              >
-                {/* Técnico canceló — banner urgente */}
-                {canceladaPorTecnico && (
-                  <div className="flex items-center gap-2 bg-red-600 px-4 py-2.5">
-                    <AlertTriangle className="h-4 w-4 text-yellow-300 animate-pulse flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs font-bold text-white">Técnico canceló el trabajo</span>
-                      <span className="text-red-200 text-xs ml-1.5">— Reasignar urgente</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Rejection banner */}
-                {rechazadaRecientemente && (
-                  <div className="flex items-center gap-2 bg-red-500 px-4 py-2">
-                    <XCircle className="h-3.5 w-3.5 text-white flex-shrink-0" />
-                    <span className="text-xs font-bold text-white">Solicitud rechazada — reasignar técnico</span>
-                  </div>
-                )}
-
-                {/* Presupuesto pending banner */}
-                {accion.tipo === 'presupuesto' && (
-                  <div className="flex items-center gap-2 bg-amber-500 px-4 py-2">
-                    <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
-                    <span className="text-xs font-bold text-white">Presupuesto enviado — revisar y aprobar</span>
-                  </div>
-                )}
-
-                {/* Conformidad pending banner */}
-                {accion.tipo === 'conformidad' && (
-                  <div className="flex items-center gap-2 bg-purple-600 px-4 py-2">
-                    <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
-                    <span className="text-xs font-bold text-white">Conformidad subida — revisar y aprobar</span>
-                  </div>
-                )}
-
-                <div className="px-4 py-4">
-                  {/* Row 1: ID + estado + prioridad */}
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{inc.id_incidente}</span>
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${cfg.badge}`}>
-                        <Icon className="w-2.5 h-2.5" />
-                        {cfg.labelAdmin}
-                      </span>
-                    </div>
-                    {inc.nivel_prioridad === 'Urgente' && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 ring-1 ring-inset ring-red-200 px-2 py-0.5 rounded-full shrink-0">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                        Urgente
-                      </span>
-                    )}
-                    {inc.nivel_prioridad === 'Alta' && (
-                      <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 ring-1 ring-inset ring-orange-200 px-2 py-0.5 rounded-full shrink-0">
-                        Alta
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Row 2: Description — hero */}
-                  <p className="text-[15px] font-semibold text-slate-800 line-clamp-2 mb-2.5 leading-snug">
-                    {inc.descripcion_problema}
-                  </p>
-
-                  {/* Row 3: Client */}
-                  {inc.clientes && (
-                    <div className="flex items-center gap-1 text-xs text-slate-500 mb-2">
-                      <User className="w-3 h-3 flex-shrink-0" />
-                      <span>{inc.clientes.nombre} {inc.clientes.apellido}</span>
-                    </div>
-                  )}
-
-                  {/* Row 4: Address + date */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1 text-xs text-slate-400 min-w-0">
-                      <MapPin className="w-3 h-3 flex-shrink-0" />
-                      <span className="truncate">{direccion}</span>
-                    </div>
-                    <span className="text-[11px] text-slate-400 shrink-0 tabular-nums">
-                      {formatFecha(inc.fecha_registro)}
-                    </span>
-                  </div>
-
-                  {/* Row 5: Category + Técnico */}
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    {inc.categoria && (
-                      <span className="text-[10px] font-medium text-slate-500 bg-white/70 border border-slate-200 px-2 py-0.5 rounded-full">
-                        {inc.categoria}
-                      </span>
-                    )}
-                    {tecnicoAsignado && (
-                      <span className="text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Wrench className="w-2.5 h-2.5" />
-                        {tecnicoAsignado.nombre} {tecnicoAsignado.apellido}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* 3-chip action row */}
-                <div className="flex border-t border-white/60">
-                  <button
-                    onClick={() => abrirModal(inc.id_incidente, 'detalles')}
-                    className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
-                  >
-                    <FileText className="w-4 h-4 text-slate-500" />
-                    <span className="text-[10px] font-semibold text-slate-500">Detalles</span>
-                  </button>
-                  <button
-                    onClick={() => abrirModal(inc.id_incidente, 'timeline')}
-                    className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
-                  >
-                    <Clock className="w-4 h-4 text-blue-500" />
-                    <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
-                  </button>
-                  <button
-                    onClick={() => !accionCfg.disabled && handleGestionar(inc, accion)}
-                    disabled={accionCfg.disabled}
-                    className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
-                      accionCfg.disabled
-                        ? 'opacity-30 cursor-not-allowed'
-                        : 'hover:bg-white/40 active:bg-white/60'
-                    } ${accionCfg.activeColor}`}
-                  >
-                    <accionCfg.Icon className={`w-4 h-4 ${accionCfg.pulse ? 'animate-pulse' : ''}`} />
-                    <span className="text-[10px] font-semibold">{accionCfg.label}</span>
-                  </button>
-                </div>
+      ) : filtro === 'en_proceso' ? (
+        /* ── Vista agrupada para En Proceso ─────────────────────────────────── */
+        <div className="space-y-6">
+          {[
+            {
+              key: 'presupuesto',
+              label: 'Presupuesto para revisar',
+              headerCls: 'text-amber-700 bg-amber-50 border-amber-200',
+              dotCls: 'bg-amber-500 animate-pulse',
+              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'presupuesto'),
+            },
+            {
+              key: 'conformidad',
+              label: 'Conformidad para revisar',
+              headerCls: 'text-purple-700 bg-purple-50 border-purple-200',
+              dotCls: 'bg-purple-500 animate-pulse',
+              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'conformidad'),
+            },
+            {
+              key: 'en_curso',
+              label: 'Trabajo en progreso',
+              headerCls: 'text-orange-700 bg-orange-50 border-orange-200',
+              dotCls: 'bg-orange-400',
+              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'en_curso'),
+            },
+          ].filter(g => g.items.length > 0).map(grupo => (
+            <div key={grupo.key}>
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${grupo.headerCls}`}>
+                <span className={`w-2 h-2 rounded-full shrink-0 ${grupo.dotCls}`} />
+                <span className="text-xs font-bold">{grupo.label}</span>
+                <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
               </div>
-            )
-          })}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {grupo.items.map(inc => {
+                  const accion = getAccionPendiente(inc)
+                  const accionCfg = ACCION_CONFIG[accion.tipo]
+                  const cfgKey = accion.tipo === 'reasignar' ? 'pendiente' : inc.estado_actual
+                  const cfg = ESTADO_INCIDENTE_CONFIG[cfgKey] ?? ESTADO_INCIDENTE_CONFIG.pendiente
+                  const Icon = ICON_BY_ESTADO[cfgKey] ?? Clock
+                  const isHighlighted = inc.id_incidente === highlightId
+                  const inmueble = inc.inmuebles
+                  const dir = [inmueble?.calle, inmueble?.altura].filter(Boolean).join(' ')
+                  const ubi = [inmueble?.barrio, inmueble?.localidad].filter(Boolean).join(', ')
+                  const direccion = ubi ? `${dir}, ${ubi}` : dir || 'Sin dirección'
+                  const tecnicoAsignado = inc.asignaciones_tecnico?.find(a =>
+                    ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+                  )?.tecnicos
+                  return <IncidenteCard
+                    key={inc.id_incidente}
+                    inc={inc}
+                    cfg={cfg}
+                    Icon={Icon}
+                    accion={accion}
+                    accionCfg={accionCfg}
+                    isHighlighted={isHighlighted}
+                    direccion={direccion}
+                    tecnicoAsignado={tecnicoAsignado ?? null}
+                    highlightRefs={highlightRefs}
+                    onVerDetalle={abrirModal}
+                    onGestionar={handleGestionar}
+                  />
+                })}
+              </div>
+            </div>
+          ))}
         </div>
-        <Paginacion pagina={pagina} total={incidentesFiltrados.length} onChange={setPagina} />
+      ) : (
+        /* ── Vista paginada normal ───────────────────────────────────────────── */
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {incidentesPaginados.map(inc => {
+              const accion = getAccionPendiente(inc)
+              const accionCfg = ACCION_CONFIG[accion.tipo]
+              const cfgKey = accion.tipo === 'reasignar' ? 'pendiente' : inc.estado_actual
+              const cfg = ESTADO_INCIDENTE_CONFIG[cfgKey] ?? ESTADO_INCIDENTE_CONFIG.pendiente
+              const Icon = ICON_BY_ESTADO[cfgKey] ?? Clock
+              const isHighlighted = inc.id_incidente === highlightId
+              const inmueble = inc.inmuebles
+              const dir = [inmueble?.calle, inmueble?.altura].filter(Boolean).join(' ')
+              const ubi = [inmueble?.barrio, inmueble?.localidad].filter(Boolean).join(', ')
+              const direccion = ubi ? `${dir}, ${ubi}` : dir || 'Sin dirección'
+              const tecnicoAsignado = inc.asignaciones_tecnico?.find(a =>
+                ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+              )?.tecnicos
+              return <IncidenteCard
+                key={inc.id_incidente}
+                inc={inc}
+                cfg={cfg}
+                Icon={Icon}
+                accion={accion}
+                accionCfg={accionCfg}
+                isHighlighted={isHighlighted}
+                direccion={direccion}
+                tecnicoAsignado={tecnicoAsignado ?? null}
+                highlightRefs={highlightRefs}
+                onVerDetalle={abrirModal}
+                onGestionar={handleGestionar}
+              />
+            })}
+          </div>
+          <Paginacion pagina={pagina} total={incidentesFiltrados.length} onChange={setPagina} />
         </>
       )}
 

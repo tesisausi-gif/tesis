@@ -63,25 +63,26 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     setPendientesPresupuesto(s => { const n = new Set(s); n.delete(id); return n })
   }
 
+  // asignacion_solicitada se agrupa con pendiente — el cliente no necesita ver esa distinción
   const porEstado = {
-    pendiente:             incidentes.filter(i => i.estado_actual === 'pendiente'),
-    asignacion_solicitada: incidentes.filter(i => i.estado_actual === 'asignacion_solicitada'),
-    en_proceso:            incidentes.filter(i => i.estado_actual === 'en_proceso'),
-    resuelto:              incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado'),
+    pendiente: incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada'),
+    en_proceso: incidentes.filter(i => i.estado_actual === 'en_proceso'),
+    resuelto:   incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado'),
   }
 
   const incidentesFiltrados = filtro === 'todos'
     ? incidentes
-    : filtro === 'resuelto'
-      ? incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado')
-      : incidentes.filter(i => i.estado_actual === filtro)
+    : filtro === 'pendiente'
+      ? incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada')
+      : filtro === 'resuelto'
+        ? incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado')
+        : incidentes.filter(i => i.estado_actual === filtro)
 
   const filtros = [
-    { id: 'todos',                label: 'Todos',       count: incidentes.length,                          Icon: ClipboardList },
-    { id: 'pendiente',            label: 'Pendiente',   count: porEstado.pendiente.length,                 Icon: Clock },
-    { id: 'asignacion_solicitada', label: 'Esp. técnico', count: porEstado.asignacion_solicitada.length,   Icon: Send },
-    { id: 'en_proceso',           label: 'En proceso',  count: porEstado.en_proceso.length,                Icon: Wrench },
-    { id: 'resuelto',             label: 'Finalizados', count: porEstado.resuelto.length,                  Icon: CheckCircle },
+    { id: 'todos',      label: 'Todos',       count: incidentes.length,            Icon: ClipboardList },
+    { id: 'pendiente',  label: 'Pendiente',   count: porEstado.pendiente.length,   Icon: Clock },
+    { id: 'en_proceso', label: 'En proceso',  count: porEstado.en_proceso.length,  Icon: Wrench },
+    { id: 'resuelto',   label: 'Finalizados', count: porEstado.resuelto.length,    Icon: CheckCircle },
   ]
 
   return (
@@ -114,12 +115,11 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
       ) : (
         <>
           {/* ── Stats strip ─────────────────────────── */}
-          <div className="grid grid-cols-4 bg-white border-b border-gray-100">
+          <div className="grid grid-cols-3 bg-white border-b border-gray-100">
             {[
-              { label: 'Pendientes', count: porEstado.pendiente.length,             color: 'text-amber-500' },
-              { label: 'Esp. técnico', count: porEstado.asignacion_solicitada.length, color: 'text-blue-500' },
-              { label: 'En proceso', count: porEstado.en_proceso.length,            color: 'text-orange-500' },
-              { label: 'Finaliz.',   count: porEstado.resuelto.length,              color: 'text-green-500' },
+              { label: 'Pendientes', count: porEstado.pendiente.length,  color: 'text-amber-500' },
+              { label: 'En proceso', count: porEstado.en_proceso.length, color: 'text-orange-500' },
+              { label: 'Finaliz.',   count: porEstado.resuelto.length,   color: 'text-green-500' },
             ].map(stat => (
               <div key={stat.label} className="flex flex-col items-center justify-center py-3 border-r border-gray-100 last:border-0">
                 <span className={`text-xl font-bold ${stat.color}`}>{stat.count}</span>
@@ -162,8 +162,10 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
               </div>
             ) : (
               incidentesFiltrados.map(incidente => {
-                const estadoCfg = ESTADO_INCIDENTE_CONFIG[incidente.estado_actual] ?? ESTADO_INCIDENTE_CONFIG.pendiente
-                const Icon = ICON_BY_ESTADO[incidente.estado_actual] ?? Clock
+                // asignacion_solicitada se muestra como "Pendiente" para el cliente
+                const estadoDisplay = incidente.estado_actual === 'asignacion_solicitada' ? 'pendiente' : incidente.estado_actual
+                const estadoCfg = ESTADO_INCIDENTE_CONFIG[estadoDisplay] ?? ESTADO_INCIDENTE_CONFIG.pendiente
+                const Icon = ICON_BY_ESTADO[estadoDisplay] ?? Clock
                 const inmueble = incidente.inmuebles
                 const direccionPartes = inmueble
                   ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
