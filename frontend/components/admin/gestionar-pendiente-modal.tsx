@@ -36,7 +36,6 @@ import { getTecnicosParaAsignacion, getEspecialidadesActivas } from '@/features/
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { actualizarIncidente } from '@/features/incidentes/incidentes.service'
 import { getFranjasDisponibilidad, getConflictosTecnicos } from '@/features/disponibilidad/disponibilidad.service'
-import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import type { IncidenteConCliente } from '@/features/incidentes/incidentes.types'
 import type { Tecnico } from '@/features/usuarios/usuarios.types'
@@ -355,7 +354,20 @@ export function GestionarPendienteModal({
                 Disponibilidad del cliente
               </p>
               {franjas.length > 0 ? (
-                <CalendarioDisponibilidad modo="ver" franjas={franjas} />
+                <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2.5 space-y-1">
+                  <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Franjas disponibles del cliente
+                  </p>
+                  {franjas.map((f, i) => (
+                    <p key={i} className="text-xs text-amber-800">
+                      <span className="font-medium capitalize">
+                        {new Date(f.fecha + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}:
+                      </span>{' '}
+                      {f.hora_inicio}–{f.hora_fin}
+                    </p>
+                  ))}
+                </div>
               ) : incidente.disponibilidad ? (
                 <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
                   <Clock className="h-3.5 w-3.5 shrink-0 mt-0.5" />

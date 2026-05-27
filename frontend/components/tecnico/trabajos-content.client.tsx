@@ -10,7 +10,6 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
-import { AgendaTecnicoModal } from '@/components/shared/agenda-tecnico-modal.client'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
 import { createClient } from '@/shared/lib/supabase/client'
 import { cancelarAsignacionAceptada } from '@/features/asignaciones/asignaciones.service'
@@ -332,18 +331,6 @@ export function TrabajosContent({
             </button>
           ))}
         </div>
-
-        {/* Ver Mi Agenda — solo para trabajos activos */}
-        {(asig.estado_asignacion === 'aceptada' || asig.estado_asignacion === 'en_curso') && (
-          <div className="flex border-t border-gray-100">
-            <AgendaTecnicoModal
-              idTecnico={idTecnico}
-              triggerLabel="Ver Mi Agenda"
-              rol="tecnico"
-              triggerClassName="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors text-xs font-semibold"
-            />
-          </div>
-        )}
 
         {/* Botón cancelar — solo para trabajos en curso (no completados) */}
         {(asig.estado_asignacion === 'aceptada' || asig.estado_asignacion === 'en_curso') && (
