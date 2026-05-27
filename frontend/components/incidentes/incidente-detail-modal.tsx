@@ -66,7 +66,6 @@ import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rech
 import { getConformidadDelIncidente, crearConformidadPorTecnico, aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
 import { crearAvance } from '@/features/avances/avances.service'
 import { getFranjasDisponibilidad, getCompromisoDeAsignacion, guardarCompromisoTecnico } from '@/features/disponibilidad/disponibilidad.service'
-import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import type { CompromisoTecnico } from '@/features/disponibilidad/disponibilidad.types'
 import { createClient } from '@/shared/lib/supabase/client'
@@ -1302,16 +1301,29 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 </p>
               </div>
 
-              {/* Disponibilidad — calendario o texto legacy */}
+              {/* Disponibilidad — lista de franjas */}
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   Disponibilidad para la visita
                 </h4>
                 {franjas.length > 0 ? (
-                  <CalendarioDisponibilidad modo="ver" franjas={franjas} />
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 space-y-1">
+                    <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Franjas disponibles del cliente
+                    </p>
+                    {franjas.map((f, i) => (
+                      <p key={i} className="text-xs text-amber-800">
+                        <span className="font-medium capitalize">
+                          {new Date(f.fecha + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}:
+                        </span>{' '}
+                        {f.hora_inicio}–{f.hora_fin}
+                      </p>
+                    ))}
+                  </div>
                 ) : incidente.disponibilidad ? (
-                  <p className="text-sm text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-100 italic">
+                  <p className="text-sm text-amber-800 bg-amber-50 p-3 rounded-lg border border-amber-200 italic">
                     {incidente.disponibilidad}
                   </p>
                 ) : (
