@@ -23,16 +23,16 @@ interface IncidentesAdminContentProps {
 // ── Status config — card border + pill colors ─────────────────────────────────
 const STATUS_CONFIG: Record<string, {
   label: string
-  borderColor: string
-  pillBg: string
-  pillText: string
+  stripe: string
+  gradientBg: string
+  badge: string
   Icon: React.ElementType
 }> = {
-  pendiente:             { label: 'Pendiente',        borderColor: 'border-l-amber-400',  pillBg: 'bg-amber-100',  pillText: 'text-amber-700',  Icon: Clock },
-  asignacion_solicitada: { label: 'Asig. Solicitada', borderColor: 'border-l-blue-400',   pillBg: 'bg-blue-100',   pillText: 'text-blue-700',   Icon: Send },
-  en_proceso:            { label: 'En Proceso',       borderColor: 'border-l-orange-400', pillBg: 'bg-orange-100', pillText: 'text-orange-700', Icon: Wrench },
-  finalizado:            { label: 'Finalizado',       borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
-  resuelto:              { label: 'Finalizado',       borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
+  pendiente:             { label: 'Pendiente',        stripe: 'border-l-amber-400',   gradientBg: 'from-amber-50/60',   badge: 'bg-amber-100 text-amber-800 ring-amber-200',   Icon: Clock },
+  asignacion_solicitada: { label: 'Asig. Solicitada', stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',      Icon: Send },
+  en_proceso:            { label: 'En Proceso',       stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200', Icon: Wrench },
+  finalizado:            { label: 'Finalizado',       stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
+  resuelto:              { label: 'Finalizado',       stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
 }
 
 // ── Acción pendiente — qué debe hacer el admin ahora mismo ───────────────────
@@ -330,7 +330,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                   if (el) highlightRefs.current.set(inc.id_incidente, el)
                   else highlightRefs.current.delete(inc.id_incidente)
                 }}
-                className={`bg-white rounded-2xl border-l-4 shadow-sm overflow-hidden transition-colors duration-[1800ms] ${cfg.borderColor} ${
+                className={`rounded-2xl border-l-4 shadow-sm overflow-hidden transition-shadow hover:shadow-md bg-gradient-to-r ${cfg.gradientBg} to-white ${cfg.stripe} ${
                   isHighlighted ? 'ring-2 ring-amber-400 ring-offset-1' : ''
                 }`}
               >
@@ -370,35 +370,48 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 )}
 
                 <div className="px-4 py-4">
-                  {/* Row 1: ID + status */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-bold text-gray-900">#{inc.id_incidente}</span>
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.pillBg} ${cfg.pillText}`}>
-                      <Icon className="w-2.5 h-2.5" />
-                      {cfg.label}
-                    </span>
+                  {/* Row 1: ID + estado + prioridad */}
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{inc.id_incidente}</span>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${cfg.badge}`}>
+                        <Icon className="w-2.5 h-2.5" />
+                        {cfg.label}
+                      </span>
+                    </div>
+                    {inc.nivel_prioridad === 'Urgente' && (
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 ring-1 ring-inset ring-red-200 px-2 py-0.5 rounded-full shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                        Urgente
+                      </span>
+                    )}
+                    {inc.nivel_prioridad === 'Alta' && (
+                      <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 ring-1 ring-inset ring-orange-200 px-2 py-0.5 rounded-full shrink-0">
+                        Alta
+                      </span>
+                    )}
                   </div>
 
-                  {/* Row 2: Client */}
-                  {inc.clientes && (
-                    <div className="flex items-center gap-1 text-xs text-gray-500 mb-1.5">
-                      <User className="w-3 h-3 flex-shrink-0" />
-                      <span className="font-medium">{inc.clientes.nombre} {inc.clientes.apellido}</span>
-                    </div>
-                  )}
-
-                  {/* Row 3: Description */}
-                  <p className="text-sm text-gray-700 line-clamp-2 mb-3 leading-snug">
+                  {/* Row 2: Description — hero */}
+                  <p className="text-[15px] font-semibold text-slate-800 line-clamp-2 mb-2.5 leading-snug">
                     {inc.descripcion_problema}
                   </p>
 
+                  {/* Row 3: Client */}
+                  {inc.clientes && (
+                    <div className="flex items-center gap-1 text-xs text-slate-500 mb-2">
+                      <User className="w-3 h-3 flex-shrink-0" />
+                      <span>{inc.clientes.nombre} {inc.clientes.apellido}</span>
+                    </div>
+                  )}
+
                   {/* Row 4: Address + date */}
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1 text-xs text-gray-400 min-w-0">
+                    <div className="flex items-center gap-1 text-xs text-slate-400 min-w-0">
                       <MapPin className="w-3 h-3 flex-shrink-0" />
                       <span className="truncate">{direccion}</span>
                     </div>
-                    <span className="text-xs text-gray-400 flex-shrink-0">
+                    <span className="text-[11px] text-slate-400 shrink-0 tabular-nums">
                       {formatFecha(inc.fecha_registro)}
                     </span>
                   </div>
@@ -406,12 +419,12 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                   {/* Row 5: Category + Técnico */}
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     {inc.categoria && (
-                      <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-medium text-slate-500 bg-white/70 border border-slate-200 px-2 py-0.5 rounded-full">
                         {inc.categoria}
                       </span>
                     )}
                     {tecnicoAsignado && (
-                      <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full flex items-center gap-1">
                         <Wrench className="w-2.5 h-2.5" />
                         {tecnicoAsignado.nombre} {tecnicoAsignado.apellido}
                       </span>
@@ -420,17 +433,17 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                 </div>
 
                 {/* 3-chip action row */}
-                <div className="flex border-t border-gray-100">
+                <div className="flex border-t border-white/60">
                   <button
                     onClick={() => abrirModal(inc.id_incidente, 'detalles')}
-                    className="flex-1 flex flex-col items-center gap-0.5 py-3 active:bg-gray-50 transition-colors border-r border-gray-100"
+                    className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
                   >
-                    <FileText className="w-4 h-4 text-gray-600" />
-                    <span className="text-[10px] font-semibold text-gray-600">Detalles</span>
+                    <FileText className="w-4 h-4 text-slate-500" />
+                    <span className="text-[10px] font-semibold text-slate-500">Detalles</span>
                   </button>
                   <button
                     onClick={() => abrirModal(inc.id_incidente, 'timeline')}
-                    className="flex-1 flex flex-col items-center gap-0.5 py-3 active:bg-gray-50 transition-colors border-r border-gray-100"
+                    className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
                   >
                     <Clock className="w-4 h-4 text-blue-500" />
                     <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
@@ -441,7 +454,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                     className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
                       accionCfg.disabled
                         ? 'opacity-30 cursor-not-allowed'
-                        : 'active:bg-gray-50'
+                        : 'hover:bg-white/40 active:bg-white/60'
                     } ${accionCfg.activeColor}`}
                   >
                     <accionCfg.Icon className={`w-4 h-4 ${accionCfg.pulse ? 'animate-pulse' : ''}`} />

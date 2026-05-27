@@ -132,7 +132,7 @@ export async function getEmbudoConversion(): Promise<EtapaEmbudo[]> {
 
   const [incRes, asigRes, presRes] = await Promise.all([
     supabase.from('incidentes').select('id_incidente, estado_actual, fue_resuelto'),
-    supabase.from('asignaciones_tecnico').select('id_incidente, estado_asignacion').in('estado_asignacion', ['aceptada', 'en_curso', 'completada']),
+    supabase.from('asignaciones_tecnico').select('id_incidente, estado_asignacion').in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso', 'completada']),
     supabase.from('presupuestos').select('id_incidente, estado_presupuesto'),
   ])
 
@@ -189,7 +189,7 @@ export async function getAgingIncidentes(): Promise<IncidenteAging[]> {
         fecha_registro,
         clientes:id_cliente_reporta (nombre, apellido)
       `)
-      .in('estado_actual', ['pendiente', 'en_proceso'])
+      .in('estado_actual', ['pendiente', 'asignacion_solicitada', 'en_proceso'])
       .order('fecha_registro', { ascending: true }),
     supabase
       .from('asignaciones_tecnico')

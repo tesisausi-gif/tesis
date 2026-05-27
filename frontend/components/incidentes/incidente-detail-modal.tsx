@@ -1156,7 +1156,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         ) : incidente ? (() => {
           const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => a.estado_asignacion !== 'rechazada')
           const hasClientePresupuesto = rol === 'cliente' && presupuestos.length > 0
-          const hasCalificacion = rol === 'cliente' && incidente.estado_actual === EstadoIncidente.RESUELTO
+          const hasCalificacion = rol === 'cliente' && (incidente.estado_actual === EstadoIncidente.RESUELTO || incidente.estado_actual === 'finalizado')
           const hasPagosTab = rol === 'cliente' && (incidente.estado_actual === 'resuelto' || incidente.estado_actual === 'finalizado')
           const hasPagosTecnicoTab = rol === 'tecnico' && conformidad?.url_documento
           const hasAdminStepperTabs = rol === 'admin' && asignaciones.some(a =>
@@ -2653,7 +2653,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             )}
 
             {/* Tab Calificación (para clientes cuando está resuelto) */}
-            {rol === 'cliente' && incidente && incidente.estado_actual === EstadoIncidente.RESUELTO && asignaciones.length > 0 && activeTab === 'calificacion' && (
+            {rol === 'cliente' && incidente && (incidente.estado_actual === EstadoIncidente.RESUELTO || incidente.estado_actual === 'finalizado') && asignaciones.length > 0 && activeTab === 'calificacion' && (
               <div className="mt-4">
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600">

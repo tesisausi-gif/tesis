@@ -19,16 +19,16 @@ interface IncidentesContentProps {
 
 const STATUS_CONFIG: Record<string, {
   label: string
-  borderColor: string
-  pillBg: string
-  pillText: string
+  stripe: string
+  gradientBg: string
+  badge: string
   Icon: React.ElementType
 }> = {
-  pendiente:             { label: 'Pendiente',  borderColor: 'border-l-amber-400',  pillBg: 'bg-amber-100',  pillText: 'text-amber-700',  Icon: Clock },
-  asignacion_solicitada: { label: 'Asignado',   borderColor: 'border-l-blue-400',   pillBg: 'bg-blue-100',   pillText: 'text-blue-700',   Icon: Send },
-  en_proceso:            { label: 'En proceso', borderColor: 'border-l-orange-400', pillBg: 'bg-orange-100', pillText: 'text-orange-700', Icon: Wrench },
-  resuelto:              { label: 'Finalizado',  borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
-  finalizado:            { label: 'Finalizado',  borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
+  pendiente:             { label: 'Pendiente',             stripe: 'border-l-amber-400',   gradientBg: 'from-amber-50/60',   badge: 'bg-amber-100 text-amber-800 ring-amber-200',      Icon: Clock },
+  asignacion_solicitada: { label: 'En espera de técnico',  stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',         Icon: Send },
+  en_proceso:            { label: 'En proceso',            stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200',   Icon: Wrench },
+  resuelto:              { label: 'Finalizado',            stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
+  finalizado:            { label: 'Finalizado',            stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
 }
 
 export function IncidentesContent({ incidentes, incidentesConPresupuestoPendiente }: IncidentesContentProps) {
@@ -83,7 +83,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
   const filtros = [
     { id: 'todos',                label: 'Todos',       count: incidentes.length,                          Icon: ClipboardList },
     { id: 'pendiente',            label: 'Pendiente',   count: porEstado.pendiente.length,                 Icon: Clock },
-    { id: 'asignacion_solicitada', label: 'Asignado',   count: porEstado.asignacion_solicitada.length,     Icon: Send },
+    { id: 'asignacion_solicitada', label: 'Esp. técnico', count: porEstado.asignacion_solicitada.length,   Icon: Send },
     { id: 'en_proceso',           label: 'En proceso',  count: porEstado.en_proceso.length,                Icon: Wrench },
     { id: 'resuelto',             label: 'Finalizados', count: porEstado.resuelto.length,                  Icon: CheckCircle },
   ]
@@ -121,7 +121,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
           <div className="grid grid-cols-4 bg-white border-b border-gray-100">
             {[
               { label: 'Pendientes', count: porEstado.pendiente.length,             color: 'text-amber-500' },
-              { label: 'Asignados',  count: porEstado.asignacion_solicitada.length, color: 'text-blue-500' },
+              { label: 'Esp. técnico', count: porEstado.asignacion_solicitada.length, color: 'text-blue-500' },
               { label: 'En proceso', count: porEstado.en_proceso.length,            color: 'text-orange-500' },
               { label: 'Finaliz.',   count: porEstado.resuelto.length,              color: 'text-green-500' },
             ].map(stat => (
@@ -179,7 +179,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                 return (
                   <div
                     key={incidente.id_incidente}
-                    className={`bg-white rounded-2xl border-l-4 shadow-sm overflow-hidden ${cfg.borderColor}`}
+                    className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${cfg.gradientBg} to-white ${cfg.stripe}`}
                   >
                     {/* Presupuesto listo banner */}
                     {tienePresupuestoPendiente && (
@@ -190,27 +190,27 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                     )}
 
                     <div className="px-4 py-4">
-                      {/* Row 1: ID + status */}
+                      {/* Row 1: ID + estado */}
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-bold text-gray-900">Incidente #{incidente.id_incidente}</span>
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.pillBg} ${cfg.pillText}`}>
+                        <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{incidente.id_incidente}</span>
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${cfg.badge}`}>
                           <Icon className="w-2.5 h-2.5" />
                           {cfg.label}
                         </span>
                       </div>
 
-                      {/* Row 2: Description */}
-                      <p className="text-sm text-gray-700 line-clamp-2 mb-3 leading-snug">
+                      {/* Row 2: Description — hero */}
+                      <p className="text-[15px] font-semibold text-slate-800 line-clamp-2 mb-2.5 leading-snug">
                         {incidente.descripcion_problema}
                       </p>
 
                       {/* Row 3: Address + date */}
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1 text-xs text-gray-400 min-w-0">
+                        <div className="flex items-center gap-1 text-xs text-slate-400 min-w-0">
                           <MapPin className="w-3 h-3 flex-shrink-0" />
                           <span className="truncate">{direccion}</span>
                         </div>
-                        <span className="text-xs text-gray-400 flex-shrink-0">
+                        <span className="text-[11px] text-slate-400 flex-shrink-0 tabular-nums">
                           {incidente.fecha_registro ? format(new Date(incidente.fecha_registro), 'dd MMM yy', { locale: es }) : ''}
                         </span>
                       </div>
@@ -218,7 +218,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                       {/* Row 4: Category pill */}
                       {incidente.categoria && (
                         <div className="mt-2">
-                          <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] font-medium text-slate-500 bg-white/70 border border-slate-200 px-2 py-0.5 rounded-full">
                             {incidente.categoria}
                           </span>
                         </div>
@@ -226,17 +226,17 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                     </div>
 
                     {/* ── Acciones — 3 chips ─────────────── */}
-                    <div className="flex border-t border-gray-100">
+                    <div className="flex border-t border-white/60">
                       <button
                         onClick={() => abrirModal(incidente.id_incidente, 'detalles')}
-                        className="flex-1 flex flex-col items-center gap-0.5 py-3 active:bg-gray-50 transition-colors border-r border-gray-100"
+                        className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
                       >
-                        <FileText className="w-4 h-4 text-gray-600" />
-                        <span className="text-[10px] font-semibold text-gray-600">Detalles</span>
+                        <FileText className="w-4 h-4 text-slate-500" />
+                        <span className="text-[10px] font-semibold text-slate-500">Detalles</span>
                       </button>
                       <button
                         onClick={() => abrirModal(incidente.id_incidente, 'timeline')}
-                        className="flex-1 flex flex-col items-center gap-0.5 py-3 active:bg-gray-50 transition-colors border-r border-gray-100"
+                        className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
                       >
                         <Clock className="w-4 h-4 text-blue-500" />
                         <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
@@ -246,8 +246,8 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                         disabled={!tienePresupuestoPendiente}
                         className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
                           tienePresupuestoPendiente
-                            ? 'active:bg-amber-50 text-amber-500'
-                            : 'opacity-30 cursor-not-allowed text-gray-400'
+                            ? 'hover:bg-amber-50/60 active:bg-amber-100/60 text-amber-600'
+                            : 'opacity-30 cursor-not-allowed text-slate-400'
                         }`}
                       >
                         <Bell className={`w-4 h-4 ${tienePresupuestoPendiente ? 'animate-pulse' : ''}`} />

@@ -77,24 +77,24 @@ function getProximoPaso(
     if (!conformidad?.url_documento) {
       return { mensaje: 'Subí la conformidad para finalizar el trabajo', urgente: true }
     }
-    return { mensaje: 'Conformidad subida — esperando firma del cliente', urgente: false }
+    return { mensaje: 'Conformidad subida — esperando revisión del administrador', urgente: false }
   }
   return null
 }
 
-// ── Mapa de estado visual (mismo patrón que cliente) ─────────────────────────
+// ── Mapa de estado visual ─────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, {
   label: string
-  borderColor: string
-  pillBg: string
-  pillText: string
+  stripe: string
+  gradientBg: string
+  badge: string
   Icon: React.ElementType
 }> = {
-  aceptada:            { label: 'Aceptado',       borderColor: 'border-l-blue-400',   pillBg: 'bg-blue-100',   pillText: 'text-blue-700',   Icon: ClipboardList },
-  en_curso:            { label: 'En curso',        borderColor: 'border-l-orange-400', pillBg: 'bg-orange-100', pillText: 'text-orange-700', Icon: Wrench },
-  completada_pendiente:{ label: 'Pend. revisión',  borderColor: 'border-l-amber-400',  pillBg: 'bg-amber-100',  pillText: 'text-amber-700',  Icon: Clock },
-  finalizado:          { label: 'Finalizado',      borderColor: 'border-l-green-400',  pillBg: 'bg-green-100',  pillText: 'text-green-700',  Icon: CheckCircle },
+  aceptada:            { label: 'Aceptado',      stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',         Icon: ClipboardList },
+  en_curso:            { label: 'En curso',       stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200',   Icon: Wrench },
+  completada_pendiente:{ label: 'Pend. revisión', stripe: 'border-l-amber-400',   gradientBg: 'from-amber-50/60',   badge: 'bg-amber-100 text-amber-800 ring-amber-200',      Icon: Clock },
+  finalizado:          { label: 'Finalizado',     stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
 }
 
 function getStatusKey(a: AsignacionTecnico): string {
@@ -222,18 +222,16 @@ export function TrabajosContent({
     return (
       <div
         key={asig.id_asignacion}
-        className={`bg-white rounded-2xl border-l-4 shadow-sm overflow-hidden ${cfg.borderColor}`}
+        className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${cfg.gradientBg} to-white ${cfg.stripe}`}
       >
         <div className="px-4 py-4">
           {/* Fila 1: ID + estado */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-bold text-gray-900 shrink-0">Incidente #{asig.id_incidente}</span>
-              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.pillBg} ${cfg.pillText}`}>
-                <Icon className="w-2.5 h-2.5" />
-                {cfg.label}
-              </span>
-            </div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{asig.id_incidente}</span>
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${cfg.badge}`}>
+              <Icon className="w-2.5 h-2.5" />
+              {cfg.label}
+            </span>
           </div>
 
           {/* Próximo paso */}
@@ -250,20 +248,20 @@ export function TrabajosContent({
             </div>
           )}
 
-          {/* Descripción */}
+          {/* Descripción — hero */}
           {incidente?.descripcion_problema && (
-            <p className="text-sm text-gray-700 line-clamp-2 mb-3 leading-snug">
+            <p className="text-[15px] font-semibold text-slate-800 line-clamp-2 mb-2.5 leading-snug">
               {incidente.descripcion_problema}
             </p>
           )}
 
           {/* Dirección + fecha */}
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1 text-xs text-gray-400 min-w-0">
+            <div className="flex items-center gap-1 text-xs text-slate-400 min-w-0">
               <MapPin className="w-3 h-3 shrink-0" />
               <span className="truncate">{direccion}</span>
             </div>
-            <span className="text-xs text-gray-400 shrink-0">
+            <span className="text-[11px] text-slate-400 shrink-0 tabular-nums">
               {formatFecha(asig.fecha_asignacion)}
             </span>
           </div>
@@ -271,14 +269,14 @@ export function TrabajosContent({
           {/* Categoría + contacto toggle */}
           <div className="flex items-center justify-between mt-2">
             {incidente?.categoria && (
-              <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-medium text-slate-500 bg-white/70 border border-slate-200 px-2 py-0.5 rounded-full">
                 {incidente.categoria}
               </span>
             )}
             {cliente && (
               <button
                 onClick={() => setContactoExpandido(contactoAbierto ? null : asig.id_asignacion)}
-                className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full hover:bg-blue-100 transition-colors ml-auto"
+                className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full hover:bg-blue-100 transition-colors ml-auto"
               >
                 Contacto cliente
                 {contactoAbierto ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -315,16 +313,16 @@ export function TrabajosContent({
         </div>
 
         {/* Acciones — 3 chips en fila */}
-        <div className="flex border-t border-gray-100">
+        <div className="flex border-t border-white/60">
           {[
-            { label: 'Detalles',  icon: FileText,      tab: 'detalles',    className: 'text-gray-600' },
+            { label: 'Detalles',  icon: FileText,      tab: 'detalles',    className: 'text-slate-500' },
             { label: 'Timeline',  icon: Clock,         tab: 'timeline',    className: 'text-blue-500' },
-            { label: 'Gestión',   icon: Wrench,        tab: 'inspecciones',className: 'text-gray-900' },
+            { label: 'Gestión',   icon: Wrench,        tab: 'inspecciones',className: 'text-slate-700' },
           ].map(({ label, icon: IcoComp, tab, className }, i) => (
             <button
               key={tab}
               onClick={() => abrirModal(asig.id_incidente, tab)}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-3 active:bg-gray-50 transition-colors ${i < 2 ? 'border-r border-gray-100' : ''}`}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors ${i < 2 ? 'border-r border-white/60' : ''}`}
             >
               <IcoComp className={`w-4 h-4 ${className}`} />
               <span className={`text-[10px] font-semibold ${className}`}>{label}</span>

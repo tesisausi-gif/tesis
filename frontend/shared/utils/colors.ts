@@ -3,20 +3,66 @@
  * Evita duplicación de definiciones de colores y asegura consistencia visual.
  */
 
-// 1. Estados de Incidentes
+// 1. Estados de Incidentes — configuración unificada para todas las vistas
+export const ESTADO_INCIDENTE_CONFIG: Record<string, {
+  stripe: string      // border-l-* para la raya lateral de la card
+  bgGradient: string  // clase from-* para el gradiente de fondo
+  badge: string       // bg + text para el badge/pill
+  labelAdmin: string  // etiqueta en vista admin
+  labelCliente: string // etiqueta en vista cliente
+}> = {
+  pendiente: {
+    stripe: 'border-l-amber-400',
+    bgGradient: 'from-amber-50/60',
+    badge: 'bg-amber-100 text-amber-800',
+    labelAdmin: 'Pendiente',
+    labelCliente: 'Pendiente',
+  },
+  asignacion_solicitada: {
+    stripe: 'border-l-blue-400',
+    bgGradient: 'from-blue-50/50',
+    badge: 'bg-blue-100 text-blue-800',
+    labelAdmin: 'Asig. Solicitada',
+    labelCliente: 'En espera de técnico',
+  },
+  en_proceso: {
+    stripe: 'border-l-orange-400',
+    bgGradient: 'from-orange-50/50',
+    badge: 'bg-orange-100 text-orange-800',
+    labelAdmin: 'En Proceso',
+    labelCliente: 'En proceso',
+  },
+  finalizado: {
+    stripe: 'border-l-emerald-400',
+    bgGradient: 'from-emerald-50/50',
+    badge: 'bg-emerald-100 text-emerald-800',
+    labelAdmin: 'Finalizado',
+    labelCliente: 'Finalizado',
+  },
+  resuelto: {
+    stripe: 'border-l-emerald-400',
+    bgGradient: 'from-emerald-50/50',
+    badge: 'bg-emerald-100 text-emerald-800',
+    labelAdmin: 'Finalizado',
+    labelCliente: 'Finalizado',
+  },
+}
+
+// Compat: mantiene compatibilidad con usos existentes
 export const ESTADO_INCIDENTE_COLORS: Record<string, string> = {
-  pendiente: 'border-yellow-200 bg-yellow-50 text-yellow-700',
-  asignacion_solicitada: 'border-orange-200 bg-orange-50 text-orange-700',
-  en_proceso: 'border-blue-200 bg-blue-50 text-blue-700',
-  resuelto: 'border-green-200 bg-green-50 text-green-700',
+  pendiente: 'border-amber-200 bg-amber-50 text-amber-700',
+  asignacion_solicitada: 'border-blue-200 bg-blue-50 text-blue-700',
+  en_proceso: 'border-orange-200 bg-orange-50 text-orange-700',
+  finalizado: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  resuelto: 'border-emerald-200 bg-emerald-50 text-emerald-700',
 }
 
 export const ESTADO_INCIDENTE_LABELS: Record<string, string> = {
   pendiente: 'Pendiente',
-  asignacion_solicitada: 'Asignación Solicitada',
+  asignacion_solicitada: 'Asig. Solicitada',
   en_proceso: 'En Proceso',
-  resuelto: 'Finalizado',
   finalizado: 'Finalizado',
+  resuelto: 'Finalizado',
 }
 
 // 2. Prioridades
