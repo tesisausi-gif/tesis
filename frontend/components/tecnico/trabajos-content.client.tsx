@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import Link from 'next/link'
 import {
   MapPin, ClipboardList, Clock, Wrench, FileText, CheckCircle, AlertTriangle, XCircle,
-  Phone, Mail, ChevronDown, ChevronUp, AlertCircle, CalendarDays,
+  Phone, Mail, ChevronDown, ChevronUp, AlertCircle, CalendarDays, CreditCard, RefreshCw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -95,6 +96,21 @@ const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
   completada_pendiente:  Clock,
   conformidad_rechazada: XCircle,
   finalizado:            CheckCircle,
+}
+
+const QUICK_ACTION_TECNICO: Record<SubEstadoEnProceso, {
+  label: string
+  Icon: React.ElementType
+  color: string
+  disabled: boolean
+}> = {
+  aceptada:              { label: 'Cargar presup.', Icon: FileText,     color: 'text-blue-600',   disabled: false },
+  presupuesto_enviado:   { label: 'Pend. admin',    Icon: Clock,        color: 'text-gray-300',   disabled: true  },
+  presupuesto_cliente:   { label: 'Pend. cliente',  Icon: Clock,        color: 'text-gray-300',   disabled: true  },
+  en_curso:              { label: 'Subir conform.', Icon: ClipboardList, color: 'text-purple-600', disabled: false },
+  completada_pendiente:  { label: 'Por revisar',    Icon: Clock,        color: 'text-gray-300',   disabled: true  },
+  conformidad_rechazada: { label: 'Resubir',        Icon: RefreshCw,    color: 'text-orange-600', disabled: false },
+  finalizado:            { label: 'Cobro pend.',    Icon: Clock,        color: 'text-gray-300',   disabled: true  },
 }
 
 function getStatusKey(
@@ -323,22 +339,45 @@ export function TrabajosContent({
           )}
         </div>
 
-        {/* Acciones — 3 chips en fila */}
+        {/* Acciones — Ver | Timeline | Acción rápida */}
         <div className="flex border-t border-white/60">
-          {[
-            { label: 'Detalles',  icon: FileText,      tab: 'detalles',    className: 'text-slate-500' },
-            { label: 'Timeline',  icon: Clock,         tab: 'timeline',    className: 'text-blue-500' },
-            { label: 'Gestión',   icon: Wrench,        tab: 'inspecciones',className: 'text-slate-700' },
-          ].map(({ label, icon: IcoComp, tab, className }, i) => (
-            <button
-              key={tab}
-              onClick={() => abrirModal(asig.id_incidente, tab)}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors ${i < 2 ? 'border-r border-white/60' : ''}`}
+          <button
+            onClick={() => abrirModal(asig.id_incidente, 'detalles')}
+            className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
+          >
+            <FileText className="w-4 h-4 text-slate-500" />
+            <span className="text-[10px] font-semibold text-slate-500">Ver</span>
+          </button>
+          <button
+            onClick={() => abrirModal(asig.id_incidente, 'timeline')}
+            className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
+          >
+            <Clock className="w-4 h-4 text-blue-500" />
+            <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
+          </button>
+          {key === 'finalizado' && incidentesPagadosIds.includes(asig.id_incidente) ? (
+            <Link
+              href="/tecnico/pagos"
+              className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-emerald-50/60 active:bg-emerald-100/60 transition-colors text-emerald-600"
             >
-              <IcoComp className={`w-4 h-4 ${className}`} />
-              <span className={`text-[10px] font-semibold ${className}`}>{label}</span>
-            </button>
-          ))}
+              <CreditCard className="w-4 h-4" />
+              <span className="text-[10px] font-semibold">Ver cobro</span>
+            </Link>
+          ) : (() => {
+            const qa = QUICK_ACTION_TECNICO[key as SubEstadoEnProceso] ?? QUICK_ACTION_TECNICO.aceptada
+            return (
+              <button
+                onClick={() => !qa.disabled && abrirModal(asig.id_incidente, 'inspecciones')}
+                disabled={qa.disabled}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
+                  qa.disabled ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/40 active:bg-white/60'
+                } ${qa.color}`}
+              >
+                <qa.Icon className="w-4 h-4" />
+                <span className="text-[10px] font-semibold">{qa.label}</span>
+              </button>
+            )
+          })()}
         </div>
 
         {/* Botón cancelar — solo para trabajos en curso (no completados) */}

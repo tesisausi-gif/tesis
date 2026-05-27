@@ -90,15 +90,15 @@ const ACCION_CONFIG: Record<AccionPendiente['tipo'], {
   pulse: boolean
   disabled: boolean
 }> = {
-  asignar:               { label: 'Asignar',       Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
-  reasignar:             { label: 'Reasignar',     Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
-  aceptada:              { label: 'Por comenzar',  Icon: ClipboardList, activeColor: 'text-gray-300',   pulse: false, disabled: true  },
-  presupuesto_enviado:   { label: 'Presupuesto',   Icon: FileText,      activeColor: 'text-amber-600',  pulse: true,  disabled: false },
-  presupuesto_cliente:   { label: 'Esp. cliente',  Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
-  completada_pendiente:  { label: 'Conformidad',   Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
-  conformidad_rechazada: { label: 'Conf. rechaz.', Icon: XCircle,       activeColor: 'text-gray-300',   pulse: false, disabled: true  },
-  en_curso:              { label: 'En Curso',      Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
-  finalizado:            { label: 'Finalizado',    Icon: CheckCircle,   activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  asignar:               { label: 'Asignar técnico', Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
+  reasignar:             { label: 'Reasignar',      Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
+  aceptada:              { label: 'Por comenzar',   Icon: ClipboardList, activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  presupuesto_enviado:   { label: 'Evaluar presup.', Icon: FileText,     activeColor: 'text-amber-600',  pulse: true,  disabled: false },
+  presupuesto_cliente:   { label: 'Esp. cliente',   Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  completada_pendiente:  { label: 'Ver conform.',   Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
+  conformidad_rechazada: { label: 'Conf. rechaz.',  Icon: XCircle,       activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  en_curso:              { label: 'En Curso',       Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  finalizado:            { label: 'Finalizado',     Icon: CheckCircle,   activeColor: 'text-gray-300',   pulse: false, disabled: true  },
 }
 
 const BANNER_ICON_BY_ACCION: Partial<Record<AccionPendiente['tipo'], React.ElementType>> = {
@@ -246,7 +246,7 @@ function IncidenteCard({
           className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60"
         >
           <FileText className="w-4 h-4 text-slate-500" />
-          <span className="text-[10px] font-semibold text-slate-500">Detalles</span>
+          <span className="text-[10px] font-semibold text-slate-500">Ver</span>
         </button>
         <button
           onClick={() => onVerDetalle(inc.id_incidente, 'timeline')}

@@ -198,7 +198,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                   <div className="flex border-t border-white/60">
                     <button onClick={() => abrirModal(incidente.id_incidente, 'detalles')} className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60">
                       <FileText className="w-4 h-4 text-slate-500" />
-                      <span className="text-[10px] font-semibold text-slate-500">Detalles</span>
+                      <span className="text-[10px] font-semibold text-slate-500">Ver</span>
                     </button>
                     <button onClick={() => abrirModal(incidente.id_incidente, 'timeline')} className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60">
                       <Clock className="w-4 h-4 text-blue-500" />
@@ -206,7 +206,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                     </button>
                     <button onClick={() => tienePresupuestoPendiente && abrirModal(incidente.id_incidente, 'presupuesto')} disabled={!tienePresupuestoPendiente} className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${tienePresupuestoPendiente ? 'hover:bg-amber-50/60 active:bg-amber-100/60 text-amber-600' : 'opacity-30 cursor-not-allowed text-slate-400'}`}>
                       <Bell className={`w-4 h-4 ${tienePresupuestoPendiente ? 'animate-pulse' : ''}`} />
-                      <span className="text-[10px] font-semibold">{tienePresupuestoPendiente ? 'Presupuesto' : 'Gestión'}</span>
+                      <span className="text-[10px] font-semibold">{tienePresupuestoPendiente ? 'Aprobar presup.' : 'Sin acción'}</span>
                     </button>
                   </div>
                 </div>
