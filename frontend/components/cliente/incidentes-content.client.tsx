@@ -227,12 +227,12 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                   items: incidentesFiltrados.filter(i => pendientesPresupuesto.has(i.id_incidente)),
                 },
                 {
-                  subKey: 'completada_pendiente' as const,
-                  items: incidentesFiltrados.filter(i => !pendientesPresupuesto.has(i.id_incidente) && incidentesConConformidadSubida.includes(i.id_incidente)),
-                },
-                {
                   subKey: 'en_curso' as const,
                   items: incidentesFiltrados.filter(i => !pendientesPresupuesto.has(i.id_incidente) && !incidentesConConformidadSubida.includes(i.id_incidente)),
+                },
+                {
+                  subKey: 'completada_pendiente' as const,
+                  items: incidentesFiltrados.filter(i => !pendientesPresupuesto.has(i.id_incidente) && incidentesConConformidadSubida.includes(i.id_incidente)),
                 },
               ]).filter(g => g.items.length > 0)
 

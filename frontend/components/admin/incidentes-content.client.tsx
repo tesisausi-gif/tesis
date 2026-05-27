@@ -487,7 +487,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                 {incidentesFiltrados.length}
               </span>
             </button>
-            {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const).map(tipo => {
+            {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const).map(tipo => {
               const count = incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo).length
               if (count === 0) return null
               const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
@@ -509,7 +509,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
             })}
           </div>
           <div className="space-y-6">
-          {((['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const)
+          {((['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const)
             .map(tipo => ({
               tipo,
               items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo),
