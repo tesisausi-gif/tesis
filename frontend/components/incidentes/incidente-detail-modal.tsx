@@ -84,6 +84,23 @@ interface TimelineEventDetalle {
   value: string
 }
 
+interface TimelineEventMetadata {
+  // presupuesto
+  descripcion_detallada?: string | null
+  costo_materiales?: number | null
+  costo_mano_obra?: number | null
+  costo_total?: number | null
+  alternativas?: string | null
+  // conformidad
+  url_documento?: string | null
+  url_comprobante_compras?: string | null
+  observaciones?: string | null
+  // pago
+  monto?: number | null
+  metodo_pago?: string | null
+  referencia_pago?: string | null
+}
+
 interface TimelineEvent {
   id: string
   tipo: 'creacion' | 'asignacion' | 'inspeccion' | 'presupuesto' | 'pago' | 'conformidad' | 'calificacion' | 'estado' | 'avance'
@@ -93,6 +110,7 @@ interface TimelineEvent {
   icono: React.ReactNode
   color: string
   detalleItems?: TimelineEventDetalle[]
+  metadata?: TimelineEventMetadata
 }
 
 interface IncidenteCompleto {
@@ -625,6 +643,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     })
 
     presupuestos?.forEach((pres: any) => {
+      const presMeta: TimelineEventMetadata = {
+        descripcion_detallada: pres.descripcion_detallada,
+        costo_materiales: pres.costo_materiales,
+        costo_mano_obra: pres.costo_mano_obra,
+        costo_total: pres.costo_total,
+        alternativas: pres.alternativas_reparacion,
+      }
       if (rolActual === 'cliente') {
         if (!['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto)) return
         timelineEvents.push({
@@ -635,6 +660,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           fecha: pres.fecha_modificacion || pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
           color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_enviado.timelineColor,
+          metadata: presMeta,
         })
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
           timelineEvents.push({
@@ -645,10 +671,10 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             fecha: pres.fecha_aprobacion,
             icono: <CheckCircle className="h-4 w-4" />,
             color: SUB_ESTADO_EN_PROCESO_CONFIG.en_curso.timelineColor,
+            metadata: presMeta,
           })
         }
       } else if (rolActual === 'tecnico') {
-        // Técnico: ve el presupuesto que él envió y si fue aprobado/rechazado por la inmobiliaria
         timelineEvents.push({
           id: `pres-${pres.id_presupuesto}`,
           tipo: 'presupuesto',
@@ -657,6 +683,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           fecha: pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
           color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_enviado.timelineColor,
+          metadata: presMeta,
         })
         if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
           timelineEvents.push({
@@ -667,6 +694,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             fecha: pres.fecha_modificacion,
             icono: <CheckCircle className="h-4 w-4" />,
             color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_cliente.timelineColor,
+            metadata: presMeta,
           })
         }
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
@@ -678,6 +706,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             fecha: pres.fecha_aprobacion,
             icono: <CheckCircle className="h-4 w-4" />,
             color: SUB_ESTADO_EN_PROCESO_CONFIG.en_curso.timelineColor,
+            metadata: presMeta,
           })
         }
         if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
@@ -689,6 +718,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             fecha: pres.fecha_modificacion,
             icono: <XCircle className="h-4 w-4" />,
             color: 'bg-red-500',
+            metadata: presMeta,
           })
         }
       } else {
@@ -701,6 +731,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           fecha: pres.fecha_creacion,
           icono: <FileText className="h-4 w-4" />,
           color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_enviado.timelineColor,
+          metadata: presMeta,
         })
         if (['aprobado_admin', 'aprobado'].includes(pres.estado_presupuesto) && pres.fecha_modificacion) {
           timelineEvents.push({
@@ -711,6 +742,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             fecha: pres.fecha_modificacion,
             icono: <CheckCircle className="h-4 w-4" />,
             color: SUB_ESTADO_EN_PROCESO_CONFIG.presupuesto_cliente.timelineColor,
+            metadata: presMeta,
           })
         }
         if (pres.estado_presupuesto === 'aprobado' && pres.fecha_aprobacion) {
@@ -722,6 +754,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             fecha: pres.fecha_aprobacion,
             icono: <CheckCircle className="h-4 w-4" />,
             color: SUB_ESTADO_EN_PROCESO_CONFIG.en_curso.timelineColor,
+            metadata: presMeta,
           })
         }
         if (pres.estado_presupuesto === 'rechazado' && pres.fecha_modificacion) {
@@ -733,19 +766,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             fecha: pres.fecha_modificacion,
             icono: <XCircle className="h-4 w-4" />,
             color: 'bg-red-500',
+            metadata: presMeta,
           })
         }
       }
     })
 
     pagos?.forEach((pago: any) => {
-      const detalle: TimelineEventDetalle[] = [
-        { label: 'Monto', value: `$${(pago.monto_pagado ?? 0).toLocaleString()}` },
-      ]
-      if (pago.metodo_pago) detalle.push({ label: 'Método', value: pago.metodo_pago })
-      if (pago.referencia_pago) detalle.push({ label: 'Referencia', value: pago.referencia_pago })
-      if (pago.observaciones) detalle.push({ label: 'Observaciones', value: pago.observaciones })
-
       timelineEvents.push({
         id: `pago-${pago.id_pago}`,
         tipo: 'pago',
@@ -754,7 +781,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         fecha: pago.fecha_pago,
         icono: <DollarSign className="h-4 w-4" />,
         color: 'bg-green-500',
-        detalleItems: detalle,
+        metadata: {
+          monto: pago.monto_pagado,
+          metodo_pago: pago.metodo_pago,
+          referencia_pago: pago.referencia_pago,
+          observaciones: pago.observaciones,
+        },
       })
     })
 
@@ -769,6 +801,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         fecha: conf.fecha_creacion,
         icono: <ClipboardList className="h-4 w-4" />,
         color: SUB_ESTADO_EN_PROCESO_CONFIG.completada_pendiente.timelineColor,
+        metadata: {
+          url_documento: conf.url_documento,
+          url_comprobante_compras: conf.url_comprobante_compras,
+          observaciones: conf.observaciones,
+        },
       })
 
       // Rechazada
@@ -1433,40 +1470,189 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     <div className="space-y-4">
                       {timeline.map((event) => {
                         const isExpanded = expandedEventId === event.id
-                        const hasDetail = event.detalleItems && event.detalleItems.length > 0
+                        const hasDetail = (event.detalleItems && event.detalleItems.length > 0) || !!event.metadata
+                        const fmtFecha = event.fecha ? (() => { try { return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(event.fecha)) } catch { return '' } })() : ''
                         return (
                           <div key={event.id} className="relative flex gap-3">
                             <div className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${event.color} text-white`}>
                               {event.icono}
                             </div>
-                            <div className="flex-1 pb-2">
+                            <div className="flex-1 pb-2 min-w-0">
                               <button
-                                onClick={() => setExpandedEventId(isExpanded ? null : event.id)}
+                                onClick={() => hasDetail && setExpandedEventId(isExpanded ? null : event.id)}
                                 className={`w-full text-left ${hasDetail ? 'cursor-pointer' : 'cursor-default'}`}
                               >
-                                <div className="flex items-center justify-between gap-2">
-                                  <p className="text-sm font-medium">{event.titulo}</p>
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <span className="text-xs text-gray-500">
-                                      {event.fecha ? (() => { try { return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(event.fecha)) } catch { return '' } })() : ''}
-                                    </span>
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-sm font-semibold leading-snug">{event.titulo}</p>
+                                  <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                                    <span className="text-[11px] text-gray-400 tabular-nums">{fmtFecha}</span>
                                     {hasDetail && (
                                       <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                                     )}
                                   </div>
                                 </div>
-                                <p className="text-xs text-gray-600 mt-0.5">{event.descripcion}</p>
+                                <p className="text-xs text-gray-500 mt-0.5 leading-snug">{event.descripcion}</p>
                               </button>
-                              {isExpanded && hasDetail && (
-                                <div className="mt-2 rounded-md border bg-gray-50 p-3 space-y-1.5">
-                                  {event.detalleItems!.map((item, i) => (
-                                    <div key={i} className="grid grid-cols-[100px_1fr] gap-2 text-xs">
-                                      <span className="font-medium text-gray-500">{item.label}</span>
-                                      <span className="text-gray-800">{item.value}</span>
+
+                              {isExpanded && hasDetail && (() => {
+                                // ── Presupuesto ──────────────────────────────
+                                if (event.tipo === 'presupuesto' && event.metadata) {
+                                  const m = event.metadata
+                                  return (
+                                    <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
+                                      <div className="px-3 py-2 bg-amber-100/60 border-b border-amber-200">
+                                        <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Detalle del presupuesto</p>
+                                      </div>
+                                      <div className="p-3 space-y-3">
+                                        {m.descripcion_detallada && (
+                                          <p className="text-xs text-amber-900 leading-relaxed">{m.descripcion_detallada}</p>
+                                        )}
+                                        {(m.costo_materiales != null || m.costo_mano_obra != null || m.costo_total != null) && (
+                                          <div className="grid grid-cols-3 gap-2">
+                                            {m.costo_materiales != null && (
+                                              <div className="bg-white/70 rounded-lg p-2 text-center">
+                                                <p className="text-[10px] text-amber-600 font-semibold">Materiales</p>
+                                                <p className="text-xs font-bold text-amber-800">${m.costo_materiales.toLocaleString()}</p>
+                                              </div>
+                                            )}
+                                            {m.costo_mano_obra != null && (
+                                              <div className="bg-white/70 rounded-lg p-2 text-center">
+                                                <p className="text-[10px] text-amber-600 font-semibold">Mano de obra</p>
+                                                <p className="text-xs font-bold text-amber-800">${m.costo_mano_obra.toLocaleString()}</p>
+                                              </div>
+                                            )}
+                                            {m.costo_total != null && (
+                                              <div className="bg-amber-200/60 rounded-lg p-2 text-center">
+                                                <p className="text-[10px] text-amber-700 font-bold">Total</p>
+                                                <p className="text-sm font-black text-amber-900">${m.costo_total.toLocaleString()}</p>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                        {m.alternativas && (
+                                          <div>
+                                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wide mb-1">Alternativas</p>
+                                            <p className="text-xs text-amber-800">{m.alternativas}</p>
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
-                                  ))}
-                                </div>
-                              )}
+                                  )
+                                }
+
+                                // ── Conformidad ──────────────────────────────
+                                if (event.tipo === 'conformidad' && event.metadata) {
+                                  const m = event.metadata
+                                  const isImg = (url: string) => /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?|$)/i.test(url)
+                                  return (
+                                    <div className="mt-2 rounded-xl border border-purple-200 bg-purple-50 overflow-hidden">
+                                      <div className="px-3 py-2 bg-purple-100/60 border-b border-purple-200">
+                                        <p className="text-[10px] font-bold text-purple-700 uppercase tracking-wide">Documentos adjuntos</p>
+                                      </div>
+                                      <div className="p-3 space-y-3">
+                                        {m.url_documento && (
+                                          <div className="space-y-1.5">
+                                            <p className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide">Foto de conformidad</p>
+                                            {isImg(m.url_documento) ? (
+                                              <a href={m.url_documento} target="_blank" rel="noopener noreferrer" className="block">
+                                                <img src={m.url_documento} alt="Conformidad" className="w-full max-h-52 object-contain rounded-lg border border-purple-200 bg-white" />
+                                                <p className="text-[10px] text-purple-500 text-center mt-1">Tocá para ver en tamaño completo</p>
+                                              </a>
+                                            ) : (
+                                              <a href={m.url_documento} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-purple-700 bg-white border border-purple-200 rounded-lg px-3 py-2 hover:bg-purple-100 transition-colors">
+                                                <FileText className="h-4 w-4 shrink-0" />
+                                                <span className="font-medium">Ver documento de conformidad</span>
+                                              </a>
+                                            )}
+                                          </div>
+                                        )}
+                                        {m.url_comprobante_compras && (
+                                          <div className="space-y-1.5">
+                                            <p className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide">Comprobante de materiales</p>
+                                            {isImg(m.url_comprobante_compras) ? (
+                                              <a href={m.url_comprobante_compras} target="_blank" rel="noopener noreferrer" className="block">
+                                                <img src={m.url_comprobante_compras} alt="Comprobante" className="w-full max-h-40 object-contain rounded-lg border border-purple-200 bg-white" />
+                                                <p className="text-[10px] text-purple-500 text-center mt-1">Tocá para ver en tamaño completo</p>
+                                              </a>
+                                            ) : (
+                                              <a href={m.url_comprobante_compras} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-purple-700 bg-white border border-purple-200 rounded-lg px-3 py-2 hover:bg-purple-100 transition-colors">
+                                                <FileText className="h-4 w-4 shrink-0" />
+                                                <span className="font-medium">Ver comprobante de compras</span>
+                                              </a>
+                                            )}
+                                          </div>
+                                        )}
+                                        {m.observaciones && (
+                                          <div>
+                                            <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wide mb-1">Observaciones</p>
+                                            <p className="text-xs text-purple-800">{m.observaciones}</p>
+                                          </div>
+                                        )}
+                                        {!m.url_documento && !m.url_comprobante_compras && !m.observaciones && (
+                                          <p className="text-xs text-purple-400 text-center py-2">Sin documentos adjuntos</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                }
+
+                                // ── Pago ─────────────────────────────────────
+                                if (event.tipo === 'pago' && event.metadata) {
+                                  const m = event.metadata
+                                  const METODO_LABELS: Record<string, string> = {
+                                    efectivo: 'Efectivo', transferencia: 'Transferencia',
+                                    debito: 'Débito', credito: 'Crédito',
+                                  }
+                                  return (
+                                    <div className="mt-2 rounded-xl border border-green-200 bg-green-50 overflow-hidden">
+                                      <div className="px-3 py-2 bg-green-100/60 border-b border-green-200">
+                                        <p className="text-[10px] font-bold text-green-700 uppercase tracking-wide">Detalle del pago</p>
+                                      </div>
+                                      <div className="p-3 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                          <p className="text-xs text-green-600">Monto</p>
+                                          <p className="text-xl font-black text-green-800">${(m.monto ?? 0).toLocaleString()}</p>
+                                        </div>
+                                        {m.metodo_pago && (
+                                          <div className="flex items-center justify-between">
+                                            <p className="text-xs text-green-600">Método</p>
+                                            <span className="text-xs font-semibold bg-green-200 text-green-800 px-2 py-0.5 rounded-full">
+                                              {METODO_LABELS[m.metodo_pago] ?? m.metodo_pago}
+                                            </span>
+                                          </div>
+                                        )}
+                                        {m.referencia_pago && (
+                                          <div className="flex items-start justify-between gap-4">
+                                            <p className="text-xs text-green-600 shrink-0">Referencia</p>
+                                            <p className="text-xs font-mono text-green-800 break-all text-right">{m.referencia_pago}</p>
+                                          </div>
+                                        )}
+                                        {m.observaciones && (
+                                          <div>
+                                            <p className="text-[10px] font-bold text-green-600 uppercase tracking-wide mb-1">Observaciones</p>
+                                            <p className="text-xs text-green-800">{m.observaciones}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                }
+
+                                // ── Fallback: detalleItems grid ───────────────
+                                if (event.detalleItems?.length) {
+                                  return (
+                                    <div className="mt-2 rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-1.5">
+                                      {event.detalleItems.map((item, i) => (
+                                        <div key={i} className="grid grid-cols-[110px_1fr] gap-2 text-xs">
+                                          <span className="font-semibold text-gray-500">{item.label}</span>
+                                          <span className="text-gray-800">{item.value}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                }
+                                return null
+                              })()}
                             </div>
                           </div>
                         )

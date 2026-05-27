@@ -202,7 +202,7 @@ export async function getTimelineData(idIncidente: number) {
       .order('fecha_avance', { ascending: true }),
     supabase
       .from('conformidades')
-      .select('id_conformidad, fecha_creacion, fecha_conformidad, fecha_rechazo, esta_firmada, esta_rechazada, url_documento')
+      .select('id_conformidad, fecha_creacion, fecha_conformidad, fecha_rechazo, esta_firmada, esta_rechazada, url_documento, url_comprobante_compras, observaciones')
       .eq('id_incidente', idIncidente)
       .order('fecha_creacion', { ascending: true }),
   ])

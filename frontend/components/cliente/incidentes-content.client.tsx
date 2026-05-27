@@ -35,6 +35,9 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     new Set(incidentesConPresupuestoPendiente)
   )
   const [filtro, setFiltro] = useState<string>('todos')
+  const [subFiltro, setSubFiltro] = useState<string>('todos')
+
+  useEffect(() => { setSubFiltro('todos') }, [filtro])
 
   // Realtime: escuchar cambios en presupuestos
   useEffect(() => {
@@ -233,21 +236,62 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                 },
               ]).filter(g => g.items.length > 0)
 
+              const gruposFiltrados = grupos.filter(g => subFiltro === 'todos' || g.subKey === subFiltro)
+
               return (
-                <div className="px-4 pt-3 space-y-6">
-                  {grupos.map(grupo => {
-                    const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[grupo.subKey]
-                    return (
-                      <div key={grupo.subKey}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${gcfg.groupHeaderCls}`}>
-                          <span className={`w-2 h-2 rounded-full shrink-0 ${gcfg.groupDotCls}`} />
-                          <span className="text-xs font-bold">{gcfg.labelGrupo}</span>
-                          <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
+                <div className="px-4 pt-3 space-y-4">
+                  {/* Sub-filtros */}
+                  {grupos.length > 1 && (
+                    <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
+                      <button
+                        onClick={() => setSubFiltro('todos')}
+                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          subFiltro === 'todos' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                        }`}
+                      >
+                        Todos
+                        <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${subFiltro === 'todos' ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                          {incidentesFiltrados.length}
+                        </span>
+                      </button>
+                      {grupos.map(({ subKey, items }) => {
+                        const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[subKey]
+                        const active = subFiltro === subKey
+                        return (
+                          <button
+                            key={subKey}
+                            onClick={() => setSubFiltro(subKey)}
+                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                              active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                            }`}
+                          >
+                            {gcfg.labelBadge}
+                            <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                              {items.length}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                  <div className="space-y-6">
+                    {gruposFiltrados.map(grupo => {
+                      const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[grupo.subKey]
+                      return (
+                        <div key={grupo.subKey}>
+                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${gcfg.groupHeaderCls}`}>
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${gcfg.groupDotCls}`} />
+                            <span className="text-xs font-bold">{gcfg.labelGrupo}</span>
+                            <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
+                          </div>
+                          <div className="space-y-3">{grupo.items.map(renderCard)}</div>
                         </div>
-                        <div className="space-y-3">{grupo.items.map(renderCard)}</div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                    {gruposFiltrados.length === 0 && (
+                      <div className="text-center py-12 text-gray-400 text-sm">No hay incidentes en este sub-estado</div>
+                    )}
+                  </div>
                 </div>
               )
             }
