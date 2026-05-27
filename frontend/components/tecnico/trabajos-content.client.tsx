@@ -21,6 +21,7 @@ interface ConformidadInfo {
   id_conformidad: number
   id_incidente: number
   esta_firmada: number | boolean
+  esta_rechazada?: boolean | null
   url_documento: string | null
 }
 
@@ -92,19 +93,33 @@ const STATUS_CONFIG: Record<string, {
   badge: string
   Icon: React.ElementType
 }> = {
-  aceptada:            { label: 'Aceptado',      stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',           Icon: ClipboardList },
-  en_curso:            { label: 'En curso',       stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200',     Icon: Wrench },
-  // purple = conformidad subida, alineado con admin (banner purple) y cliente (pill purple)
-  completada_pendiente:{ label: 'Conf. subida',   stripe: 'border-l-purple-400',  gradientBg: 'from-purple-50/50',  badge: 'bg-purple-100 text-purple-800 ring-purple-200',     Icon: Clock },
-  finalizado:          { label: 'Finalizado',     stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',   Icon: CheckCircle },
+  aceptada:              { label: 'Por iniciar',     stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',           Icon: ClipboardList },
+  presupuesto_enviado:   { label: 'Presup. enviado', stripe: 'border-l-amber-400',   gradientBg: 'from-amber-50/50',   badge: 'bg-amber-100 text-amber-800 ring-amber-200',        Icon: FileText },
+  presupuesto_cliente:   { label: 'Esp. cliente',    stripe: 'border-l-yellow-400',  gradientBg: 'from-yellow-50/50',  badge: 'bg-yellow-100 text-yellow-800 ring-yellow-200',     Icon: Clock },
+  en_curso:              { label: 'En curso',         stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200',     Icon: Wrench },
+  completada_pendiente:  { label: 'Conf. subida',     stripe: 'border-l-purple-400',  gradientBg: 'from-purple-50/50',  badge: 'bg-purple-100 text-purple-800 ring-purple-200',     Icon: Clock },
+  conformidad_rechazada: { label: 'Conf. rechazada',  stripe: 'border-l-red-400',     gradientBg: 'from-red-50/50',     badge: 'bg-red-100 text-red-800 ring-red-200',              Icon: XCircle },
+  finalizado:            { label: 'Finalizado',       stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',   Icon: CheckCircle },
 }
 
-function getStatusKey(a: AsignacionTecnico): string {
+function getStatusKey(
+  a: AsignacionTecnico,
+  estadoPresupuesto?: string,
+  conformidad?: ConformidadInfo
+): string {
+  const estadoInc = a.incidentes?.estado_actual ?? ''
+  if (['finalizado', 'resuelto'].includes(estadoInc)) return 'finalizado'
+
   if (a.estado_asignacion === 'completada') {
-    return ['finalizado', 'resuelto'].includes(a.incidentes?.estado_actual ?? '')
-      ? 'finalizado'
-      : 'completada_pendiente'
+    if (conformidad?.esta_rechazada) return 'conformidad_rechazada'
+    return 'completada_pendiente'
   }
+
+  if (['aceptada', 'en_curso'].includes(a.estado_asignacion)) {
+    if (estadoPresupuesto === 'enviado') return 'presupuesto_enviado'
+    if (estadoPresupuesto === 'aprobado_admin') return 'presupuesto_cliente'
+  }
+
   return a.estado_asignacion
 }
 
@@ -176,18 +191,12 @@ export function TrabajosContent({
 
   // ── Filtros ─────────────────────────────────────────────────────────────
 
-  const enProceso = asignaciones.filter(a =>
-    ['aceptada', 'en_curso', 'completada_pendiente'].includes(getStatusKey(a))
-  )
-  const resueltas = asignaciones.filter(a => getStatusKey(a) === 'finalizado')
+  const sk = (a: AsignacionTecnico) =>
+    getStatusKey(a, estadoPresupuestoPorIncidente[a.id_incidente], conformidadesPorIncidente[a.id_incidente])
 
-  // Stats por categoría
-  const counts = {
-    aceptada: asignaciones.filter(a => getStatusKey(a) === 'aceptada').length,
-    en_curso: asignaciones.filter(a => getStatusKey(a) === 'en_curso').length,
-    pendiente: asignaciones.filter(a => getStatusKey(a) === 'completada_pendiente').length,
-    finalizado: asignaciones.filter(a => getStatusKey(a) === 'finalizado').length,
-  }
+  const EN_PROCESO_KEYS = ['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada']
+  const enProceso = asignaciones.filter(a => EN_PROCESO_KEYS.includes(sk(a)))
+  const resueltas = asignaciones.filter(a => sk(a) === 'finalizado')
 
   const filtros = [
     { id: 'todos',      label: 'Todos',       count: asignaciones.length, Icon: ClipboardList },
@@ -206,7 +215,7 @@ export function TrabajosContent({
     const incidente = asig.incidentes
     const inmueble = incidente?.inmuebles
     const cliente = incidente?.clientes
-    const key = getStatusKey(asig)
+    const key = sk(asig)
     const cfg = STATUS_CONFIG[key] ?? STATUS_CONFIG.aceptada
     const { Icon } = cfg
 
@@ -412,21 +421,42 @@ export function TrabajosContent({
                   label: 'Asignaciones por iniciar',
                   headerCls: 'text-blue-700 bg-blue-50 border-blue-200',
                   dotCls: 'bg-blue-500 animate-pulse',
-                  items: listaFiltrada.filter(a => getStatusKey(a) === 'aceptada'),
+                  items: listaFiltrada.filter(a => sk(a) === 'aceptada'),
+                },
+                {
+                  key: 'presupuesto_enviado',
+                  label: 'Presupuesto para revisar',
+                  headerCls: 'text-amber-700 bg-amber-50 border-amber-200',
+                  dotCls: 'bg-amber-500 animate-pulse',
+                  items: listaFiltrada.filter(a => sk(a) === 'presupuesto_enviado'),
+                },
+                {
+                  key: 'presupuesto_cliente',
+                  label: 'Aguarda aprobación del cliente',
+                  headerCls: 'text-yellow-700 bg-yellow-50 border-yellow-200',
+                  dotCls: 'bg-yellow-400',
+                  items: listaFiltrada.filter(a => sk(a) === 'presupuesto_cliente'),
                 },
                 {
                   key: 'en_curso',
                   label: 'Trabajo en progreso',
                   headerCls: 'text-orange-700 bg-orange-50 border-orange-200',
                   dotCls: 'bg-orange-400',
-                  items: listaFiltrada.filter(a => getStatusKey(a) === 'en_curso'),
+                  items: listaFiltrada.filter(a => sk(a) === 'en_curso'),
                 },
                 {
                   key: 'completada_pendiente',
                   label: 'Conformidad para revisar',
                   headerCls: 'text-purple-700 bg-purple-50 border-purple-200',
                   dotCls: 'bg-purple-500 animate-pulse',
-                  items: listaFiltrada.filter(a => getStatusKey(a) === 'completada_pendiente'),
+                  items: listaFiltrada.filter(a => sk(a) === 'completada_pendiente'),
+                },
+                {
+                  key: 'conformidad_rechazada',
+                  label: 'Conformidad rechazada',
+                  headerCls: 'text-red-700 bg-red-50 border-red-200',
+                  dotCls: 'bg-red-500 animate-pulse',
+                  items: listaFiltrada.filter(a => sk(a) === 'conformidad_rechazada'),
                 },
               ].filter(g => g.items.length > 0).map(grupo => (
                 <div key={grupo.key}>

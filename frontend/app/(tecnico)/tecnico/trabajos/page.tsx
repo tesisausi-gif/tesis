@@ -28,7 +28,7 @@ export default async function TecnicoTrabajosPage() {
   const idIncidentes = asignaciones.map(a => a.id_incidente).filter(Boolean) as number[]
   const conformidades = await getConformidadesPorIncidentes(idIncidentes)
 
-  const conformidadesPorIncidente: Record<number, { id_conformidad: number; id_incidente: number; esta_firmada: number | boolean; url_documento: string | null }> = {}
+  const conformidadesPorIncidente: Record<number, { id_conformidad: number; id_incidente: number; esta_firmada: number | boolean; esta_rechazada?: boolean | null; url_documento: string | null }> = {}
   for (const c of conformidades) {
     conformidadesPorIncidente[c.id_incidente] = c
   }

@@ -34,7 +34,9 @@ type AccionPendiente =
   | { tipo: 'asignar' }
   | { tipo: 'reasignar' }
   | { tipo: 'presupuesto' }
+  | { tipo: 'presupuesto_cliente' }
   | { tipo: 'conformidad' }
+  | { tipo: 'conformidad_rechazada' }
   | { tipo: 'en_curso' }
   | { tipo: 'finalizado' }
 
@@ -51,8 +53,12 @@ function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
     return { tipo: 'en_curso' }
   }
   if (estado === 'en_proceso') {
+    const confRechazada = inc.conformidades?.find(c => c.esta_rechazada)
+    if (confRechazada) return { tipo: 'conformidad_rechazada' }
     const presPendiente = inc.presupuestos?.find(p => p.estado_presupuesto === 'enviado')
     if (presPendiente) return { tipo: 'presupuesto' }
+    const presClientePendiente = inc.presupuestos?.find(p => p.estado_presupuesto === 'aprobado_admin')
+    if (presClientePendiente) return { tipo: 'presupuesto_cliente' }
     const confPendiente = inc.conformidades?.find(c => c.url_documento && !c.esta_firmada && !c.esta_rechazada)
     if (confPendiente) return { tipo: 'conformidad' }
     return { tipo: 'en_curso' }
@@ -68,12 +74,14 @@ const ACCION_CONFIG: Record<AccionPendiente['tipo'], {
   pulse: boolean
   disabled: boolean
 }> = {
-  asignar:     { label: 'Asignar',     Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
-  reasignar:   { label: 'Reasignar',   Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
-  presupuesto: { label: 'Presupuesto', Icon: FileText,      activeColor: 'text-amber-600',  pulse: true,  disabled: false },
-  conformidad: { label: 'Conformidad', Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
-  en_curso:    { label: 'En Curso',    Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true },
-  finalizado:  { label: 'Finalizado',  Icon: CheckCircle,   activeColor: 'text-gray-300',   pulse: false, disabled: true },
+  asignar:               { label: 'Asignar',       Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
+  reasignar:             { label: 'Reasignar',     Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
+  presupuesto:           { label: 'Presupuesto',   Icon: FileText,      activeColor: 'text-amber-600',  pulse: true,  disabled: false },
+  presupuesto_cliente:   { label: 'Esp. cliente',  Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  conformidad:           { label: 'Conformidad',   Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
+  conformidad_rechazada: { label: 'Conf. rechaz.', Icon: XCircle,       activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  en_curso:              { label: 'En Curso',      Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  finalizado:            { label: 'Finalizado',    Icon: CheckCircle,   activeColor: 'text-gray-300',   pulse: false, disabled: true  },
 }
 
 function formatFecha(raw: string | null | undefined): string {
@@ -142,10 +150,22 @@ function IncidenteCard({
           <span className="text-xs font-bold text-white">Presupuesto enviado — revisar y aprobar</span>
         </div>
       )}
+      {accion.tipo === 'presupuesto_cliente' && (
+        <div className="flex items-center gap-2 bg-yellow-500 px-4 py-2">
+          <Clock className="h-3.5 w-3.5 text-white flex-shrink-0" />
+          <span className="text-xs font-bold text-white">Presupuesto aprobado — aguarda decisión del cliente</span>
+        </div>
+      )}
       {accion.tipo === 'conformidad' && (
         <div className="flex items-center gap-2 bg-purple-600 px-4 py-2">
           <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
           <span className="text-xs font-bold text-white">Conformidad subida — revisar y aprobar</span>
+        </div>
+      )}
+      {accion.tipo === 'conformidad_rechazada' && (
+        <div className="flex items-center gap-2 bg-red-500 px-4 py-2">
+          <XCircle className="h-3.5 w-3.5 text-white flex-shrink-0" />
+          <span className="text-xs font-bold text-white">Conformidad rechazada — técnico debe re-subir</span>
         </div>
       )}
 
@@ -427,11 +447,25 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'presupuesto'),
             },
             {
+              key: 'presupuesto_cliente',
+              label: 'Aguarda aprobación del cliente',
+              headerCls: 'text-yellow-700 bg-yellow-50 border-yellow-200',
+              dotCls: 'bg-yellow-400',
+              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'presupuesto_cliente'),
+            },
+            {
               key: 'conformidad',
               label: 'Conformidad para revisar',
               headerCls: 'text-purple-700 bg-purple-50 border-purple-200',
               dotCls: 'bg-purple-500 animate-pulse',
               items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'conformidad'),
+            },
+            {
+              key: 'conformidad_rechazada',
+              label: 'Conformidad rechazada',
+              headerCls: 'text-red-700 bg-red-50 border-red-200',
+              dotCls: 'bg-red-500 animate-pulse',
+              items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === 'conformidad_rechazada'),
             },
             {
               key: 'en_curso',

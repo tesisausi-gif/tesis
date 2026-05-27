@@ -118,7 +118,7 @@ export async function getConformidadesPorIncidentes(idIncidentes: number[]) {
 
   const { data, error } = await supabase
     .from('conformidades')
-    .select('id_conformidad, id_incidente, esta_firmada, url_documento, fecha_creacion')
+    .select('id_conformidad, id_incidente, esta_firmada, esta_rechazada, url_documento, fecha_creacion')
     .in('id_incidente', idIncidentes)
 
   if (error) throw error
