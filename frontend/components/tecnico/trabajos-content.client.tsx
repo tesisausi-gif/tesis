@@ -128,6 +128,7 @@ export function TrabajosContent({
 }: TrabajosContentProps) {
   const router = useRouter()
   const [filtro, setFiltro] = useState<string>('en_proceso')
+  const [subFiltro, setSubFiltro] = useState<string>('todos')
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalTab, setModalTab] = useState('detalles')
   const [modalOpen, setModalOpen] = useState(false)
@@ -185,6 +186,8 @@ export function TrabajosContent({
   }, [asignaciones, router])
 
   // ── Filtros ─────────────────────────────────────────────────────────────
+
+  useEffect(() => { setSubFiltro('todos') }, [filtro])
 
   const sk = (a: AsignacionTecnico) =>
     getStatusKey(a, estadoPresupuestoPorIncidente[a.id_incidente], conformidadesPorIncidente[a.id_incidente])
@@ -409,13 +412,49 @@ export function TrabajosContent({
             </div>
           ) : filtro === 'en_proceso' ? (
             /* ── Vista agrupada para En Proceso ── */
-            <div className="px-4 pt-3 space-y-6">
+            <div className="px-4 pt-3 space-y-4">
+              {/* Sub-filtro */}
+              <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
+                <button
+                  onClick={() => setSubFiltro('todos')}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    subFiltro === 'todos' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                  }`}
+                >
+                  Todos
+                  <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${subFiltro === 'todos' ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                    {listaFiltrada.length}
+                  </span>
+                </button>
+                {(['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const).map(tipo => {
+                  const count = listaFiltrada.filter(a => sk(a) === tipo).length
+                  if (count === 0) return null
+                  const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
+                  const active = subFiltro === tipo
+                  return (
+                    <button
+                      key={tipo}
+                      onClick={() => setSubFiltro(tipo)}
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                      }`}
+                    >
+                      {gcfg.labelBadge}
+                      <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                        {count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="space-y-6">
               {((['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const)
                 .map(tipo => ({
                   tipo,
                   items: listaFiltrada.filter(a => sk(a) === tipo),
                 }))
                 .filter(g => g.items.length > 0)
+                .filter(g => subFiltro === 'todos' || g.tipo === subFiltro)
                 .map(grupo => {
                   const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[grupo.tipo]
                   return (
@@ -430,6 +469,7 @@ export function TrabajosContent({
                   )
                 })
               )}
+              </div>
             </div>
           ) : (
             <div className="px-4 pt-3 space-y-3">

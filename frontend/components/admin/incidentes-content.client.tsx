@@ -29,6 +29,16 @@ const ICON_BY_ESTADO: Record<string, React.ElementType> = {
   resuelto:              CheckCircle,
 }
 
+const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
+  aceptada:              ClipboardList,
+  presupuesto_enviado:   FileText,
+  presupuesto_cliente:   Clock,
+  en_curso:              Wrench,
+  completada_pendiente:  Clock,
+  conformidad_rechazada: XCircle,
+  finalizado:            CheckCircle,
+}
+
 // ── Acción pendiente — qué debe hacer el admin ahora mismo ───────────────────
 type AccionPendiente =
   | { tipo: 'asignar' }
@@ -80,7 +90,7 @@ const ACCION_CONFIG: Record<AccionPendiente['tipo'], {
 }> = {
   asignar:               { label: 'Asignar',       Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
   reasignar:             { label: 'Reasignar',     Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
-  aceptada:              { label: 'Por iniciar',   Icon: ClipboardList, activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  aceptada:              { label: 'Por comenzar',  Icon: ClipboardList, activeColor: 'text-gray-300',   pulse: false, disabled: true  },
   presupuesto_enviado:   { label: 'Presupuesto',   Icon: FileText,      activeColor: 'text-amber-600',  pulse: true,  disabled: false },
   presupuesto_cliente:   { label: 'Esp. cliente',  Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
   completada_pendiente:  { label: 'Conformidad',   Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
@@ -129,6 +139,12 @@ function IncidenteCard({
     inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'rechazada')
   const canceladaPorTecnico = inc.estado_actual === 'pendiente' &&
     inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'cancelada')
+  const subCfg = SUB_ESTADO_EN_PROCESO_CONFIG[accion.tipo as SubEstadoEnProceso]
+  const BadgeIcon = subCfg ? (ICON_BY_SUB_ESTADO[accion.tipo as SubEstadoEnProceso] ?? Icon) : Icon
+  const badgeLabel = subCfg ? subCfg.labelBadge : cfg.labelAdmin
+  const cardStripe = subCfg?.stripe ?? cfg.stripe
+  const cardBgGradient = subCfg?.bgGradient ?? cfg.bgGradient
+  const badgeCls = subCfg?.badge ?? cfg.badge
 
   return (
     <div
@@ -137,7 +153,7 @@ function IncidenteCard({
         if (el) highlightRefs.current.set(inc.id_incidente, el)
         else highlightRefs.current.delete(inc.id_incidente)
       }}
-      className={`rounded-2xl border-l-4 shadow-sm overflow-hidden transition-shadow hover:shadow-md bg-gradient-to-r ${cfg.bgGradient} to-white ${cfg.stripe} ${
+      className={`rounded-2xl border-l-4 shadow-sm overflow-hidden transition-shadow hover:shadow-md bg-gradient-to-r ${cardBgGradient} to-white ${cardStripe} ${
         isHighlighted ? 'ring-2 ring-amber-400 ring-offset-1' : ''
       }`}
     >
@@ -173,9 +189,9 @@ function IncidenteCard({
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{inc.id_incidente}</span>
-            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${cfg.badge}`}>
-              <Icon className="w-2.5 h-2.5" />
-              {cfg.labelAdmin}
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${badgeCls}`}>
+              <BadgeIcon className="w-2.5 h-2.5" />
+              {badgeLabel}
             </span>
           </div>
           {inc.nivel_prioridad === 'Urgente' && (
@@ -256,6 +272,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
   const [filtro, setFiltro] = useState('todos')
+  const [subFiltro, setSubFiltro] = useState<string>('todos')
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalTab, setModalTab] = useState('detalles')
@@ -337,8 +354,8 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     { id: 'finalizado',            label: 'Finalizados',    count: porEstado.finalizado.length,                Icon: CheckCircle },
   ]
 
-  // Reset page when filters change
-  useEffect(() => { setPagina(1) }, [filtro, busqueda])
+  // Reset page + subfiltro when filters change
+  useEffect(() => { setPagina(1); setSubFiltro('todos') }, [filtro, busqueda])
 
   // Filter by estado + search
   const incidentesFiltrados = incidentes.filter(inc => {
@@ -437,13 +454,49 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
         </div>
       ) : filtro === 'en_proceso' ? (
         /* ── Vista agrupada para En Proceso ─────────────────────────────────── */
-        <div className="space-y-6">
+        <div className="space-y-4">
+          {/* Sub-filtro */}
+          <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
+            <button
+              onClick={() => setSubFiltro('todos')}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                subFiltro === 'todos' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+              }`}
+            >
+              Todos
+              <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${subFiltro === 'todos' ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                {incidentesFiltrados.length}
+              </span>
+            </button>
+            {(['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const).map(tipo => {
+              const count = incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo).length
+              if (count === 0) return null
+              const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
+              const active = subFiltro === tipo
+              return (
+                <button
+                  key={tipo}
+                  onClick={() => setSubFiltro(tipo)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                  }`}
+                >
+                  {gcfg.labelBadge}
+                  <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="space-y-6">
           {((['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const)
             .map(tipo => ({
               tipo,
               items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo),
             }))
             .filter(g => g.items.length > 0)
+            .filter(g => subFiltro === 'todos' || g.tipo === subFiltro)
             .map(grupo => {
               const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[grupo.tipo]
               return (
@@ -488,6 +541,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
               )
             })
           )}
+          </div>
         </div>
       ) : (
         /* ── Vista paginada normal ───────────────────────────────────────────── */
