@@ -298,10 +298,12 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
         <>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {incidentesPaginados.map(inc => {
-            const cfg = STATUS_CONFIG[inc.estado_actual] ?? STATUS_CONFIG.pendiente
-            const { Icon } = cfg
             const accion = getAccionPendiente(inc)
             const accionCfg = ACCION_CONFIG[accion.tipo]
+            // Reasignaciones usan siempre styling de pendiente (amber) aunque estado_actual sea asignacion_solicitada
+            const cfgKey = accion.tipo === 'reasignar' ? 'pendiente' : inc.estado_actual
+            const cfg = STATUS_CONFIG[cfgKey] ?? STATUS_CONFIG.pendiente
+            const { Icon } = cfg
             const isHighlighted = inc.id_incidente === highlightId
 
             const inmueble = inc.inmuebles

@@ -93,6 +93,23 @@ export async function getConformidadesHistorial() {
 }
 
 /**
+ * IDs de incidentes con conformidad subida pero aún no aprobada (para sub-estado del cliente)
+ */
+export async function getIncidentesConConformidadSubida(idIncidentes: number[]): Promise<number[]> {
+  if (idIncidentes.length === 0) return []
+  const supabase = createAdminClient()
+
+  const { data } = await supabase
+    .from('conformidades')
+    .select('id_incidente')
+    .in('id_incidente', idIncidentes)
+    .not('url_documento', 'is', null)
+    .neq('esta_firmada', 1)
+
+  return (data || []).map((c: any) => c.id_incidente)
+}
+
+/**
  * Obtener conformidades por lista de incidentes (para el técnico)
  */
 export async function getConformidadesPorIncidentes(idIncidentes: number[]) {

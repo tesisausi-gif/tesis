@@ -220,17 +220,23 @@ export async function getDashboardStats() {
   const { createAdminClient } = await import('@/shared/lib/supabase/admin')
   const supabase = createAdminClient()
 
-  const [incidentes, propiedades, clientes, tecnicos] = await Promise.all([
-    supabase.from('incidentes').select('estado_actual'),
+  const [incidentes, propiedades, clientes, tecnicos, asigRechazadas] = await Promise.all([
+    supabase.from('incidentes').select('id_incidente, estado_actual'),
     supabase.from('inmuebles').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
     supabase.from('clientes').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
     supabase.from('tecnicos').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
+    supabase.from('asignaciones_tecnico').select('id_incidente').eq('estado_asignacion', 'rechazada'),
   ])
 
   const incidentesData = incidentes.data || []
+  // IDs de incidentes asignacion_solicitada con rechazo → equivalen a pendiente
+  const rechazadasIds = new Set((asigRechazadas.data || []).map((a: any) => a.id_incidente))
 
   return {
-    incidentesPendientes: incidentesData.filter(i => i.estado_actual === 'pendiente').length,
+    incidentesPendientes: incidentesData.filter(i =>
+      i.estado_actual === 'pendiente' ||
+      (i.estado_actual === 'asignacion_solicitada' && rechazadasIds.has(i.id_incidente))
+    ).length,
     incidentesEnProceso: incidentesData.filter(i => i.estado_actual === 'en_proceso').length,
     incidentesResueltos: incidentesData.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto').length,
     propiedades: propiedades.count || 0,

@@ -15,6 +15,7 @@ import type { Incidente } from '@/features/incidentes/incidentes.types'
 interface IncidentesContentProps {
   incidentes: Incidente[]
   incidentesConPresupuestoPendiente: number[]
+  incidentesConConformidadSubida?: number[]
 }
 
 const STATUS_CONFIG: Record<string, {
@@ -31,7 +32,7 @@ const STATUS_CONFIG: Record<string, {
   finalizado:            { label: 'Finalizado',            stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
 }
 
-export function IncidentesContent({ incidentes, incidentesConPresupuestoPendiente }: IncidentesContentProps) {
+export function IncidentesContent({ incidentes, incidentesConPresupuestoPendiente, incidentesConConformidadSubida = [] }: IncidentesContentProps) {
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalTab, setModalTab] = useState<string>('detalles')
@@ -175,6 +176,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                 const ubicacion = inmueble ? [inmueble.barrio, inmueble.localidad].filter(Boolean).join(', ') : ''
                 const direccion = ubicacion ? `${direccionPartes}, ${ubicacion}` : direccionPartes || 'Sin dirección'
                 const tienePresupuestoPendiente = pendientesPresupuesto.has(incidente.id_incidente)
+                const tieneConformidadSubida = incidentesConConformidadSubida.includes(incidente.id_incidente)
 
                 return (
                   <div
@@ -198,6 +200,18 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                           {cfg.label}
                         </span>
                       </div>
+
+                      {/* Sub-estado en_proceso */}
+                      {incidente.estado_actual === 'en_proceso' && !tienePresupuestoPendiente && (
+                        <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg mb-2 w-fit ${
+                          tieneConformidadSubida
+                            ? 'bg-purple-50 text-purple-700 border border-purple-100'
+                            : 'bg-orange-50 text-orange-700 border border-orange-100'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${tieneConformidadSubida ? 'bg-purple-400' : 'bg-orange-400 animate-pulse'}`} />
+                          {tieneConformidadSubida ? 'Revisión final — en proceso' : 'Trabajo en ejecución'}
+                        </div>
+                      )}
 
                       {/* Row 2: Description — hero */}
                       <p className="text-[15px] font-semibold text-slate-800 line-clamp-2 mb-2.5 leading-snug">

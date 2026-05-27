@@ -1,7 +1,8 @@
 import { createClient } from '@/shared/lib/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { AlertCircle, Plus, ArrowRight, Clock, CheckCircle2, FileText, UserCheck, Wrench } from 'lucide-react'
+import {
+  AlertCircle, Plus, ArrowRight, Clock, CheckCircle2,
+  FileText, Send, Wrench, Bell,
+} from 'lucide-react'
 import Link from 'next/link'
 import { getClienteBadgeCounts } from '@/features/notificaciones/badge-counts.service'
 import { getNotificacionesCliente } from '@/features/notificaciones/notificaciones-inapp.service'
@@ -10,151 +11,165 @@ import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.cl
 export default async function ClienteDashboard() {
   const supabase = await createClient()
 
-  // Obtener el usuario actual
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-  if (!user) {
-    return null
-  }
-
-  // Obtener datos del cliente
   const { data: usuario } = await supabase
     .from('usuarios')
     .select('*, clientes(*)')
     .eq('id', user.id)
     .single()
 
-  // Obtener estadísticas de incidentes
   const { data: incidentes } = await supabase
     .from('incidentes')
     .select('id_incidente, estado_actual')
     .eq('id_cliente_reporta', usuario?.id_cliente)
 
-  const cntPendiente  = incidentes?.filter(i => i.estado_actual === 'pendiente').length || 0
-  const cntAsignado   = incidentes?.filter(i => i.estado_actual === 'asignacion_solicitada').length || 0
-  const cntEnProceso  = incidentes?.filter(i => i.estado_actual === 'en_proceso').length || 0
-  const cntFinalizado = incidentes?.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto').length || 0
-
-  const totalIncidentes = incidentes?.length || 0
-
-  // Obtener inmuebles (solo para verificar si tiene alguno registrado)
   const { data: inmuebles } = await supabase
     .from('inmuebles')
     .select('id_inmueble')
     .eq('id_cliente', usuario?.id_cliente)
 
-  const totalInmuebles = inmuebles?.length || 0
+  const cntPendiente  = incidentes?.filter(i => i.estado_actual === 'pendiente').length ?? 0
+  const cntAsignado   = incidentes?.filter(i => i.estado_actual === 'asignacion_solicitada').length ?? 0
+  const cntEnProceso  = incidentes?.filter(i => i.estado_actual === 'en_proceso').length ?? 0
+  const cntFinalizado = incidentes?.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto').length ?? 0
+  const totalInmuebles = inmuebles?.length ?? 0
 
   const [badgeCounts, notificaciones] = await Promise.all([
     getClienteBadgeCounts().catch(() => ({ presupuestos: 0, pagos: 0, notificaciones: 0 })),
     getNotificacionesCliente().catch(() => []),
   ])
 
+  const iniciales = usuario?.nombre
+    ? `${usuario.nombre[0]}${usuario.apellido?.[0] ?? ''}`.toUpperCase()
+    : '?'
+
   return (
-    <div className="space-y-4 px-4 py-6 md:px-6 md:py-8">
-      {/* Header - Mobile First */}
-      <div className="space-y-2 mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Bienvenido, {usuario?.nombre}
-        </h1>
-        <p className="text-sm md:text-base text-gray-600">
-          Panel de control de tus incidentes y propiedades
-        </p>
+    <div className="min-h-screen bg-gray-50 pb-8">
+
+      {/* ── Header ──────────────────────────────────────── */}
+      <div className="bg-white px-5 pt-6 pb-5 border-b border-slate-100">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="h-10 w-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+            <span className="text-sm font-bold text-white">{iniciales}</span>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 leading-tight">
+              Hola, {usuario?.nombre ?? 'Cliente'}
+            </h1>
+            <p className="text-xs text-slate-400">Panel de incidentes</p>
+          </div>
+        </div>
       </div>
 
-      {/* Mensaje informativo minimalista - Solo si no hay inmuebles */}
-      {totalInmuebles === 0 && (
-        <Card className="border-dashed border-2 bg-blue-50 border-blue-200">
-          <CardContent className="py-4 text-center">
-            <p className="text-sm md:text-base text-gray-700">
-              💡 <strong>Importante:</strong> Para reportar incidentes, primero debes registrar al menos un inmueble
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      <div className="px-4 space-y-4 pt-4">
 
-      {/* Alerta: Presupuestos pendientes de aprobación */}
-      {badgeCounts.presupuestos > 0 && (
-        <Link href="/cliente/presupuestos" className="block">
-          <Card className="border-2 border-blue-400 bg-blue-50 hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center gap-4 py-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
-                <FileText className="h-5 w-5 text-blue-600" />
+        {/* ── Aviso: sin inmuebles ──────────────────────── */}
+        {totalInmuebles === 0 && (
+          <div className="rounded-2xl bg-blue-50 border border-blue-200 px-4 py-3 flex items-start gap-3">
+            <AlertCircle className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+            <p className="text-xs text-blue-700">
+              <strong>Antes de reportar</strong> un incidente, registrá al menos un inmueble.
+            </p>
+          </div>
+        )}
+
+        {/* ── Alerta: presupuesto pendiente ────────────── */}
+        {badgeCounts.presupuestos > 0 && (
+          <Link href="/cliente/presupuestos">
+            <div className="rounded-2xl border-l-4 border-l-amber-400 bg-gradient-to-r from-amber-50/70 to-white shadow-sm p-4 flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                <Bell className="h-4 w-4 text-amber-600 animate-pulse" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-blue-800">
-                  {badgeCounts.presupuestos === 1
-                    ? 'Tenés 1 presupuesto para aprobar'
-                    : `Tenés ${badgeCounts.presupuestos} presupuestos para aprobar`}
+                <p className="text-sm font-bold text-amber-800">
+                  {badgeCounts.presupuestos === 1 ? '1 presupuesto para revisar' : `${badgeCounts.presupuestos} presupuestos para revisar`}
                 </p>
-                <p className="text-sm text-blue-600">Toca para revisar y aprobar →</p>
+                <p className="text-xs text-amber-600">Tocá para ver →</p>
               </div>
-            </CardContent>
-          </Card>
-        </Link>
-      )}
-
-      {/* Incidentes */}
-      <Card className="border-2 hover:shadow-lg transition-shadow">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl md:text-2xl flex items-center gap-2">
-              <AlertCircle className="h-6 w-6 md:h-7 md:w-7 text-blue-600" />
-              Incidentes
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Estadísticas de Incidentes */}
-          <div className="grid grid-cols-2 gap-2 md:gap-3 sm:grid-cols-4">
-            <div className="p-3 rounded-lg border-l-4 border-l-amber-400 bg-amber-50/50">
-              <div className="text-2xl md:text-3xl font-bold tabular-nums text-amber-700">{cntPendiente}</div>
-              <p className="text-xs md:text-sm text-slate-500 mt-1">Pendientes</p>
             </div>
+          </Link>
+        )}
 
-            <div className="p-3 rounded-lg border-l-4 border-l-blue-400 bg-blue-50/50">
-              <div className="text-2xl md:text-3xl font-bold tabular-nums text-blue-700">{cntAsignado}</div>
-              <p className="text-xs md:text-sm text-slate-500 mt-1">Asignados</p>
+        {/* ── Stats de incidentes ───────────────────────── */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <Link href="/cliente/incidentes?filtro=pendiente">
+            <div className="rounded-2xl border-l-4 border-l-amber-400 bg-gradient-to-r from-amber-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
+              <div className="text-2xl font-bold tabular-nums text-amber-700">{cntPendiente}</div>
+              <div className="flex items-center gap-1 mt-1">
+                <Clock className="h-3 w-3 text-amber-500" />
+                <span className="text-[11px] text-slate-500">Pendientes</span>
+              </div>
             </div>
-
-            <div className="p-3 rounded-lg border-l-4 border-l-orange-400 bg-orange-50/50">
-              <div className="text-2xl md:text-3xl font-bold tabular-nums text-orange-700">{cntEnProceso}</div>
-              <p className="text-xs md:text-sm text-slate-500 mt-1">En proceso</p>
-            </div>
-
-            <div className="p-3 rounded-lg border-l-4 border-l-green-400 bg-green-50/50">
-              <div className="text-2xl md:text-3xl font-bold tabular-nums text-green-700">{cntFinalizado}</div>
-              <p className="text-xs md:text-sm text-slate-500 mt-1">Finalizado</p>
-            </div>
-          </div>
-
-          {/* CTA Principal - Reportar Incidente */}
-          <Link href="/cliente/incidentes/nuevo" className="block">
-            <Button
-              size="lg"
-              className="w-full gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all text-base md:text-lg py-6"
-            >
-              <Plus className="h-5 w-5 md:h-6 md:w-6" />
-              Reportar Nuevo Incidente
-            </Button>
           </Link>
 
-          {/* Link secundario - Ver todos */}
+          <Link href="/cliente/incidentes?filtro=asignacion_solicitada">
+            <div className="rounded-2xl border-l-4 border-l-blue-400 bg-gradient-to-r from-blue-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
+              <div className="text-2xl font-bold tabular-nums text-blue-700">{cntAsignado}</div>
+              <div className="flex items-center gap-1 mt-1">
+                <Send className="h-3 w-3 text-blue-500" />
+                <span className="text-[11px] text-slate-500">Esp. técnico</span>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/cliente/incidentes?filtro=en_proceso">
+            <div className="rounded-2xl border-l-4 border-l-orange-400 bg-gradient-to-r from-orange-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
+              <div className="text-2xl font-bold tabular-nums text-orange-700">{cntEnProceso}</div>
+              <div className="flex items-center gap-1 mt-1">
+                <Wrench className="h-3 w-3 text-orange-500" />
+                <span className="text-[11px] text-slate-500">En proceso</span>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/cliente/incidentes?filtro=resuelto">
+            <div className="rounded-2xl border-l-4 border-l-emerald-400 bg-gradient-to-r from-emerald-50/60 to-white p-4 shadow-sm active:shadow-none transition-shadow">
+              <div className="text-2xl font-bold tabular-nums text-emerald-700">{cntFinalizado}</div>
+              <div className="flex items-center gap-1 mt-1">
+                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                <span className="text-[11px] text-slate-500">Finalizados</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* ── Acciones rápidas ─────────────────────────── */}
+        <div className="space-y-2">
+          <Link href="/cliente/incidentes/nuevo">
+            <div className="rounded-2xl bg-slate-900 text-white px-5 py-4 flex items-center justify-between shadow-sm active:bg-slate-800 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Plus className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-sm font-semibold">Reportar nuevo incidente</span>
+              </div>
+              <ArrowRight className="h-4 w-4 opacity-60" />
+            </div>
+          </Link>
+
           <Link href="/cliente/incidentes">
-            <Button variant="outline" className="w-full gap-2 text-sm md:text-base">
-              Ver Todos Mis Incidentes
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <div className="rounded-2xl bg-white border border-slate-200 px-5 py-4 flex items-center justify-between shadow-sm active:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <FileText className="h-4 w-4 text-slate-600" />
+                </div>
+                <span className="text-sm font-semibold text-slate-800">Ver todos mis incidentes</span>
+              </div>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
+            </div>
           </Link>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Notificaciones */}
-      <Card className="border-2 hover:shadow-lg transition-shadow">
-        <CardContent className="pt-5">
-          <NotificacionesPanel notificaciones={notificaciones} rol="cliente" />
-        </CardContent>
-      </Card>
+        {/* ── Notificaciones ───────────────────────────── */}
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-4 pt-4 pb-2">
+            <NotificacionesPanel notificaciones={notificaciones} rol="cliente" />
+          </div>
+        </div>
+
+      </div>
     </div>
   )
 }
