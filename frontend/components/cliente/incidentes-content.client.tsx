@@ -9,7 +9,6 @@ import {
   Bell, MapPin, ClipboardList, FileText,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
-import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 import { createClient } from '@/shared/lib/supabase/client'
 import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
 import type { Incidente } from '@/features/incidentes/incidentes.types'
@@ -90,7 +89,6 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
   ]
 
   return (
-    <PullToRefresh>
     <div className="min-h-screen bg-gray-50 pb-8">
 
       {/* ── Header ──────────────────────────────────── */}
@@ -311,6 +309,5 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
         initialTab={modalTab}
       />
     </div>
-    </PullToRefresh>
   )
 }

@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
-import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
 import { createClient } from '@/shared/lib/supabase/client'
 import { cancelarAsignacionAceptada } from '@/features/asignaciones/asignaciones.service'
@@ -421,7 +420,6 @@ export function TrabajosContent({
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <PullToRefresh>
     <div className="min-h-screen bg-gray-50 pb-8">
 
       {/* Header */}
@@ -646,6 +644,5 @@ export function TrabajosContent({
         </div>
       )}
     </div>
-    </PullToRefresh>
   )
 }

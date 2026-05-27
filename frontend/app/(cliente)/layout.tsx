@@ -5,6 +5,7 @@ import { ClienteNav } from '@/components/cliente/cliente-nav'
 import { CambiarPasswordPrimerAcceso } from '@/components/cliente/cambiar-password-primer-acceso.client'
 import { AIHelpChat } from '@/components/ai-help-chat'
 import { PageTransitionProvider, PageTransition } from '@/components/ui/page-transition'
+import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 import { createClient } from '@/shared/lib/supabase/client'
 
 const clienteRoutes = [
@@ -35,11 +36,13 @@ export default function ClienteLayout({
     <PageTransitionProvider routes={clienteRoutes}>
       <div className="min-h-screen bg-gray-50 pb-16">
         <ClienteNav />
-        <main className="p-4 overflow-hidden">
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </main>
+        <PullToRefresh>
+          <main className="p-4 overflow-hidden">
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </main>
+        </PullToRefresh>
         <AIHelpChat />
       </div>
       {debeCambiarPassword && <CambiarPasswordPrimerAcceso onSuccess={() => setDebeCambiarPassword(false)} />}
