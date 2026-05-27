@@ -15,24 +15,18 @@ import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-m
 import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-modal'
 import type { IncidenteConClienteAdmin } from '@/features/incidentes/incidentes.types'
 import { Paginacion } from '@/components/ui/paginacion'
+import { ESTADO_INCIDENTE_CONFIG } from '@/shared/utils/colors'
 
 interface IncidentesAdminContentProps {
   incidentes: IncidenteConClienteAdmin[]
 }
 
-// ── Status config — card border + pill colors ─────────────────────────────────
-const STATUS_CONFIG: Record<string, {
-  label: string
-  stripe: string
-  gradientBg: string
-  badge: string
-  Icon: React.ElementType
-}> = {
-  pendiente:             { label: 'Pendiente',        stripe: 'border-l-amber-400',   gradientBg: 'from-amber-50/60',   badge: 'bg-amber-100 text-amber-800 ring-amber-200',   Icon: Clock },
-  asignacion_solicitada: { label: 'Asig. Solicitada', stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',      Icon: Send },
-  en_proceso:            { label: 'En Proceso',       stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200', Icon: Wrench },
-  finalizado:            { label: 'Finalizado',       stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
-  resuelto:              { label: 'Finalizado',       stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
+const ICON_BY_ESTADO: Record<string, React.ElementType> = {
+  pendiente:             Clock,
+  asignacion_solicitada: Send,
+  en_proceso:            Wrench,
+  finalizado:            CheckCircle,
+  resuelto:              CheckCircle,
 }
 
 // ── Acción pendiente — qué debe hacer el admin ahora mismo ───────────────────
@@ -302,8 +296,8 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
             const accionCfg = ACCION_CONFIG[accion.tipo]
             // Reasignaciones usan siempre styling de pendiente (amber) aunque estado_actual sea asignacion_solicitada
             const cfgKey = accion.tipo === 'reasignar' ? 'pendiente' : inc.estado_actual
-            const cfg = STATUS_CONFIG[cfgKey] ?? STATUS_CONFIG.pendiente
-            const { Icon } = cfg
+            const cfg = ESTADO_INCIDENTE_CONFIG[cfgKey] ?? ESTADO_INCIDENTE_CONFIG.pendiente
+            const Icon = ICON_BY_ESTADO[cfgKey] ?? Clock
             const isHighlighted = inc.id_incidente === highlightId
 
             const inmueble = inc.inmuebles
@@ -332,7 +326,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                   if (el) highlightRefs.current.set(inc.id_incidente, el)
                   else highlightRefs.current.delete(inc.id_incidente)
                 }}
-                className={`rounded-2xl border-l-4 shadow-sm overflow-hidden transition-shadow hover:shadow-md bg-gradient-to-r ${cfg.gradientBg} to-white ${cfg.stripe} ${
+                className={`rounded-2xl border-l-4 shadow-sm overflow-hidden transition-shadow hover:shadow-md bg-gradient-to-r ${cfg.bgGradient} to-white ${cfg.stripe} ${
                   isHighlighted ? 'ring-2 ring-amber-400 ring-offset-1' : ''
                 }`}
               >
@@ -378,7 +372,7 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
                       <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{inc.id_incidente}</span>
                       <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${cfg.badge}`}>
                         <Icon className="w-2.5 h-2.5" />
-                        {cfg.label}
+                        {cfg.labelAdmin}
                       </span>
                     </div>
                     {inc.nivel_prioridad === 'Urgente' && (

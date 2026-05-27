@@ -5,48 +5,74 @@
 
 // 1. Estados de Incidentes — configuración unificada para todas las vistas
 export const ESTADO_INCIDENTE_CONFIG: Record<string, {
-  stripe: string      // border-l-* para la raya lateral de la card
-  bgGradient: string  // clase from-* para el gradiente de fondo
-  badge: string       // bg + text para el badge/pill
-  labelAdmin: string  // etiqueta en vista admin
+  stripe: string       // border-l-* para la raya lateral de la card
+  bgGradient: string   // clase from-* para el gradiente de fondo
+  badge: string        // bg + text + ring para el badge/pill de estado principal
+  labelAdmin: string   // etiqueta en vista admin
   labelCliente: string // etiqueta en vista cliente
+  labelTecnico: string // etiqueta en vista técnico (sobre incidente, no sobre asignación)
 }> = {
   pendiente: {
     stripe: 'border-l-amber-400',
     bgGradient: 'from-amber-50/60',
-    badge: 'bg-amber-100 text-amber-800',
+    badge: 'bg-amber-100 text-amber-800 ring-amber-200',
     labelAdmin: 'Pendiente',
     labelCliente: 'Pendiente',
+    labelTecnico: 'Pendiente',
   },
   asignacion_solicitada: {
     stripe: 'border-l-blue-400',
     bgGradient: 'from-blue-50/50',
-    badge: 'bg-blue-100 text-blue-800',
+    badge: 'bg-blue-100 text-blue-800 ring-blue-200',
     labelAdmin: 'Asig. Solicitada',
     labelCliente: 'En espera de técnico',
+    labelTecnico: 'Asig. Solicitada',
   },
   en_proceso: {
     stripe: 'border-l-orange-400',
     bgGradient: 'from-orange-50/50',
-    badge: 'bg-orange-100 text-orange-800',
+    badge: 'bg-orange-100 text-orange-800 ring-orange-200',
     labelAdmin: 'En Proceso',
     labelCliente: 'En proceso',
+    labelTecnico: 'En proceso',
   },
   finalizado: {
     stripe: 'border-l-emerald-400',
     bgGradient: 'from-emerald-50/50',
-    badge: 'bg-emerald-100 text-emerald-800',
+    badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
     labelAdmin: 'Finalizado',
     labelCliente: 'Finalizado',
+    labelTecnico: 'Finalizado',
   },
   resuelto: {
     stripe: 'border-l-emerald-400',
     bgGradient: 'from-emerald-50/50',
-    badge: 'bg-emerald-100 text-emerald-800',
+    badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
     labelAdmin: 'Finalizado',
     labelCliente: 'Finalizado',
+    labelTecnico: 'Finalizado',
   },
 }
+
+// 1b. Sub-estados de "En proceso" — mismos colores en los 3 roles
+// "en_progreso" = trabajo activo, sin acción pendiente de nadie
+// "revision_conformidad" = técnico subió conformidad, admin debe revisar/firmar
+export const SUB_ESTADO_EN_PROCESO = {
+  en_progreso: {
+    pill: 'bg-white border border-orange-300 text-orange-700',
+    dot: 'bg-orange-500 animate-pulse',
+    labelCliente: 'Trabajo en progreso',
+    labelAdmin: 'Trabajo en progreso',
+    labelTecnico: 'En curso',
+  },
+  revision_conformidad: {
+    pill: 'bg-purple-100 border border-purple-200 text-purple-700',
+    dot: 'bg-purple-500',
+    labelCliente: 'En revisión final',
+    labelAdmin: 'En revisión final',
+    labelTecnico: 'Pend. revisión',
+  },
+} as const
 
 // Compat: mantiene compatibilidad con usos existentes
 export const ESTADO_INCIDENTE_COLORS: Record<string, string> = {

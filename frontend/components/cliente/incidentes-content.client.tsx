@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { createClient } from '@/shared/lib/supabase/client'
+import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO } from '@/shared/utils/colors'
 import type { Incidente } from '@/features/incidentes/incidentes.types'
 
 interface IncidentesContentProps {
@@ -18,18 +19,12 @@ interface IncidentesContentProps {
   incidentesConConformidadSubida?: number[]
 }
 
-const STATUS_CONFIG: Record<string, {
-  label: string
-  stripe: string
-  gradientBg: string
-  badge: string
-  Icon: React.ElementType
-}> = {
-  pendiente:             { label: 'Pendiente',             stripe: 'border-l-amber-400',   gradientBg: 'from-amber-50/60',   badge: 'bg-amber-100 text-amber-800 ring-amber-200',      Icon: Clock },
-  asignacion_solicitada: { label: 'En espera de técnico',  stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',         Icon: Send },
-  en_proceso:            { label: 'En proceso',            stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200',   Icon: Wrench },
-  resuelto:              { label: 'Finalizado',            stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
-  finalizado:            { label: 'Finalizado',            stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
+const ICON_BY_ESTADO: Record<string, React.ElementType> = {
+  pendiente:             Clock,
+  asignacion_solicitada: Send,
+  en_proceso:            Wrench,
+  resuelto:              CheckCircle,
+  finalizado:            CheckCircle,
 }
 
 export function IncidentesContent({ incidentes, incidentesConPresupuestoPendiente, incidentesConConformidadSubida = [] }: IncidentesContentProps) {
@@ -167,8 +162,8 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
               </div>
             ) : (
               incidentesFiltrados.map(incidente => {
-                const cfg = STATUS_CONFIG[incidente.estado_actual] ?? STATUS_CONFIG.pendiente
-                const { Icon } = cfg
+                const estadoCfg = ESTADO_INCIDENTE_CONFIG[incidente.estado_actual] ?? ESTADO_INCIDENTE_CONFIG.pendiente
+                const Icon = ICON_BY_ESTADO[incidente.estado_actual] ?? Clock
                 const inmueble = incidente.inmuebles
                 const direccionPartes = inmueble
                   ? [inmueble.calle, inmueble.altura, inmueble.piso && `Piso ${inmueble.piso}`, inmueble.dpto && `Dpto ${inmueble.dpto}`].filter(Boolean).join(' ')
@@ -181,9 +176,9 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                 return (
                   <div
                     key={incidente.id_incidente}
-                    className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${cfg.gradientBg} to-white ${cfg.stripe}`}
+                    className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${estadoCfg.bgGradient} to-white ${estadoCfg.stripe}`}
                   >
-                    {/* Presupuesto listo banner */}
+                    {/* Banner: presupuesto para aprobar */}
                     {tienePresupuestoPendiente && (
                       <div className="flex items-center gap-2 bg-amber-500 px-4 py-2">
                         <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
@@ -192,26 +187,27 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                     )}
 
                     <div className="px-4 py-4">
-                      {/* Row 1: ID + estado */}
+                      {/* Row 1: ID + estado principal */}
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{incidente.id_incidente}</span>
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${cfg.badge}`}>
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${estadoCfg.badge}`}>
                           <Icon className="w-2.5 h-2.5" />
-                          {cfg.label}
+                          {estadoCfg.labelCliente}
                         </span>
                       </div>
 
-                      {/* Sub-estado en_proceso */}
-                      {incidente.estado_actual === 'en_proceso' && !tienePresupuestoPendiente && (
-                        <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg mb-2 w-fit ${
-                          tieneConformidadSubida
-                            ? 'bg-purple-50 text-purple-700 border border-purple-100'
-                            : 'bg-orange-50 text-orange-700 border border-orange-100'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${tieneConformidadSubida ? 'bg-purple-400' : 'bg-orange-400 animate-pulse'}`} />
-                          {tieneConformidadSubida ? 'Revisión final — en proceso' : 'Trabajo en ejecución'}
-                        </div>
-                      )}
+                      {/* Sub-estado dentro de "En proceso" — solo 2 variantes */}
+                      {incidente.estado_actual === 'en_proceso' && !tienePresupuestoPendiente && (() => {
+                        const sub = tieneConformidadSubida
+                          ? SUB_ESTADO_EN_PROCESO.revision_conformidad
+                          : SUB_ESTADO_EN_PROCESO.en_progreso
+                        return (
+                          <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg mb-2 w-fit ${sub.pill}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sub.dot}`} />
+                            {sub.labelCliente}
+                          </div>
+                        )
+                      })()}
 
                       {/* Row 2: Description — hero */}
                       <p className="text-[15px] font-semibold text-slate-800 line-clamp-2 mb-2.5 leading-snug">

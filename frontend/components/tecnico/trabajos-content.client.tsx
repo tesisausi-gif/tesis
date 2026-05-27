@@ -13,6 +13,7 @@ import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-m
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
 import { createClient } from '@/shared/lib/supabase/client'
 import { cancelarAsignacionAceptada } from '@/features/asignaciones/asignaciones.service'
+import { SUB_ESTADO_EN_PROCESO } from '@/shared/utils/colors'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -91,10 +92,11 @@ const STATUS_CONFIG: Record<string, {
   badge: string
   Icon: React.ElementType
 }> = {
-  aceptada:            { label: 'Aceptado',      stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',         Icon: ClipboardList },
-  en_curso:            { label: 'En curso',       stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200',   Icon: Wrench },
-  completada_pendiente:{ label: 'Pend. revisión', stripe: 'border-l-amber-400',   gradientBg: 'from-amber-50/60',   badge: 'bg-amber-100 text-amber-800 ring-amber-200',      Icon: Clock },
-  finalizado:          { label: 'Finalizado',     stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', Icon: CheckCircle },
+  aceptada:            { label: 'Aceptado',      stripe: 'border-l-blue-400',    gradientBg: 'from-blue-50/50',    badge: 'bg-blue-100 text-blue-800 ring-blue-200',           Icon: ClipboardList },
+  en_curso:            { label: 'En curso',       stripe: 'border-l-orange-400',  gradientBg: 'from-orange-50/50',  badge: 'bg-orange-100 text-orange-800 ring-orange-200',     Icon: Wrench },
+  // purple = conformidad subida, alineado con admin (banner purple) y cliente (pill purple)
+  completada_pendiente:{ label: 'Pend. revisión', stripe: 'border-l-purple-400',  gradientBg: 'from-purple-50/50',  badge: 'bg-purple-100 text-purple-800 ring-purple-200',     Icon: Clock },
+  finalizado:          { label: 'Finalizado',     stripe: 'border-l-emerald-400', gradientBg: 'from-emerald-50/50', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',   Icon: CheckCircle },
 }
 
 function getStatusKey(a: AsignacionTecnico): string {
