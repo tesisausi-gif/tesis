@@ -239,15 +239,26 @@ export function AIHelpChat({ variant = 'floating' }: AIHelpChatProps) {
         </button>
       )}
 
-      {/* Botón discreto admin (no flota, no arrastra) */}
-      {variant === 'admin' && !isOpen && (
+      {/* Botón admin (arrastrable, discreto) */}
+      {variant === 'admin' && !isOpen && mounted && (
         <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-10 w-10 rounded-full z-[9999] flex items-center justify-center bg-white border border-slate-200 shadow-md hover:shadow-lg hover:border-indigo-300 transition-all group"
+          ref={buttonRef}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          onClick={handleClick}
+          style={{
+            position: 'fixed',
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+            touchAction: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+          }}
+          className="h-14 w-14 rounded-full z-[9999] flex items-center justify-center bg-white border border-slate-200 shadow-lg hover:shadow-xl hover:border-indigo-300 transition-shadow cursor-grab active:cursor-grabbing group"
           title="Asistente IA"
         >
-          <Bot className="h-4 w-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-          <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-indigo-400 border-2 border-white" />
+          <Bot className="h-6 w-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+          <span className="absolute top-0.5 right-0.5 h-3 w-3 rounded-full bg-indigo-400 border-2 border-white" />
         </button>
       )}
 
