@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { getPagosForAdmin } from '@/features/pagos/pagos.service'
 import { getPendientesPagoTecnico, getPagosTecnicosRealizados } from '@/features/pagos/pagos-tecnicos.service'
 import { getPendientesCobroCliente, getCobrosClientesRealizados } from '@/features/pagos/cobros-clientes.service'
@@ -13,12 +14,14 @@ export default async function PagosPage() {
   ])
 
   return (
-    <PagosContent
-      pagos={pagos as any[]}
-      pendientesTecnicos={pendientesTecnicos}
-      realizadosTecnicos={realizadosTecnicos}
-      pendientesCobroCliente={pendientesCobroCliente}
-      realizadosCobroCliente={realizadosCobroCliente}
-    />
+    <Suspense>
+      <PagosContent
+        pagos={pagos as any[]}
+        pendientesTecnicos={pendientesTecnicos}
+        realizadosTecnicos={realizadosTecnicos}
+        pendientesCobroCliente={pendientesCobroCliente}
+        realizadosCobroCliente={realizadosCobroCliente}
+      />
+    </Suspense>
   )
 }

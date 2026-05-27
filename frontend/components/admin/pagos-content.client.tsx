@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useTransition, useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import {
   DollarSign, CreditCard, Calendar, FileText, Receipt, Wrench,
-  CheckCircle2, Clock, User, Banknote, ArrowLeftRight, History, Loader2, Search,
+  CheckCircle2, Clock, User, Banknote, ArrowLeftRight, History, Loader2, Search, ExternalLink,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -142,15 +143,37 @@ function MetodoBadge({ metodo }: { metodo: string }) {
   return <Badge className={colors[metodo] ?? 'bg-gray-100 text-gray-700'}>{metodoLabel(metodo)}</Badge>
 }
 
-function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCobroCliente[]; realizados: CobroClienteRegistrado[] }) {
+function TabCobrosClientes({ pendientes, realizados, highlightId }: { pendientes: PendienteCobroCliente[]; realizados: CobroClienteRegistrado[]; highlightId?: number | null }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [cobrarDialog, setCobrarDialog] = useState<PendienteCobroCliente | null>(null)
   const [formPago, setFormPago] = useState<MetodoPagoData>(METODO_INICIAL)
-  const [vista, setVista] = useState<'pendientes' | 'historial'>('pendientes')
+  const [vista, setVista] = useState<'pendientes' | 'historial'>(() => {
+    if (!highlightId) return 'pendientes'
+    if (pendientes.some(p => p.id_incidente === highlightId)) return 'pendientes'
+    if (realizados.some(c => c.id_incidente === highlightId)) return 'historial'
+    return 'pendientes'
+  })
   const [busqueda, setBusqueda] = useState('')
-  const [paginaPendientes, setPaginaPendientes] = useState(1)
-  const [paginaRealizados, setPaginaRealizados] = useState(1)
+  const [paginaPendientes, setPaginaPendientes] = useState(() => {
+    if (!highlightId) return 1
+    const idx = pendientes.findIndex(p => p.id_incidente === highlightId)
+    return idx >= 0 ? Math.floor(idx / 10) + 1 : 1
+  })
+  const [paginaRealizados, setPaginaRealizados] = useState(() => {
+    if (!highlightId) return 1
+    const idx = realizados.findIndex(c => c.id_incidente === highlightId)
+    return idx >= 0 ? Math.floor(idx / 10) + 1 : 1
+  })
+  const highlightRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+
+  useEffect(() => {
+    if (!highlightId) return
+    const timer = setTimeout(() => {
+      highlightRefs.current.get(highlightId)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [highlightId])
 
   const realizadosFiltrados = busqueda.trim()
     ? realizados.filter(c => {
@@ -249,25 +272,38 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
             <>
             <div className="grid gap-3">
               {pendientesPag.map(p => (
-                <Card key={p.id_presupuesto} className="border-amber-200 hover:shadow-md transition-shadow">
-                  <CardContent className="pt-4 pb-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                          <span className="font-semibold">{p.nombre_cliente} {p.apellido_cliente}</span>
-                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>
+                <div
+                  key={p.id_presupuesto}
+                  ref={el => { if (el) highlightRefs.current.set(p.id_incidente, el); else highlightRefs.current.delete(p.id_incidente) }}
+                >
+                  <Card className={`border-amber-200 hover:shadow-md transition-shadow ${highlightId === p.id_incidente ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}>
+                    <CardContent className="pt-4 pb-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
+                            <span className="font-semibold">{p.nombre_cliente} {p.apellido_cliente}</span>
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>
+                          <p className="text-sm font-bold text-gray-800">Total (con comisión): {fmt$(p.monto_cobro)}</p>
                         </div>
-                        <p className="text-sm text-gray-600 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>
-                        <p className="text-sm font-bold text-gray-800">Total (con comisión): {fmt$(p.monto_cobro)}</p>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <Link
+                            href={`/dashboard/incidentes?tab=finalizado&highlight=${p.id_incidente}`}
+                            className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5"/>Ver incidente
+                          </Link>
+                          <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setCobrarDialog(p) }}
+                            className="bg-green-600 hover:bg-green-700 gap-1" disabled={isPending}>
+                            <DollarSign className="h-3.5 w-3.5"/>Cobrar
+                          </Button>
+                        </div>
                       </div>
-                      <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setCobrarDialog(p) }}
-                        className="bg-green-600 hover:bg-green-700 gap-1 flex-shrink-0" disabled={isPending}>
-                        <DollarSign className="h-3.5 w-3.5"/>Cobrar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               ))}
             </div>
             <Paginacion pagina={paginaPendientes} total={pendientes.length} onChange={setPaginaPendientes} />
@@ -297,25 +333,38 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
             <>
             <div className="grid gap-3">
               {realizadosPag.map(c => (
-                <Card key={c.id_cobro} className="border-green-200"><CardContent className="pt-3 pb-3">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                    <span className="font-medium">{c.nombre_cliente} {c.apellido_cliente}</span>
-                    <MetodoBadge metodo={c.metodo_pago}/>
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Cobrado</Badge>
-                  </div>
-                  {c.descripcion_problema && <p className="text-sm text-gray-500 truncate">Incidente #{c.id_incidente} — {c.descripcion_problema}</p>}
-                  <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
-                    <span className="font-semibold text-green-700">{fmt$(Number(c.monto_cobro))}</span>
-                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(c.fecha_cobro),'dd/MM/yyyy HH:mm',{locale:es})}</span>
-                    {c.referencia_pago && <span>Ref: {c.referencia_pago}</span>}
-                    {c.banco && <span>{c.banco}</span>}
-                    {c.cuotas && c.cuotas > 1 && <span>{c.cuotas} cuotas</span>}
-                    {c.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Cobrado por: {c.marcado_por_nombre}</span>}
-                    {!c.marcado_por_nombre && c.marcado_por_email && <span>{c.marcado_por_email}</span>}
-                  </div>
-                  {c.observaciones && <p className="text-xs text-gray-400 italic mt-1">{c.observaciones}</p>}
-                </CardContent></Card>
+                <div
+                  key={c.id_cobro}
+                  ref={el => { if (el) highlightRefs.current.set(c.id_incidente, el); else highlightRefs.current.delete(c.id_incidente) }}
+                >
+                  <Card className={`border-green-200 ${highlightId === c.id_incidente ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}><CardContent className="pt-3 pb-3">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
+                        <span className="font-medium">{c.nombre_cliente} {c.apellido_cliente}</span>
+                        <MetodoBadge metodo={c.metodo_pago}/>
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Cobrado</Badge>
+                      </div>
+                      <Link
+                        href={`/dashboard/incidentes?tab=finalizado&highlight=${c.id_incidente}`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex-shrink-0"
+                      >
+                        <ExternalLink className="h-3 w-3"/>Ver
+                      </Link>
+                    </div>
+                    {c.descripcion_problema && <p className="text-sm text-gray-500 truncate">Incidente #{c.id_incidente} — {c.descripcion_problema}</p>}
+                    <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
+                      <span className="font-semibold text-green-700">{fmt$(Number(c.monto_cobro))}</span>
+                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(c.fecha_cobro),'dd/MM/yyyy HH:mm',{locale:es})}</span>
+                      {c.referencia_pago && <span>Ref: {c.referencia_pago}</span>}
+                      {c.banco && <span>{c.banco}</span>}
+                      {c.cuotas && c.cuotas > 1 && <span>{c.cuotas} cuotas</span>}
+                      {c.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Cobrado por: {c.marcado_por_nombre}</span>}
+                      {!c.marcado_por_nombre && c.marcado_por_email && <span>{c.marcado_por_email}</span>}
+                    </div>
+                    {c.observaciones && <p className="text-xs text-gray-400 italic mt-1">{c.observaciones}</p>}
+                  </CardContent></Card>
+                </div>
               ))}
             </div>
             <Paginacion pagina={paginaRealizados} total={realizadosFiltrados.length} onChange={setPaginaRealizados} />
@@ -346,15 +395,37 @@ function TabCobrosClientes({ pendientes, realizados }: { pendientes: PendienteCo
   )
 }
 
-function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePagoTecnico[]; realizados: PagoTecnicoRegistrado[] }) {
+function TabPagosTecnicos({ pendientes, realizados, highlightId }: { pendientes: PendientePagoTecnico[]; realizados: PagoTecnicoRegistrado[]; highlightId?: number | null }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [pagarDialog, setPagarDialog] = useState<PendientePagoTecnico | null>(null)
   const [formPago, setFormPago] = useState<MetodoPagoData>(METODO_INICIAL)
-  const [vista, setVista] = useState<'pendientes' | 'historial'>('pendientes')
+  const [vista, setVista] = useState<'pendientes' | 'historial'>(() => {
+    if (!highlightId) return 'pendientes'
+    if (pendientes.some(p => p.id_incidente === highlightId)) return 'pendientes'
+    if (realizados.some(p => p.id_incidente === highlightId)) return 'historial'
+    return 'pendientes'
+  })
   const [busqueda, setBusqueda] = useState('')
-  const [paginaPendientes, setPaginaPendientes] = useState(1)
-  const [paginaRealizados, setPaginaRealizados] = useState(1)
+  const [paginaPendientes, setPaginaPendientes] = useState(() => {
+    if (!highlightId) return 1
+    const idx = pendientes.findIndex(p => p.id_incidente === highlightId)
+    return idx >= 0 ? Math.floor(idx / 10) + 1 : 1
+  })
+  const [paginaRealizados, setPaginaRealizados] = useState(() => {
+    if (!highlightId) return 1
+    const idx = realizados.findIndex(p => p.id_incidente === highlightId)
+    return idx >= 0 ? Math.floor(idx / 10) + 1 : 1
+  })
+  const highlightRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+
+  useEffect(() => {
+    if (!highlightId) return
+    const timer = setTimeout(() => {
+      highlightRefs.current.get(highlightId)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [highlightId])
 
   const realizadosFiltrados = busqueda.trim()
     ? realizados.filter(p => {
@@ -466,34 +537,42 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
             <>
             <div className="grid gap-3">
               {pendientesPag.map(p => (
-                <Card key={p.id_presupuesto} className="border-amber-200 hover:shadow-md transition-shadow">
-                  <CardContent className="pt-4 pb-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                          <span className="font-semibold">{p.nombre_tecnico} {p.apellido_tecnico}</span>
-                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>
+                <div
+                  key={p.id_presupuesto}
+                  ref={el => { if (el) highlightRefs.current.set(p.id_incidente, el); else highlightRefs.current.delete(p.id_incidente) }}
+                >
+                  <Card className={`border-amber-200 hover:shadow-md transition-shadow ${highlightId === p.id_incidente ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}>
+                    <CardContent className="pt-4 pb-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
+                            <span className="font-semibold">{p.nombre_tecnico} {p.apellido_tecnico}</span>
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>
+                          <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                            <span>Materiales: {fmt$(p.costo_materiales)}</span>
+                            <span>Mano de obra: {fmt$(p.costo_mano_obra)}</span>
+                            <span className="font-semibold text-gray-700">Total: {fmt$(p.monto_a_pagar)}</span>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-600 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>
-                        <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                          <span>Materiales: {fmt$(p.costo_materiales)}</span>
-                          <span>Mano de obra: {fmt$(p.costo_mano_obra)}</span>
-                          <span className="font-semibold text-gray-700">Total: {fmt$(p.monto_a_pagar)}</span>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <Link
+                            href={`/dashboard/incidentes?tab=finalizado&highlight=${p.id_incidente}`}
+                            className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5"/>Ver incidente
+                          </Link>
+                          <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setPagarDialog(p) }}
+                            className="bg-green-600 hover:bg-green-700 gap-1" disabled={isPending}>
+                            <CheckCircle2 className="h-3.5 w-3.5"/>Pagar
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        <Button size="sm" variant="outline" onClick={() => abrirTimeline(p.id_incidente)} disabled={isPending} className="gap-1 flex-shrink-0">
-                          <History className="h-3.5 w-3.5"/>Historial
-                        </Button>
-                        <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setPagarDialog(p) }}
-                          className="bg-green-600 hover:bg-green-700 gap-1 flex-shrink-0" disabled={isPending}>
-                          <CheckCircle2 className="h-3.5 w-3.5"/>Pagar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               ))}
             </div>
             <Paginacion pagina={paginaPendientes} total={pendientes.length} onChange={setPaginaPendientes} />
@@ -523,25 +602,38 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
             <>
             <div className="grid gap-3">
               {realizadosPag.map(p => (
-                <Card key={p.id_pago_tecnico} className="border-green-200"><CardContent className="pt-3 pb-3">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                    <span className="font-medium">{p.nombre_tecnico} {p.apellido_tecnico}</span>
-                    {p.metodo_pago && <MetodoBadge metodo={p.metodo_pago}/>}
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Pagado</Badge>
-                  </div>
-                  {p.descripcion_problema && <p className="text-sm text-gray-500 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>}
-                  <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
-                    <span className="font-semibold text-green-700">{fmt$(Number(p.monto_pago))}</span>
-                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(p.fecha_pago),'dd/MM/yyyy HH:mm',{locale:es})}</span>
-                    {p.referencia_pago && <span>Ref: {p.referencia_pago}</span>}
-                    {p.banco && <span>{p.banco}</span>}
-                    {p.cuotas && p.cuotas > 1 && <span>{p.cuotas} cuotas</span>}
-                    {p.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Pagado por: {p.marcado_por_nombre}</span>}
-                    {!p.marcado_por_nombre && p.marcado_por_email && <span>{p.marcado_por_email}</span>}
-                  </div>
-                  {p.observaciones && <p className="text-xs text-gray-400 italic mt-1">{p.observaciones}</p>}
-                </CardContent></Card>
+                <div
+                  key={p.id_pago_tecnico}
+                  ref={el => { if (el) highlightRefs.current.set(p.id_incidente, el); else highlightRefs.current.delete(p.id_incidente) }}
+                >
+                  <Card className={`border-green-200 ${highlightId === p.id_incidente ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}><CardContent className="pt-3 pb-3">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
+                        <span className="font-medium">{p.nombre_tecnico} {p.apellido_tecnico}</span>
+                        {p.metodo_pago && <MetodoBadge metodo={p.metodo_pago}/>}
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Pagado</Badge>
+                      </div>
+                      <Link
+                        href={`/dashboard/incidentes?tab=finalizado&highlight=${p.id_incidente}`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex-shrink-0"
+                      >
+                        <ExternalLink className="h-3 w-3"/>Ver
+                      </Link>
+                    </div>
+                    {p.descripcion_problema && <p className="text-sm text-gray-500 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>}
+                    <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
+                      <span className="font-semibold text-green-700">{fmt$(Number(p.monto_pago))}</span>
+                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(p.fecha_pago),'dd/MM/yyyy HH:mm',{locale:es})}</span>
+                      {p.referencia_pago && <span>Ref: {p.referencia_pago}</span>}
+                      {p.banco && <span>{p.banco}</span>}
+                      {p.cuotas && p.cuotas > 1 && <span>{p.cuotas} cuotas</span>}
+                      {p.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Pagado por: {p.marcado_por_nombre}</span>}
+                      {!p.marcado_por_nombre && p.marcado_por_email && <span>{p.marcado_por_email}</span>}
+                    </div>
+                    {p.observaciones && <p className="text-xs text-gray-400 italic mt-1">{p.observaciones}</p>}
+                  </CardContent></Card>
+                </div>
               ))}
             </div>
             <Paginacion pagina={paginaRealizados} total={realizadosFiltrados.length} onChange={setPaginaRealizados} />
@@ -758,6 +850,9 @@ interface PagosContentProps {
 
 export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendientesCobroCliente, realizadosCobroCliente }: PagosContentProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') ?? 'cobros-clientes')
+  const highlightId = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : null
 
   useEffect(() => {
     const supabase = createClient()
@@ -782,7 +877,7 @@ export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendiente
         <h1 className="text-3xl font-bold text-gray-900">Pagos y Cobros</h1>
         <p className="text-gray-600 text-sm mt-1">Gestión de cobros a clientes y pagos a técnicos</p>
       </div>
-      <Tabs defaultValue="cobros-clientes">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
           <TabsTrigger value="cobros-clientes" className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">
             <DollarSign className="h-3.5 w-3.5"/>Cobros a Clientes
@@ -801,10 +896,10 @@ export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendiente
           </TabsTrigger>
         </TabsList>
         <TabsContent value="cobros-clientes" className="mt-4">
-          <TabCobrosClientes pendientes={pendientesCobroCliente} realizados={realizadosCobroCliente}/>
+          <TabCobrosClientes pendientes={pendientesCobroCliente} realizados={realizadosCobroCliente} highlightId={activeTab === 'cobros-clientes' ? highlightId : null}/>
         </TabsContent>
         <TabsContent value="pagos-tecnicos" className="mt-4">
-          <TabPagosTecnicos pendientes={pendientesTecnicos} realizados={realizadosTecnicos}/>
+          <TabPagosTecnicos pendientes={pendientesTecnicos} realizados={realizadosTecnicos} highlightId={activeTab === 'pagos-tecnicos' ? highlightId : null}/>
         </TabsContent>
         <TabsContent value="registro" className="mt-4">
           <TabRegistroHistorico realizadosTecnicos={realizadosTecnicos} realizadosCobroCliente={realizadosCobroCliente}/>

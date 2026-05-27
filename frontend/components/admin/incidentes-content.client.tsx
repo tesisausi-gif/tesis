@@ -123,7 +123,7 @@ function formatFecha(raw: string | null | undefined): string {
 // ── Componente de card extraído para reutilizar en vista plana y agrupada ─────
 function IncidenteCard({
   inc, cfg, Icon, accion, accionCfg, isHighlighted,
-  direccion, tecnicoAsignado, highlightRefs, onVerDetalle, onGestionar,
+  direccion, tecnicoAsignado, highlightRefs, onVerDetalle, onGestionar, pagoLink,
 }: {
   inc: IncidenteConClienteAdmin
   cfg: typeof import('@/shared/utils/colors').ESTADO_INCIDENTE_CONFIG[string]
@@ -136,6 +136,7 @@ function IncidenteCard({
   highlightRefs: React.MutableRefObject<Map<number, HTMLDivElement>>
   onVerDetalle: (id: number, tab?: string) => void
   onGestionar: (inc: IncidenteConClienteAdmin, accion: AccionPendiente) => void
+  pagoLink?: string
 }) {
   const rechazadaRecientemente = inc.estado_actual === 'asignacion_solicitada' &&
     inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'rechazada')
@@ -254,16 +255,26 @@ function IncidenteCard({
           <Clock className="w-4 h-4 text-blue-500" />
           <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
         </button>
-        <button
-          onClick={() => !accionCfg.disabled && onGestionar(inc, accion)}
-          disabled={accionCfg.disabled}
-          className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
-            accionCfg.disabled ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/40 active:bg-white/60'
-          } ${accionCfg.activeColor}`}
-        >
-          <accionCfg.Icon className={`w-4 h-4 ${accionCfg.pulse ? 'animate-pulse' : ''}`} />
-          <span className="text-[10px] font-semibold">{accionCfg.label}</span>
-        </button>
+        {pagoLink ? (
+          <Link
+            href={pagoLink}
+            className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-emerald-50/60 active:bg-emerald-100/60 transition-colors text-emerald-600"
+          >
+            <CreditCard className="w-4 h-4" />
+            <span className="text-[10px] font-semibold">Ir al Pago</span>
+          </Link>
+        ) : (
+          <button
+            onClick={() => !accionCfg.disabled && onGestionar(inc, accion)}
+            disabled={accionCfg.disabled}
+            className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${
+              accionCfg.disabled ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/40 active:bg-white/60'
+            } ${accionCfg.activeColor}`}
+          >
+            <accionCfg.Icon className={`w-4 h-4 ${accionCfg.pulse ? 'animate-pulse' : ''}`} />
+            <span className="text-[10px] font-semibold">{accionCfg.label}</span>
+          </button>
+        )}
       </div>
     </div>
   )
@@ -627,6 +638,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                         highlightRefs={highlightRefs}
                         onVerDetalle={abrirModal}
                         onGestionar={handleGestionar}
+                        pagoLink={!incidentesPagadosIds.includes(inc.id_incidente) ? `/dashboard/pagos?tab=pagos-tecnicos&highlight=${inc.id_incidente}` : undefined}
                       />
                     })}
                   </div>
