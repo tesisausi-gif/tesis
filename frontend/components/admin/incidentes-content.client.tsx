@@ -156,9 +156,18 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   }
 
   // Stats
+  // asignacion_solicitada con rechazo = necesita reasignación urgente → se agrupa con pendientes
+  const necesitaReasignacion = (inc: IncidenteConClienteAdmin) =>
+    getAccionPendiente(inc).tipo === 'reasignar'
+
   const porEstado = {
-    pendiente:             incidentes.filter(i => i.estado_actual === 'pendiente'),
-    asignacion_solicitada: incidentes.filter(i => i.estado_actual === 'asignacion_solicitada'),
+    pendiente:             incidentes.filter(i =>
+      i.estado_actual === 'pendiente' ||
+      (i.estado_actual === 'asignacion_solicitada' && necesitaReasignacion(i))
+    ),
+    asignacion_solicitada: incidentes.filter(i =>
+      i.estado_actual === 'asignacion_solicitada' && !necesitaReasignacion(i)
+    ),
     en_proceso:            incidentes.filter(i => i.estado_actual === 'en_proceso'),
     finalizado:            incidentes.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto'),
   }
@@ -178,9 +187,14 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
   const incidentesFiltrados = incidentes.filter(inc => {
     const estadoMatch = filtro === 'todos'
       ? true
-      : filtro === 'finalizado'
-        ? (inc.estado_actual === 'finalizado' || inc.estado_actual === 'resuelto')
-        : inc.estado_actual === filtro
+      : filtro === 'pendiente'
+        ? (inc.estado_actual === 'pendiente' ||
+           (inc.estado_actual === 'asignacion_solicitada' && necesitaReasignacion(inc)))
+        : filtro === 'asignacion_solicitada'
+          ? (inc.estado_actual === 'asignacion_solicitada' && !necesitaReasignacion(inc))
+          : filtro === 'finalizado'
+            ? (inc.estado_actual === 'finalizado' || inc.estado_actual === 'resuelto')
+            : inc.estado_actual === filtro
 
     if (!estadoMatch) return false
 
@@ -202,7 +216,14 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
     return true
   })
 
-  const incidentesPaginados = incidentesFiltrados.slice((pagina - 1) * 10, pagina * 10)
+  // Reasignaciones urgentes siempre al tope
+  const incidentesOrdenados = [...incidentesFiltrados].sort((a, b) => {
+    const aUrgente = necesitaReasignacion(a) ? 0 : 1
+    const bUrgente = necesitaReasignacion(b) ? 0 : 1
+    return aUrgente - bUrgente
+  })
+
+  const incidentesPaginados = incidentesOrdenados.slice((pagina - 1) * 10, pagina * 10)
 
   return (
     <div className="space-y-4">
