@@ -518,6 +518,67 @@ completada
     → técnico puede volver a subir nueva foto
 ```
 
+### 5.5 Sub-estados de "en_proceso"
+
+El estado `en_proceso` de un incidente se subdivide en 7 sub-estados que se **calculan dinámicamente** — no hay un campo único en la DB. Se derivan de la combinación de `estado_asignacion` (asignación activa), `estado_presupuesto` (presupuesto si existe), inspecciones cargadas y el estado de la conformidad.
+
+**Funciones que los calculan:**
+- Admin: `getAccionPendiente()` en `components/admin/incidentes-content.client.tsx`
+- Técnico: `getStatusKey()` en `components/tecnico/trabajos-content.client.tsx`
+- Cliente: lógica inline de `grupos` en `components/cliente/incidentes-content.client.tsx`
+
+**Fuente canónica del type y config visual:** `shared/utils/colors.ts` → `SubEstadoEnProceso` y `SUB_ESTADO_EN_PROCESO_CONFIG`
+
+---
+
+#### Orden cronológico y lógico del flujo
+
+| # | Key | labelBadge | Condición de activación | Admin | Técnico | Cliente |
+|---|-----|-----------|------------------------|-------|---------|---------|
+| 1 | `pendiente_inspeccion` | Pend. inspección | `estado_asignacion = 'aceptada'` + sin inspecciones en DB | Visible (disabled) | Visible (→ tab inspecciones) | NO (aparece como "En curso") |
+| 2 | `aceptada` | Pend. presupuesto | `estado_asignacion = 'aceptada'` + inspección cargada + sin presupuesto aprobado | Visible (disabled) | Visible (→ cargar presupuesto) | NO (aparece como "En curso") |
+| 3 | `presupuesto_enviado` | Presup. enviado | `estado_presupuesto = 'enviado'` | Visible (→ evaluar presup.) | Visible (disabled) | NO (aparece como "En curso") |
+| 4 | `presupuesto_cliente` | Esp. cliente | `estado_presupuesto = 'aprobado_admin'` | Visible (disabled) | Visible (disabled) | Visible (→ aprobar presup.) |
+| 5 | `en_curso` | En curso | `estado_presupuesto = 'aprobado'` | Fallback general | Condición explícita | Residual (engloba #1-#3) |
+| 6 | `completada_pendiente` | Conf. subida | Conformidad con `url_documento && !esta_firmada && !esta_rechazada` | Visible (→ ver conform.) | `estado_asignacion = 'completada'` | Visible |
+| 7 | `conformidad_rechazada` | Conf. rechazada | `conformidad.esta_rechazada = true` | Primera condición evaluada | `estado_asignacion = 'completada'` + rechazada | NO |
+
+---
+
+#### Descripción de cada sub-estado
+
+**1. `pendiente_inspeccion` — Pend. inspección**
+Técnico aceptó la asignación pero todavía no realizó la inspección del inmueble. Nadie puede avanzar hasta que el técnico suba la inspección. El admin y el cliente no pueden hacer nada; solo el técnico tiene acción (ir al tab de inspecciones).
+
+**2. `aceptada` — Pend. presupuesto**
+Inspección ya cargada. El técnico debe elaborar y enviar el presupuesto. El admin observa; no hay acción posible hasta que el técnico actúe.
+
+**3. `presupuesto_enviado` — Presup. enviado**
+Técnico envió el presupuesto al sistema. El admin debe revisarlo: puede aprobarlo (→ `aprobado_admin`) o rechazarlo. Si lo rechaza sin decidir un nuevo técnico, el incidente vuelve a `pendiente`.
+
+**4. `presupuesto_cliente` — Esp. cliente**
+Admin aprobó el presupuesto internamente. Ahora el cliente debe dar el ok. Nadie puede avanzar hasta que el cliente decida. Si rechaza con `nueva_oportunidad`, el técnico puede reenviar presupuesto. Si rechaza con `nuevo_tecnico`, el incidente vuelve a `pendiente`.
+
+**5. `en_curso` — En curso**
+Cliente aprobó el presupuesto y el trabajo está activo. El técnico está ejecutando. No hay acción pendiente para el admin. El cliente ve este sub-estado para todos los incidentes que no tienen presupuesto pendiente ni conformidad subida (incluye los sub-estados #1–#3 que el cliente no puede distinguir).
+
+**6. `completada_pendiente` — Conf. subida**
+Técnico marcó la asignación como completada y subió la foto de la conformidad firmada. El admin debe revisar la foto y aprobar o rechazar. Banner violeta en la card del admin.
+
+**7. `conformidad_rechazada` — Conf. rechazada**
+Admin rechazó la foto de conformidad (ilegible, incompleta, etc.). El técnico debe subir una nueva foto. Banner rojo. Este sub-estado tiene la **máxima prioridad** en la función del admin: se evalúa antes que todos los demás.
+
+---
+
+#### Visibilidad por rol
+
+El cliente solo ve 3 de los 7 sub-estados:
+- `presupuesto_cliente` → "Aguarda aprobación del cliente" (debe aprobar el presupuesto)
+- `en_curso` → "Trabajo en progreso" (engloba también #1, #2 y #3)
+- `completada_pendiente` → "Conformidad para revisar"
+
+Los sub-estados `pendiente_inspeccion`, `aceptada` y `presupuesto_enviado` son invisibles para el cliente: aparecen todos agrupados como "En curso". El sub-estado `conformidad_rechazada` tampoco es visible para el cliente en la vista de lista (solo en el timeline del incidente).
+
 ---
 
 ## 6. Flujos por Rol
