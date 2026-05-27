@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { createClient } from '@/shared/lib/supabase/client'
-import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO } from '@/shared/utils/colors'
+import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
 import type { Incidente } from '@/features/incidentes/incidentes.types'
 
 interface IncidentesContentProps {
@@ -170,11 +170,12 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                       </span>
                     </div>
                     {incidente.estado_actual === 'en_proceso' && !tienePresupuestoPendiente && (() => {
-                      const sub = tieneConformidadSubida ? SUB_ESTADO_EN_PROCESO.revision_conformidad : SUB_ESTADO_EN_PROCESO.en_progreso
+                      const subKey = tieneConformidadSubida ? 'completada_pendiente' as const : 'en_curso' as const
+                      const subcfg = SUB_ESTADO_EN_PROCESO_CONFIG[subKey]
                       return (
-                        <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg mb-2 w-fit ${sub.pill}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sub.dot}`} />
-                          {sub.labelCliente}
+                        <div className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg mb-2 ring-1 ring-inset ${subcfg.badge}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${subcfg.groupDotCls}`} />
+                          {subcfg.labelGrupo}
                         </div>
                       )
                     })()}
@@ -217,42 +218,36 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
             }
 
             if (filtro === 'en_proceso') {
-              const grupos = [
+              const grupos = ([
                 {
-                  key: 'presupuesto',
-                  label: 'Presupuesto para aprobar',
-                  headerCls: 'text-amber-700 bg-amber-50 border-amber-200',
-                  dotCls: 'bg-amber-500 animate-pulse',
+                  subKey: 'presupuesto_cliente' as const,
                   items: incidentesFiltrados.filter(i => pendientesPresupuesto.has(i.id_incidente)),
                 },
                 {
-                  key: 'revision',
-                  label: 'En revisión final',
-                  headerCls: 'text-purple-700 bg-purple-50 border-purple-200',
-                  dotCls: 'bg-purple-500 animate-pulse',
+                  subKey: 'completada_pendiente' as const,
                   items: incidentesFiltrados.filter(i => !pendientesPresupuesto.has(i.id_incidente) && incidentesConConformidadSubida.includes(i.id_incidente)),
                 },
                 {
-                  key: 'progreso',
-                  label: 'Trabajo en progreso',
-                  headerCls: 'text-orange-700 bg-orange-50 border-orange-200',
-                  dotCls: 'bg-orange-400',
+                  subKey: 'en_curso' as const,
                   items: incidentesFiltrados.filter(i => !pendientesPresupuesto.has(i.id_incidente) && !incidentesConConformidadSubida.includes(i.id_incidente)),
                 },
-              ].filter(g => g.items.length > 0)
+              ]).filter(g => g.items.length > 0)
 
               return (
                 <div className="px-4 pt-3 space-y-6">
-                  {grupos.map(grupo => (
-                    <div key={grupo.key}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${grupo.headerCls}`}>
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${grupo.dotCls}`} />
-                        <span className="text-xs font-bold">{grupo.label}</span>
-                        <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
+                  {grupos.map(grupo => {
+                    const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[grupo.subKey]
+                    return (
+                      <div key={grupo.subKey}>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border mb-3 ${gcfg.groupHeaderCls}`}>
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${gcfg.groupDotCls}`} />
+                          <span className="text-xs font-bold">{gcfg.labelGrupo}</span>
+                          <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
+                        </div>
+                        <div className="space-y-3">{grupo.items.map(renderCard)}</div>
                       </div>
-                      <div className="space-y-3">{grupo.items.map(renderCard)}</div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )
             }

@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/features/auth/auth.service'
 import { getAsignacionesActivas } from '@/features/asignaciones/asignaciones.service'
 import { getPresupuestosDeTecnico } from '@/features/presupuestos/presupuestos.service'
 import { getConformidadesPorIncidentes } from '@/features/conformidades/conformidades.service'
+import { getMisIncidentesPagados } from '@/features/pagos/pagos-tecnicos.service'
 import { TrabajosContent } from '@/components/tecnico/trabajos-content.client'
 
 export default async function TecnicoTrabajosPage() {
@@ -11,9 +12,10 @@ export default async function TecnicoTrabajosPage() {
   if (!user) redirect('/login')
   if (!user.id_tecnico) redirect('/login')
 
-  const [asignaciones, presupuestos] = await Promise.all([
+  const [asignaciones, presupuestos, incidentesPagadosIds] = await Promise.all([
     getAsignacionesActivas(),
     getPresupuestosDeTecnico(),
+    getMisIncidentesPagados(),
   ])
 
   // Mapa de id_incidente → estado del presupuesto
@@ -39,6 +41,7 @@ export default async function TecnicoTrabajosPage() {
       estadoPresupuestoPorIncidente={estadoPresupuestoPorIncidente}
       conformidadesPorIncidente={conformidadesPorIncidente}
       idTecnico={user.id_tecnico!}
+      incidentesPagadosIds={incidentesPagadosIds}
     />
   )
 }

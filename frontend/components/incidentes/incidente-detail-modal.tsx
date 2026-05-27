@@ -162,11 +162,11 @@ const ESTADOS_LABELS: Record<string, string> = {
 }
 
 const ESTADO_COLORS: Record<string, string> = {
-  'pendiente': 'bg-yellow-100 text-yellow-800',
-  'en_proceso': 'bg-blue-100 text-blue-800',
-  'asignacion_solicitada': 'bg-purple-100 text-purple-800',
-  'resuelto': 'bg-green-100 text-green-800',
-  'finalizado': 'bg-green-100 text-green-800',
+  'pendiente': 'bg-amber-100 text-amber-800',
+  'en_proceso': 'bg-orange-100 text-orange-800',
+  'asignacion_solicitada': 'bg-blue-100 text-blue-800',
+  'resuelto': 'bg-emerald-100 text-emerald-800',
+  'finalizado': 'bg-emerald-100 text-emerald-800',
 }
 
 function TecnicoAsignadoCard({ nombre, especialidad, telefono, email, estado }: {

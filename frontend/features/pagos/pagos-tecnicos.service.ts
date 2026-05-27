@@ -212,6 +212,25 @@ export async function registrarPagoTecnico(
   }
 }
 
+/**
+ * IDs de incidentes que ya tienen un pago registrado (para admin).
+ */
+export async function getIncidentesPagados(): Promise<number[]> {
+  const supabase = createAdminClient()
+  const { data } = await supabase.from('pagos_tecnicos').select('id_incidente')
+  return (data || []).map((p: any) => Number(p.id_incidente)).filter(Boolean)
+}
+
+/**
+ * IDs de incidentes del técnico actual que ya fueron cobrados.
+ */
+export async function getMisIncidentesPagados(): Promise<number[]> {
+  const supabase = await createClient()
+  const idTecnico = await requireTecnicoId()
+  const { data } = await supabase.from('pagos_tecnicos').select('id_incidente').eq('id_tecnico', idTecnico)
+  return (data || []).map((p: any) => Number(p.id_incidente)).filter(Boolean)
+}
+
 // ─── Vista Técnico: mis pagos pendientes y recibidos ─────────────────────────
 
 export interface MiPagoPendiente {

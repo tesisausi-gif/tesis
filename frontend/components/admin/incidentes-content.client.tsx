@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { format } from 'date-fns'
@@ -9,7 +10,7 @@ import { es } from 'date-fns/locale'
 import {
   AlertCircle, Search, Clock, Send, Wrench, CheckCircle,
   MapPin, FileText, ClipboardList, RefreshCw, XCircle, Bell,
-  User, AlertTriangle,
+  User, AlertTriangle, CreditCard, CircleCheck,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-modal'
@@ -19,6 +20,7 @@ import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEn
 
 interface IncidentesAdminContentProps {
   incidentes: IncidenteConClienteAdmin[]
+  incidentesPagadosIds: number[]
 }
 
 const ICON_BY_ESTADO: Record<string, React.ElementType> = {
@@ -267,7 +269,7 @@ function IncidenteCard({
   )
 }
 
-export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentProps) {
+export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: IncidentesAdminContentProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
@@ -543,6 +545,97 @@ export function IncidentesAdminContent({ incidentes }: IncidentesAdminContentPro
           )}
           </div>
         </div>
+      ) : filtro === 'finalizado' ? (
+        /* ── Vista Finalizados con sub-filtro de pago ────────────────────────── */
+        (() => {
+          const pagados = incidentesOrdenados.filter(i => incidentesPagadosIds.includes(i.id_incidente))
+          const pendientesPago = incidentesOrdenados.filter(i => !incidentesPagadosIds.includes(i.id_incidente))
+          const listaFinal =
+            subFiltro === 'pagado' ? pagados :
+            subFiltro === 'pendiente_pago' ? pendientesPago :
+            incidentesOrdenados
+          const paginados = listaFinal.slice((pagina - 1) * 10, pagina * 10)
+          return (
+            <div className="space-y-4">
+              {/* Sub-filtro */}
+              <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
+                {([
+                  { id: 'todos',           label: 'Todos',           count: incidentesOrdenados.length },
+                  { id: 'pendiente_pago',  label: 'Pendiente Pago',  count: pendientesPago.length },
+                  { id: 'pagado',          label: 'Pagados',         count: pagados.length },
+                ] as const).map(({ id, label, count }) => {
+                  const active = subFiltro === id
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => { setSubFiltro(id); setPagina(1) }}
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                      }`}
+                    >
+                      {id === 'pagado' ? <CircleCheck className="w-3 h-3" /> : id === 'pendiente_pago' ? <CreditCard className="w-3 h-3" /> : null}
+                      {label}
+                      {count > 0 && (
+                        <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+              {/* Acceso directo a pagos cuando hay pendientes */}
+              {(subFiltro === 'todos' || subFiltro === 'pendiente_pago') && pendientesPago.length > 0 && (
+                <Link
+                  href="/dashboard/pagos"
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors text-sm font-semibold"
+                >
+                  <CreditCard className="w-4 h-4 flex-shrink-0" />
+                  <span>Hay {pendientesPago.length} pago{pendientesPago.length !== 1 ? 's' : ''} pendiente{pendientesPago.length !== 1 ? 's' : ''} — Ir a Pagos</span>
+                  <span className="ml-auto text-emerald-500">→</span>
+                </Link>
+              )}
+              {listaFinal.length === 0 ? (
+                <div className="text-center py-12 text-gray-400 text-sm">No hay incidentes en este sub-estado</div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {paginados.map(inc => {
+                      const accion = getAccionPendiente(inc)
+                      const accionCfg = ACCION_CONFIG[accion.tipo]
+                      const cfgKey = inc.estado_actual
+                      const cfg = ESTADO_INCIDENTE_CONFIG[cfgKey] ?? ESTADO_INCIDENTE_CONFIG.finalizado
+                      const Icon = ICON_BY_ESTADO[cfgKey] ?? CheckCircle
+                      const isHighlighted = inc.id_incidente === highlightId
+                      const inmueble = inc.inmuebles
+                      const dir = [inmueble?.calle, inmueble?.altura].filter(Boolean).join(' ')
+                      const ubi = [inmueble?.barrio, inmueble?.localidad].filter(Boolean).join(', ')
+                      const direccion = ubi ? `${dir}, ${ubi}` : dir || 'Sin dirección'
+                      const tecnicoAsignado = inc.asignaciones_tecnico?.find(a =>
+                        ['aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+                      )?.tecnicos
+                      return <IncidenteCard
+                        key={inc.id_incidente}
+                        inc={inc}
+                        cfg={cfg}
+                        Icon={Icon}
+                        accion={accion}
+                        accionCfg={accionCfg}
+                        isHighlighted={isHighlighted}
+                        direccion={direccion}
+                        tecnicoAsignado={tecnicoAsignado ?? null}
+                        highlightRefs={highlightRefs}
+                        onVerDetalle={abrirModal}
+                        onGestionar={handleGestionar}
+                      />
+                    })}
+                  </div>
+                  <Paginacion pagina={pagina} total={listaFinal.length} onChange={setPagina} />
+                </>
+              )}
+            </div>
+          )
+        })()
       ) : (
         /* ── Vista paginada normal ───────────────────────────────────────────── */
         <>

@@ -30,6 +30,7 @@ interface TrabajosContentProps {
   estadoPresupuestoPorIncidente: Record<number, string>
   conformidadesPorIncidente: Record<number, ConformidadInfo>
   idTecnico: number
+  incidentesPagadosIds: number[]
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -125,6 +126,7 @@ export function TrabajosContent({
   estadoPresupuestoPorIncidente,
   conformidadesPorIncidente,
   idTecnico,
+  incidentesPagadosIds,
 }: TrabajosContentProps) {
   const router = useRouter()
   const [filtro, setFiltro] = useState<string>('en_proceso')
@@ -471,6 +473,50 @@ export function TrabajosContent({
               )}
               </div>
             </div>
+          ) : filtro === 'resueltos' ? (
+            /* ── Finalizados con sub-filtro de cobro ── */
+            (() => {
+              const cobrados = listaFiltrada.filter(a => incidentesPagadosIds.includes(a.id_incidente))
+              const cobroPendiente = listaFiltrada.filter(a => !incidentesPagadosIds.includes(a.id_incidente))
+              const listaFinal =
+                subFiltro === 'cobrado' ? cobrados :
+                subFiltro === 'cobro_pendiente' ? cobroPendiente :
+                listaFiltrada
+              return (
+                <div className="px-4 pt-3 space-y-4">
+                  <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
+                    {([
+                      { id: 'todos',          label: 'Todos',          count: listaFiltrada.length },
+                      { id: 'cobro_pendiente', label: 'Cobro pendiente', count: cobroPendiente.length },
+                      { id: 'cobrado',        label: 'Cobrados',       count: cobrados.length },
+                    ] as const).map(({ id, label, count }) => {
+                      const active = subFiltro === id
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => setSubFiltro(id)}
+                          className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                          }`}
+                        >
+                          {label}
+                          {count > 0 && (
+                            <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                              {count}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {listaFinal.length === 0 ? (
+                    <div className="text-center py-12 text-gray-400 text-sm">No hay incidentes en este sub-estado</div>
+                  ) : (
+                    <div className="space-y-3">{listaFinal.map(a => renderCard(a))}</div>
+                  )}
+                </div>
+              )
+            })()
           ) : (
             <div className="px-4 pt-3 space-y-3">
               {listaFiltrada.map(a => renderCard(a))}

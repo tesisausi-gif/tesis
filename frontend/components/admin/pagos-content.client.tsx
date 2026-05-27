@@ -488,7 +488,7 @@ function TabPagosTecnicos({ pendientes, realizados }: { pendientes: PendientePag
                         </Button>
                         <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setPagarDialog(p) }}
                           className="bg-green-600 hover:bg-green-700 gap-1 flex-shrink-0" disabled={isPending}>
-                          <CheckCircle2 className="h-3.5 w-3.5"/>Ya se le pagó
+                          <CheckCircle2 className="h-3.5 w-3.5"/>Pagar
                         </Button>
                       </div>
                     </div>
