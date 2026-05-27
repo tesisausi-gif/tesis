@@ -75,10 +75,16 @@ export interface ConformidadResumen {
   esta_rechazada: boolean
 }
 
-// Incidente con datos de cliente + presupuestos/conformidades (para admin)
+// Resumen de inspección para la lista de incidentes del admin
+export interface InspeccionResumen {
+  id_inspeccion: number
+}
+
+// Incidente con datos de cliente + presupuestos/conformidades/inspecciones (para admin)
 export interface IncidenteConClienteAdmin extends IncidenteConCliente {
   presupuestos?: PresupuestoResumen[]
   conformidades?: ConformidadResumen[]
+  inspecciones?: InspeccionResumen[]
 }
 
 // Filtros para métricas y reportes

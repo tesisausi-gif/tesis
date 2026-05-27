@@ -67,6 +67,9 @@ export async function getIncidentesForAdmin(): Promise<IncidenteConClienteAdmin[
         url_documento,
         esta_firmada,
         esta_rechazada
+      ),
+      inspecciones (
+        id_inspeccion
       )
     `)
     .order('fecha_registro', { ascending: false })

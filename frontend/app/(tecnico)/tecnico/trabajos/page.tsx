@@ -4,6 +4,7 @@ import { getAsignacionesActivas } from '@/features/asignaciones/asignaciones.ser
 import { getPresupuestosDeTecnico } from '@/features/presupuestos/presupuestos.service'
 import { getConformidadesPorIncidentes } from '@/features/conformidades/conformidades.service'
 import { getMisIncidentesPagados } from '@/features/pagos/pagos-tecnicos.service'
+import { getInspeccionesDeTecnico } from '@/features/inspecciones/inspecciones.service'
 import { TrabajosContent } from '@/components/tecnico/trabajos-content.client'
 
 export default async function TecnicoTrabajosPage() {
@@ -12,11 +13,17 @@ export default async function TecnicoTrabajosPage() {
   if (!user) redirect('/login')
   if (!user.id_tecnico) redirect('/login')
 
-  const [asignaciones, presupuestos, incidentesPagadosIds] = await Promise.all([
+  const [asignaciones, presupuestos, incidentesPagadosIds, inspecciones] = await Promise.all([
     getAsignacionesActivas(),
     getPresupuestosDeTecnico(),
     getMisIncidentesPagados(),
+    getInspeccionesDeTecnico(),
   ])
+
+  const tieneInspeccionPorIncidente: Record<number, boolean> = {}
+  for (const insp of inspecciones) {
+    if (insp.id_incidente) tieneInspeccionPorIncidente[insp.id_incidente] = true
+  }
 
   // Mapa de id_incidente → estado del presupuesto
   const estadoPresupuestoPorIncidente: Record<number, string> = {}
@@ -42,6 +49,7 @@ export default async function TecnicoTrabajosPage() {
       conformidadesPorIncidente={conformidadesPorIncidente}
       idTecnico={user.id_tecnico!}
       incidentesPagadosIds={incidentesPagadosIds}
+      tieneInspeccionPorIncidente={tieneInspeccionPorIncidente}
     />
   )
 }

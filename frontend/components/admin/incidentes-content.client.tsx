@@ -32,7 +32,8 @@ const ICON_BY_ESTADO: Record<string, React.ElementType> = {
 }
 
 const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
-  aceptada:              ClipboardList,
+  pendiente_inspeccion:  ClipboardList,
+  aceptada:              FileText,
   presupuesto_enviado:   FileText,
   presupuesto_cliente:   Clock,
   en_curso:              Wrench,
@@ -45,6 +46,7 @@ const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
 type AccionPendiente =
   | { tipo: 'asignar' }
   | { tipo: 'reasignar' }
+  | { tipo: 'pendiente_inspeccion' }
   | { tipo: 'aceptada' }
   | { tipo: 'presupuesto_enviado' }
   | { tipo: 'presupuesto_cliente' }
@@ -76,7 +78,10 @@ function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
     if (confPendiente) return { tipo: 'completada_pendiente' }
     const asigActiva = inc.asignaciones_tecnico?.find(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion))
     const presAprobado = inc.presupuestos?.find(p => p.estado_presupuesto === 'aprobado')
-    if (asigActiva?.estado_asignacion === 'aceptada' && !presAprobado) return { tipo: 'aceptada' }
+    if (asigActiva?.estado_asignacion === 'aceptada' && !presAprobado) {
+      const tieneInspeccion = (inc.inspecciones?.length ?? 0) > 0
+      return { tipo: tieneInspeccion ? 'aceptada' : 'pendiente_inspeccion' }
+    }
     return { tipo: 'en_curso' }
   }
   if (estado === 'finalizado' || estado === 'resuelto') return { tipo: 'finalizado' }
@@ -90,15 +95,16 @@ const ACCION_CONFIG: Record<AccionPendiente['tipo'], {
   pulse: boolean
   disabled: boolean
 }> = {
-  asignar:               { label: 'Asignar técnico', Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
-  reasignar:             { label: 'Reasignar',      Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
-  aceptada:              { label: 'Por comenzar',   Icon: ClipboardList, activeColor: 'text-gray-300',   pulse: false, disabled: true  },
-  presupuesto_enviado:   { label: 'Evaluar presup.', Icon: FileText,     activeColor: 'text-amber-600',  pulse: true,  disabled: false },
-  presupuesto_cliente:   { label: 'Esp. cliente',   Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
-  completada_pendiente:  { label: 'Ver conform.',   Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
-  conformidad_rechazada: { label: 'Conf. rechaz.',  Icon: XCircle,       activeColor: 'text-gray-300',   pulse: false, disabled: true  },
-  en_curso:              { label: 'En Curso',       Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
-  finalizado:            { label: 'Finalizado',     Icon: CheckCircle,   activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  asignar:               { label: 'Asignar técnico',  Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
+  reasignar:             { label: 'Reasignar',        Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
+  pendiente_inspeccion:  { label: 'Pend. inspección', Icon: ClipboardList, activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  aceptada:              { label: 'Pend. presupuesto', Icon: FileText,     activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  presupuesto_enviado:   { label: 'Evaluar presup.',  Icon: FileText,      activeColor: 'text-amber-600',  pulse: true,  disabled: false },
+  presupuesto_cliente:   { label: 'Esp. cliente',     Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  completada_pendiente:  { label: 'Ver conform.',     Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
+  conformidad_rechazada: { label: 'Conf. rechaz.',    Icon: XCircle,       activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  en_curso:              { label: 'En Curso',         Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  finalizado:            { label: 'Finalizado',       Icon: CheckCircle,   activeColor: 'text-gray-300',   pulse: false, disabled: true  },
 }
 
 const BANNER_ICON_BY_ACCION: Partial<Record<AccionPendiente['tipo'], React.ElementType>> = {
@@ -481,7 +487,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                 {incidentesFiltrados.length}
               </span>
             </button>
-            {(['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const).map(tipo => {
+            {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const).map(tipo => {
               const count = incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo).length
               if (count === 0) return null
               const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
@@ -503,7 +509,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
             })}
           </div>
           <div className="space-y-6">
-          {((['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const)
+          {((['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'completada_pendiente', 'conformidad_rechazada', 'en_curso'] as const)
             .map(tipo => ({
               tipo,
               items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo),

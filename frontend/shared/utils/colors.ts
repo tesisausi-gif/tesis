@@ -68,6 +68,7 @@ export const ESTADO_INCIDENTE_CONFIG: Record<string, {
 //   3. Agregar el icono en ICON_BY_SUB_ESTADO de cada componente
 // ─────────────────────────────────────────────────────────────────────────────
 export type SubEstadoEnProceso =
+  | 'pendiente_inspeccion'
   | 'aceptada'
   | 'presupuesto_enviado'
   | 'presupuesto_cliente'
@@ -88,9 +89,21 @@ export const SUB_ESTADO_EN_PROCESO_CONFIG: Record<SubEstadoEnProceso, {
   bannerText: string | null
   timelineColor: string    // bg-* del evento que ENTRA a este sub-estado
 }> = {
+  pendiente_inspeccion: {
+    labelGrupo:    'Pendiente inspección',
+    labelBadge:    'Pend. inspección',
+    stripe:        'border-l-slate-400',
+    bgGradient:    'from-slate-50/50',
+    badge:         'bg-slate-100 text-slate-700 ring-slate-200',
+    groupHeaderCls:'text-slate-600 bg-slate-50 border-slate-200',
+    groupDotCls:   'bg-slate-400 animate-pulse',
+    bannerBg:      null,
+    bannerText:    null,
+    timelineColor: 'bg-slate-400',
+  },
   aceptada: {
-    labelGrupo:    'Técnico asignado',
-    labelBadge:    'Por comenzar',
+    labelGrupo:    'Pendiente presupuesto',
+    labelBadge:    'Pend. presupuesto',
     stripe:        'border-l-blue-400',
     bgGradient:    'from-blue-50/50',
     badge:         'bg-blue-100 text-blue-800 ring-blue-200',

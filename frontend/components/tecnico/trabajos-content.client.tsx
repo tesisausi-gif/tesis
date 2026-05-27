@@ -32,6 +32,7 @@ interface TrabajosContentProps {
   conformidadesPorIncidente: Record<number, ConformidadInfo>
   idTecnico: number
   incidentesPagadosIds: number[]
+  tieneInspeccionPorIncidente: Record<number, boolean>
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -89,7 +90,8 @@ function getProximoPaso(
 // ── Iconos por sub-estado (los colores/labels vienen de SUB_ESTADO_EN_PROCESO_CONFIG) ──
 
 const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
-  aceptada:              ClipboardList,
+  pendiente_inspeccion:  ClipboardList,
+  aceptada:              FileText,
   presupuesto_enviado:   FileText,
   presupuesto_cliente:   Clock,
   en_curso:              Wrench,
@@ -105,19 +107,21 @@ const QUICK_ACTION_TECNICO: Record<SubEstadoEnProceso, {
   disabled: boolean
   tab: string
 }> = {
-  aceptada:              { label: 'Cargar presup.', Icon: FileText,     color: 'text-blue-600',   disabled: false, tab: 'presupuesto'  },
-  presupuesto_enviado:   { label: 'Pend. admin',    Icon: Clock,        color: 'text-gray-300',   disabled: true,  tab: 'presupuesto'  },
-  presupuesto_cliente:   { label: 'Pend. cliente',  Icon: Clock,        color: 'text-gray-300',   disabled: true,  tab: 'presupuesto'  },
-  en_curso:              { label: 'Subir conform.', Icon: ClipboardList, color: 'text-purple-600', disabled: false, tab: 'conformidad'  },
-  completada_pendiente:  { label: 'Por revisar',    Icon: Clock,        color: 'text-gray-300',   disabled: true,  tab: 'conformidad'  },
-  conformidad_rechazada: { label: 'Resubir',        Icon: RefreshCw,    color: 'text-orange-600', disabled: false, tab: 'conformidad'  },
-  finalizado:            { label: 'Cobro pend.',    Icon: Clock,        color: 'text-gray-300',   disabled: true,  tab: 'inspecciones' },
+  pendiente_inspeccion:  { label: 'Ir a Inspección', Icon: ClipboardList, color: 'text-blue-600',   disabled: false, tab: 'inspecciones' },
+  aceptada:              { label: 'Cargar presup.',   Icon: FileText,      color: 'text-blue-600',   disabled: false, tab: 'presupuesto'  },
+  presupuesto_enviado:   { label: 'Pend. admin',      Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'presupuesto'  },
+  presupuesto_cliente:   { label: 'Pend. cliente',    Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'presupuesto'  },
+  en_curso:              { label: 'Subir conform.',   Icon: ClipboardList, color: 'text-purple-600', disabled: false, tab: 'conformidad'  },
+  completada_pendiente:  { label: 'Por revisar',      Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'conformidad'  },
+  conformidad_rechazada: { label: 'Resubir',          Icon: RefreshCw,     color: 'text-orange-600', disabled: false, tab: 'conformidad'  },
+  finalizado:            { label: 'Cobro pend.',      Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'inspecciones' },
 }
 
 function getStatusKey(
   a: AsignacionTecnico,
   estadoPresupuesto?: string,
-  conformidad?: ConformidadInfo
+  conformidad?: ConformidadInfo,
+  tieneInspeccion?: boolean
 ): string {
   const estadoInc = a.incidentes?.estado_actual ?? ''
   if (['finalizado', 'resuelto'].includes(estadoInc)) return 'finalizado'
@@ -131,6 +135,7 @@ function getStatusKey(
     if (estadoPresupuesto === 'enviado') return 'presupuesto_enviado'
     if (estadoPresupuesto === 'aprobado_admin') return 'presupuesto_cliente'
     if (estadoPresupuesto === 'aprobado') return 'en_curso'
+    if (a.estado_asignacion === 'aceptada' && !tieneInspeccion) return 'pendiente_inspeccion'
   }
 
   return a.estado_asignacion
@@ -144,6 +149,7 @@ export function TrabajosContent({
   conformidadesPorIncidente,
   idTecnico,
   incidentesPagadosIds,
+  tieneInspeccionPorIncidente,
 }: TrabajosContentProps) {
   const router = useRouter()
   const [filtro, setFiltro] = useState<string>('en_proceso')
@@ -209,9 +215,14 @@ export function TrabajosContent({
   useEffect(() => { setSubFiltro('todos') }, [filtro])
 
   const sk = (a: AsignacionTecnico) =>
-    getStatusKey(a, estadoPresupuestoPorIncidente[a.id_incidente], conformidadesPorIncidente[a.id_incidente])
+    getStatusKey(
+      a,
+      estadoPresupuestoPorIncidente[a.id_incidente],
+      conformidadesPorIncidente[a.id_incidente],
+      tieneInspeccionPorIncidente[a.id_incidente]
+    )
 
-  const EN_PROCESO_KEYS = ['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada']
+  const EN_PROCESO_KEYS = ['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada']
   const enProceso = asignaciones.filter(a => EN_PROCESO_KEYS.includes(sk(a)))
   const resueltas = asignaciones.filter(a => sk(a) === 'finalizado')
 
@@ -468,7 +479,7 @@ export function TrabajosContent({
                     {listaFiltrada.length}
                   </span>
                 </button>
-                {(['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const).map(tipo => {
+                {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const).map(tipo => {
                   const count = listaFiltrada.filter(a => sk(a) === tipo).length
                   if (count === 0) return null
                   const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
@@ -490,7 +501,7 @@ export function TrabajosContent({
                 })}
               </div>
               <div className="space-y-6">
-              {((['aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const)
+              {((['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const)
                 .map(tipo => ({
                   tipo,
                   items: listaFiltrada.filter(a => sk(a) === tipo),
