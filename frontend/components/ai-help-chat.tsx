@@ -83,6 +83,7 @@ export function AIHelpChat({ variant = 'floating' }: AIHelpChatProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const wasDraggedRef = useRef(false)
 
   // Establecer posición inicial
   useEffect(() => {
@@ -97,6 +98,7 @@ export function AIHelpChat({ variant = 'floating' }: AIHelpChatProps) {
 
   // Manejar drag con touch y mouse
   const handleDragStart = (clientX: number, clientY: number) => {
+    wasDraggedRef.current = false
     setIsDragging(true)
     setDragStart({
       x: clientX - position.x,
@@ -114,10 +116,14 @@ export function AIHelpChat({ variant = 'floating' }: AIHelpChatProps) {
     const maxX = window.innerWidth - 48
     const maxY = window.innerHeight - 48
 
-    setPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY)),
-    })
+    const clampedX = Math.max(0, Math.min(newX, maxX))
+    const clampedY = Math.max(0, Math.min(newY, maxY))
+
+    if (Math.abs(clampedX - position.x) > 4 || Math.abs(clampedY - position.y) > 4) {
+      wasDraggedRef.current = true
+    }
+
+    setPosition({ x: clampedX, y: clampedY })
   }
 
   const handleDragEnd = () => {
@@ -168,10 +174,10 @@ export function AIHelpChat({ variant = 'floating' }: AIHelpChatProps) {
   }, [isDragging, dragStart, position])
 
   const handleClick = () => {
-    // Solo abrir si no se arrastró mucho
-    if (!isDragging) {
+    if (!wasDraggedRef.current) {
       setIsOpen(true)
     }
+    wasDraggedRef.current = false
   }
 
   const scrollToBottom = () => {
