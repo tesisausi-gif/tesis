@@ -6,6 +6,7 @@
  */
 
 import { createClient } from '@/shared/lib/supabase/server'
+import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireTecnicoId } from '@/features/auth/auth.service'
 import type { Asignacion, AsignacionTecnico } from './asignaciones.types'
 import type { ActionResult } from '@/shared/types'
@@ -463,5 +464,103 @@ export async function completarAsignacion(idAsignacion: number): Promise<ActionR
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al completar asignación' }
+  }
+}
+
+/**
+ * Admin da de baja a un técnico de un incidente.
+ * - Solo se permite si no hay conformidad subida aún.
+ * - Marca la asignación como 'cancelada' y vuelve el incidente a 'pendiente'.
+ * - Envía notificación al técnico y al cliente con el motivo.
+ */
+export async function darDeBajaIncidente(
+  idIncidente: number,
+  motivo: string,
+): Promise<ActionResult> {
+  try {
+    const adminClient = createAdminClient()
+
+    // 1. Verificar que no haya conformidad con foto subida
+    const { data: conformidades } = await adminClient
+      .from('conformidades')
+      .select('id_conformidad')
+      .eq('id_incidente', idIncidente)
+      .not('url_documento', 'is', null)
+
+    if (conformidades && conformidades.length > 0) {
+      return { success: false, error: 'No se puede dar de baja después de que el técnico subió la conformidad' }
+    }
+
+    // 2. Obtener la asignación activa
+    const { data: asigData, error: errQuery } = await adminClient
+      .from('asignaciones_tecnico')
+      .select('id_asignacion, id_tecnico, tecnicos(nombre, apellido)')
+      .eq('id_incidente', idIncidente)
+      .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso', 'completada'])
+      .order('fecha_asignacion', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (errQuery) return { success: false, error: errQuery.message }
+    if (!asigData) return { success: false, error: 'No se encontró asignación activa para este incidente' }
+
+    const tec = asigData.tecnicos as any
+    const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
+    const idTecnico = asigData.id_tecnico
+
+    // 3. Obtener id_cliente del incidente
+    const { data: incData } = await adminClient
+      .from('incidentes')
+      .select('id_cliente_reporta')
+      .eq('id_incidente', idIncidente)
+      .single()
+
+    const idCliente = incData?.id_cliente_reporta ?? null
+
+    // 4. Marcar asignación como cancelada
+    const { error: errAsig } = await adminClient
+      .from('asignaciones_tecnico')
+      .update({
+        estado_asignacion: 'cancelada',
+        fecha_rechazo: new Date().toISOString(),
+      })
+      .eq('id_asignacion', asigData.id_asignacion)
+
+    if (errAsig) return { success: false, error: errAsig.message }
+
+    // 5. Resetear incidente a pendiente
+    const { error: errInc } = await adminClient
+      .from('incidentes')
+      .update({ estado_actual: 'pendiente' })
+      .eq('id_incidente', idIncidente)
+
+    if (errInc) return { success: false, error: errInc.message }
+
+    // 6. Notificaciones al técnico y al cliente
+    try {
+      const { crearNotificacion, crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
+
+      await crearNotificacion({
+        id_tecnico: idTecnico,
+        tipo: 'baja_admin',
+        titulo: 'Fuiste desafectado de un incidente',
+        mensaje: `La administración te desafectó del incidente #${idIncidente}. Motivo: ${motivo}`,
+        id_incidente: idIncidente,
+      })
+
+      if (idCliente) {
+        await crearNotificacionCliente({
+          id_cliente: idCliente,
+          tipo: 'baja_admin',
+          titulo: 'Cambio en tu incidente',
+          mensaje: `La administración realizó un cambio en tu incidente #${idIncidente}: ${motivo}. Tu incidente está nuevamente pendiente de asignación.`,
+          id_incidente: idIncidente,
+        })
+      }
+    } catch { /* no bloquear la operación principal */ }
+
+    return { success: true, data: undefined }
+  } catch {
+    return { success: false, error: 'Error inesperado al dar de baja el incidente' }
   }
 }

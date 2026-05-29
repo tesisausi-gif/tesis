@@ -5,18 +5,23 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { toast } from 'sonner'
 import {
   AlertCircle, Search, Clock, Send, Wrench, CheckCircle,
   MapPin, FileText, ClipboardList, RefreshCw, XCircle, Bell,
-  User, AlertTriangle, CreditCard, CircleCheck,
+  User, AlertTriangle, CreditCard, CircleCheck, UserX,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-modal'
 import type { IncidenteConClienteAdmin } from '@/features/incidentes/incidentes.types'
 import { Paginacion } from '@/components/ui/paginacion'
 import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEnProceso } from '@/shared/utils/colors'
+import { darDeBajaIncidente } from '@/features/asignaciones/asignaciones.service'
 
 interface IncidentesAdminContentProps {
   incidentes: IncidenteConClienteAdmin[]
@@ -129,7 +134,7 @@ function formatFecha(raw: string | null | undefined): string {
 // ── Componente de card extraído para reutilizar en vista plana y agrupada ─────
 function IncidenteCard({
   inc, cfg, Icon, accion, accionCfg, isHighlighted,
-  direccion, tecnicoAsignado, highlightRefs, onVerDetalle, onGestionar, pagoLink,
+  direccion, tecnicoAsignado, highlightRefs, onVerDetalle, onGestionar, onDarBaja, pagoLink,
 }: {
   inc: IncidenteConClienteAdmin
   cfg: typeof import('@/shared/utils/colors').ESTADO_INCIDENTE_CONFIG[string]
@@ -142,12 +147,20 @@ function IncidenteCard({
   highlightRefs: React.MutableRefObject<Map<number, HTMLDivElement>>
   onVerDetalle: (id: number, tab?: string) => void
   onGestionar: (inc: IncidenteConClienteAdmin, accion: AccionPendiente) => void
+  onDarBaja: (inc: IncidenteConClienteAdmin) => void
   pagoLink?: string
 }) {
   const rechazadaRecientemente = inc.estado_actual === 'asignacion_solicitada' &&
     inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'rechazada')
   const canceladaPorTecnico = inc.estado_actual === 'pendiente' &&
     inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'cancelada')
+
+  // Dar de baja: hay asignación activa y NO hay conformidad subida todavía
+  const asignacionActiva = inc.asignaciones_tecnico?.find(a =>
+    ['pendiente', 'aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+  )
+  const puedeDarBaja = !!asignacionActiva &&
+    !['asignar', 'reasignar', 'completada_pendiente', 'conformidad_rechazada', 'finalizado'].includes(accion.tipo)
   const subCfg = SUB_ESTADO_EN_PROCESO_CONFIG[accion.tipo as SubEstadoEnProceso]
   const BadgeIcon = subCfg ? (ICON_BY_SUB_ESTADO[accion.tipo as SubEstadoEnProceso] ?? Icon) : Icon
   const badgeLabel = subCfg ? subCfg.labelBadge : cfg.labelAdmin
@@ -281,6 +294,15 @@ function IncidenteCard({
             <span className="text-[10px] font-semibold">{accionCfg.label}</span>
           </button>
         )}
+        {puedeDarBaja && (
+          <button
+            onClick={() => onDarBaja(inc)}
+            className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-red-50/80 active:bg-red-100/80 transition-colors text-red-500 border-l border-white/60"
+          >
+            <UserX className="w-4 h-4" />
+            <span className="text-[10px] font-semibold">Dar baja</span>
+          </button>
+        )}
       </div>
     </div>
   )
@@ -297,6 +319,9 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
   const [modalTab, setModalTab] = useState('detalles')
   const [modalGestionarOpen, setModalGestionarOpen] = useState(false)
   const [incidenteParaGestionar, setIncidenteParaGestionar] = useState<IncidenteConClienteAdmin | null>(null)
+  const [bajaDialogInc, setBajaDialogInc] = useState<IncidenteConClienteAdmin | null>(null)
+  const [motivoBaja, setMotivoBaja] = useState('')
+  const [procesandoBaja, setProcesandoBaja] = useState(false)
   const [highlightId, setHighlightId] = useState<number | null>(null)
   const highlightRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const [pagina, setPagina] = useState(1)
@@ -360,6 +385,29 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
       abrirModal(inc.id_incidente, 'presupuesto_admin')
     } else if (accion.tipo === 'completada_pendiente') {
       abrirModal(inc.id_incidente, 'conformidad_admin')
+    }
+  }
+
+  const handleConfirmarBaja = async () => {
+    if (!bajaDialogInc || !motivoBaja.trim()) return
+    setProcesandoBaja(true)
+    try {
+      const result = await darDeBajaIncidente(bajaDialogInc.id_incidente, motivoBaja.trim())
+      if (result.success) {
+        toast.success('Técnico desafectado', {
+          description: `Incidente #${bajaDialogInc.id_incidente} volvió a estado Pendiente.`,
+        })
+        setBajaDialogInc(null)
+        setMotivoBaja('')
+        router.refresh()
+        window.dispatchEvent(new Event('admin-badges-refresh'))
+      } else {
+        toast.error('Error', { description: result.error })
+      }
+    } catch {
+      toast.error('Error inesperado')
+    } finally {
+      setProcesandoBaja(false)
     }
   }
 
@@ -568,6 +616,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                         highlightRefs={highlightRefs}
                         onVerDetalle={abrirModal}
                         onGestionar={handleGestionar}
+                        onDarBaja={setBajaDialogInc}
                       />
                     })}
                   </div>
@@ -659,6 +708,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                         highlightRefs={highlightRefs}
                         onVerDetalle={abrirModal}
                         onGestionar={handleGestionar}
+                        onDarBaja={setBajaDialogInc}
                         pagoLink={!incidentesPagadosIds.includes(inc.id_incidente) ? `/dashboard/pagos?tab=pagos-tecnicos&highlight=${inc.id_incidente}` : undefined}
                       />
                     })}
@@ -700,6 +750,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                 highlightRefs={highlightRefs}
                 onVerDetalle={abrirModal}
                 onGestionar={handleGestionar}
+                onDarBaja={setBajaDialogInc}
               />
             })}
           </div>
@@ -726,6 +777,61 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
           onGestionExito={() => { setModalGestionarOpen(false); router.refresh(); window.dispatchEvent(new CustomEvent('admin-badges-refresh')) }}
         />
       )}
+
+      {/* Dialog: Dar de baja técnico */}
+      <Dialog
+        open={bajaDialogInc !== null}
+        onOpenChange={(o) => { if (!o && !procesandoBaja) { setBajaDialogInc(null); setMotivoBaja('') } }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <UserX className="h-5 w-5" />
+              Dar de baja al técnico
+            </DialogTitle>
+            <DialogDescription>
+              Incidente #{bajaDialogInc?.id_incidente} — El técnico será desafectado y el incidente volverá a estado <strong>Pendiente</strong> de asignación.
+              Se notificará al técnico y al cliente con el motivo indicado.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                Motivo de la baja <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                value={motivoBaja}
+                onChange={(e) => setMotivoBaja(e.target.value)}
+                placeholder="Explicá el motivo por el cual se da de baja al técnico de este incidente..."
+                rows={4}
+                disabled={procesandoBaja}
+                className="resize-none"
+              />
+              <p className="text-xs text-gray-400 mt-1">Este mensaje será enviado al técnico y al cliente como notificación.</p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setBajaDialogInc(null); setMotivoBaja('') }}
+              disabled={procesandoBaja}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmarBaja}
+              disabled={procesandoBaja || !motivoBaja.trim()}
+              className="gap-2"
+            >
+              <UserX className="h-4 w-4" />
+              {procesandoBaja ? 'Procesando...' : 'Confirmar baja'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
