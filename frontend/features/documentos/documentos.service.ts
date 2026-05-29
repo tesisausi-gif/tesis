@@ -66,6 +66,66 @@ export async function subirFotoInspeccion(
 }
 
 /**
+ * Sube la foto de diagnóstico adjunta por el cliente al crear un incidente.
+ * Guarda la URL pública en la columna url_foto_diagnostico del incidente.
+ */
+export async function subirFotoDiagnostico(
+  idIncidente: number,
+  formData: FormData
+): Promise<ActionResult<string>> {
+  try {
+    const archivo = formData.get('archivo') as File | null
+
+    if (!archivo || archivo.size === 0) {
+      return { success: false, error: 'No se recibió ningún archivo' }
+    }
+
+    if (archivo.size > 10 * 1024 * 1024) {
+      return { success: false, error: 'La imagen supera el límite de 10 MB' }
+    }
+
+    const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+    if (!tiposPermitidos.includes(archivo.type)) {
+      return { success: false, error: 'Solo se permiten imágenes (JPG, PNG, WEBP, GIF)' }
+    }
+
+    const { createAdminClient } = await import('@/shared/lib/supabase/admin')
+    const supabase = createAdminClient()
+
+    const ext = archivo.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const nombreArchivo = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const path = `${STORAGE_PATHS.diagnosticos(idIncidente)}/${nombreArchivo}`
+
+    const buffer = await archivo.arrayBuffer()
+
+    const { error: uploadError } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(path, buffer, {
+        contentType: archivo.type || 'image/jpeg',
+        upsert: false,
+      })
+
+    if (uploadError) return { success: false, error: uploadError.message }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(path)
+
+    // Guardar URL en la columna del incidente
+    const { error: dbError } = await supabase
+      .from('incidentes')
+      .update({ url_foto_diagnostico: publicUrl })
+      .eq('id_incidente', idIncidente)
+
+    if (dbError) return { success: false, error: dbError.message }
+
+    return { success: true, data: publicUrl }
+  } catch {
+    return { success: false, error: 'Error inesperado al subir la foto' }
+  }
+}
+
+/**
  * Elimina una foto de una inspección (del Storage y de la DB).
  */
 export async function eliminarFotoInspeccion(

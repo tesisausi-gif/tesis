@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle, Phone, Mail, CalendarDays } from 'lucide-react'
+import { MapPin, Calendar, Clock, AlertCircle, Search, CheckCircle, Phone, Mail, CalendarDays, ImageIcon, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { format } from 'date-fns'
@@ -188,6 +188,28 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales, franja
                   <p className="text-xs text-gray-500 mb-1">Problema:</p>
                   <p className="text-sm text-gray-700">{asignacion.incidentes.descripcion_problema}</p>
                 </div>
+
+                {asignacion.incidentes.url_foto_diagnostico && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      Foto del cliente
+                    </p>
+                    <div
+                      className="relative inline-block cursor-pointer group"
+                      onClick={() => window.open(asignacion.incidentes!.url_foto_diagnostico!, '_blank')}
+                    >
+                      <img
+                        src={asignacion.incidentes.url_foto_diagnostico}
+                        alt="Foto del problema"
+                        className="max-h-44 w-full rounded-lg border border-gray-200 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition-colors flex items-center justify-center">
+                        <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {(() => {
                   const franjas = franjasPorIncidente[asignacion.id_incidente] ?? []

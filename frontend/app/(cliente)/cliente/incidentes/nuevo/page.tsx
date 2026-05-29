@@ -10,11 +10,12 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, AlertCircle, Building2, MapPin, Send } from 'lucide-react'
+import { ArrowLeft, AlertCircle, Building2, MapPin, Send, ImagePlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { crearNotificacionAdmin } from '@/features/notificaciones/notificaciones-inapp.service'
 import { CalendarioDisponibilidad, type FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import { guardarFranjasDisponibilidad } from '@/features/disponibilidad/disponibilidad.service'
+import { subirFotoDiagnostico } from '@/features/documentos/documentos.service'
 
 interface TipoInmueble {
   nombre: string
@@ -47,6 +48,8 @@ export default function NuevoIncidentePage() {
   const [inmuebleSeleccionado, setInmuebleSeleccionado] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [franjas, setFranjas] = useState<FranjaInput[]>([])
+  const [fotoArchivo, setFotoArchivo] = useState<File | null>(null)
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null)
 
   useEffect(() => {
     cargarDatos()
@@ -119,6 +122,23 @@ export default function NuevoIncidentePage() {
     return ubicacion ? `${partes}, ${ubicacion}` : partes
   }
 
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null
+    if (!file) return
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('La imagen supera el límite de 10 MB')
+      return
+    }
+    setFotoArchivo(file)
+    setFotoPreview(URL.createObjectURL(file))
+  }
+
+  const quitarFoto = () => {
+    if (fotoPreview) URL.revokeObjectURL(fotoPreview)
+    setFotoArchivo(null)
+    setFotoPreview(null)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -175,6 +195,18 @@ export default function NuevoIncidentePage() {
 
       // Guardar franjas de disponibilidad
       await guardarFranjasDisponibilidad(data.id_incidente, franjasConSlot)
+
+      // Subir foto de diagnóstico si el cliente adjuntó una
+      if (fotoArchivo) {
+        const formData = new FormData()
+        formData.append('archivo', fotoArchivo)
+        const uploadResult = await subirFotoDiagnostico(data.id_incidente, formData)
+        if (!uploadResult.success) {
+          toast.warning('Incidente creado, pero no se pudo subir la foto', {
+            description: uploadResult.error,
+          })
+        }
+      }
 
       toast.success('Incidente reportado exitosamente', {
         description: `Tu incidente #${data.id_incidente} ha sido registrado`
@@ -336,6 +368,46 @@ export default function NuevoIncidentePage() {
               <p className="text-xs text-gray-500">
                 Mínimo 20 caracteres. Actual: {descripcion.length}
               </p>
+            </div>
+
+            {/* Foto de diagnóstico — opcional */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                <ImagePlus className="h-4 w-4 text-gray-400" />
+                Foto del problema <span className="text-gray-400 font-normal">(opcional)</span>
+              </Label>
+              <p className="text-xs text-gray-500">
+                Podés adjuntar una foto que ayude a entender el problema. Máximo 10 MB (JPG, PNG, WEBP).
+              </p>
+              {fotoPreview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={fotoPreview}
+                    alt="Vista previa"
+                    className="max-h-48 rounded-lg border border-gray-200 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={quitarFoto}
+                    disabled={submitting}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <label className={`flex flex-col items-center justify-center gap-2 w-full h-28 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-colors ${submitting ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <ImagePlus className="h-7 w-7 text-gray-300" />
+                  <span className="text-xs text-gray-400">Tocá para adjuntar una foto</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleFotoChange}
+                    disabled={submitting}
+                  />
+                </label>
+              )}
             </div>
 
             {/* Disponibilidad — calendario interactivo */}

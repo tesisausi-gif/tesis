@@ -22,6 +22,7 @@ const INCIDENTE_SELECT = `
   fecha_cierre,
   fue_resuelto,
   disponibilidad,
+  url_foto_diagnostico,
   id_propiedad,
   id_cliente_reporta,
   inmuebles (

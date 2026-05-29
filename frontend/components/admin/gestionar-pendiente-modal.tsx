@@ -31,6 +31,8 @@ import {
   ChevronLeft,
   Wrench,
   Clock,
+  ImageIcon,
+  ExternalLink,
 } from 'lucide-react'
 import { getTecnicosParaAsignacion, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
@@ -122,6 +124,27 @@ function IncidenteInfoCard({ incidente, compact = false }: { incidente: Incident
             </span>
           )}
         </div>
+        {incidente.url_foto_diagnostico && (
+          <div className="mt-2 pt-2 border-t border-blue-100">
+            <p className="text-xs text-blue-600 font-medium flex items-center gap-1 mb-1.5">
+              <ImageIcon className="h-3 w-3" />
+              Foto del problema adjunta por el cliente
+            </p>
+            <div
+              className="relative inline-block cursor-pointer group"
+              onClick={() => window.open(incidente.url_foto_diagnostico!, '_blank')}
+            >
+              <img
+                src={incidente.url_foto_diagnostico}
+                alt="Foto de diagnóstico"
+                className="max-h-40 rounded-lg border border-blue-200 object-cover"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition-colors flex items-center justify-center">
+                <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

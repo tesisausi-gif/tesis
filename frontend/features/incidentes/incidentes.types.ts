@@ -20,6 +20,7 @@ export interface IncidenteBase {
   disponibilidad: string | null
   calificacion_admin: number | null
   comentario_admin: string | null
+  url_foto_diagnostico: string | null
 }
 
 // Incidente con datos de inmueble

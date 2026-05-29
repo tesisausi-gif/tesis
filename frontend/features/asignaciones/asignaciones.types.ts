@@ -13,6 +13,7 @@ export interface IncidenteParaAsignacion {
   nivel_prioridad: string | null
   estado_actual: string
   disponibilidad: string | null
+  url_foto_diagnostico: string | null
   inmuebles: InmuebleResumen | null
   clientes: ClienteResumen | null
 }
