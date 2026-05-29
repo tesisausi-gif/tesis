@@ -29,6 +29,8 @@ function TecnicoNavComponent() {
     const refresh = () => getTecnicoBadgeCounts().then(setCounts).catch(() => {})
     refresh()
 
+    window.addEventListener('tecnico-badges-refresh', refresh)
+
     const channel = supabase
       .channel('tecnico-badges-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'asignaciones_tecnico' }, refresh)
@@ -36,7 +38,10 @@ function TecnicoNavComponent() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conformidades' }, refresh)
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      supabase.removeChannel(channel)
+      window.removeEventListener('tecnico-badges-refresh', refresh)
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogout = useCallback(async () => {

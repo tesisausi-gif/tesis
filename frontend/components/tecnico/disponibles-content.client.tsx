@@ -77,8 +77,9 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales, franja
         toast.success('Asignación rechazada')
       }
 
-      // Eliminar de la lista local y refrescar server data
+      // Eliminar de la lista local, refrescar server data y badge del nav
       setAsignaciones(prev => prev.filter(a => a.id_asignacion !== asignacionSeleccionada.id_asignacion))
+      window.dispatchEvent(new Event('tecnico-badges-refresh'))
       router.refresh()
     } catch (error) {
       console.error('Error:', error)
