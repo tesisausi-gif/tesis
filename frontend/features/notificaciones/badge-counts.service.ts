@@ -10,7 +10,7 @@ import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireTecnicoId, requireClienteId } from '@/features/auth/auth.service'
 
 export interface AdminBadgeCounts {
-  incidentes: number     // incidentes nuevos en estado pendiente (sin asignar)
+  incidentes: number     // todos los incidentes no finalizados
   conformidades: number  // fotos subidas pendientes de revisión
   presupuestos: number   // presupuestos enviados esperando aprobación admin
   pagos: number          // cobros a clientes + pagos a técnicos pendientes
@@ -38,11 +38,11 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
   const supabase = createAdminClient()
 
   const [incResult, confResult, presResult, cobrosPendResult, pagosTecResult, solResult, reasigResult, notifResult] = await Promise.all([
-    // Incidentes nuevos en estado pendiente (sin técnico asignado)
+    // Todos los incidentes no finalizados
     supabase
       .from('incidentes')
       .select('id_incidente', { count: 'exact', head: true })
-      .eq('estado_actual', 'pendiente'),
+      .neq('estado_actual', 'finalizado'),
 
     // Conformidades con foto subida esperando revisión
     supabase
