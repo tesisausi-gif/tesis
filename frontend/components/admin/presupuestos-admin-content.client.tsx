@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -11,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { FileText, CheckCircle, XCircle, Clock, DollarSign, AlertCircle, Search } from 'lucide-react'
+import { FileText, CheckCircle, XCircle, Clock, DollarSign, AlertCircle, Search, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { EstadoPresupuesto } from '@/shared/types/enums'
 import { getEstadoPresupuestoColor, getEstadoPresupuestoLabel } from '@/shared/utils/colors'
@@ -129,7 +130,13 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
                 <TableCell className="font-medium">#{p.id_presupuesto}</TableCell>
                 <TableCell>
                   <div className="space-y-0.5">
-                    <p className="text-sm font-medium">#{p.id_incidente}</p>
+                    <Link
+                      href={`/dashboard/incidentes?highlight=${p.id_incidente}`}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline"
+                    >
+                      #{p.id_incidente}
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
                     {p.incidentes?.categoria && (
                       <p className="text-xs text-gray-500">{p.incidentes.categoria}</p>
                     )}

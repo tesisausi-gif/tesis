@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -325,12 +326,15 @@ export function ConformidadesContent({ conformidades, historial }: Conformidades
             const esHistorial = vista === 'historial'
 
             return (
-              <button
+              <div
                 key={conf.id_conformidad}
                 className={`w-full text-left px-4 py-3 transition-colors flex items-center gap-4 group ${
-                  esHistorial ? 'cursor-default' : 'hover:bg-gray-50'
+                  esHistorial ? '' : 'hover:bg-gray-50 cursor-pointer'
                 }`}
                 onClick={() => !esHistorial && abrirDetalle(conf)}
+                role={!esHistorial ? 'button' : undefined}
+                tabIndex={!esHistorial ? 0 : undefined}
+                onKeyDown={!esHistorial ? (e) => (e.key === 'Enter' || e.key === ' ') && abrirDetalle(conf) : undefined}
               >
                 <div className={`rounded-full p-2 flex-shrink-0 ${esHistorial ? 'bg-green-100' : 'bg-amber-100'}`}>
                   <FileCheck className={`h-4 w-4 ${esHistorial ? 'text-green-600' : 'text-amber-600'}`} />
@@ -373,10 +377,20 @@ export function ConformidadesContent({ conformidades, historial }: Conformidades
                     <p className="text-xs text-gray-400 truncate mt-0.5">{inc.descripcion_problema}</p>
                   )}
                 </div>
-                {!esHistorial && (
-                  <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 flex-shrink-0 transition-colors" />
-                )}
-              </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Link
+                    href={`/dashboard/incidentes?highlight=${conf.id_incidente}`}
+                    onClick={e => e.stopPropagation()}
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Ver incidente
+                  </Link>
+                  {!esHistorial && (
+                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                  )}
+                </div>
+              </div>
             )
           })}
         </div>
