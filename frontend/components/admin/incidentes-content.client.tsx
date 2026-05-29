@@ -326,29 +326,24 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
     setHighlightId(parseInt(id))
   }, [])
 
-  // Scroll al elemento destacado con retry: espera hasta que el DOM lo tenga
+  // Scroll al elemento destacado con retry: usa interval hasta que el DOM lo tenga
   useEffect(() => {
     if (!highlightId) return
 
-    let cancelled = false
-    let clearTimer: ReturnType<typeof setTimeout>
-
-    const tryScroll = (attempt = 0) => {
-      if (cancelled) return
+    let attempts = 0
+    const interval = setInterval(() => {
       const el = highlightRefs.current.get(highlightId)
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        clearTimer = setTimeout(() => setHighlightId(null), 2500)
-      } else if (attempt < 20) {
-        setTimeout(() => tryScroll(attempt + 1), 100)
+        clearInterval(interval)
+        setTimeout(() => setHighlightId(null), 2500)
+      } else if (++attempts >= 20) {
+        clearInterval(interval)
+        setHighlightId(null)
       }
-    }
+    }, 100)
 
-    tryScroll()
-    return () => {
-      cancelled = true
-      clearTimeout(clearTimer)
-    }
+    return () => clearInterval(interval)
   }, [highlightId])
 
   const abrirModal = (id: number, tab = 'detalles') => {

@@ -381,10 +381,10 @@ export function ConformidadesContent({ conformidades, historial }: Conformidades
                   <Link
                     href={`/dashboard/incidentes?highlight=${conf.id_incidente}`}
                     onClick={e => e.stopPropagation()}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
-                    Ver incidente
+                    Ver
                   </Link>
                   {!esHistorial && (
                     <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />

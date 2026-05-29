@@ -121,6 +121,7 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
               <TableHead>Total</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Fecha</TableHead>
+              <TableHead className="w-[80px]"></TableHead>
               {mostrarAcciones && <TableHead className="w-[160px]">Acciones</TableHead>}
             </TableRow>
           </TableHeader>
@@ -130,13 +131,7 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
                 <TableCell className="font-medium">#{p.id_presupuesto}</TableCell>
                 <TableCell>
                   <div className="space-y-0.5">
-                    <Link
-                      href={`/dashboard/incidentes?highlight=${p.id_incidente}`}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline"
-                    >
-                      #{p.id_incidente}
-                      <ExternalLink className="h-3 w-3" />
-                    </Link>
+                    <p className="text-sm font-medium">#{p.id_incidente}</p>
                     {p.incidentes?.categoria && (
                       <p className="text-xs text-gray-500">{p.incidentes.categoria}</p>
                     )}
@@ -157,6 +152,15 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
                   {p.fecha_creacion ? format(new Date(p.fecha_creacion), 'dd/MM/yy', { locale: es }) : ''}
+                </TableCell>
+                <TableCell>
+                  <Link
+                    href={`/dashboard/incidentes?highlight=${p.id_incidente}`}
+                    className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Ver
+                  </Link>
                 </TableCell>
                 {mostrarAcciones && (
                   <TableCell>
