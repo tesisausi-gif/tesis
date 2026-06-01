@@ -5,12 +5,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/shared/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, AlertCircle, Building2, MapPin, Send, ImagePlus, X } from 'lucide-react'
+import { ArrowLeft, Building2, MapPin, Send, ImagePlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { crearNotificacionAdmin } from '@/features/notificaciones/notificaciones-inapp.service'
 import { CalendarioDisponibilidad, type FranjaInput } from '@/components/ui/calendario-disponibilidad'
@@ -232,228 +230,210 @@ export default function NuevoIncidentePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando...</p>
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 rounded-full border-2 border-amber-200 border-t-amber-500 animate-spin mx-auto" />
+          <p className="text-sm text-gray-400">Cargando...</p>
         </div>
       </div>
     )
   }
 
-  // Si no tiene inmuebles, mostrar mensaje
   if (inmuebles.length === 0) {
     return (
-      <div className="space-y-4 px-4 py-6">
-        <Link
-          href="/cliente/incidentes"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+        className="max-w-lg mx-auto px-4 py-6 space-y-4"
+      >
+        <Link href="/cliente/incidentes" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Volver a Incidentes
+          Volver
         </Link>
-
-        <Card className="border-dashed border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50">
-          <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
-            <div className="rounded-full bg-orange-100 p-4 mb-6">
-              <Building2 className="h-12 w-12 text-orange-600" />
-            </div>
-
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Primero registra un inmueble
-            </h3>
-
-            <p className="text-sm text-gray-600 mb-6 max-w-md">
-              Para reportar un incidente, necesitas tener al menos un inmueble registrado.
-            </p>
-
-            <Button asChild>
-              <Link href="/cliente/propiedades">
-                Ir a Mis Inmuebles
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+        <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center border border-orange-100">
+          <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
+            <Building2 className="h-8 w-8 text-orange-400" />
+          </div>
+          <h3 className="font-semibold text-gray-900 mb-1">Registrá un inmueble primero</h3>
+          <p className="text-sm text-gray-500 mb-6 max-w-xs">
+            Para reportar un incidente necesitás tener al menos un inmueble registrado.
+          </p>
+          <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl">
+            <Link href="/cliente/propiedades">Ir a Mis Inmuebles</Link>
+          </Button>
+        </div>
+      </motion.div>
     )
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-4 px-4 py-6"
+      transition={{ duration: 0.25 }}
+      className="max-w-lg mx-auto"
     >
-      <Link
-        href="/cliente/incidentes"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Volver a Incidentes
-      </Link>
-
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reportar Incidente</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Completa el formulario para reportar un problema en tu inmueble
-        </p>
+      {/* Header */}
+      <div className="px-1 pt-2 pb-5 flex items-center gap-3">
+        <Link
+          href="/cliente/incidentes"
+          className="h-9 w-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 text-gray-600" />
+        </Link>
+        <div>
+          <h1 className="font-bold text-gray-900 text-lg leading-tight">Reportar incidente</h1>
+          <p className="text-xs text-gray-400">Completá los 3 pasos</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <AlertCircle className="h-5 w-5 text-blue-600" />
-            Nuevo Reporte
-          </CardTitle>
-          <CardDescription>
-            Todos los campos marcados con * son obligatorios
-          </CardDescription>
-        </CardHeader>
+      <form onSubmit={handleSubmit} className="space-y-3">
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Selección de Inmueble */}
-            <div className="space-y-2">
-              <Label htmlFor="inmueble" className="text-sm font-medium">
-                Inmueble *
-              </Label>
-              <Select
-                value={inmuebleSeleccionado}
-                onValueChange={setInmuebleSeleccionado}
-                disabled={submitting}
-              >
-                <SelectTrigger id="inmueble" className="h-auto py-3">
-                  <SelectValue placeholder="Selecciona el inmueble con el problema" />
-                </SelectTrigger>
-                <SelectContent>
-                  {inmuebles.map((inmueble) => (
-                    <SelectItem
-                      key={inmueble.id_inmueble}
-                      value={inmueble.id_inmueble.toString()}
-                      className="py-3"
-                    >
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 mt-0.5 text-gray-400" />
-                        <div>
-                          <div className="font-medium">
-                            {getTipoInmuebleNombre(inmueble)}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {formatDireccion(inmueble)}
-                          </div>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* ── Paso 01: Inmueble ── */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100">
+          <div className="flex items-start gap-3 mb-4">
+            <span className="text-4xl font-black text-amber-100 leading-none select-none">01</span>
+            <div className="pt-0.5">
+              <p className="font-semibold text-gray-900 text-sm">Inmueble afectado</p>
+              <p className="text-xs text-gray-400">¿Dónde ocurrió el problema?</p>
             </div>
+          </div>
 
-            {/* Categoría: asignada por administración */}
+          <Select
+            value={inmuebleSeleccionado}
+            onValueChange={setInmuebleSeleccionado}
+            disabled={submitting}
+          >
+            <SelectTrigger className="w-full h-auto py-3.5 px-4 rounded-xl border-gray-200 bg-gray-50 text-sm">
+              <SelectValue placeholder="Seleccioná el inmueble con el problema" />
+            </SelectTrigger>
+            <SelectContent>
+              {inmuebles.map((inmueble) => (
+                <SelectItem
+                  key={inmueble.id_inmueble}
+                  value={inmueble.id_inmueble.toString()}
+                  className="py-3"
+                >
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 mt-0.5 text-amber-400 shrink-0" />
+                    <div>
+                      <div className="font-medium text-sm">{getTipoInmuebleNombre(inmueble)}</div>
+                      <div className="text-xs text-gray-400">{formatDireccion(inmueble)}</div>
+                    </div>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-            {/* Descripción */}
-            <div className="space-y-2">
-              <Label htmlFor="descripcion" className="text-sm font-medium">
-                Descripción del Problema *
-              </Label>
-              <Textarea
-                id="descripcion"
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-                placeholder="Describe el problema con el mayor detalle posible. Incluye: qué está pasando, desde cuándo, y cualquier información relevante..."
-                rows={5}
-                disabled={submitting}
-                className="resize-none"
-              />
-              <p className="text-xs text-gray-500">
-                Mínimo 20 caracteres. Actual: {descripcion.length}
-              </p>
+        {/* ── Paso 02: Descripción + Foto ── */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 space-y-4">
+          <div className="flex items-start gap-3">
+            <span className="text-4xl font-black text-amber-100 leading-none select-none">02</span>
+            <div className="pt-0.5">
+              <p className="font-semibold text-gray-900 text-sm">¿Qué está pasando?</p>
+              <p className="text-xs text-gray-400">Describí el problema con detalle</p>
             </div>
+          </div>
 
-            {/* Foto de diagnóstico — opcional */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-1.5">
-                <ImagePlus className="h-4 w-4 text-gray-400" />
-                Foto del problema <span className="text-gray-400 font-normal">(opcional)</span>
-              </Label>
-              <p className="text-xs text-gray-500">
-                Podés adjuntar una foto que ayude a entender el problema. Máximo 10 MB (JPG, PNG, WEBP).
-              </p>
-              {fotoPreview ? (
-                <div className="relative inline-block">
-                  <img
-                    src={fotoPreview}
-                    alt="Vista previa"
-                    className="max-h-48 rounded-lg border border-gray-200 object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={quitarFoto}
-                    disabled={submitting}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <label className={`flex flex-col items-center justify-center gap-2 w-full h-28 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-colors ${submitting ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <ImagePlus className="h-7 w-7 text-gray-300" />
-                  <span className="text-xs text-gray-400">Tocá para adjuntar una foto</span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                    className="hidden"
-                    onChange={handleFotoChange}
-                    disabled={submitting}
-                  />
-                </label>
-              )}
-            </div>
+          <Textarea
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
+            placeholder="Describí qué está pasando, desde cuándo ocurre y cualquier detalle relevante..."
+            rows={4}
+            disabled={submitting}
+            className="resize-none rounded-xl border-gray-200 bg-gray-50 text-sm focus:border-amber-300 focus:ring-amber-200"
+          />
+          <div className="flex justify-end">
+            <span className={`text-xs font-medium transition-colors ${
+              descripcion.length === 0 ? 'text-gray-300' :
+              descripcion.length < 20 ? 'text-red-400' : 'text-green-500'
+            }`}>
+              {descripcion.length < 20 && descripcion.length > 0
+                ? `Faltan ${20 - descripcion.length} caracteres`
+                : `${descripcion.length} caracteres`}
+            </span>
+          </div>
 
-            {/* Disponibilidad — calendario interactivo */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Disponibilidad para la visita del técnico *
-              </Label>
-              <p className="text-xs text-gray-500">
-                Marcá los días y horarios en que podés recibir al técnico. Podés seleccionar días discontinuos y múltiples franjas por día.
-              </p>
-              <CalendarioDisponibilidad
-                modo="editar"
-                franjas={franjas}
-                onChange={setFranjas}
-              />
-            </div>
+          {/* Foto opcional */}
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1.5">
+              <ImagePlus className="h-3.5 w-3.5" />
+              Foto del problema
+              <span className="text-gray-300 font-normal">· opcional · máx. 10 MB</span>
+            </p>
+            {fotoPreview ? (
+              <div className="relative">
+                <img
+                  src={fotoPreview}
+                  alt="Vista previa"
+                  className="w-full max-h-56 object-cover rounded-xl border border-gray-100"
+                />
+                <button
+                  type="button"
+                  onClick={quitarFoto}
+                  disabled={submitting}
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/40 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <label className={`flex flex-col items-center justify-center gap-2 w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-amber-300 hover:bg-amber-50/40 transition-colors ${submitting ? 'opacity-50 pointer-events-none' : ''}`}>
+                <ImagePlus className="h-7 w-7 text-gray-200" />
+                <span className="text-xs text-gray-400">Tocá para adjuntar una foto</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleFotoChange}
+                  disabled={submitting}
+                />
+              </label>
+            )}
+          </div>
+        </div>
 
-            {/* Botones */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full sm:w-auto"
-                onClick={() => router.back()}
-                disabled={submitting}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                className="w-full sm:flex-1 gap-2"
-                disabled={submitting}
-              >
-                {submitting ? (
-                  'Enviando...'
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    Reportar Incidente
-                  </>
-                )}
-              </Button>
+        {/* ── Paso 03: Disponibilidad ── */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 space-y-3">
+          <div className="flex items-start gap-3">
+            <span className="text-4xl font-black text-amber-100 leading-none select-none">03</span>
+            <div className="pt-0.5">
+              <p className="font-semibold text-gray-900 text-sm">Tu disponibilidad</p>
+              <p className="text-xs text-gray-400">¿Cuándo podés recibir al técnico?</p>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+
+          <CalendarioDisponibilidad
+            modo="editar"
+            franjas={franjas}
+            onChange={setFranjas}
+          />
+        </div>
+
+        {/* ── Botón enviar ── */}
+        <div className="pt-1 pb-6">
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-base gap-2 shadow-sm shadow-amber-200 transition-all active:scale-[0.98]"
+          >
+            {submitting ? (
+              <>
+                <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4" />
+                Reportar incidente
+              </>
+            )}
+          </Button>
+        </div>
+
+      </form>
     </motion.div>
   )
 }

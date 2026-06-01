@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { es } from 'date-fns/locale'
 import { format, parseISO, isValid } from 'date-fns'
@@ -328,8 +328,29 @@ export function CalendarioDisponibilidad({
   compromisoActual,
   className,
 }: CalendarioDisponibilidadProps) {
-  // Estado para modo editar
   const [selectedDates, setSelectedDates] = useState<Date[]>([])
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const touchStartX = useRef<number | null>(null)
+
+  const handleCalTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }, [])
+
+  const handleCalTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const delta = e.changedTouches[0].clientX - touchStartX.current
+    if (Math.abs(delta) > 40) {
+      setCurrentMonth(prev => {
+        const now = new Date()
+        const next = new Date(prev.getFullYear(), prev.getMonth() + (delta < 0 ? 1 : -1), 1)
+        if (next.getFullYear() < now.getFullYear() || (next.getFullYear() === now.getFullYear() && next.getMonth() < now.getMonth())) {
+          return prev
+        }
+        return next
+      })
+    }
+    touchStartX.current = null
+  }, [])
   const [slotsByDate, setSlotsByDate] = useState<Record<string, { hora_inicio: string; hora_fin: string }[]>>({})
 
   // Inicializar con franjas existentes (modo editar)
@@ -432,17 +453,23 @@ export function CalendarioDisponibilidad({
       {/* ── MODO EDITAR ── */}
       {modo === 'editar' && (
         <>
-          <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center">
+          <div
+            className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center select-none"
+            onTouchStart={handleCalTouchStart}
+            onTouchEnd={handleCalTouchEnd}
+          >
             <DayPicker
               {...dayPickerCommon}
               mode="multiple"
               selected={selectedDates}
               onSelect={handleSelectDates}
+              month={currentMonth}
+              onMonthChange={setCurrentMonth}
               disabled={{ before: (() => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(0,0,0,0); return d; })() }}
             />
           </div>
           <p className="text-[11px] text-gray-400 text-center">
-            Hacé click en los días en que podés recibir al técnico
+            Tocá los días en que podés recibir al técnico · deslizá para cambiar de mes
           </p>
 
           {selectedDates.length > 0 && (
@@ -484,7 +511,11 @@ export function CalendarioDisponibilidad({
         <>
           {franjas.length > 0 ? (
             <>
-              <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center overflow-hidden">
+              <div
+                className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center overflow-hidden select-none"
+                onTouchStart={handleCalTouchStart}
+                onTouchEnd={handleCalTouchEnd}
+              >
                 <DayPicker
                   {...dayPickerCommon}
                   mode="single"
@@ -492,6 +523,8 @@ export function CalendarioDisponibilidad({
                   modifiersClassNames={modifiersClassNames}
                   selected={undefined}
                   onSelect={() => {}}
+                  month={currentMonth}
+                  onMonthChange={setCurrentMonth}
                 />
               </div>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1.5">
@@ -515,7 +548,11 @@ export function CalendarioDisponibilidad({
         <>
           {franjas.length > 0 ? (
             <>
-              <div className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center overflow-hidden">
+              <div
+                className="bg-white border border-gray-200 rounded-xl p-3 flex justify-center overflow-hidden select-none"
+                onTouchStart={handleCalTouchStart}
+                onTouchEnd={handleCalTouchEnd}
+              >
                 <DayPicker
                   {...dayPickerCommon}
                   mode="single"
@@ -523,6 +560,8 @@ export function CalendarioDisponibilidad({
                   modifiersClassNames={modifiersClassNames}
                   selected={undefined}
                   onSelect={() => {}}
+                  month={currentMonth}
+                  onMonthChange={setCurrentMonth}
                   footer={
                     <p className="text-[11px] text-center text-amber-600 mt-2">
                       Días marcados = disponibles del cliente

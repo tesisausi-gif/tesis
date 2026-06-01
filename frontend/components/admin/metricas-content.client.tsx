@@ -105,7 +105,7 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Métricas e Informes</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Indicadores</h2>
           <p className="text-sm text-muted-foreground">Análisis de rendimiento y reportes del sistema ISBA</p>
         </div>
         {cargando && (
