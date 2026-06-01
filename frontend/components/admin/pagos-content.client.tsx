@@ -290,7 +290,7 @@ function TabCobrosClientes({ pendientes, realizados, highlightId }: { pendientes
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                           <Link
-                            href={`/dashboard/incidentes?tab=finalizado&highlight=${p.id_incidente}`}
+                            href={`/dashboard/incidentes?tab=en_proceso&highlight=${p.id_incidente}`}
                             className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                           >
                             <ExternalLink className="h-3.5 w-3.5"/>Ver incidente
@@ -895,7 +895,7 @@ export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendiente
   return (
     <div className="space-y-4 px-4 py-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Pagos y Cobros</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Cobros y Pagos</h1>
         <p className="text-gray-600 text-sm mt-1">Gestión de cobros a clientes y pagos a técnicos</p>
       </div>
       <Tabs value={activeTab} onValueChange={setActiveTab}>

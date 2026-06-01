@@ -279,7 +279,7 @@ function IncidenteCard({
             className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-emerald-50/60 active:bg-emerald-100/60 transition-colors text-emerald-600"
           >
             <CreditCard className="w-4 h-4" />
-            <span className="text-[10px] font-semibold">Ir al Pago</span>
+            <span className="text-[10px] font-semibold">Ir al Cobro</span>
           </Link>
         ) : (
           <button
