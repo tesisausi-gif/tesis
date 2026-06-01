@@ -97,34 +97,13 @@ export function InicioTecnicoContent({
         variants={cardVariants}
         className="-mx-4 px-5 pt-8 pb-9 relative overflow-hidden"
         style={{
-          background:
-            'radial-gradient(ellipse at 85% 0%, rgba(59,130,246,0.22) 0%, transparent 50%), linear-gradient(148deg, #0e1929 0%, #131e32 55%, #0f1e2e 100%)',
+          background: 'linear-gradient(155deg, #0e1929 0%, #131e32 60%, #0f1e2e 100%)',
         }}
       >
-        {/* Fine grid overlay */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,1) 1px, transparent 1px)',
-            backgroundSize: '36px 36px',
-          }}
+          className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none opacity-20"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.6) 0%, transparent 70%)' }}
         />
-
-        {/* Ambient glow */}
-        <motion.div
-          animate={{ scale: [1, 1.18, 1], opacity: [0.25, 0.40, 0.25] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-20 -right-20 w-64 h-64 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.4) 0%, transparent 68%)' }}
-        />
-
-        {/* Small accent dots */}
-        <div className="absolute top-5 right-5 flex gap-1 opacity-30">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="h-1 w-1 rounded-full bg-blue-400" />
-          ))}
-        </div>
 
         <div className="relative flex items-start gap-3.5">
           <div className="h-12 w-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center shrink-0">

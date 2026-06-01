@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
   Plus, ChevronRight, Calendar, Clock,
   AlertCircle, CreditCard, Building2, CheckCircle2,
-  Home, FileText, Zap,
+  Home, FileText, Zap, Wrench,
 } from 'lucide-react'
 import { format, parseISO, isToday, isTomorrow } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -117,40 +117,19 @@ export function InicioContent({
         variants={cardVariants}
         className="-mx-4 px-5 pt-8 pb-9 relative overflow-hidden"
         style={{
-          background:
-            'radial-gradient(ellipse at 88% 0%, rgba(217,119,6,0.22) 0%, transparent 52%), linear-gradient(148deg, #1c1a17 0%, #252018 60%, #1a1f2e 100%)',
+          background: 'linear-gradient(155deg, #1c1a17 0%, #252018 60%, #1a1f2e 100%)',
         }}
       >
-        {/* Fine grid overlay */}
         <div
-          className="absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,1) 1px, transparent 1px)',
-            backgroundSize: '36px 36px',
-          }}
+          className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none opacity-20"
+          style={{ background: 'radial-gradient(circle, rgba(217,119,6,0.6) 0%, transparent 70%)' }}
         />
-
-        {/* Ambient glow */}
-        <motion.div
-          animate={{ scale: [1, 1.18, 1], opacity: [0.28, 0.42, 0.28] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-20 -right-20 w-64 h-64 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(217,119,6,0.4) 0%, transparent 68%)' }}
-        />
-
-        {/* Small accent dot row */}
-        <div className="absolute top-5 right-5 flex gap-1 opacity-30">
-          {[0,1,2].map(i => (
-            <div key={i} className="h-1 w-1 rounded-full bg-amber-400" />
-          ))}
-        </div>
 
         <div className="relative">
           <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-amber-500/70 mb-2.5">
             {fechaHoy}
           </p>
-          <h1 className="text-[2.15rem] font-black text-white leading-none tracking-tighter mb-4">
+          <h1 className="text-[1.85rem] font-black text-white leading-none tracking-tighter mb-3">
             Hola, {nombre}.
           </h1>
 
@@ -220,26 +199,26 @@ export function InicioContent({
       {/* ── STATS ─────────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants} className="grid grid-cols-3 gap-2">
         {[
-          { label: 'Activos',   value: stats.activos,     accent: 'bg-amber-400' },
-          { label: 'En curso',  value: stats.en_proceso,  accent: 'bg-blue-400' },
-          { label: 'Cerrados',  value: stats.finalizados, accent: 'bg-emerald-400' },
-        ].map(({ label, value, accent }) => (
-          <motion.div
-            key={label}
-            whileHover={{ rotateY: 5, rotateX: -2, scale: 1.03 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-            style={{ transformStyle: 'preserve-3d', perspective: '700px' }}
-            className="bg-white rounded-2xl px-3.5 pt-4 pb-3.5 border border-gray-100 shadow-sm flex flex-col gap-1"
-          >
-            <div className={cn('h-[3px] w-7 rounded-full mb-1', accent)} />
-            <p className="text-3xl font-black text-gray-900 tracking-tighter leading-none">
-              <AnimatedCounter value={value} />
-            </p>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.12em]">
-              {label}
-            </p>
-          </motion.div>
+          { label: 'Activos',  value: stats.activos,     Icon: AlertCircle,  iconColor: 'text-amber-500',   tab: 'pendiente' },
+          { label: 'En curso', value: stats.en_proceso,  Icon: Wrench,       iconColor: 'text-blue-500',    tab: 'en_proceso' },
+          { label: 'Cerrados', value: stats.finalizados, Icon: CheckCircle2, iconColor: 'text-emerald-500', tab: 'finalizado' },
+        ].map(({ label, value, Icon, iconColor, tab }) => (
+          <Link key={label} href={`/cliente/incidentes?tab=${tab}`} className="block">
+            <motion.div
+              whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              className="bg-white rounded-xl border border-gray-100 shadow-sm p-4"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium text-gray-500">{label}</p>
+                <Icon className={`h-4 w-4 ${iconColor}`} />
+              </div>
+              <p className="text-2xl font-bold text-gray-900 tabular-nums leading-none">
+                <AnimatedCounter value={value} />
+              </p>
+            </motion.div>
+          </Link>
         ))}
       </motion.div>
 
