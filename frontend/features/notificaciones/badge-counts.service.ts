@@ -164,13 +164,12 @@ export async function getClienteBadgeCounts(): Promise<ClienteBadgeCounts> {
         .in('id_incidente', ids)
         .eq('estado_presupuesto', 'aprobado_admin'),
 
-      // Pagos pendientes = incidentes en_proceso con fue_resuelto (esperando cobro)
+      // Pagos pendientes = incidentes en_proceso con fue_resuelto (filtramos en JS para evitar coerción de tipo)
       supabase
         .from('incidentes')
-        .select('id_incidente', { count: 'exact', head: true })
+        .select('id_incidente, fue_resuelto')
         .eq('id_cliente_reporta', idCliente)
-        .eq('estado_actual', 'en_proceso')
-        .eq('fue_resuelto', 1),
+        .eq('estado_actual', 'en_proceso'),
 
       // Notificaciones no leídas del cliente
       supabase
@@ -180,7 +179,8 @@ export async function getClienteBadgeCounts(): Promise<ClienteBadgeCounts> {
         .is('fecha_leida', null),
     ])
 
-    return { presupuestos: presResult.count ?? 0, pagos: pagosResult.count ?? 0, notificaciones: notifResult.count ?? 0 }
+    const pagos = (pagosResult.data || []).filter((i: any) => i.fue_resuelto).length
+    return { presupuestos: presResult.count ?? 0, pagos, notificaciones: notifResult.count ?? 0 }
   } catch {
     return { presupuestos: 0, pagos: 0, notificaciones: 0 }
   }

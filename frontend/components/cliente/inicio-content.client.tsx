@@ -306,38 +306,45 @@ export function InicioContent({
       {/* ── MIS PAGOS ────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants}>
         <Link href="/cliente/pagos" className="block">
-          <motion.div
-            whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
-                <CreditCard className="h-4 w-4 text-gray-400" />
+          {pagosPendientes > 0 ? (
+            <motion.div
+              whileTap={{ scale: 0.97 }}
+              className="rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #be123c 100%)' }}
+            >
+              <div
+                className="absolute -top-8 -right-8 w-36 h-36 rounded-full pointer-events-none opacity-20"
+                style={{ background: 'radial-gradient(circle, #ffffff 0%, transparent 70%)' }}
+              />
+              <div className="h-12 w-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+                <CreditCard className="h-6 w-6 text-white" />
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-800">Mis pagos</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {pagosPendientes > 0
-                    ? `${pagosPendientes} pago${pagosPendientes !== 1 ? 's' : ''} pendiente${pagosPendientes !== 1 ? 's' : ''}`
-                    : 'Todo al día'}
+              <div className="flex-1 min-w-0 relative">
+                <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-rose-200">Mis pagos</p>
+                <p className="text-base font-black text-white leading-tight mt-0.5">
+                  {pagosPendientes === 1 ? '1 pago pendiente' : `${pagosPendientes} pagos pendientes`}
                 </p>
+                <p className="text-xs text-rose-200/70 mt-0.5">Completá el pago del servicio</p>
               </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {pagosPendientes > 0 ? (
-                <span className="h-5 min-w-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
-                  {pagosPendientes}
-                </span>
-              ) : (
-                <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                  Al día
-                </span>
-              )}
-              <ChevronRight className="h-4 w-4 text-gray-300" />
-            </div>
-          </motion.div>
+              <ChevronRight className="h-5 w-5 text-white/50 shrink-0 relative" />
+            </motion.div>
+          ) : (
+            <motion.div
+              whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.06)' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3"
+            >
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800">Mis pagos</p>
+                <p className="text-xs text-emerald-600 font-medium mt-0.5">Todo al día</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
+            </motion.div>
+          )}
         </Link>
       </motion.div>
 
