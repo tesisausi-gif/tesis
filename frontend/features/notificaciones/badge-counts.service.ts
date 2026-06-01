@@ -38,11 +38,11 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
   const supabase = createAdminClient()
 
   const [incResult, confResult, presResult, cobrosPendResult, pagosTecResult, solResult, reasigResult, notifResult] = await Promise.all([
-    // Todos los incidentes no finalizados
+    // Incidentes activos con trabajo pendiente (excluye finalizado, resuelto y en_proceso+fue_resuelto)
     supabase
       .from('incidentes')
-      .select('id_incidente', { count: 'exact', head: true })
-      .neq('estado_actual', 'finalizado'),
+      .select('id_incidente, fue_resuelto')
+      .in('estado_actual', ['pendiente', 'asignacion_solicitada', 'en_proceso']),
 
     // Conformidades con foto subida esperando revisión
     supabase
@@ -127,8 +127,10 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
     reasignaciones = count ?? 0
   }
 
+  const incidentes = (incResult.data || []).filter((i: any) => !i.fue_resuelto).length
+
   return {
-    incidentes: incResult.count ?? 0,
+    incidentes,
     conformidades: confResult.count ?? 0,
     presupuestos: presResult.count ?? 0,
     pagos: pendientesCobros + pendientesPagos,
