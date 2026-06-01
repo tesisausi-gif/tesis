@@ -67,50 +67,41 @@ const cardVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 380, damping: 34 } },
 }
 
-// ── Colored stat card ─────────────────────────────────────────────────────────
+// ── Stat card (white minimal) ─────────────────────────────────────────────────
 
 function StatCard({
   href,
-  gradient,
+  accent,
   label,
-  sublabel,
   value,
   icon: Icon,
-  decoration,
+  valueColor,
 }: {
   href: string
-  gradient: string
+  accent: string
   label: string
-  sublabel: string
   value: number
   icon: React.ElementType
-  decoration: React.ReactNode
+  valueColor: string
 }) {
   return (
     <Link href={href} className="group block">
       <motion.div
-        whileHover={{ scale: 1.025, y: -2 }}
-        whileTap={{ scale: 0.97 }}
+        whileHover={{ y: -3, boxShadow: '0 8px 24px -4px rgba(0,0,0,0.10)' }}
+        whileTap={{ scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-        className="relative overflow-hidden rounded-2xl p-5"
-        style={{ background: gradient }}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 pt-4 pb-3.5"
       >
-        {decoration}
-        <div className="relative z-10">
-          <div className="flex items-start justify-between mb-4">
-            <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-white/60">{label}</span>
-            <div className="h-8 w-8 rounded-xl bg-white/15 flex items-center justify-center">
-              <Icon className="h-4 w-4 text-white" />
-            </div>
+        <div className="flex items-start justify-between mb-3">
+          <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${accent}`}>
+            <Icon className="h-3.5 w-3.5 text-white" />
           </div>
-          <div className="text-4xl font-black text-white tabular-nums leading-none mb-1.5">
-            <AnimatedCounter value={value} />
-          </div>
-          <p className="text-xs text-white/55 flex items-center gap-1">
-            {sublabel}
-            <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </p>
+          <ArrowRight className="h-3.5 w-3.5 text-gray-200 group-hover:text-gray-400 transition-colors" />
         </div>
+        <div className={`text-3xl font-black tabular-nums leading-none mb-1.5 ${valueColor}`}>
+          <AnimatedCounter value={value} />
+        </div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">{label}</p>
       </motion.div>
     </Link>
   )
@@ -158,29 +149,6 @@ export function DashboardContent({
   }, [])
 
   const totalActivos = stats.incidentesPendientes + stats.incidentesEnProceso
-
-  // Decoraciones SVG por card
-  const decoPendientes = (
-    <svg className="absolute right-0 top-0 w-40 h-40 pointer-events-none" viewBox="0 0 200 200" fill="none">
-      <circle cx="170" cy="50" r="70" fill="white" fillOpacity="0.07" />
-      <circle cx="210" cy="110" r="50" fill="white" fillOpacity="0.05" />
-      <circle cx="140" cy="170" r="35" fill="white" fillOpacity="0.06" />
-    </svg>
-  )
-  const decoEnProceso = (
-    <svg className="absolute right-0 top-0 w-40 h-40 pointer-events-none" viewBox="0 0 200 200" fill="none">
-      <ellipse cx="180" cy="60" rx="55" ry="30" fill="white" fillOpacity="0.07" />
-      <circle cx="200" cy="130" r="45" fill="white" fillOpacity="0.05" />
-      <rect x="130" y="20" width="60" height="30" rx="12" fill="white" fillOpacity="0.06" />
-    </svg>
-  )
-  const decoFinalizados = (
-    <svg className="absolute right-0 top-0 w-40 h-40 pointer-events-none" viewBox="0 0 200 200" fill="none">
-      <polygon points="200,0 200,80 120,0" fill="white" fillOpacity="0.07" />
-      <circle cx="175" cy="100" r="50" fill="white" fillOpacity="0.05" />
-      <circle cx="145" cy="30" r="18" fill="white" fillOpacity="0.08" />
-    </svg>
-  )
 
   return (
     <motion.div
@@ -250,30 +218,27 @@ export function DashboardContent({
       <motion.div variants={cardVariants} className="grid grid-cols-3 gap-2.5">
         <StatCard
           href="/dashboard/incidentes?tab=pendiente"
-          gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+          accent="bg-amber-500"
           label="Pendientes"
-          sublabel="Sin asignar"
           value={stats.incidentesPendientes}
           icon={Clock}
-          decoration={decoPendientes}
+          valueColor="text-slate-900"
         />
         <StatCard
           href="/dashboard/incidentes?tab=en_proceso"
-          gradient="linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
+          accent="bg-orange-500"
           label="En Proceso"
-          sublabel="Siendo atendidos"
           value={stats.incidentesEnProceso}
           icon={Wrench}
-          decoration={decoEnProceso}
+          valueColor="text-slate-900"
         />
         <StatCard
           href="/dashboard/incidentes?tab=finalizado"
-          gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
+          accent="bg-emerald-500"
           label="Finalizados"
-          sublabel="Completados"
           value={stats.incidentesResueltos}
           icon={CheckCircle}
-          decoration={decoFinalizados}
+          valueColor="text-slate-900"
         />
       </motion.div>
 
@@ -281,31 +246,19 @@ export function DashboardContent({
       <motion.div variants={cardVariants} className="grid grid-cols-2 gap-2.5">
         <StatCard
           href="/dashboard/clientes"
-          gradient="linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
+          accent="bg-violet-500"
           label="Clientes"
-          sublabel="Activos en el sistema"
           value={stats.clientes}
           icon={Users}
-          decoration={
-            <svg className="absolute right-0 top-0 w-36 h-36 pointer-events-none" viewBox="0 0 200 200" fill="none">
-              <circle cx="160" cy="60" r="60" fill="white" fillOpacity="0.07" />
-              <circle cx="190" cy="140" r="35" fill="white" fillOpacity="0.05" />
-            </svg>
-          }
+          valueColor="text-slate-900"
         />
         <StatCard
           href="/dashboard/tecnicos"
-          gradient="linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
+          accent="bg-blue-500"
           label="Técnicos"
-          sublabel="Activos en el sistema"
           value={stats.tecnicos}
           icon={Wrench}
-          decoration={
-            <svg className="absolute right-0 top-0 w-36 h-36 pointer-events-none" viewBox="0 0 200 200" fill="none">
-              <circle cx="165" cy="55" r="55" fill="white" fillOpacity="0.07" />
-              <ellipse cx="185" cy="130" rx="38" ry="22" fill="white" fillOpacity="0.05" />
-            </svg>
-          }
+          valueColor="text-slate-900"
         />
       </motion.div>
 
