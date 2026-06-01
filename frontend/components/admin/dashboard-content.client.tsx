@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import {
   Users, Wrench, Clock, AlertCircle, CheckCircle, Activity,
-  ArrowRight, Wifi, WifiOff, Send, MapPin,
+  ArrowRight, Wifi, WifiOff, Send, MapPin, Zap,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -48,12 +49,54 @@ interface DashboardContentProps {
 }
 
 const ESTADO_CFG: Record<string, { badge: string; label: string }> = {
-  pendiente:             { badge: 'bg-amber-100 text-amber-800 ring-amber-200',   label: 'Pendiente' },
-  asignacion_solicitada: { badge: 'bg-blue-100 text-blue-800 ring-blue-200',      label: 'Asig. Solicitada' },
-  en_proceso:            { badge: 'bg-orange-100 text-orange-800 ring-orange-200', label: 'En Proceso' },
+  pendiente:             { badge: 'bg-amber-100 text-amber-800 ring-amber-200',      label: 'Pendiente' },
+  asignacion_solicitada: { badge: 'bg-blue-100 text-blue-800 ring-blue-200',         label: 'Asig. Solicitada' },
+  en_proceso:            { badge: 'bg-orange-100 text-orange-800 ring-orange-200',   label: 'En Proceso' },
   finalizado:            { badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', label: 'Finalizado' },
   resuelto:              { badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', label: 'Finalizado' },
 }
+
+// ── Animated counter ──────────────────────────────────────────────────────────
+
+function AnimatedCounter({ value }: { value: number }) {
+  const [displayed, setDisplayed] = useState(0)
+  const prevRef = useRef(0)
+  const rafRef = useRef<number>(0)
+
+  useEffect(() => {
+    const from = prevRef.current
+    const to = value
+    const duration = 700
+    const start = performance.now()
+
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setDisplayed(Math.round(from + (to - from) * eased))
+      if (p < 1) rafRef.current = requestAnimationFrame(tick)
+      else prevRef.current = to
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [value])
+
+  return <>{displayed}</>
+}
+
+// ── Stagger config ────────────────────────────────────────────────────────────
+
+const listVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 380, damping: 34 } },
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function DashboardContent({
   stats: initialStats,
@@ -106,110 +149,208 @@ export function DashboardContent({
   const totalActivos = stats.incidentesPendientes + stats.incidentesEnProceso
 
   return (
-    <div className="space-y-5">
+    <motion.div
+      variants={listVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-3 -mt-4"
+    >
 
-      {/* ── Header ───────────────────────────────────────────── */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h2>
-          <p className="text-sm text-slate-400 mt-0.5">Sistema de gestión ISBA</p>
-        </div>
-        <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border ${
-          conectado
-            ? 'text-emerald-700 border-emerald-200 bg-emerald-50'
-            : 'text-slate-400 border-slate-200 bg-slate-50'
-        }`}>
-          {conectado
-            ? <><Wifi className="h-3 w-3" /> En vivo</>
-            : <><WifiOff className="h-3 w-3" /> Conectando...</>
-          }
-        </div>
-      </div>
+      {/* ── HERO ────────────────────────────────────────────────────────── */}
+      <motion.div
+        variants={cardVariants}
+        className="-mx-6 px-6 pt-8 pb-9 relative overflow-hidden"
+        style={{
+          background:
+            'radial-gradient(ellipse at 85% 0%, rgba(109,40,217,0.22) 0%, transparent 50%), linear-gradient(148deg, #0c0b1a 0%, #130f28 55%, #0e0d1f 100%)',
+        }}
+      >
+        {/* Fine grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,1) 1px, transparent 1px)',
+            backgroundSize: '36px 36px',
+          }}
+        />
 
-      {/* ── Stat cards — incidentes ───────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Link href="/dashboard/incidentes?tab=pendiente" className="group">
-          <div className="rounded-2xl border-l-4 border-l-amber-400 bg-gradient-to-r from-amber-50/70 to-white p-5 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pendientes</span>
+        {/* Ambient glow */}
+        <motion.div
+          animate={{ scale: [1, 1.18, 1], opacity: [0.25, 0.40, 0.25] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -top-20 -right-20 w-64 h-64 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.4) 0%, transparent 68%)' }}
+        />
+
+        {/* Small accent dots */}
+        <div className="absolute top-5 right-5 flex gap-1 opacity-30">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="h-1 w-1 rounded-full bg-violet-400" />
+          ))}
+        </div>
+
+        <div className="relative">
+          <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-violet-400/70 mb-2.5">
+            Sistema ISBA
+          </p>
+          <h1 className="text-[2.15rem] font-black text-white leading-none tracking-tighter mb-4">
+            Panel de Control
+          </h1>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {totalActivos > 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-200 bg-violet-900/35 border border-violet-600/30 px-3 py-1.5 rounded-full">
+                <Zap className="h-3 w-3" />
+                {totalActivos} incidente{totalActivos !== 1 ? 's' : ''} activo{totalActivos !== 1 ? 's' : ''}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 bg-emerald-900/35 border border-emerald-600/30 px-3 py-1.5 rounded-full">
+                <CheckCircle className="h-3 w-3" />
+                Sin pendientes
+              </span>
+            )}
+
+            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${
+              conectado
+                ? 'text-emerald-300 border-emerald-600/30 bg-emerald-900/35'
+                : 'text-slate-400 border-slate-600/30 bg-slate-900/35'
+            }`}>
+              {conectado
+                ? <><Wifi className="h-3 w-3" /> En vivo</>
+                : <><WifiOff className="h-3 w-3" /> Conectando...</>
+              }
+            </span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── STAT CARDS — incidentes ──────────────────────────────────────── */}
+      <motion.div variants={cardVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <Link href="/dashboard/incidentes?tab=pendiente" className="group block">
+          <motion.div
+            whileHover={{ rotateY: 5, rotateX: -2, scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            style={{ transformStyle: 'preserve-3d', perspective: '700px' }}
+            className="rounded-2xl bg-white px-4 pt-4 pb-3.5 border border-gray-100 shadow-sm flex flex-col gap-1"
+          >
+            <div className="h-[3px] w-7 rounded-full mb-1 bg-amber-400" />
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-black tabular-nums text-amber-700">
+                <AnimatedCounter value={stats.incidentesPendientes} />
+              </div>
               <div className="h-7 w-7 rounded-lg bg-amber-100 flex items-center justify-center">
                 <Clock className="h-3.5 w-3.5 text-amber-600" />
               </div>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-amber-700">{stats.incidentesPendientes}</div>
-            <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-              Requieren asignación <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.12em] flex items-center gap-1">
+              Pendientes <ArrowRight className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </p>
-          </div>
+          </motion.div>
         </Link>
 
-        <Link href="/dashboard/incidentes?tab=en_proceso" className="group">
-          <div className="rounded-2xl border-l-4 border-l-orange-400 bg-gradient-to-r from-orange-50/70 to-white p-5 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">En Proceso</span>
+        <Link href="/dashboard/incidentes?tab=en_proceso" className="group block">
+          <motion.div
+            whileHover={{ rotateY: 5, rotateX: -2, scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            style={{ transformStyle: 'preserve-3d', perspective: '700px' }}
+            className="rounded-2xl bg-white px-4 pt-4 pb-3.5 border border-gray-100 shadow-sm flex flex-col gap-1"
+          >
+            <div className="h-[3px] w-7 rounded-full mb-1 bg-orange-400" />
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-black tabular-nums text-orange-700">
+                <AnimatedCounter value={stats.incidentesEnProceso} />
+              </div>
               <div className="h-7 w-7 rounded-lg bg-orange-100 flex items-center justify-center">
                 <Wrench className="h-3.5 w-3.5 text-orange-600" />
               </div>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-orange-700">{stats.incidentesEnProceso}</div>
-            <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-              Siendo atendidos <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.12em] flex items-center gap-1">
+              En Proceso <ArrowRight className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </p>
-          </div>
+          </motion.div>
         </Link>
 
-        <Link href="/dashboard/incidentes?tab=finalizado" className="group">
-          <div className="rounded-2xl border-l-4 border-l-emerald-400 bg-gradient-to-r from-emerald-50/70 to-white p-5 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Finalizados</span>
+        <Link href="/dashboard/incidentes?tab=finalizado" className="group block">
+          <motion.div
+            whileHover={{ rotateY: 5, rotateX: -2, scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            style={{ transformStyle: 'preserve-3d', perspective: '700px' }}
+            className="rounded-2xl bg-white px-4 pt-4 pb-3.5 border border-gray-100 shadow-sm flex flex-col gap-1"
+          >
+            <div className="h-[3px] w-7 rounded-full mb-1 bg-emerald-400" />
+            <div className="flex items-center justify-between">
+              <div className="text-3xl font-black tabular-nums text-emerald-700">
+                <AnimatedCounter value={stats.incidentesResueltos} />
+              </div>
               <div className="h-7 w-7 rounded-lg bg-emerald-100 flex items-center justify-center">
                 <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
               </div>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-emerald-700">{stats.incidentesResueltos}</div>
-            <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-              Completados <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.12em] flex items-center gap-1">
+              Finalizados <ArrowRight className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </p>
-          </div>
+          </motion.div>
         </Link>
-      </div>
+      </motion.div>
 
-      {/* ── Entidades: clientes + técnicos ───────────────────── */}
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/dashboard/clientes" className="group">
-          <div className="rounded-2xl bg-gradient-to-r from-violet-50/60 to-white border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
+      {/* ── ENTIDADES ────────────────────────────────────────────────────── */}
+      <motion.div variants={cardVariants} className="grid grid-cols-2 gap-2">
+        <Link href="/dashboard/clientes" className="block">
+          <motion.div
+            whileHover={{ rotateY: 5, rotateX: -2, scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            style={{ transformStyle: 'preserve-3d', perspective: '700px' }}
+            className="rounded-2xl bg-white px-4 pt-4 pb-3.5 border border-gray-100 shadow-sm flex items-center gap-3"
+          >
             <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
               <Users className="h-5 w-5 text-violet-600" />
             </div>
             <div>
-              <div className="text-xl font-bold tabular-nums text-violet-700">{stats.clientes}</div>
-              <p className="text-[11px] text-slate-400">Clientes activos</p>
+              <div className="text-2xl font-black tabular-nums text-violet-700">
+                <AnimatedCounter value={stats.clientes} />
+              </div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.10em]">Clientes</p>
             </div>
-          </div>
+          </motion.div>
         </Link>
 
-        <Link href="/dashboard/tecnicos" className="group">
-          <div className="rounded-2xl bg-gradient-to-r from-blue-50/60 to-white border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
+        <Link href="/dashboard/tecnicos" className="block">
+          <motion.div
+            whileHover={{ rotateY: 5, rotateX: -2, scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            style={{ transformStyle: 'preserve-3d', perspective: '700px' }}
+            className="rounded-2xl bg-white px-4 pt-4 pb-3.5 border border-gray-100 shadow-sm flex items-center gap-3"
+          >
             <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
               <Wrench className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <div className="text-xl font-bold tabular-nums text-blue-700">{stats.tecnicos}</div>
-              <p className="text-[11px] text-slate-400">Técnicos activos</p>
+              <div className="text-2xl font-black tabular-nums text-blue-700">
+                <AnimatedCounter value={stats.tecnicos} />
+              </div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.10em]">Técnicos</p>
             </div>
-          </div>
+          </motion.div>
         </Link>
-      </div>
+      </motion.div>
 
-      {/* ── Notificaciones ────────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="px-5 pt-4 pb-1">
-          <NotificacionesPanel notificaciones={notificaciones} rol="admin" />
+      {/* ── NOTIFICACIONES ──────────────────────────────────────────────── */}
+      <motion.div variants={cardVariants}>
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="px-5 pt-4 pb-1">
+            <NotificacionesPanel notificaciones={notificaciones} rol="admin" />
+          </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* ── Actividad reciente ────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ── ACTIVIDAD RECIENTE ───────────────────────────────────────────── */}
+      <motion.div variants={cardVariants} className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
         {/* Incidentes recientes */}
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -297,7 +438,9 @@ export function DashboardContent({
             <p className="text-sm text-slate-400 text-center py-8">Sin asignaciones recientes</p>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+
+      <div className="h-2" />
+    </motion.div>
   )
 }
