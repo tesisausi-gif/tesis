@@ -547,7 +547,6 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
             </button>
             {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
               const count = incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo).length
-              if (count === 0) return null
               const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
               const active = subFiltro === tipo
               return (

@@ -486,7 +486,6 @@ export function TrabajosContent({
                 </button>
                 {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
                   const count = listaFiltrada.filter(a => sk(a) === tipo).length
-                  if (count === 0) return null
                   const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
                   const active = subFiltro === tipo
                   return (
