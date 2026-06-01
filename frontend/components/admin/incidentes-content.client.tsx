@@ -44,6 +44,7 @@ const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
   en_curso:              Wrench,
   completada_pendiente:  Clock,
   conformidad_rechazada: XCircle,
+  pendiente_pago:        CreditCard,
   finalizado:            CheckCircle,
 }
 
@@ -58,6 +59,7 @@ type AccionPendiente =
   | { tipo: 'completada_pendiente' }
   | { tipo: 'conformidad_rechazada' }
   | { tipo: 'en_curso' }
+  | { tipo: 'pendiente_pago' }
   | { tipo: 'finalizado' }
 
 function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
@@ -73,6 +75,8 @@ function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
     return { tipo: 'en_curso' }
   }
   if (estado === 'en_proceso') {
+    // Trabajo completado y aprobado — espera cobro al cliente
+    if (inc.fue_resuelto) return { tipo: 'pendiente_pago' }
     const confRechazada = inc.conformidades?.find(c => c.esta_rechazada)
     if (confRechazada) return { tipo: 'conformidad_rechazada' }
     const presPendiente = inc.presupuestos?.find(p => p.estado_presupuesto === 'enviado')
@@ -109,6 +113,7 @@ const ACCION_CONFIG: Record<AccionPendiente['tipo'], {
   completada_pendiente:  { label: 'Ver conform.',     Icon: ClipboardList, activeColor: 'text-purple-600', pulse: true,  disabled: false },
   conformidad_rechazada: { label: 'Conf. rechaz.',    Icon: XCircle,       activeColor: 'text-gray-300',   pulse: false, disabled: true  },
   en_curso:              { label: 'En Curso',         Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  pendiente_pago:        { label: 'Cobrar cliente',   Icon: CreditCard,    activeColor: 'text-teal-600',   pulse: true,  disabled: false },
   finalizado:            { label: 'Finalizado',       Icon: CheckCircle,   activeColor: 'text-gray-300',   pulse: false, disabled: true  },
 }
 
@@ -117,6 +122,7 @@ const BANNER_ICON_BY_ACCION: Partial<Record<AccionPendiente['tipo'], React.Eleme
   presupuesto_cliente:   Clock,
   completada_pendiente:  Bell,
   conformidad_rechazada: XCircle,
+  pendiente_pago:        CreditCard,
 }
 
 function formatFecha(raw: string | null | undefined): string {
@@ -539,7 +545,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                 {incidentesFiltrados.length}
               </span>
             </button>
-            {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const).map(tipo => {
+            {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
               const count = incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo).length
               if (count === 0) return null
               const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
@@ -561,7 +567,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
             })}
           </div>
           <div className="space-y-6">
-          {((['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada'] as const)
+          {((['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
             .map(tipo => ({
               tipo,
               items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo),
@@ -605,6 +611,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                         highlightRefs={highlightRefs}
                         onVerDetalle={abrirModal}
                         onGestionar={handleGestionar}
+                        pagoLink={accion.tipo === 'pendiente_pago' ? `/dashboard/pagos?tab=cobros-clientes&highlight=${inc.id_incidente}` : undefined}
                       />
                     })}
                   </div>
@@ -615,57 +622,13 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
           </div>
         </div>
       ) : filtro === 'finalizado' ? (
-        /* ── Vista Finalizados con sub-filtro de pago ────────────────────────── */
+        /* ── Vista Finalizados — lista simple sin sub-filtros ─────────────────── */
         (() => {
-          const pagados = incidentesOrdenados.filter(i => incidentesPagadosIds.includes(i.id_incidente))
-          const pendientesPago = incidentesOrdenados.filter(i => !incidentesPagadosIds.includes(i.id_incidente))
-          const listaFinal =
-            subFiltro === 'pagado' ? pagados :
-            subFiltro === 'pendiente_pago' ? pendientesPago :
-            incidentesOrdenados
-          const paginados = listaFinal.slice((pagina - 1) * 10, pagina * 10)
+          const paginados = incidentesOrdenados.slice((pagina - 1) * 10, pagina * 10)
           return (
             <div className="space-y-4">
-              {/* Sub-filtro */}
-              <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
-                {([
-                  { id: 'todos',           label: 'Todos',           count: incidentesOrdenados.length },
-                  { id: 'pendiente_pago',  label: 'Pendiente Pago',  count: pendientesPago.length },
-                  { id: 'pagado',          label: 'Pagados',         count: pagados.length },
-                ] as const).map(({ id, label, count }) => {
-                  const active = subFiltro === id
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => { setSubFiltro(id); setPagina(1) }}
-                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
-                      }`}
-                    >
-                      {id === 'pagado' ? <CircleCheck className="w-3 h-3" /> : id === 'pendiente_pago' ? <CreditCard className="w-3 h-3" /> : null}
-                      {label}
-                      {count > 0 && (
-                        <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
-                          {count}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-              {/* Acceso directo a pagos cuando hay pendientes */}
-              {(subFiltro === 'todos' || subFiltro === 'pendiente_pago') && pendientesPago.length > 0 && (
-                <Link
-                  href="/dashboard/pagos"
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors text-sm font-semibold"
-                >
-                  <CreditCard className="w-4 h-4 flex-shrink-0" />
-                  <span>Hay {pendientesPago.length} pago{pendientesPago.length !== 1 ? 's' : ''} pendiente{pendientesPago.length !== 1 ? 's' : ''} — Ir a Pagos</span>
-                  <span className="ml-auto text-emerald-500">→</span>
-                </Link>
-              )}
-              {listaFinal.length === 0 ? (
-                <div className="text-center py-12 text-gray-400 text-sm">No hay incidentes en este sub-estado</div>
+              {incidentesOrdenados.length === 0 ? (
+                <div className="text-center py-12 text-gray-400 text-sm">No hay incidentes finalizados</div>
               ) : (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -696,11 +659,10 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                         highlightRefs={highlightRefs}
                         onVerDetalle={abrirModal}
                         onGestionar={handleGestionar}
-                        pagoLink={!incidentesPagadosIds.includes(inc.id_incidente) ? `/dashboard/pagos?tab=pagos-tecnicos&highlight=${inc.id_incidente}` : undefined}
                       />
                     })}
                   </div>
-                  <Paginacion pagina={pagina} total={listaFinal.length} onChange={setPagina} />
+                  <Paginacion pagina={pagina} total={incidentesOrdenados.length} onChange={setPagina} />
                 </>
               )}
             </div>

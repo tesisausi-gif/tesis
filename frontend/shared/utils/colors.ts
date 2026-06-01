@@ -75,6 +75,7 @@ export type SubEstadoEnProceso =
   | 'en_curso'
   | 'completada_pendiente'
   | 'conformidad_rechazada'
+  | 'pendiente_pago'
   | 'finalizado'
 
 export const SUB_ESTADO_EN_PROCESO_CONFIG: Record<SubEstadoEnProceso, {
@@ -172,6 +173,18 @@ export const SUB_ESTADO_EN_PROCESO_CONFIG: Record<SubEstadoEnProceso, {
     bannerBg:      'bg-red-500',
     bannerText:    'Conformidad rechazada — técnico debe re-subir',
     timelineColor: 'bg-red-500',
+  },
+  pendiente_pago: {
+    labelGrupo:    'Pendiente de cobro',
+    labelBadge:    'Pend. cobro',
+    stripe:        'border-l-teal-400',
+    bgGradient:    'from-teal-50/50',
+    badge:         'bg-teal-100 text-teal-800 ring-teal-200',
+    groupHeaderCls:'text-teal-700 bg-teal-50 border-teal-200',
+    groupDotCls:   'bg-teal-500 animate-pulse',
+    bannerBg:      'bg-teal-600',
+    bannerText:    'Trabajo finalizado — registrar cobro al cliente',
+    timelineColor: 'bg-teal-500',
   },
   finalizado: {
     labelGrupo:    'Finalizados',

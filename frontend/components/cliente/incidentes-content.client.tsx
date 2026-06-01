@@ -66,11 +66,16 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     setPendientesPresupuesto(s => { const n = new Set(s); n.delete(id); return n })
   }
 
+  // Incidente "resuelto" para el cliente = finalizado en DB, O en_proceso con fue_resuelto (pendiente_pago)
+  const esResueltoParaCliente = (i: typeof incidentes[0]) =>
+    i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado' ||
+    (i.estado_actual === 'en_proceso' && i.fue_resuelto)
+
   // asignacion_solicitada se agrupa con pendiente — el cliente no necesita ver esa distinción
   const porEstado = {
     pendiente: incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada'),
-    en_proceso: incidentes.filter(i => i.estado_actual === 'en_proceso'),
-    resuelto:   incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado'),
+    en_proceso: incidentes.filter(i => i.estado_actual === 'en_proceso' && !i.fue_resuelto),
+    resuelto:   incidentes.filter(esResueltoParaCliente),
   }
 
   const incidentesFiltrados = filtro === 'todos'
@@ -78,8 +83,8 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     : filtro === 'pendiente'
       ? incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada')
       : filtro === 'resuelto'
-        ? incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado')
-        : incidentes.filter(i => i.estado_actual === filtro)
+        ? incidentes.filter(esResueltoParaCliente)
+        : incidentes.filter(i => i.estado_actual === filtro && !i.fue_resuelto)
 
   const filtros = [
     { id: 'todos',      label: 'Todos',       count: incidentes.length,            Icon: ClipboardList },

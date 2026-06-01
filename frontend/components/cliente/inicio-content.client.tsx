@@ -193,9 +193,9 @@ export function InicioContent({
       {/* ── STATS ─────────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants} className="grid grid-cols-3 gap-2">
         {[
-          { label: 'Activos',  value: stats.activos,     Icon: AlertCircle,  iconColor: 'text-amber-500',   tab: 'pendiente' },
-          { label: 'En curso', value: stats.en_proceso,  Icon: Wrench,       iconColor: 'text-blue-500',    tab: 'en_proceso' },
-          { label: 'Cerrados', value: stats.finalizados, Icon: CheckCircle2, iconColor: 'text-emerald-500', tab: 'finalizado' },
+          { label: 'Activos',     value: stats.activos,     Icon: AlertCircle,  iconColor: 'text-amber-500',   tab: 'pendiente' },
+          { label: 'En Proceso',  value: stats.en_proceso,  Icon: Wrench,       iconColor: 'text-blue-500',    tab: 'en_proceso' },
+          { label: 'Finalizados', value: stats.finalizados, Icon: CheckCircle2, iconColor: 'text-emerald-500', tab: 'resuelto' },
         ].map(({ label, value, Icon, iconColor, tab }) => (
           <Link key={label} href={`/cliente/incidentes?tab=${tab}`} className="block">
             <motion.div

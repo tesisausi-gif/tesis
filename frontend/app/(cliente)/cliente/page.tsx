@@ -23,7 +23,7 @@ export default async function ClienteInicio() {
   const [incidentesResult, badgeCounts, notificaciones] = await Promise.all([
     supabase
       .from('incidentes')
-      .select('estado_actual, id_incidente, id_propiedad')
+      .select('estado_actual, id_incidente, id_propiedad, fue_resuelto')
       .eq('id_cliente_reporta', idCliente),
     getClienteBadgeCounts().catch(() => ({ presupuestos: 0, pagos: 0, notificaciones: 0 })),
     getNotificacionesCliente().catch(() => [] as Notificacion[]),
@@ -35,9 +35,12 @@ export default async function ClienteInicio() {
   const EN_PROCESO = ['en_proceso', 'asignacion_solicitada']
 
   const stats = {
-    activos: todosIncidentes.filter(i => ACTIVOS.includes(i.estado_actual)).length,
-    en_proceso: todosIncidentes.filter(i => EN_PROCESO.includes(i.estado_actual)).length,
-    finalizados: todosIncidentes.filter(i => i.estado_actual === 'finalizado').length,
+    activos: todosIncidentes.filter(i => ACTIVOS.includes(i.estado_actual) && !i.fue_resuelto).length,
+    en_proceso: todosIncidentes.filter(i => EN_PROCESO.includes(i.estado_actual) && !i.fue_resuelto).length,
+    finalizados: todosIncidentes.filter(i =>
+      i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto' ||
+      (i.estado_actual === 'en_proceso' && i.fue_resuelto)
+    ).length,
   }
 
   // Next scheduled visit

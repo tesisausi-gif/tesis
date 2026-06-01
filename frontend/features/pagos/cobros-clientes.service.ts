@@ -59,7 +59,7 @@ export async function getPendientesCobroCliente(): Promise<PendienteCobroCliente
       )
     `)
     .eq('estado_presupuesto', 'aprobado')
-    .in('incidentes.estado_actual', ['finalizado', 'resuelto'])
+    .in('incidentes.estado_actual', ['finalizado', 'resuelto', 'en_proceso'])
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
@@ -174,6 +174,13 @@ export async function registrarCobroCliente(params: {
       })
 
     if (error) return { success: false, error: error.message }
+
+    // Cobro registrado → incidente pasa a finalizado (verdaderamente cerrado)
+    await createAdminClient()
+      .from('incidentes')
+      .update({ estado_actual: 'finalizado' })
+      .eq('id_incidente', params.idIncidente)
+
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al registrar cobro' }

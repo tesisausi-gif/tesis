@@ -64,11 +64,13 @@ Las tareas del proyecto se gestionan en Azure DevOps:
 ### 4. Documentacion de Referencia
 
 - `documentacion/ANALISIS_FLUJOS.md` — Arquitectura, modelo de datos, roles, flujos por rol
-  - **Seccion 5.5**: Sub-estados de `en_proceso` — descripcion completa de los 7 sub-estados
+  - **Seccion 5.5**: Sub-estados de `en_proceso` — descripcion completa de los 8 sub-estados
 
 ### 5. Sub-estados de "en_proceso" (referencia rapida)
 
-El estado `en_proceso` se subdivide en 7 sub-estados calculados dinamicamente (no hay campo en DB). Las funciones que los calculan son `getAccionPendiente()` (admin) y `getStatusKey()` (tecnico). La fuente canonica del type es `SubEstadoEnProceso` en `shared/utils/colors.ts`.
+El estado `en_proceso` se subdivide en 8 sub-estados calculados dinamicamente (no hay campo en DB). Las funciones que los calculan son `getAccionPendiente()` (admin) y `getStatusKey()` (tecnico). La fuente canonica del type es `SubEstadoEnProceso` en `shared/utils/colors.ts`.
+
+**Estado `finalizado` = cobro registrado** (verdaderamente cerrado). No tiene sub-estados.
 
 **Orden cronologico del flujo:**
 
@@ -81,7 +83,9 @@ El estado `en_proceso` se subdivide en 7 sub-estados calculados dinamicamente (n
 | `en_curso` | En curso | `estado_presupuesto='aprobado'` (o fallback) |
 | `completada_pendiente` | Conf. subida | conformidad con `url_documento && !esta_firmada && !esta_rechazada` |
 | `conformidad_rechazada` | Conf. rechazada | `conformidad.esta_rechazada=true` (maxima prioridad en admin) |
+| `pendiente_pago` | Pend. cobro | `fue_resuelto=true` — conformidad aprobada, cobro al cliente pendiente |
 
 **Regla critica al modificar esta logica:**
 - Si agregás o renombrás una key, actualizá `SubEstadoEnProceso`, `SUB_ESTADO_EN_PROCESO_CONFIG`, `getAccionPendiente`, `getStatusKey`, los arrays de orden de sub-filtros en los 3 componentes y la documentacion en `ANALISIS_FLUJOS.md` seccion 5.5.
 - El cliente no ve `pendiente_inspeccion`, `aceptada`, `presupuesto_enviado` ni `conformidad_rechazada` en la vista de lista — los primeros 3 aparecen agrupados como "En curso".
+- El cliente SÍ ve `pendiente_pago` pero como "Finalizados" (el trabajo esta hecho desde su perspectiva).

@@ -125,6 +125,7 @@ export async function getAsignacionesActivas(): Promise<AsignacionTecnico[]> {
         categoria,
         nivel_prioridad,
         estado_actual,
+        fue_resuelto,
         inmuebles (
           calle,
           altura,

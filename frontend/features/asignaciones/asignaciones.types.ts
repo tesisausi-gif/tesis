@@ -46,6 +46,7 @@ export interface AsignacionTecnico extends AsignacionBase {
     categoria: string | null
     nivel_prioridad: string | null
     estado_actual: string
+    fue_resuelto: boolean | number | null
     inmuebles: InmuebleResumen | null
     clientes: {
       nombre: string
