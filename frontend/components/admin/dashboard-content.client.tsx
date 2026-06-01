@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Users, Wrench, Clock, CheckCircle,
-  ArrowRight, Wifi, WifiOff, Zap,
+  Users, Wrench, Clock, CheckCircle, ArrowRight,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -114,7 +113,6 @@ export function DashboardContent({
   notificaciones,
 }: DashboardContentProps) {
   const [stats, setStats] = useState<Stats>(initialStats)
-  const [conectado, setConectado] = useState(false)
   const refreshingRef = useRef(false)
 
   const refrescarStats = async () => {
@@ -143,7 +141,7 @@ export function DashboardContent({
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'incidentes' }, () => refrescarStats())
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'asignaciones_tecnico' }, () => refrescarStats())
-      .subscribe((status) => setConectado(status === 'SUBSCRIBED'))
+      .subscribe()
 
     return () => { supabase.removeChannel(canal) }
   }, [])
@@ -161,54 +159,26 @@ export function DashboardContent({
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <motion.div
         variants={cardVariants}
-        className="-mx-6 px-6 pt-8 pb-9 relative overflow-hidden"
+        className="-mx-6 px-6 pt-9 pb-10 relative overflow-hidden"
         style={{
-          background:
-            'radial-gradient(ellipse at 85% 0%, rgba(109,40,217,0.22) 0%, transparent 50%), linear-gradient(148deg, #0c0b1a 0%, #130f28 55%, #0e0d1f 100%)',
+          background: 'linear-gradient(155deg, #0c0b1a 0%, #130f28 60%, #0e0d1f 100%)',
         }}
       >
         <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,1) 1px, transparent 1px)',
-            backgroundSize: '36px 36px',
-          }}
+          className="absolute -top-28 -right-28 w-80 h-80 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.18) 0%, transparent 70%)' }}
         />
-        <motion.div
-          animate={{ scale: [1, 1.18, 1], opacity: [0.25, 0.40, 0.25] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-20 -right-20 w-64 h-64 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.4) 0%, transparent 68%)' }}
-        />
-        <div className="absolute top-5 right-5 flex gap-1 opacity-30">
-          {[0, 1, 2].map(i => <div key={i} className="h-1 w-1 rounded-full bg-violet-400" />)}
-        </div>
 
         <div className="relative">
-          <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-violet-400/70 mb-2.5">Sistema ISBA</p>
-          <h1 className="text-[2.15rem] font-black text-white leading-none tracking-tighter mb-4">
-            Panel de Control
+          <h1 className="text-[2.15rem] font-black text-white leading-none tracking-tighter mb-3">
+            Inicio
           </h1>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            {totalActivos > 0 ? (
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-200 bg-violet-900/35 border border-violet-600/30 px-3 py-1.5 rounded-full">
-                <Zap className="h-3 w-3" />
-                {totalActivos} incidente{totalActivos !== 1 ? 's' : ''} activo{totalActivos !== 1 ? 's' : ''}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 bg-emerald-900/35 border border-emerald-600/30 px-3 py-1.5 rounded-full">
-                <CheckCircle className="h-3 w-3" />
-                Sin pendientes
-              </span>
-            )}
-            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${
-              conectado
-                ? 'text-emerald-300 border-emerald-600/30 bg-emerald-900/35'
-                : 'text-slate-400 border-slate-600/30 bg-slate-900/35'
-            }`}>
-              {conectado ? <><Wifi className="h-3 w-3" /> En vivo</> : <><WifiOff className="h-3 w-3" /> Conectando...</>}
+          <div className="flex items-center gap-2">
+            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${totalActivos > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+            <span className="text-sm text-white/45">
+              {totalActivos > 0
+                ? `${totalActivos} incidente${totalActivos !== 1 ? 's' : ''} activo${totalActivos !== 1 ? 's' : ''}`
+                : 'Sin incidentes activos'}
             </span>
           </div>
         </div>

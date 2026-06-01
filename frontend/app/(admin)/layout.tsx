@@ -14,9 +14,8 @@ export default function AdminLayout({
       <div className="min-h-screen w-full flex">
         <AdminSidebar />
         <main className="flex-1 flex flex-col">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
+          <header className="sticky top-0 z-10 flex h-12 items-center gap-3 border-b bg-background/95 backdrop-blur-sm px-4">
             <SidebarTrigger />
-            <h1 className="font-semibold text-lg">Sistema de Gestión de Incidentes</h1>
           </header>
           <div className="flex-1 p-6">
             {children}

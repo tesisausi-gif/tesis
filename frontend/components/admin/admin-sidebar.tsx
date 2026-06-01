@@ -35,7 +35,7 @@ import type { AdminBadgeCounts } from '@/features/notificaciones/badge-counts.se
 type BadgeKey = keyof AdminBadgeCounts
 
 const menuItems: { title: string; icon: React.ElementType; href: string; badge?: BadgeKey }[] = [
-  { title: 'Dashboard', icon: Home, href: '/dashboard' },
+  { title: 'Inicio', icon: Home, href: '/dashboard' },
   { title: 'Incidentes', icon: FileText, href: '/dashboard/incidentes', badge: 'incidentes' },
   { title: 'Clientes', icon: Users, href: '/dashboard/clientes' },
   { title: 'Técnicos', icon: Wrench, href: '/dashboard/tecnicos', badge: 'solicitudes' },
