@@ -170,7 +170,7 @@ export async function getClienteBadgeCounts(): Promise<ClienteBadgeCounts> {
         .select('id_incidente', { count: 'exact', head: true })
         .eq('id_cliente_reporta', idCliente)
         .eq('estado_actual', 'en_proceso')
-        .eq('fue_resuelto', true),
+        .eq('fue_resuelto', 1),
 
       // Notificaciones no leídas del cliente
       supabase
