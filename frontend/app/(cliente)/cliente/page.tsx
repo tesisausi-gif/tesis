@@ -82,6 +82,10 @@ export default async function ClienteInicio() {
 
   const fechaHoy = format(new Date(), "EEEE d 'de' MMMM", { locale: es })
 
+  const pagosPendientes = todosIncidentes.filter(
+    i => i.estado_actual === 'en_proceso' && i.fue_resuelto
+  ).length
+
   return (
     <InicioContent
       nombre={usuario?.nombre ?? 'Cliente'}
@@ -89,7 +93,7 @@ export default async function ClienteInicio() {
       stats={stats}
       proximaVisita={proximaVisita}
       presupuestosPendientes={badgeCounts.presupuestos}
-      pagosPendientes={badgeCounts.pagos}
+      pagosPendientes={pagosPendientes}
       notificaciones={notificaciones}
     />
   )
