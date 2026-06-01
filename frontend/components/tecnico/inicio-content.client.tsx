@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import {
-  CheckCircle2, Star, UserCheck, Wrench, Bell, Zap,
+  CheckCircle2, Star, UserCheck, Wrench, Bell, Zap, CalendarDays,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
@@ -83,6 +83,7 @@ export function InicioTecnicoContent({
 }: InicioTecnicoProps) {
   const totalActivos = cntAsignado + cntEnProceso
   const todoAlDia = totalActivos === 0 && trabajosPendientes === 0
+  const diasAgenda = new Set(compromisos.map(f => f.fecha)).size
 
   return (
     <motion.div
@@ -208,7 +209,24 @@ export function InicioTecnicoContent({
 
       {/* ── AGENDA ──────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants}>
-        <AgendaTecnico franjas={compromisos} />
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-4 pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                <CalendarDays className="h-4 w-4 text-blue-600" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700">Mi Agenda</p>
+            </div>
+            {compromisos.length > 0 && (
+              <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                {diasAgenda} día{diasAgenda !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <div className="px-4 pb-4">
+            <AgendaTecnico franjas={compromisos} embedded />
+          </div>
+        </div>
       </motion.div>
 
       <div className="h-2" />
