@@ -5,12 +5,13 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import {
   Plus, ChevronRight, Calendar, Clock,
-  AlertCircle, CreditCard, Building2, CheckCircle2,
-  Home, FileText, Zap, Wrench,
+  AlertCircle, CreditCard, CheckCircle2,
+  FileText, Zap, Wrench,
 } from 'lucide-react'
 import { format, parseISO, isToday, isTomorrow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { cn } from '@/shared/utils'
+import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
+import type { Notificacion } from '@/features/notificaciones/notificaciones.types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -27,13 +28,7 @@ export interface InicioContentProps {
   } | null
   presupuestosPendientes: number
   pagosPendientes: number
-  propiedades: {
-    id_inmueble: number
-    tipo: string
-    direccion: string
-    incidentes_activos: number
-  }[]
-  totalInmuebles: number
+  notificaciones: Notificacion[]
 }
 
 // ── Animated number counter ───────────────────────────────────────────────────
@@ -98,8 +93,7 @@ export function InicioContent({
   proximaVisita,
   presupuestosPendientes,
   pagosPendientes,
-  propiedades,
-  totalInmuebles,
+  notificaciones,
 }: InicioContentProps) {
   const tieneAcciones = presupuestosPendientes > 0 || pagosPendientes > 0
   const todoEnOrden = stats.activos === 0 && !tieneAcciones
@@ -222,7 +216,16 @@ export function InicioContent({
         ))}
       </motion.div>
 
-      {/* ── PRÓXIMA VISITA ────────────────────────────────────────────────── */}
+      {/* ── NOTIFICACIONES ──────────────────────────────────────────────── */}
+      <motion.div variants={cardVariants}>
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-4 pt-4 pb-2">
+            <NotificacionesPanel notificaciones={notificaciones} rol="cliente" />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── AGENDA / PRÓXIMA VISITA ───────────────────────────────────────── */}
       {proximaVisita && (
         <motion.div variants={cardVariants}>
           <div
@@ -244,7 +247,6 @@ export function InicioContent({
                     Próxima visita
                   </p>
                 </div>
-                {/* Large day number decoration */}
                 <div className="text-right">
                   <p className="text-[2.2rem] font-black leading-none text-blue-400/25">
                     {format(parseISO(proximaVisita.fecha), 'd')}
@@ -301,100 +303,43 @@ export function InicioContent({
         </Link>
       </motion.div>
 
-      {/* ── VER INCIDENTES (link secundario) ─────────────────────────────── */}
+      {/* ── MIS PAGOS ────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants}>
-        <Link href="/cliente/incidentes">
+        <Link href="/cliente/pagos" className="block">
           <motion.div
+            whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
             whileTap={{ scale: 0.98 }}
-            className="rounded-2xl px-5 py-4 flex items-center justify-between bg-white border border-gray-100 shadow-sm"
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between"
           >
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center">
-                <AlertCircle className="h-4 w-4 text-gray-500" />
+              <div className="h-9 w-9 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+                <CreditCard className="h-4 w-4 text-gray-400" />
               </div>
-              <span className="text-sm font-semibold text-gray-800">Ver todos mis incidentes</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Mis pagos</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {pagosPendientes > 0
+                    ? `${pagosPendientes} pago${pagosPendientes !== 1 ? 's' : ''} pendiente${pagosPendientes !== 1 ? 's' : ''}`
+                    : 'Todo al día'}
+                </p>
+              </div>
             </div>
-            <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
+            <div className="flex items-center gap-2 shrink-0">
+              {pagosPendientes > 0 ? (
+                <span className="h-5 min-w-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                  {pagosPendientes}
+                </span>
+              ) : (
+                <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  Al día
+                </span>
+              )}
+              <ChevronRight className="h-4 w-4 text-gray-300" />
+            </div>
           </motion.div>
         </Link>
       </motion.div>
-
-      {/* ── MIS PROPIEDADES ──────────────────────────────────────────────── */}
-      {propiedades.length > 0 && (
-        <motion.div variants={cardVariants} className="space-y-2">
-          <div className="flex items-center justify-between px-1">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.18em]">
-              Mis propiedades
-            </p>
-            <Link href="/cliente/propiedades" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              Ver todas
-            </Link>
-          </div>
-
-          {propiedades.map((prop, idx) => {
-            const tieneProblemas = prop.incidentes_activos > 0
-            return (
-              <motion.div
-                key={prop.id_inmueble}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.18 + idx * 0.05, type: 'spring', stiffness: 360, damping: 30 }}
-                whileHover={{ x: 3 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Link href="/cliente/incidentes">
-                  <div className={cn(
-                    'flex items-center gap-3 bg-white rounded-xl p-3.5 border-l-[3px] border border-r-gray-100 border-t-gray-100 border-b-gray-100',
-                    tieneProblemas ? 'border-l-amber-400' : 'border-l-emerald-400',
-                  )}>
-                    <div className={cn(
-                      'h-9 w-9 rounded-lg flex items-center justify-center shrink-0',
-                      tieneProblemas ? 'bg-amber-50' : 'bg-emerald-50',
-                    )}>
-                      <Building2 className={cn(
-                        'h-4 w-4',
-                        tieneProblemas ? 'text-amber-500' : 'text-emerald-500',
-                      )} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{prop.tipo}</p>
-                      <p className="text-xs text-gray-400 truncate">{prop.direccion}</p>
-                    </div>
-                    {tieneProblemas ? (
-                      <span className="text-[11px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                        {prop.incidentes_activos} activo{prop.incidentes_activos !== 1 ? 's' : ''}
-                      </span>
-                    ) : (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    )}
-                  </div>
-                </Link>
-              </motion.div>
-            )
-          })}
-        </motion.div>
-      )}
-
-      {/* ── SIN INMUEBLES ─────────────────────────────────────────────────── */}
-      {totalInmuebles === 0 && (
-        <motion.div variants={cardVariants}>
-          <Link href="/cliente/propiedades">
-            <motion.div
-              whileTap={{ scale: 0.98 }}
-              className="rounded-2xl border-2 border-dashed border-gray-200 p-5 flex items-center gap-3"
-            >
-              <div className="h-10 w-10 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                <Home className="h-5 w-5 text-gray-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-600">Registrá un inmueble primero</p>
-                <p className="text-xs text-gray-400 mt-0.5">Es necesario antes de reportar incidentes</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
-            </motion.div>
-          </Link>
-        </motion.div>
-      )}
 
       <div className="h-2" />
     </motion.div>
