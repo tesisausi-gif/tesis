@@ -257,7 +257,12 @@ export async function getMisCobrosComoCliente(): Promise<{ pendientes: MiCobroPe
   const cobradosIds = new Set((cobros || []).map((c: any) => c.id_presupuesto))
 
   const pendientes: MiCobroPendiente[] = presupuestos
-    .filter((p: any) => !cobradosIds.has(p.id_presupuesto))
+    .filter((p: any) => {
+      if (cobradosIds.has(p.id_presupuesto)) return false
+      // Solo mostrar pendientes para incidentes que están activamente esperando cobro
+      const inc = p.incidentes as any
+      return inc?.estado_actual === 'en_proceso'
+    })
     .map((p: any) => {
       const inc = p.incidentes as any
       return {
