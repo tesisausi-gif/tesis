@@ -53,13 +53,13 @@ export async function getPendientesCobroCliente(): Promise<PendienteCobroCliente
     .select(`
       id_presupuesto, id_incidente, costo_total, fecha_creacion,
       incidentes!inner (
-        id_incidente, descripcion_problema, categoria, estado_actual,
+        id_incidente, descripcion_problema, categoria, estado_actual, fue_resuelto,
         id_cliente_reporta,
         clientes:id_cliente_reporta (id_cliente, nombre, apellido)
       )
     `)
     .eq('estado_presupuesto', 'aprobado')
-    .in('incidentes.estado_actual', ['finalizado', 'resuelto', 'en_proceso'])
+    .eq('incidentes.estado_actual', 'en_proceso')
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
@@ -78,6 +78,8 @@ export async function getPendientesCobroCliente(): Promise<PendienteCobroCliente
   for (const pres of presupuestos) {
     if (cobradosSet.has(pres.id_presupuesto)) continue
     const inc = pres.incidentes as any
+    // Solo incluir incidentes que genuinamente esperan cobro (fue_resuelto=1)
+    if (!inc?.fue_resuelto) continue
     const cliente = Array.isArray(inc?.clientes) ? inc.clientes[0] : inc?.clientes
     if (!cliente) continue
 
