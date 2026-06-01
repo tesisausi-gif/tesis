@@ -1198,7 +1198,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="ml-auto gap-1.5 shrink-0"
+                    className="ml-auto mr-8 gap-1.5 shrink-0"
                     onClick={() => { onOpenChange(false); onDarBaja(incidenteId!) }}
                   >
                     <UserX className="h-4 w-4" />
