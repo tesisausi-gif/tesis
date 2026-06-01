@@ -153,23 +153,26 @@ export function InicioTecnicoContent({
         <motion.div variants={cardVariants}>
           <Link href="/tecnico/trabajos">
             <motion.div
-              whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-              className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-gray-100 shadow-sm"
+              className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
             >
-              <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                <Bell className="h-4 w-4 text-blue-500" />
+              <div className="h-11 w-11 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+                <Bell className="h-5 w-5 text-blue-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-[10px] font-bold tracking-widest uppercase text-blue-500 mb-0.5">Conformidades</p>
+                <p className="text-sm font-semibold text-gray-900 leading-snug">
                   {trabajosPendientes === 1
                     ? '1 trabajo listo para subir conformidad'
                     : `${trabajosPendientes} trabajos listos para subir conformidad`}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">Tocá para ir a Trabajos</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="text-xs font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">{trabajosPendientes}</span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
+              </div>
             </motion.div>
           </Link>
         </motion.div>

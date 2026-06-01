@@ -148,23 +148,26 @@ export function InicioContent({
         <motion.div variants={cardVariants}>
           <Link href="/cliente/presupuestos">
             <motion.div
-              whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-              className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-gray-100 shadow-sm"
+              className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
             >
-              <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                <FileText className="h-4 w-4 text-amber-500" />
+              <div className="h-11 w-11 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5 text-amber-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-[10px] font-bold tracking-widest uppercase text-amber-500 mb-0.5">Presupuesto</p>
+                <p className="text-sm font-semibold text-gray-900 leading-snug">
                   {presupuestosPendientes === 1
                     ? 'Tenés un presupuesto para revisar'
                     : `${presupuestosPendientes} presupuestos para revisar`}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">Tu aprobación está pendiente</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="text-xs font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">{presupuestosPendientes}</span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
+              </div>
             </motion.div>
           </Link>
         </motion.div>
@@ -174,21 +177,24 @@ export function InicioContent({
         <motion.div variants={cardVariants}>
           <Link href="/cliente/pagos">
             <motion.div
-              whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-              className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-gray-100 shadow-sm"
+              className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
             >
-              <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
-                <CreditCard className="h-4 w-4 text-rose-500" />
+              <div className="h-11 w-11 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0">
+                <CreditCard className="h-5 w-5 text-rose-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">
-                  {pagosPendientes === 1 ? '1 pago pendiente' : `${pagosPendientes} pagos pendientes`}
+                <p className="text-[10px] font-bold tracking-widest uppercase text-rose-500 mb-0.5">Pagos</p>
+                <p className="text-sm font-semibold text-gray-900 leading-snug">
+                  {pagosPendientes === 1 ? '1 cobro pendiente de pago' : `${pagosPendientes} cobros pendientes de pago`}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">Completá el pago del servicio</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="text-xs font-black text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">{pagosPendientes}</span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
+              </div>
             </motion.div>
           </Link>
         </motion.div>
@@ -286,23 +292,19 @@ export function InicioContent({
       <motion.div variants={cardVariants}>
         <Link href="/cliente/incidentes/nuevo">
           <motion.div
-            whileTap={{ scale: 0.97 }}
-            whileHover={{ scale: 1.01 }}
-            className="rounded-2xl p-5 flex items-center justify-between"
-            style={{ background: 'linear-gradient(130deg, #d97706 0%, #b45309 100%)' }}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="h-11 w-11 rounded-xl bg-white/15 flex items-center justify-center">
-                <Plus className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-[13px] font-black text-white uppercase tracking-wide leading-tight">
-                  Reportar incidente
-                </p>
-                <p className="text-xs text-amber-200/70 mt-0.5">Informá un problema en tu inmueble</p>
-              </div>
+            <div className="h-11 w-11 rounded-2xl bg-gray-900 flex items-center justify-center shrink-0">
+              <Plus className="h-5 w-5 text-white" />
             </div>
-            <ChevronRight className="h-5 w-5 text-white/50 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-0.5">Nueva solicitud</p>
+              <p className="text-sm font-bold text-gray-900">Reportar incidente</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-gray-300 shrink-0" />
           </motion.div>
         </Link>
       </motion.div>
@@ -310,45 +312,32 @@ export function InicioContent({
       {/* ── MIS PAGOS ────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants}>
         <Link href="/cliente/pagos" className="block">
-          {pagosPendientes > 0 ? (
-            <motion.div
-              whileTap={{ scale: 0.97 }}
-              className="rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden"
-              style={{ background: 'linear-gradient(135deg, #f43f5e 0%, #be123c 100%)' }}
-            >
-              <div
-                className="absolute -top-8 -right-8 w-36 h-36 rounded-full pointer-events-none opacity-20"
-                style={{ background: 'radial-gradient(circle, #ffffff 0%, transparent 70%)' }}
-              />
-              <div className="h-12 w-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
-                <CreditCard className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex-1 min-w-0 relative">
-                <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-rose-200">Mis pagos</p>
-                <p className="text-base font-black text-white leading-tight mt-0.5">
-                  {pagosPendientes === 1 ? '1 pago pendiente' : `${pagosPendientes} pagos pendientes`}
-                </p>
-                <p className="text-xs text-rose-200/70 mt-0.5">Completá el pago del servicio</p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-white/50 shrink-0 relative" />
-            </motion.div>
-          ) : (
-            <motion.div
-              whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.06)' }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3"
-            >
-              <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800">Mis pagos</p>
-                <p className="text-xs text-emerald-600 font-medium mt-0.5">Todo al día</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
-            </motion.div>
-          )}
+          <motion.div
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
+          >
+            <div className={`h-11 w-11 rounded-2xl flex items-center justify-center shrink-0 ${pagosPendientes > 0 ? 'bg-rose-50' : 'bg-emerald-50'}`}>
+              <CreditCard className={`h-5 w-5 ${pagosPendientes > 0 ? 'text-rose-500' : 'text-emerald-500'}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-[10px] font-bold tracking-widest uppercase mb-0.5 ${pagosPendientes > 0 ? 'text-rose-500' : 'text-gray-400'}`}>
+                Mis pagos
+              </p>
+              <p className="text-sm font-semibold text-gray-900">
+                {pagosPendientes > 0
+                  ? (pagosPendientes === 1 ? '1 pago pendiente' : `${pagosPendientes} pagos pendientes`)
+                  : 'Todo al día'}
+              </p>
+            </div>
+            <div className="shrink-0 flex items-center gap-2">
+              {pagosPendientes > 0 && (
+                <span className="text-xs font-black text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">{pagosPendientes}</span>
+              )}
+              <ChevronRight className="h-4 w-4 text-gray-300" />
+            </div>
+          </motion.div>
         </Link>
       </motion.div>
 
