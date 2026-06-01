@@ -29,6 +29,7 @@ const ASIGNACION_SELECT = `
     nivel_prioridad,
     estado_actual,
     disponibilidad,
+    url_foto_diagnostico,
     inmuebles (
       calle,
       altura,
