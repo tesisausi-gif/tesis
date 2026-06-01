@@ -105,50 +105,45 @@ export function InicioTecnicoContent({
           style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.6) 0%, transparent 70%)' }}
         />
 
-        <div className="relative flex items-start gap-3.5">
-          <div className="h-12 w-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center shrink-0">
-            <span className="text-base font-black text-white">{iniciales}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-blue-400/70 mb-1.5">
-              Técnico
-            </p>
-            <h1 className="text-[1.85rem] font-black text-white leading-none tracking-tighter mb-3">
-              Hola, {nombre}.
-            </h1>
+        <div className="relative">
+          <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-blue-400/70 mb-2.5">
+            Técnico
+          </p>
+          <h1 className="text-[1.85rem] font-black text-white leading-none tracking-tighter mb-3">
+            Hola, {nombre}.
+          </h1>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              {todoAlDia ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 bg-emerald-900/35 border border-emerald-600/30 px-3 py-1.5 rounded-full">
-                  <CheckCircle2 className="h-3 w-3" />
-                  Todo al día
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-200 bg-blue-900/35 border border-blue-600/30 px-3 py-1.5 rounded-full">
-                  <Zap className="h-3 w-3" />
-                  {cntAsignado > 0
-                    ? `${cntAsignado} asignación${cntAsignado !== 1 ? 'es' : ''} pendiente${cntAsignado !== 1 ? 's' : ''}`
-                    : 'Trabajos en curso'}
-                </span>
-              )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {todoAlDia ? (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 bg-emerald-900/35 border border-emerald-600/30 px-3 py-1.5 rounded-full">
+                <CheckCircle2 className="h-3 w-3" />
+                Todo al día
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-200 bg-blue-900/35 border border-blue-600/30 px-3 py-1.5 rounded-full">
+                <Zap className="h-3 w-3" />
+                {cntAsignado > 0
+                  ? `${cntAsignado} asignación${cntAsignado !== 1 ? 'es' : ''} pendiente${cntAsignado !== 1 ? 's' : ''}`
+                  : 'Trabajos en curso'}
+              </span>
+            )}
 
-              {calificacionPromedio != null && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-yellow-300 bg-yellow-900/30 border border-yellow-600/25 px-2 py-1 rounded-full cursor-default select-none">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      {calificacionPromedio.toFixed(1)}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Tu calificación promedio</TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-
-            {especialidadesLabel && (
-              <p className="text-[11px] text-blue-300/40 mt-2 truncate">{especialidadesLabel}</p>
+            {calificacionPromedio != null && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-yellow-300 bg-yellow-900/30 border border-yellow-600/25 px-2 py-1 rounded-full cursor-default select-none">
+                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                    {calificacionPromedio.toFixed(1)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Tu calificación promedio</TooltipContent>
+              </Tooltip>
             )}
           </div>
+
+          {especialidadesLabel && (
+            <p className="text-[11px] text-blue-300/40 mt-2 truncate">{especialidadesLabel}</p>
+          )}
         </div>
       </motion.div>
 
