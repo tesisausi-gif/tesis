@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/shared/lib/supabase/client'
+import { normalizeSearch } from '@/shared/utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -136,7 +137,7 @@ export function ConformidadesContent({ conformidades, historial }: Conformidades
 
   const listaFiltrada = busqueda.trim()
     ? listaActiva.filter(conf => {
-        const q = busqueda.toLowerCase()
+        const q = normalizeSearch(busqueda)
         const inc = conf.incidentes
         const asig = Array.isArray(inc?.asignaciones_tecnico)
           ? inc.asignaciones_tecnico[0] : null
@@ -144,12 +145,12 @@ export function ConformidadesContent({ conformidades, historial }: Conformidades
         const cli = inc?.clientes
         return (
           String(conf.id_incidente).includes(q) ||
-          inc?.descripcion_problema?.toLowerCase().includes(q) ||
-          inc?.categoria?.toLowerCase().includes(q) ||
-          cli?.nombre?.toLowerCase().includes(q) ||
-          cli?.apellido?.toLowerCase().includes(q) ||
-          tec?.nombre?.toLowerCase().includes(q) ||
-          tec?.apellido?.toLowerCase().includes(q)
+          normalizeSearch(inc?.descripcion_problema).includes(q) ||
+          normalizeSearch(inc?.categoria).includes(q) ||
+          normalizeSearch(cli?.nombre).includes(q) ||
+          normalizeSearch(cli?.apellido).includes(q) ||
+          normalizeSearch(tec?.nombre).includes(q) ||
+          normalizeSearch(tec?.apellido).includes(q)
         )
       })
     : listaActiva

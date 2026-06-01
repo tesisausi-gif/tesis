@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/shared/lib/supabase/client'
+import { normalizeSearch } from '@/shared/utils'
 import { getTecnicos, toggleActivoTecnico, actualizarTecnico as actualizarTecnicoService, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -226,12 +227,12 @@ export default function TecnicosTab() {
       filtroEspecialidad === 'todas' ||
       esps.includes(filtroEspecialidad)
 
-    const q = busqueda.toLowerCase().trim()
+    const q = normalizeSearch(busqueda)
     const cumpleBusqueda = !q ||
-      (tecnico.nombre ?? '').toLowerCase().includes(q) ||
-      (tecnico.apellido ?? '').toLowerCase().includes(q) ||
-      (tecnico.correo_electronico ?? '').toLowerCase().includes(q) ||
-      (tecnico.dni ?? '').toLowerCase().includes(q)
+      normalizeSearch(tecnico.nombre).includes(q) ||
+      normalizeSearch(tecnico.apellido).includes(q) ||
+      normalizeSearch(tecnico.correo_electronico).includes(q) ||
+      normalizeSearch(tecnico.dni).includes(q)
 
     return cumpleEstado && cumpleEspecialidad && cumpleBusqueda
   })

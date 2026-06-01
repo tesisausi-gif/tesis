@@ -16,6 +16,7 @@ import { FileText, CheckCircle, XCircle, Clock, DollarSign, AlertCircle, Search,
 import { toast } from 'sonner'
 import { EstadoPresupuesto } from '@/shared/types/enums'
 import { getEstadoPresupuestoColor, getEstadoPresupuestoLabel } from '@/shared/utils/colors'
+import { normalizeSearch } from '@/shared/utils'
 import { aprobarPresupuesto, rechazarPresupuesto } from '@/features/presupuestos/presupuestos.service'
 import type { PresupuestoConDetalle } from '@/features/presupuestos/presupuestos.types'
 
@@ -32,14 +33,14 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
 
   const filtrar = (lista: PresupuestoConDetalle[]) => {
     if (!busqueda.trim()) return lista
-    const q = busqueda.toLowerCase()
+    const q = normalizeSearch(busqueda)
     return lista.filter(p =>
       String(p.id_presupuesto).includes(q) ||
       String(p.id_incidente).includes(q) ||
-      p.descripcion_detallada?.toLowerCase().includes(q) ||
-      p.estado_presupuesto?.toLowerCase().includes(q) ||
+      normalizeSearch(p.descripcion_detallada).includes(q) ||
+      normalizeSearch(p.estado_presupuesto).includes(q) ||
       String(p.costo_total).includes(q) ||
-      p.incidentes?.categoria?.toLowerCase().includes(q)
+      normalizeSearch(p.incidentes?.categoria).includes(q)
     )
   }
 

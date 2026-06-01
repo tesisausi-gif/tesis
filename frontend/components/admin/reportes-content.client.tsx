@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { normalizeSearch } from '@/shared/utils'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -209,7 +210,7 @@ export function ReportesContent({ data }: { data: ReportesData }) {
 
   const tecnicoMatch = (nombre: string, apellido: string) =>
     busquedaTecnico === '' ||
-    `${nombre} ${apellido}`.toLowerCase().includes(busquedaTecnico.toLowerCase())
+    normalizeSearch(`${nombre} ${apellido}`).includes(normalizeSearch(busquedaTecnico))
 
   const maxTec = Math.max(...rendimientoTecnicos.map(t => t.totalAsignaciones), 1)
   const maxDiasResolucion = Math.max(...tiempoResolucionPorCategoria.map(c => c.diasPromedio), 1)

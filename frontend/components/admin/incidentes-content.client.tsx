@@ -21,6 +21,7 @@ import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-
 import type { IncidenteConClienteAdmin } from '@/features/incidentes/incidentes.types'
 import { Paginacion } from '@/components/ui/paginacion'
 import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEnProceso } from '@/shared/utils/colors'
+import { normalizeSearch } from '@/shared/utils'
 import { darDeBajaIncidente } from '@/features/asignaciones/asignaciones.service'
 
 interface IncidentesAdminContentProps {
@@ -450,16 +451,16 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
     if (!estadoMatch) return false
 
     if (busqueda.trim()) {
-      const q = busqueda.toLowerCase()
+      const q = normalizeSearch(busqueda)
       const matchId = inc.id_incidente.toString().includes(q)
-      const matchDesc = inc.descripcion_problema.toLowerCase().includes(q)
-      const matchCliente = `${inc.clientes?.nombre ?? ''} ${inc.clientes?.apellido ?? ''}`.toLowerCase().includes(q)
-      const matchDir = `${inc.inmuebles?.calle ?? ''} ${inc.inmuebles?.altura ?? ''} ${inc.inmuebles?.barrio ?? ''} ${inc.inmuebles?.localidad ?? ''}`.toLowerCase().includes(q)
-      const matchCategoria = (inc.categoria ?? '').toLowerCase().includes(q)
-      const matchPrioridad = (inc.nivel_prioridad ?? '').toLowerCase().includes(q)
+      const matchDesc = normalizeSearch(inc.descripcion_problema).includes(q)
+      const matchCliente = normalizeSearch(`${inc.clientes?.nombre ?? ''} ${inc.clientes?.apellido ?? ''}`).includes(q)
+      const matchDir = normalizeSearch(`${inc.inmuebles?.calle ?? ''} ${inc.inmuebles?.altura ?? ''} ${inc.inmuebles?.barrio ?? ''} ${inc.inmuebles?.localidad ?? ''}`).includes(q)
+      const matchCategoria = normalizeSearch(inc.categoria).includes(q)
+      const matchPrioridad = normalizeSearch(inc.nivel_prioridad).includes(q)
       const matchTecnico = inc.asignaciones_tecnico?.some(a => {
         const t = a.tecnicos
-        return t ? `${t.nombre} ${t.apellido}`.toLowerCase().includes(q) : false
+        return t ? normalizeSearch(`${t.nombre} ${t.apellido}`).includes(q) : false
       }) ?? false
       if (!matchId && !matchDesc && !matchCliente && !matchDir && !matchCategoria && !matchPrioridad && !matchTecnico) return false
     }

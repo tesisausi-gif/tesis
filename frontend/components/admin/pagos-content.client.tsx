@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/shared/lib/supabase/client'
+import { normalizeSearch } from '@/shared/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -177,16 +178,16 @@ function TabCobrosClientes({ pendientes, realizados, highlightId }: { pendientes
 
   const realizadosFiltrados = busqueda.trim()
     ? realizados.filter(c => {
-        const q = busqueda.toLowerCase()
+        const q = normalizeSearch(busqueda)
         return (
           String(c.id_incidente).includes(q) ||
-          c.nombre_cliente?.toLowerCase().includes(q) ||
-          c.apellido_cliente?.toLowerCase().includes(q) ||
-          c.descripcion_problema?.toLowerCase().includes(q) ||
-          c.metodo_pago?.toLowerCase().includes(q) ||
+          normalizeSearch(c.nombre_cliente).includes(q) ||
+          normalizeSearch(c.apellido_cliente).includes(q) ||
+          normalizeSearch(c.descripcion_problema).includes(q) ||
+          normalizeSearch(c.metodo_pago).includes(q) ||
           String(c.monto_cobro).includes(q) ||
-          c.referencia_pago?.toLowerCase().includes(q) ||
-          c.banco?.toLowerCase().includes(q)
+          normalizeSearch(c.referencia_pago).includes(q) ||
+          normalizeSearch(c.banco).includes(q)
         )
       })
     : realizados
@@ -429,16 +430,16 @@ function TabPagosTecnicos({ pendientes, realizados, highlightId, cobrosCliente }
 
   const realizadosFiltrados = busqueda.trim()
     ? realizados.filter(p => {
-        const q = busqueda.toLowerCase()
+        const q = normalizeSearch(busqueda)
         return (
           String(p.id_incidente).includes(q) ||
-          p.nombre_tecnico?.toLowerCase().includes(q) ||
-          p.apellido_tecnico?.toLowerCase().includes(q) ||
-          p.descripcion_problema?.toLowerCase().includes(q) ||
-          p.metodo_pago?.toLowerCase().includes(q) ||
+          normalizeSearch(p.nombre_tecnico).includes(q) ||
+          normalizeSearch(p.apellido_tecnico).includes(q) ||
+          normalizeSearch(p.descripcion_problema).includes(q) ||
+          normalizeSearch(p.metodo_pago).includes(q) ||
           String(p.monto_pago).includes(q) ||
-          p.referencia_pago?.toLowerCase().includes(q) ||
-          p.banco?.toLowerCase().includes(q)
+          normalizeSearch(p.referencia_pago).includes(q) ||
+          normalizeSearch(p.banco).includes(q)
         )
       })
     : realizados
@@ -756,25 +757,25 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
 
   const itemsFiltrados = busqueda.trim()
     ? items.filter(entry => {
-        const q = busqueda.toLowerCase()
+        const q = normalizeSearch(busqueda)
         if (entry.tipo === 'tecnico') {
           const p = entry.item
           return (
             String(p.id_incidente).includes(q) ||
-            p.nombre_tecnico?.toLowerCase().includes(q) ||
-            p.apellido_tecnico?.toLowerCase().includes(q) ||
-            p.descripcion_problema?.toLowerCase().includes(q) ||
-            p.metodo_pago?.toLowerCase().includes(q) ||
+            normalizeSearch(p.nombre_tecnico).includes(q) ||
+            normalizeSearch(p.apellido_tecnico).includes(q) ||
+            normalizeSearch(p.descripcion_problema).includes(q) ||
+            normalizeSearch(p.metodo_pago).includes(q) ||
             String(p.monto_pago).includes(q)
           )
         } else {
           const c = entry.item
           return (
             String(c.id_incidente).includes(q) ||
-            c.nombre_cliente?.toLowerCase().includes(q) ||
-            c.apellido_cliente?.toLowerCase().includes(q) ||
-            c.descripcion_problema?.toLowerCase().includes(q) ||
-            c.metodo_pago?.toLowerCase().includes(q) ||
+            normalizeSearch(c.nombre_cliente).includes(q) ||
+            normalizeSearch(c.apellido_cliente).includes(q) ||
+            normalizeSearch(c.descripcion_problema).includes(q) ||
+            normalizeSearch(c.metodo_pago).includes(q) ||
             String(c.monto_cobro).includes(q)
           )
         }
