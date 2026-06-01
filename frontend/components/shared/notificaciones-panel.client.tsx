@@ -21,62 +21,58 @@ const MAX_ITEMS = 8
 // ─── Config visual por categoría ─────────────────────────────────────────────
 const CATEGORIA_CONFIG: Record<TipoNotificacionCategoria, {
   icon: React.ElementType
-  bg: string
-  border: string
+  iconBg: string
   iconColor: string
-  titleColor: string
-  msgColor: string
   dot: string
+  titleColor: string
   badge: string
+  groupBorder: string
+  groupBg: string
 }> = {
   urgente: {
     icon: XCircle,
-    bg: 'bg-red-50',
-    border: 'border-red-200',
+    iconBg: 'bg-red-100',
     iconColor: 'text-red-500',
-    titleColor: 'text-red-900',
-    msgColor: 'text-red-700',
     dot: 'bg-red-500',
+    titleColor: 'text-red-600',
     badge: 'bg-red-100 text-red-700 border-red-200',
+    groupBorder: 'border-l-red-400',
+    groupBg: 'bg-red-50/50',
   },
   positivo: {
     icon: CheckCircle2,
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
+    iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-600',
-    titleColor: 'text-emerald-900',
-    msgColor: 'text-emerald-700',
     dot: 'bg-emerald-500',
+    titleColor: 'text-emerald-700',
     badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    groupBorder: 'border-l-emerald-400',
+    groupBg: 'bg-emerald-50/50',
   },
   pendiente: {
     icon: AlertTriangle,
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
+    iconBg: 'bg-amber-100',
     iconColor: 'text-amber-600',
-    titleColor: 'text-amber-900',
-    msgColor: 'text-amber-700',
     dot: 'bg-amber-500',
+    titleColor: 'text-amber-700',
     badge: 'bg-amber-100 text-amber-700 border-amber-200',
+    groupBorder: 'border-l-amber-400',
+    groupBg: 'bg-amber-50/50',
   },
   informativo: {
     icon: Info,
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
+    iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600',
-    titleColor: 'text-blue-900',
-    msgColor: 'text-blue-700',
     dot: 'bg-blue-500',
+    titleColor: 'text-blue-700',
     badge: 'bg-blue-100 text-blue-700 border-blue-200',
+    groupBorder: 'border-l-blue-400',
+    groupBg: 'bg-blue-50/50',
   },
 }
 
-// Prioridad para determinar la categoría "más urgente" de un grupo
 const CATEGORIA_PRIORIDAD: Record<TipoNotificacionCategoria, number> = {
-  urgente: 3,
-  pendiente: 2,
-  positivo: 1,
-  informativo: 0,
+  urgente: 3, pendiente: 2, positivo: 1, informativo: 0,
 }
 
 function getCategoriaConfig(tipo: string) {
@@ -132,7 +128,72 @@ interface Props {
   rol: 'tecnico' | 'cliente' | 'admin'
 }
 
-// ─── Componente de grupo por incidente (solo admin) ───────────────────────────
+// ─── Item de notificación individual ─────────────────────────────────────────
+function NotifItem({
+  n,
+  onDescartar,
+  onNavigate,
+  rol,
+}: {
+  n: Notificacion
+  onDescartar: (e: React.MouseEvent, id: number) => void
+  onNavigate: (n: Notificacion) => void
+  rol: 'tecnico' | 'cliente' | 'admin'
+}) {
+  const cfg = getCategoriaConfig(n.tipo)
+  const Icon = cfg.icon
+  const navUrl = getNavUrl(n.tipo, rol, n.id_incidente, n.id_presupuesto)
+  const esClickeable = !!navUrl
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.15 }}
+      className="group/item"
+    >
+      <div
+        onClick={() => esClickeable && onNavigate(n)}
+        className={`flex items-start gap-3 py-3.5 ${esClickeable ? 'cursor-pointer' : ''}`}
+      >
+        {/* Icon in colored circle */}
+        <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${cfg.iconBg}`}>
+          <Icon className={`h-3.5 w-3.5 ${cfg.iconColor}`} />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-semibold text-gray-800 truncate flex-1 leading-tight">{n.titulo}</p>
+            {/* Unread dot */}
+            <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+          </div>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-xs text-gray-400">{formatFecha(n.fecha_creacion)}</span>
+            {esClickeable && (
+              <span className={`text-[11px] font-medium flex items-center gap-0.5 ${cfg.iconColor} opacity-0 group-hover/item:opacity-100 transition-opacity`}>
+                · Ver <ExternalLink className="h-2.5 w-2.5" />
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Dismiss */}
+        <button
+          onClick={e => onDescartar(e, n.id_notificacion)}
+          className="flex-shrink-0 p-1.5 rounded-lg hover:bg-gray-100 transition-colors mt-0.5 opacity-0 group-hover/item:opacity-100"
+          title="Descartar"
+        >
+          <X className="h-3 w-3 text-gray-400" />
+        </button>
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Grupo por incidente (solo admin) ────────────────────────────────────────
 function GrupoIncidente({
   idIncidente,
   notifs,
@@ -147,11 +208,9 @@ function GrupoIncidente({
   router: ReturnType<typeof useRouter>
 }) {
   const [abierto, setAbierto] = useState(false)
-
   const categoriaMax = getCategoriaMaxGrupo(notifs)
   const cfg = CATEGORIA_CONFIG[categoriaMax]
   const Icon = cfg.icon
-  const masReciente = notifs[0]?.fecha_creacion
 
   const handleClickNotif = (n: Notificacion) => {
     const url = getNavUrl(n.tipo, 'admin', n.id_incidente, n.id_presupuesto)
@@ -166,45 +225,47 @@ function GrupoIncidente({
   }
 
   return (
-    <div className={`rounded-lg border overflow-hidden ${cfg.border}`}>
+    <div className={`rounded-xl border border-gray-100 border-l-[3px] overflow-hidden ${cfg.groupBorder}`}>
       {/* Cabecera del grupo */}
       <button
         onClick={() => setAbierto(v => !v)}
-        className={`w-full flex items-center gap-2 px-3 py-2 ${cfg.bg} transition-all hover:brightness-95`}
+        className={`w-full flex items-center gap-2.5 px-3 py-2.5 transition-all hover:bg-gray-50 ${cfg.groupBg}`}
       >
-        <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${cfg.iconColor}`} />
+        <div className={`h-6 w-6 rounded-lg flex items-center justify-center shrink-0 ${cfg.iconBg}`}>
+          <Icon className={`h-3 w-3 ${cfg.iconColor}`} />
+        </div>
 
         <div className="flex-1 flex items-center gap-1.5 min-w-0 text-left">
           {idIncidente ? (
             <span
               onClick={irAlIncidente}
-              className={`text-xs font-bold flex items-center gap-0.5 hover:underline ${cfg.titleColor}`}
+              className="text-xs font-bold flex items-center gap-0.5 text-gray-700 hover:underline"
             >
               <Hash className="h-3 w-3" />
               Incidente {idIncidente}
-              <ExternalLink className="h-2.5 w-2.5 ml-0.5" />
+              <ExternalLink className="h-2.5 w-2.5 ml-0.5 text-gray-400" />
             </span>
           ) : (
-            <span className={`text-xs font-bold ${cfg.titleColor}`}>General</span>
+            <span className="text-xs font-bold text-gray-700">General</span>
           )}
-          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${cfg.badge}`}>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.badge}`}>
             {notifs.length}
           </span>
           {!abierto && notifs[0] && (
-            <span className="text-[10px] text-gray-500 truncate max-w-[160px] hidden sm:block">
+            <span className="text-[11px] text-gray-400 truncate max-w-[140px] hidden sm:block">
               {notifs[0].titulo}
             </span>
           )}
         </div>
 
-        {masReciente && (
-          <span className="text-[10px] text-gray-400 shrink-0">{formatFecha(masReciente)}</span>
+        {notifs[0]?.fecha_creacion && (
+          <span className="text-[10px] text-gray-400 shrink-0">{formatFecha(notifs[0].fecha_creacion)}</span>
         )}
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0 ml-1">
           <button
             onClick={e => { e.stopPropagation(); onDescartarGrupo(notifs.map(n => n.id_notificacion)) }}
-            className="p-1 rounded hover:bg-black/10 transition-colors"
+            className="p-1 rounded-md hover:bg-black/10 transition-colors"
             title="Descartar todas"
           >
             <CheckCheck className="h-3 w-3 text-gray-500" />
@@ -213,7 +274,7 @@ function GrupoIncidente({
         </div>
       </button>
 
-      {/* Notificaciones del grupo */}
+      {/* Items del grupo */}
       <AnimatePresence initial={false}>
         {abierto && (
           <motion.div
@@ -223,7 +284,7 @@ function GrupoIncidente({
             transition={{ duration: 0.15 }}
             className="overflow-hidden"
           >
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-dashed divide-gray-100 px-3 bg-white">
               {notifs.map(n => {
                 const ncfg = getCategoriaConfig(n.tipo)
                 const NIcon = ncfg.icon
@@ -234,17 +295,18 @@ function GrupoIncidente({
                     exit={{ opacity: 0, x: 16 }}
                     transition={{ duration: 0.12 }}
                     onClick={() => handleClickNotif(n)}
-                    className="flex items-center gap-2.5 px-3 py-2 bg-white hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="flex items-start gap-2.5 py-3 cursor-pointer group/inner hover:bg-gray-50 -mx-3 px-3"
                   >
-                    <NIcon className={`h-3.5 w-3.5 flex-shrink-0 ${ncfg.iconColor}`} />
+                    <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${ncfg.iconBg}`}>
+                      <NIcon className={`h-3 w-3 ${ncfg.iconColor}`} />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium leading-tight truncate ${ncfg.titleColor}`}>{n.titulo}</p>
+                      <p className="text-xs font-semibold text-gray-800 leading-tight truncate">{n.titulo}</p>
                       <span className="text-[10px] text-gray-400">{formatFecha(n.fecha_creacion)}</span>
                     </div>
                     <button
                       onClick={e => onDescartar(e, n.id_notificacion)}
-                      className="flex-shrink-0 p-1 rounded hover:bg-black/10 transition-colors"
-                      title="Descartar"
+                      className="flex-shrink-0 p-1 rounded-md hover:bg-black/10 transition-colors opacity-0 group-hover/inner:opacity-100"
                     >
                       <X className="h-3 w-3 text-gray-400" />
                     </button>
@@ -310,7 +372,7 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     })
   }
 
-  const handleClick = (n: Notificacion) => {
+  const handleNavigate = (n: Notificacion) => {
     const url = getNavUrl(n.tipo, rol, n.id_incidente, n.id_presupuesto)
     if (!url) return
     setItems(prev => prev.filter(x => x.id_notificacion !== n.id_notificacion))
@@ -318,55 +380,7 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     router.push(url)
   }
 
-  // ── Render notificación individual (tecnico / cliente) ──
-  const renderNotif = (n: Notificacion) => {
-    const cfg = getCategoriaConfig(n.tipo)
-    const Icon = cfg.icon
-    const navUrl = getNavUrl(n.tipo, rol, n.id_incidente, n.id_presupuesto)
-    const esClickeable = !!navUrl
-
-    return (
-      <motion.div
-        key={n.id_notificacion}
-        layout
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, x: 20 }}
-        transition={{ duration: 0.15 }}
-      >
-        <div
-          onClick={() => esClickeable && handleClick(n)}
-          className={`flex items-center gap-3 rounded-lg border px-3 py-2 transition-all ${cfg.bg} ${cfg.border} ${
-            esClickeable ? 'cursor-pointer hover:brightness-95' : ''
-          }`}
-        >
-          <div className={`flex-shrink-0 ${cfg.iconColor}`}>
-            <Icon className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className={`text-xs font-semibold leading-tight truncate ${cfg.titleColor}`}>{n.titulo}</p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-[10px] text-gray-400">{formatFecha(n.fecha_creacion)}</span>
-              {esClickeable && (
-                <span className={`text-[10px] font-medium flex items-center gap-0.5 ${cfg.iconColor}`}>
-                  · Ver <ExternalLink className="h-2.5 w-2.5" />
-                </span>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={e => descartar(e, n.id_notificacion)}
-            className="flex-shrink-0 p-1 rounded hover:bg-black/10 transition-colors"
-            title="Descartar"
-          >
-            <X className="h-3.5 w-3.5 text-gray-400" />
-          </button>
-        </div>
-      </motion.div>
-    )
-  }
-
-  // ── Agrupación por incidente (solo admin) ──
+  // ── Admin: agrupado por incidente ──
   const renderAdmin = () => {
     const grupos = new Map<number | null, Notificacion[]>()
     for (const n of items) {
@@ -428,7 +442,7 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     )
   }
 
-  // ── Agrupación Hoy/Anteriores (tecnico / cliente) ──
+  // ── Técnico/Cliente: Hoy / Anteriores ──
   const renderHoyAnteriores = () => {
     const hoy = items.filter(n => isToday(new Date(n.fecha_creacion)))
     const anteriores = items.filter(n => !isToday(new Date(n.fecha_creacion)))
@@ -442,26 +456,34 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     return (
       <>
         {hoyVisibles.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1">Hoy</p>
-            <AnimatePresence mode="popLayout">
-              {hoyVisibles.map(n => renderNotif(n))}
-            </AnimatePresence>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1 mb-1">Hoy</p>
+            <div className="divide-y divide-dashed divide-gray-100">
+              <AnimatePresence mode="popLayout">
+                {hoyVisibles.map(n => (
+                  <NotifItem key={n.id_notificacion} n={n} onDescartar={descartar} onNavigate={handleNavigate} rol={rol} />
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
         )}
         {anterioresVisibles.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1">Anteriores</p>
-            <AnimatePresence mode="popLayout">
-              {anterioresVisibles.map(n => renderNotif(n))}
-            </AnimatePresence>
+          <div className={hoyVisibles.length > 0 ? 'mt-3' : ''}>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-1 mb-1">Anteriores</p>
+            <div className="divide-y divide-dashed divide-gray-100">
+              <AnimatePresence mode="popLayout">
+                {anterioresVisibles.map(n => (
+                  <NotifItem key={n.id_notificacion} n={n} onDescartar={descartar} onNavigate={handleNavigate} rol={rol} />
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
         )}
 
         {!verTodos && ocultos > 0 && (
           <button
             onClick={() => setVerTodos(true)}
-            className="w-full text-xs text-center text-blue-600 hover:text-blue-700 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+            className="w-full text-xs text-center text-blue-600 hover:text-blue-700 py-1.5 rounded-lg hover:bg-blue-50 transition-colors mt-2"
           >
             Ver {ocultos} notificacion{ocultos > 1 ? 'es' : ''} más
           </button>
@@ -469,7 +491,7 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
         {verTodos && todos.length > MAX_ITEMS && (
           <button
             onClick={() => setVerTodos(false)}
-            className="w-full text-xs text-center text-gray-400 hover:text-gray-600 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full text-xs text-center text-gray-400 hover:text-gray-600 py-1.5 rounded-lg hover:bg-gray-50 transition-colors mt-2"
           >
             Mostrar menos
           </button>
@@ -482,35 +504,45 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Bell className="h-4 w-4 text-gray-600" />
-          <span className="text-sm font-semibold text-gray-700">
-            {items.length > 0 ? `${items.length} sin leer` : 'Notificaciones'}
-          </span>
+        <div className="flex items-center gap-2.5">
+          <div className="relative">
+            <div className="h-8 w-8 rounded-xl bg-gray-100 flex items-center justify-center">
+              <Bell className="h-3.5 w-3.5 text-gray-600" />
+            </div>
+            {items.length > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 min-w-4 px-0.5 rounded-full bg-slate-900 flex items-center justify-center">
+                <span className="text-[9px] font-black text-white leading-none">{items.length > 9 ? '9+' : items.length}</span>
+              </span>
+            )}
+          </div>
+          <span className="text-sm font-bold text-gray-800">Notificaciones</span>
         </div>
         {items.length > 0 && (
           <button
             onClick={descartarTodas}
-            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
           >
             <CheckCheck className="h-3.5 w-3.5" />
-            Marcar todas leídas
+            Marcar leídas
           </button>
         )}
       </div>
 
       {/* Estado vacío */}
       {items.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 mb-2">
-            <Inbox className="h-6 w-6 text-gray-400" />
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div
+            className="h-14 w-14 rounded-2xl flex items-center justify-center mb-3"
+            style={{ background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)' }}
+          >
+            <Inbox className="h-6 w-6 text-slate-400" />
           </div>
-          <p className="text-sm font-semibold text-gray-700">Todo al día</p>
+          <p className="text-sm font-bold text-gray-700">Todo al día</p>
           <p className="text-xs text-gray-400 mt-0.5">No hay notificaciones pendientes</p>
         </div>
       )}
 
-      {/* Contenido agrupado */}
+      {/* Contenido */}
       {items.length > 0 && (
         <div className="space-y-1.5">
           {rol === 'admin' ? renderAdmin() : renderHoyAnteriores()}
