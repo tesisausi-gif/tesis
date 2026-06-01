@@ -200,28 +200,24 @@ export function InicioTecnicoContent({
       {/* ── STATS ────────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants} className="grid grid-cols-3 gap-2">
         {[
-          { label: 'Asignaciones', value: cntAsignado,    accent: 'bg-blue-400',    href: '/tecnico/disponibles',               icon: <UserCheck className="h-3 w-3 text-blue-500 shrink-0" /> },
-          { label: 'En proceso',   value: cntEnProceso,   accent: 'bg-orange-400',  href: '/tecnico/trabajos',                  icon: <Wrench className="h-3 w-3 text-orange-500 shrink-0" /> },
-          { label: 'Finalizados',  value: cntFinalizado,  accent: 'bg-emerald-400', href: '/tecnico/trabajos?filtro=resueltos', icon: <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" /> },
-        ].map(({ label, value, accent, href, icon }) => (
+          { label: 'Asignaciones', value: cntAsignado,   href: '/tecnico/disponibles',               Icon: UserCheck,    iconColor: 'text-blue-500' },
+          { label: 'En proceso',   value: cntEnProceso,  href: '/tecnico/trabajos',                  Icon: Wrench,       iconColor: 'text-orange-500' },
+          { label: 'Finalizados',  value: cntFinalizado, href: '/tecnico/trabajos?filtro=resueltos', Icon: CheckCircle2, iconColor: 'text-emerald-500' },
+        ].map(({ label, value, href, Icon, iconColor }) => (
           <Link key={label} href={href} className="block">
             <motion.div
-              whileHover={{ rotateY: 5, rotateX: -2, scale: 1.03 }}
-              whileTap={{ scale: 0.96 }}
+              whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
+              whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-              style={{ transformStyle: 'preserve-3d', perspective: '700px' }}
-              className="bg-white rounded-2xl px-3.5 pt-4 pb-3.5 border border-gray-100 shadow-sm flex flex-col gap-1 h-full"
+              className="bg-white rounded-xl border border-gray-100 shadow-sm p-4"
             >
-              <div className={`h-[3px] w-7 rounded-full mb-1 ${accent}`} />
-              <p className="text-3xl font-black text-gray-900 tracking-tighter leading-none">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium text-gray-500">{label}</p>
+                <Icon className={`h-4 w-4 ${iconColor}`} />
+              </div>
+              <p className="text-2xl font-bold text-gray-900 tabular-nums leading-none">
                 <AnimatedCounter value={value} />
               </p>
-              <div className="flex items-center gap-1 mt-0.5">
-                {icon}
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.10em] leading-tight">
-                  {label}
-                </p>
-              </div>
             </motion.div>
           </Link>
         ))}

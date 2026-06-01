@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Users, Wrench, Clock, CheckCircle, ArrowRight,
+  Users, Wrench, Clock, CheckCircle,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -66,41 +66,36 @@ const cardVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 380, damping: 34 } },
 }
 
-// ── Stat card (white minimal) ─────────────────────────────────────────────────
+// ── Stat card ─────────────────────────────────────────────────────────────────
 
 function StatCard({
   href,
-  accent,
+  iconColor,
   label,
   value,
   icon: Icon,
-  valueColor,
 }: {
   href: string
-  accent: string
+  iconColor: string
   label: string
   value: number
   icon: React.ElementType
-  valueColor: string
 }) {
   return (
-    <Link href={href} className="group block">
+    <Link href={href} className="block">
       <motion.div
-        whileHover={{ y: -3, boxShadow: '0 8px 24px -4px rgba(0,0,0,0.10)' }}
+        whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
         whileTap={{ scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-        className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 pt-4 pb-3.5"
+        className="bg-white rounded-xl border border-gray-100 shadow-sm p-4"
       >
-        <div className="flex items-start justify-between mb-3">
-          <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${accent}`}>
-            <Icon className="h-3.5 w-3.5 text-white" />
-          </div>
-          <ArrowRight className="h-3.5 w-3.5 text-gray-200 group-hover:text-gray-400 transition-colors" />
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-medium text-gray-500">{label}</p>
+          <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
-        <div className={`text-3xl font-black tabular-nums leading-none mb-1.5 ${valueColor}`}>
+        <p className="text-2xl font-bold text-gray-900 tabular-nums leading-none">
           <AnimatedCounter value={value} />
-        </div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">{label}</p>
+        </p>
       </motion.div>
     </Link>
   )
@@ -186,50 +181,15 @@ export function DashboardContent({
 
       {/* ── STAT CARDS — incidentes ──────────────────────────────────────── */}
       <motion.div variants={cardVariants} className="grid grid-cols-3 gap-2.5">
-        <StatCard
-          href="/dashboard/incidentes?tab=pendiente"
-          accent="bg-amber-500"
-          label="Pendientes"
-          value={stats.incidentesPendientes}
-          icon={Clock}
-          valueColor="text-slate-900"
-        />
-        <StatCard
-          href="/dashboard/incidentes?tab=en_proceso"
-          accent="bg-orange-500"
-          label="En Proceso"
-          value={stats.incidentesEnProceso}
-          icon={Wrench}
-          valueColor="text-slate-900"
-        />
-        <StatCard
-          href="/dashboard/incidentes?tab=finalizado"
-          accent="bg-emerald-500"
-          label="Finalizados"
-          value={stats.incidentesResueltos}
-          icon={CheckCircle}
-          valueColor="text-slate-900"
-        />
+        <StatCard href="/dashboard/incidentes?tab=pendiente" iconColor="text-amber-500" label="Pendientes" value={stats.incidentesPendientes} icon={Clock} />
+        <StatCard href="/dashboard/incidentes?tab=en_proceso" iconColor="text-orange-500" label="En Proceso" value={stats.incidentesEnProceso} icon={Wrench} />
+        <StatCard href="/dashboard/incidentes?tab=finalizado" iconColor="text-emerald-500" label="Finalizados" value={stats.incidentesResueltos} icon={CheckCircle} />
       </motion.div>
 
       {/* ── ENTIDADES ────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants} className="grid grid-cols-2 gap-2.5">
-        <StatCard
-          href="/dashboard/clientes"
-          accent="bg-violet-500"
-          label="Clientes"
-          value={stats.clientes}
-          icon={Users}
-          valueColor="text-slate-900"
-        />
-        <StatCard
-          href="/dashboard/tecnicos"
-          accent="bg-blue-500"
-          label="Técnicos"
-          value={stats.tecnicos}
-          icon={Wrench}
-          valueColor="text-slate-900"
-        />
+        <StatCard href="/dashboard/clientes" iconColor="text-violet-500" label="Clientes" value={stats.clientes} icon={Users} />
+        <StatCard href="/dashboard/tecnicos" iconColor="text-blue-500" label="Técnicos" value={stats.tecnicos} icon={Wrench} />
       </motion.div>
 
       {/* ── NOTIFICACIONES ──────────────────────────────────────────────── */}
