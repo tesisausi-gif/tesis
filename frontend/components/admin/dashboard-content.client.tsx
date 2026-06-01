@@ -148,35 +148,17 @@ export function DashboardContent({
       variants={listVariants}
       initial="hidden"
       animate="show"
-      className="space-y-3 -mt-4"
+      className="space-y-3"
     >
 
-      {/* ── HERO ────────────────────────────────────────────────────────── */}
-      <motion.div
-        variants={cardVariants}
-        className="-mx-6 px-6 pt-9 pb-10 relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(155deg, #0c0b1a 0%, #130f28 60%, #0e0d1f 100%)',
-        }}
-      >
-        <div
-          className="absolute -top-28 -right-28 w-80 h-80 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.18) 0%, transparent 70%)' }}
-        />
-
-        <div className="relative">
-          <h1 className="text-[2.15rem] font-black text-white leading-none tracking-tighter mb-3">
-            Inicio
-          </h1>
-          <div className="flex items-center gap-2">
-            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${totalActivos > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-            <span className="text-sm text-white/45">
-              {totalActivos > 0
-                ? `${totalActivos} incidente${totalActivos !== 1 ? 's' : ''} activo${totalActivos !== 1 ? 's' : ''}`
-                : 'Sin incidentes activos'}
-            </span>
-          </div>
-        </div>
+      {/* ── STATUS LINE ──────────────────────────────────────────────────── */}
+      <motion.div variants={cardVariants} className="flex items-center gap-1.5 pb-1">
+        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${totalActivos > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+        <span className="text-xs text-gray-400">
+          {totalActivos > 0
+            ? `${totalActivos} incidente${totalActivos !== 1 ? 's' : ''} activo${totalActivos !== 1 ? 's' : ''}`
+            : 'Sin incidentes activos'}
+        </span>
       </motion.div>
 
       {/* ── STAT CARDS — incidentes ──────────────────────────────────────── */}
