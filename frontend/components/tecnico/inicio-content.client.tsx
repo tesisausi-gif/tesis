@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import {
-  CheckCircle2, Star, UserCheck, Wrench, Bell, Zap, CalendarDays,
+  CheckCircle2, Star, UserCheck, Wrench, Bell, Zap, CalendarDays, ChevronRight,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
@@ -153,20 +153,23 @@ export function InicioTecnicoContent({
         <motion.div variants={cardVariants}>
           <Link href="/tecnico/trabajos">
             <motion.div
+              whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-3 rounded-2xl p-4 border-l-[3px] border-l-amber-500 border border-amber-200/50 bg-gradient-to-r from-amber-50/80 to-white"
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-gray-100 shadow-sm"
             >
-              <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                <Bell className="h-4 w-4 text-amber-600 animate-pulse" />
+              <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                <Bell className="h-4 w-4 text-blue-500" />
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-amber-900">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900">
                   {trabajosPendientes === 1
                     ? '1 trabajo listo para subir conformidad'
                     : `${trabajosPendientes} trabajos listos para subir conformidad`}
                 </p>
-                <p className="text-xs text-amber-700/70">Tocá para ir a Trabajos →</p>
+                <p className="text-xs text-gray-400 mt-0.5">Tocá para ir a Trabajos</p>
               </div>
+              <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
             </motion.div>
           </Link>
         </motion.div>
