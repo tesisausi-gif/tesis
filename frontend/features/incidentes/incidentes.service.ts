@@ -224,14 +224,12 @@ export async function getDashboardStats() {
   const { createAdminClient } = await import('@/shared/lib/supabase/admin')
   const supabase = createAdminClient()
 
-  const [incidentes, propiedades, clientes, tecnicos, asigRechazadas, presupuestos, conformidades] = await Promise.all([
+  const [incidentes, propiedades, clientes, tecnicos, asigRechazadas] = await Promise.all([
     supabase.from('incidentes').select('id_incidente, estado_actual'),
     supabase.from('inmuebles').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
     supabase.from('clientes').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
     supabase.from('tecnicos').select('*', { count: 'exact', head: true }).eq('esta_activo', true),
     supabase.from('asignaciones_tecnico').select('id_incidente').eq('estado_asignacion', 'rechazada'),
-    supabase.from('presupuestos').select('*', { count: 'exact', head: true }).eq('estado_presupuesto', 'enviado'),
-    supabase.from('conformidades').select('*', { count: 'exact', head: true }).not('url_documento', 'is', null).eq('esta_firmada', false).eq('esta_rechazada', false),
   ])
 
   const incidentesData = incidentes.data || []
@@ -248,8 +246,6 @@ export async function getDashboardStats() {
     propiedades: propiedades.count || 0,
     clientes: clientes.count || 0,
     tecnicos: tecnicos.count || 0,
-    presupuestosPendientes: presupuestos.count || 0,
-    conformidadesPendientes: conformidades.count || 0,
   }
 }
 

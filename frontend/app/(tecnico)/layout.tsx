@@ -20,7 +20,7 @@ export default function TecnicoLayout({
 }) {
   return (
     <PageTransitionProvider routes={tecnicoRoutes}>
-      <div className="min-h-screen bg-[#07070b] pb-16">
+      <div className="min-h-screen bg-gray-50 pb-16">
         <TecnicoNav />
         <PullToRefresh>
           <main className="p-4 overflow-hidden">

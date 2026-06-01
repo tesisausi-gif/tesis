@@ -34,7 +34,7 @@ export default function ClienteLayout({
 
   return (
     <PageTransitionProvider routes={clienteRoutes}>
-      <div className="min-h-screen bg-[#07070b] pb-16">
+      <div className="min-h-screen bg-gray-50 pb-16">
         <ClienteNav />
         <PullToRefresh>
           <main className="p-4 overflow-hidden">

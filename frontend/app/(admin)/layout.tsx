@@ -18,7 +18,7 @@ export default function AdminLayout({
             <SidebarTrigger />
             <h1 className="font-semibold text-lg">Sistema de Gestión de Incidentes</h1>
           </header>
-          <div className="flex-1 p-6 bg-[#07070b]">
+          <div className="flex-1 p-6">
             {children}
           </div>
         </main>
