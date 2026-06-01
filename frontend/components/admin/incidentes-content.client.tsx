@@ -134,7 +134,7 @@ function formatFecha(raw: string | null | undefined): string {
 // ── Componente de card extraído para reutilizar en vista plana y agrupada ─────
 function IncidenteCard({
   inc, cfg, Icon, accion, accionCfg, isHighlighted,
-  direccion, tecnicoAsignado, highlightRefs, onVerDetalle, onGestionar, onDarBaja, pagoLink,
+  direccion, tecnicoAsignado, highlightRefs, onVerDetalle, onGestionar, pagoLink,
 }: {
   inc: IncidenteConClienteAdmin
   cfg: typeof import('@/shared/utils/colors').ESTADO_INCIDENTE_CONFIG[string]
@@ -147,7 +147,6 @@ function IncidenteCard({
   highlightRefs: React.MutableRefObject<Map<number, HTMLDivElement>>
   onVerDetalle: (id: number, tab?: string) => void
   onGestionar: (inc: IncidenteConClienteAdmin, accion: AccionPendiente) => void
-  onDarBaja: (inc: IncidenteConClienteAdmin) => void
   pagoLink?: string
 }) {
   const rechazadaRecientemente = inc.estado_actual === 'asignacion_solicitada' &&
@@ -155,12 +154,6 @@ function IncidenteCard({
   const canceladaPorTecnico = inc.estado_actual === 'pendiente' &&
     inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'cancelada')
 
-  // Dar de baja: hay asignación activa y NO hay conformidad subida todavía
-  const asignacionActiva = inc.asignaciones_tecnico?.find(a =>
-    ['pendiente', 'aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
-  )
-  const puedeDarBaja = !!asignacionActiva &&
-    !['asignar', 'reasignar', 'completada_pendiente', 'conformidad_rechazada', 'finalizado'].includes(accion.tipo)
   const subCfg = SUB_ESTADO_EN_PROCESO_CONFIG[accion.tipo as SubEstadoEnProceso]
   const BadgeIcon = subCfg ? (ICON_BY_SUB_ESTADO[accion.tipo as SubEstadoEnProceso] ?? Icon) : Icon
   const badgeLabel = subCfg ? subCfg.labelBadge : cfg.labelAdmin
@@ -294,15 +287,6 @@ function IncidenteCard({
             <span className="text-[10px] font-semibold">{accionCfg.label}</span>
           </button>
         )}
-        {puedeDarBaja && (
-          <button
-            onClick={() => onDarBaja(inc)}
-            className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-red-50/80 active:bg-red-100/80 transition-colors text-red-500 border-l border-white/60"
-          >
-            <UserX className="w-4 h-4" />
-            <span className="text-[10px] font-semibold">Dar baja</span>
-          </button>
-        )}
       </div>
     </div>
   )
@@ -386,6 +370,11 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
     } else if (accion.tipo === 'completada_pendiente') {
       abrirModal(inc.id_incidente, 'conformidad_admin')
     }
+  }
+
+  const handleModalDarBaja = (incidenteId: number) => {
+    const inc = incidentes.find(i => i.id_incidente === incidenteId)
+    if (inc) setBajaDialogInc(inc)
   }
 
   const handleConfirmarBaja = async () => {
@@ -616,7 +605,6 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                         highlightRefs={highlightRefs}
                         onVerDetalle={abrirModal}
                         onGestionar={handleGestionar}
-                        onDarBaja={setBajaDialogInc}
                       />
                     })}
                   </div>
@@ -708,7 +696,6 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                         highlightRefs={highlightRefs}
                         onVerDetalle={abrirModal}
                         onGestionar={handleGestionar}
-                        onDarBaja={setBajaDialogInc}
                         pagoLink={!incidentesPagadosIds.includes(inc.id_incidente) ? `/dashboard/pagos?tab=pagos-tecnicos&highlight=${inc.id_incidente}` : undefined}
                       />
                     })}
@@ -750,7 +737,6 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                 highlightRefs={highlightRefs}
                 onVerDetalle={abrirModal}
                 onGestionar={handleGestionar}
-                onDarBaja={setBajaDialogInc}
               />
             })}
           </div>
@@ -766,6 +752,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
         rol="admin"
         initialTab={modalTab}
         onUpdate={() => { router.refresh(); window.dispatchEvent(new CustomEvent('admin-badges-refresh')) }}
+        onDarBaja={handleModalDarBaja}
       />
 
       {/* Modal de Gestión (asignar/reasignar técnico) */}

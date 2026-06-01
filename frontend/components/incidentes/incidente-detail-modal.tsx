@@ -49,6 +49,7 @@ import {
   ImageIcon,
   X,
   Check,
+  UserX,
 } from 'lucide-react'
 import { EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
@@ -159,6 +160,7 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onUpdate?: () => void
+  onDarBaja?: (incidenteId: number) => void
   rol?: 'admin' | 'cliente' | 'tecnico'
   initialTab?: string
   hideTabs?: boolean
@@ -352,7 +354,7 @@ function StepperTecnico({
   )
 }
 
-export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, rol = 'admin', initialTab, hideTabs = false }: Props) {
+export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, onDarBaja, rol = 'admin', initialTab, hideTabs = false }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('detalles')
@@ -1183,8 +1185,28 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <AlertCircle className="h-5 w-5 text-blue-600" />
+            <AlertCircle className="h-5 w-5 text-blue-600 shrink-0" />
             Incidente #{incidenteId}
+            {rol === 'admin' && onDarBaja && !loading && incidente && (
+              (() => {
+                const tieneAsignacionActiva = asignaciones.some(a =>
+                  ['pendiente', 'aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+                )
+                const tieneConformidadSubida = !!conformidad?.url_documento
+                if (!tieneAsignacionActiva || tieneConformidadSubida) return null
+                return (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="ml-auto gap-1.5 shrink-0"
+                    onClick={() => { onOpenChange(false); onDarBaja(incidenteId!) }}
+                  >
+                    <UserX className="h-4 w-4" />
+                    Dar de baja
+                  </Button>
+                )
+              })()
+            )}
           </DialogTitle>
           <DialogDescription>
             {rol === 'admin' ? 'Gestión completa del incidente' : 'Detalles del incidente'}
