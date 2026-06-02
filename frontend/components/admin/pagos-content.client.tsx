@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/shared/lib/supabase/client'
+import { normalizeSearch } from '@/shared/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -31,6 +32,7 @@ import type { PendienteCobroCliente, CobroClienteRegistrado } from '@/features/p
 import { getTimelineIncidente } from '@/features/incidentes/incidentes.service'
 import type { EventoTimeline } from '@/features/incidentes/incidentes.service'
 import { Paginacion } from '@/components/ui/paginacion'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 const AR = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const fmt$ = (n: number) => AR.format(n)
@@ -177,16 +179,16 @@ function TabCobrosClientes({ pendientes, realizados, highlightId }: { pendientes
 
   const realizadosFiltrados = busqueda.trim()
     ? realizados.filter(c => {
-        const q = busqueda.toLowerCase()
+        const q = normalizeSearch(busqueda)
         return (
           String(c.id_incidente).includes(q) ||
-          c.nombre_cliente?.toLowerCase().includes(q) ||
-          c.apellido_cliente?.toLowerCase().includes(q) ||
-          c.descripcion_problema?.toLowerCase().includes(q) ||
-          c.metodo_pago?.toLowerCase().includes(q) ||
+          normalizeSearch(c.nombre_cliente).includes(q) ||
+          normalizeSearch(c.apellido_cliente).includes(q) ||
+          normalizeSearch(c.descripcion_problema).includes(q) ||
+          normalizeSearch(c.metodo_pago).includes(q) ||
           String(c.monto_cobro).includes(q) ||
-          c.referencia_pago?.toLowerCase().includes(q) ||
-          c.banco?.toLowerCase().includes(q)
+          normalizeSearch(c.referencia_pago).includes(q) ||
+          normalizeSearch(c.banco).includes(q)
         )
       })
     : realizados
@@ -290,7 +292,7 @@ function TabCobrosClientes({ pendientes, realizados, highlightId }: { pendientes
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                           <Link
-                            href={`/dashboard/incidentes?tab=finalizado&highlight=${p.id_incidente}`}
+                            href={`/dashboard/incidentes?tab=en_proceso&highlight=${p.id_incidente}`}
                             className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                           >
                             <ExternalLink className="h-3.5 w-3.5"/>Ver incidente
@@ -429,16 +431,16 @@ function TabPagosTecnicos({ pendientes, realizados, highlightId, cobrosCliente }
 
   const realizadosFiltrados = busqueda.trim()
     ? realizados.filter(p => {
-        const q = busqueda.toLowerCase()
+        const q = normalizeSearch(busqueda)
         return (
           String(p.id_incidente).includes(q) ||
-          p.nombre_tecnico?.toLowerCase().includes(q) ||
-          p.apellido_tecnico?.toLowerCase().includes(q) ||
-          p.descripcion_problema?.toLowerCase().includes(q) ||
-          p.metodo_pago?.toLowerCase().includes(q) ||
+          normalizeSearch(p.nombre_tecnico).includes(q) ||
+          normalizeSearch(p.apellido_tecnico).includes(q) ||
+          normalizeSearch(p.descripcion_problema).includes(q) ||
+          normalizeSearch(p.metodo_pago).includes(q) ||
           String(p.monto_pago).includes(q) ||
-          p.referencia_pago?.toLowerCase().includes(q) ||
-          p.banco?.toLowerCase().includes(q)
+          normalizeSearch(p.referencia_pago).includes(q) ||
+          normalizeSearch(p.banco).includes(q)
         )
       })
     : realizados
@@ -756,25 +758,25 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
 
   const itemsFiltrados = busqueda.trim()
     ? items.filter(entry => {
-        const q = busqueda.toLowerCase()
+        const q = normalizeSearch(busqueda)
         if (entry.tipo === 'tecnico') {
           const p = entry.item
           return (
             String(p.id_incidente).includes(q) ||
-            p.nombre_tecnico?.toLowerCase().includes(q) ||
-            p.apellido_tecnico?.toLowerCase().includes(q) ||
-            p.descripcion_problema?.toLowerCase().includes(q) ||
-            p.metodo_pago?.toLowerCase().includes(q) ||
+            normalizeSearch(p.nombre_tecnico).includes(q) ||
+            normalizeSearch(p.apellido_tecnico).includes(q) ||
+            normalizeSearch(p.descripcion_problema).includes(q) ||
+            normalizeSearch(p.metodo_pago).includes(q) ||
             String(p.monto_pago).includes(q)
           )
         } else {
           const c = entry.item
           return (
             String(c.id_incidente).includes(q) ||
-            c.nombre_cliente?.toLowerCase().includes(q) ||
-            c.apellido_cliente?.toLowerCase().includes(q) ||
-            c.descripcion_problema?.toLowerCase().includes(q) ||
-            c.metodo_pago?.toLowerCase().includes(q) ||
+            normalizeSearch(c.nombre_cliente).includes(q) ||
+            normalizeSearch(c.apellido_cliente).includes(q) ||
+            normalizeSearch(c.descripcion_problema).includes(q) ||
+            normalizeSearch(c.metodo_pago).includes(q) ||
             String(c.monto_cobro).includes(q)
           )
         }
@@ -893,11 +895,8 @@ export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendiente
   }, [])
 
   return (
-    <div className="space-y-4 px-4 py-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Pagos y Cobros</h1>
-        <p className="text-gray-600 text-sm mt-1">Gestión de cobros a clientes y pagos a técnicos</p>
-      </div>
+    <div className="space-y-4">
+      <AdminPageHeader title="Cobros y Pagos" subtitle="Gestión de cobros a clientes y pagos a técnicos" />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
           <TabsTrigger value="cobros-clientes" className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">

@@ -10,7 +10,7 @@ import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireTecnicoId, requireClienteId } from '@/features/auth/auth.service'
 
 export interface AdminBadgeCounts {
-  incidentes: number     // todos los incidentes no finalizados
+  incidentes: number     // pendientes sin asignar + asignacion_solicitada con asignacion rechazada
   conformidades: number  // fotos subidas pendientes de revisión
   presupuestos: number   // presupuestos enviados esperando aprobación admin
   pagos: number          // cobros a clientes + pagos a técnicos pendientes
@@ -38,11 +38,11 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
   const supabase = createAdminClient()
 
   const [incResult, confResult, presResult, cobrosPendResult, pagosTecResult, solResult, reasigResult, notifResult] = await Promise.all([
-    // Todos los incidentes no finalizados
+    // Incidentes en estado pendiente (sin asignar aún)
     supabase
       .from('incidentes')
       .select('id_incidente', { count: 'exact', head: true })
-      .neq('estado_actual', 'finalizado'),
+      .eq('estado_actual', 'pendiente'),
 
     // Conformidades con foto subida esperando revisión
     supabase
@@ -128,7 +128,7 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
   }
 
   return {
-    incidentes: incResult.count ?? 0,
+    incidentes: (incResult.count ?? 0) + reasignaciones,
     conformidades: confResult.count ?? 0,
     presupuestos: presResult.count ?? 0,
     pagos: pendientesCobros + pendientesPagos,
@@ -157,17 +157,19 @@ export async function getClienteBadgeCounts(): Promise<ClienteBadgeCounts> {
     const ids = incidentes.map((i: any) => i.id_incidente)
 
     // En paralelo: presupuestos pendientes de aprobación, cobros pendientes y notificaciones
-    const [presResult, presAprobResult, notifResult] = await Promise.all([
+    const [presResult, pagosResult, notifResult] = await Promise.all([
       supabase
         .from('presupuestos')
         .select('id_presupuesto', { count: 'exact', head: true })
         .in('id_incidente', ids)
         .eq('estado_presupuesto', 'aprobado_admin'),
+
+      // Pagos pendientes = incidentes en_proceso con fue_resuelto (filtramos en JS para evitar coerción de tipo)
       supabase
-        .from('presupuestos')
-        .select('id_presupuesto')
-        .in('id_incidente', ids)
-        .eq('estado_presupuesto', 'aprobado'),
+        .from('incidentes')
+        .select('id_incidente, fue_resuelto')
+        .eq('id_cliente_reporta', idCliente)
+        .eq('estado_actual', 'en_proceso'),
 
       // Notificaciones no leídas del cliente
       supabase
@@ -177,18 +179,8 @@ export async function getClienteBadgeCounts(): Promise<ClienteBadgeCounts> {
         .is('fecha_leida', null),
     ])
 
-    let pagosPendientes = 0
-    if (presAprobResult.data?.length) {
-      const idsPres = presAprobResult.data.map((p: any) => p.id_presupuesto)
-      const { data: cobros } = await supabase
-        .from('cobros_clientes')
-        .select('id_presupuesto')
-        .in('id_presupuesto', idsPres)
-      const cobradosSet = new Set((cobros || []).map((c: any) => c.id_presupuesto))
-      pagosPendientes = idsPres.filter((id: number) => !cobradosSet.has(id)).length
-    }
-
-    return { presupuestos: presResult.count ?? 0, pagos: pagosPendientes, notificaciones: notifResult.count ?? 0 }
+    const pagos = (pagosResult.data || []).filter((i: any) => i.fue_resuelto).length
+    return { presupuestos: presResult.count ?? 0, pagos, notificaciones: notifResult.count ?? 0 }
   } catch {
     return { presupuestos: 0, pagos: 0, notificaciones: 0 }
   }

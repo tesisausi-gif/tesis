@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { normalizeSearch } from '@/shared/utils'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import type { ReportesData, TrabajosPorCategoria, TrabajoCategoriaItem } from '@/features/reportes/reportes.service'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 function NavLink({ href, children, className = '' }: { href: string; children: React.ReactNode; className?: string }) {
   return (
@@ -209,7 +211,7 @@ export function ReportesContent({ data }: { data: ReportesData }) {
 
   const tecnicoMatch = (nombre: string, apellido: string) =>
     busquedaTecnico === '' ||
-    `${nombre} ${apellido}`.toLowerCase().includes(busquedaTecnico.toLowerCase())
+    normalizeSearch(`${nombre} ${apellido}`).includes(normalizeSearch(busquedaTecnico))
 
   const maxTec = Math.max(...rendimientoTecnicos.map(t => t.totalAsignaciones), 1)
   const maxDiasResolucion = Math.max(...tiempoResolucionPorCategoria.map(c => c.diasPromedio), 1)
@@ -217,6 +219,7 @@ export function ReportesContent({ data }: { data: ReportesData }) {
 
   return (
     <div className="space-y-10">
+      <AdminPageHeader title="Reportes" subtitle="Análisis detallado del sistema por categoría" />
 
       {/* ══════════════════════════════════════════════════════════════
           GRUPO 1 — INCIDENTES

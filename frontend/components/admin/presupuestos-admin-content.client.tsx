@@ -16,8 +16,10 @@ import { FileText, CheckCircle, XCircle, Clock, DollarSign, AlertCircle, Search,
 import { toast } from 'sonner'
 import { EstadoPresupuesto } from '@/shared/types/enums'
 import { getEstadoPresupuestoColor, getEstadoPresupuestoLabel } from '@/shared/utils/colors'
+import { normalizeSearch } from '@/shared/utils'
 import { aprobarPresupuesto, rechazarPresupuesto } from '@/features/presupuestos/presupuestos.service'
 import type { PresupuestoConDetalle } from '@/features/presupuestos/presupuestos.types'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface PresupuestosAdminContentProps {
   presupuestos: PresupuestoConDetalle[]
@@ -32,14 +34,14 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
 
   const filtrar = (lista: PresupuestoConDetalle[]) => {
     if (!busqueda.trim()) return lista
-    const q = busqueda.toLowerCase()
+    const q = normalizeSearch(busqueda)
     return lista.filter(p =>
       String(p.id_presupuesto).includes(q) ||
       String(p.id_incidente).includes(q) ||
-      p.descripcion_detallada?.toLowerCase().includes(q) ||
-      p.estado_presupuesto?.toLowerCase().includes(q) ||
+      normalizeSearch(p.descripcion_detallada).includes(q) ||
+      normalizeSearch(p.estado_presupuesto).includes(q) ||
       String(p.costo_total).includes(q) ||
-      p.incidentes?.categoria?.toLowerCase().includes(q)
+      normalizeSearch(p.incidentes?.categoria).includes(q)
     )
   }
 
@@ -195,10 +197,7 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Presupuestos</h1>
-        <p className="text-gray-600 mt-1">Gestión y aprobación de presupuestos de incidentes</p>
-      </div>
+      <AdminPageHeader title="Presupuestos" subtitle="Gestión y aprobación de presupuestos de incidentes" />
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">

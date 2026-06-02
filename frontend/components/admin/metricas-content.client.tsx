@@ -34,6 +34,7 @@ import { ReportesContent } from '@/components/admin/reportes-content.client'
 import type { ReportesData } from '@/features/reportes/reportes.service'
 import { PpisContent } from '@/components/admin/ppis-content.client'
 import type { TodosPpisData } from '@/features/reportes/metricas-ppis.service'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface MetricasContentProps {
   metricas: MetricasDashboard
@@ -107,35 +108,38 @@ export function MetricasContent({ metricas: metricasIniciales, reportes, ppis }:
 
   return (
     <div className="space-y-5">
+      <AdminPageHeader
+        title="Indicadores"
+        subtitle="Análisis de rendimiento y reportes del sistema Traki"
+        right={cargando ? (
+          <div className="flex items-center gap-2 text-sm text-white/50">
+            <Loader2 className="h-4 w-4 animate-spin" /> Actualizando...
+          </div>
+        ) : undefined}
+      />
 
-      {/* Header + Selector de sección */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Métricas e Informes</h2>
-          <p className="text-sm text-muted-foreground">Análisis de rendimiento y PPIs del sistema ISBA</p>
-        </div>
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
-          <button
-            onClick={() => setSeccion('indicadores')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-              seccion === 'indicadores'
-                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
-                : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
-            }`}
-          >
-            Indicadores
-          </button>
-          <button
-            onClick={() => setSeccion('ppis')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-              seccion === 'ppis'
-                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
-                : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
-            }`}
-          >
-            PPIs de Proceso
-          </button>
-        </div>
+      {/* Selector de sección */}
+      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl self-start">
+        <button
+          onClick={() => setSeccion('indicadores')}
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            seccion === 'indicadores'
+              ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+          }`}
+        >
+          Indicadores
+        </button>
+        <button
+          onClick={() => setSeccion('ppis')}
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            seccion === 'ppis'
+              ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+          }`}
+        >
+          PPIs de Proceso
+        </button>
       </div>
 
       {/* ── Sección PPIs ────────────────────────────────────────────────────── */}

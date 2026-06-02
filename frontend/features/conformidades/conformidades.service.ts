@@ -328,10 +328,10 @@ export async function aprobarConformidad(
       }
     }
 
-    // 3. Marcar incidente como resuelto con fecha de cierre
+    // 3. Marcar trabajo como resuelto — queda en en_proceso (sub-estado pendiente_pago) hasta cobro
     await supabase
       .from('incidentes')
-      .update({ estado_actual: 'finalizado', fue_resuelto: 1, fecha_cierre: new Date().toISOString() })
+      .update({ fue_resuelto: 1, fecha_cierre: new Date().toISOString() })
       .eq('id_incidente', idIncidente)
 
     // 3b. Liberar compromiso del técnico (horario queda libre)

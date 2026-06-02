@@ -54,7 +54,7 @@ export function BrandPanel() {
         style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.13) 0%, transparent 65%)' }}
       />
 
-      {/* Watermark ISBA */}
+      {/* Watermark Traki */}
       <div
         className="absolute bottom-8 -right-6 pointer-events-none select-none leading-none"
         style={{
@@ -66,7 +66,7 @@ export function BrandPanel() {
           transform: 'rotate(-6deg)',
         }}
       >
-        ISBA
+        Traki
       </div>
 
       {/* Left accent line — animates height */}
@@ -89,10 +89,10 @@ export function BrandPanel() {
             animate={{ boxShadow: ['0 0 0px rgba(37,99,235,0)', '0 0 18px rgba(37,99,235,0.55)', '0 0 0px rgba(37,99,235,0)'] }}
             transition={{ boxShadow: { duration: 2.8, repeat: Infinity, ease: 'easeInOut' as const } }}
           >
-            <span className="text-white font-bold text-sm tracking-tight" style={{ fontFamily: 'var(--font-syne)' }}>IS</span>
+            <span className="text-white font-bold text-sm tracking-tight" style={{ fontFamily: 'var(--font-syne)' }}>TK</span>
           </motion.div>
           <span className="text-white/35 text-xs tracking-[0.28em] uppercase" style={{ fontFamily: 'var(--font-outfit)' }}>
-            ISBA
+            Traki
           </span>
         </motion.div>
 
@@ -130,7 +130,7 @@ export function BrandPanel() {
         transition={{ delay: 0.9, duration: 0.5 }}
       >
         <div className="h-px mb-5" style={{ background: 'rgba(255,255,255,0.07)' }} />
-        <p className="text-slate-600 text-xs">© 2025 ISBA — Sistema de Gestión de Incidentes</p>
+        <p className="text-slate-600 text-xs">© 2025 Traki — Sistema de Gestión de Incidentes</p>
       </motion.div>
     </motion.div>
   )

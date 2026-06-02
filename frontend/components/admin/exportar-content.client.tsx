@@ -35,6 +35,7 @@ import type {
   R7Resultado, R8Resultado, R10Resultado, R11Resultado, R12Resultado,
   R13Resultado,
 } from '@/features/exportar/exportar.types'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 // ─── CSV helpers ──────────────────────────────────────────────────────────────
 
@@ -649,12 +650,12 @@ function TabR5() {
     finally { setCargando(false) }
   }
 
-  const cols = ['Tipo', 'Cobrado a cliente', 'Pagado al técnico', 'Comisión ISBA', 'Margen %']
+  const cols = ['Tipo', 'Cobrado a cliente', 'Pagado al técnico', 'Comisión Traki', 'Margen %']
   const filas = resultado?.porTipo.map(t => ({
     'Tipo': t.tipo,
     'Cobrado a cliente': fmt$(t.ingresoBruto),
     'Pagado al técnico': fmt$(t.costoPagadoTecnico),
-    'Comisión ISBA': fmt$(t.comision),
+    'Comisión Traki': fmt$(t.comision),
     'Margen %': fmtPct(t.margen),
   })) ?? []
 
@@ -663,7 +664,7 @@ function TabR5() {
       <Card className="border-blue-100 bg-blue-50/40">
         <CardContent className="pt-4 pb-3">
           <p className="text-xs text-blue-700">
-            <strong>Nota:</strong> Comisión ISBA = lo cobrado al cliente menos lo pagado al técnico (materiales + mano de obra).
+            <strong>Nota:</strong> Comisión Traki = lo cobrado al cliente menos lo pagado al técnico (materiales + mano de obra).
             Los gastos administrativos incluidos en el presupuesto quedan como margen de la inmobiliaria.
           </p>
         </CardContent>
@@ -684,7 +685,7 @@ function TabR5() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <KpiCard label="Total cobrado" valor={fmt$(resultado.ingresoTotal)} sub="a clientes" />
             <KpiCard label="Total pagado" valor={fmt$(resultado.costoTotal)} sub="a técnicos" />
-            <KpiCard label="Comisión ISBA" valor={fmt$(resultado.comisionTotal)} sub="margen neto" />
+            <KpiCard label="Comisión Traki" valor={fmt$(resultado.comisionTotal)} sub="margen neto" />
             <KpiCard label="Margen global" valor={fmtPct(resultado.margenGlobal)} />
             <KpiCard label="Mano de obra" valor={fmt$(resultado.manoObraTotal)} sub="según presupuestos" />
             <KpiCard label="Materiales" valor={fmt$(resultado.materialesTotal)} sub="según presupuestos" />
@@ -867,7 +868,7 @@ function TabR6({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
   )
 }
 
-// ─── R7: Satisfacción de ISBA ─────────────────────────────────────────────────
+// ─── R7: Satisfacción Traki ─────────────────────────────────────────────────
 
 function TabR7({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
   const [desde, setDesde] = useState('')
@@ -1367,7 +1368,7 @@ function TabR13() {
       <Card className="border-blue-100 bg-blue-50/40">
         <CardContent className="pt-4 pb-3">
           <p className="text-xs text-blue-700">
-            <strong>Cobrado a clientes</strong>: montos registrados en cobros_clientes (lo que el cliente pagó a ISBA por cada incidente). ·{' '}
+            <strong>Cobrado a clientes</strong>: montos registrados en cobros_clientes (lo que el cliente pagó a Traki por cada incidente). ·{' '}
             <strong>Pagado a técnicos</strong>: montos registrados en pagos_tecnicos (materiales + mano de obra). ·{' '}
             <strong>Total</strong>: suma de ambos flujos para el mismo método de pago.
           </p>
@@ -1464,9 +1465,9 @@ export function ExportarContent() {
     { value: 'r2', label: 'Tiempos', icon: TrendingUp, desc: 'Resolución', info: 'Detecta cuellos de botella en la resolución: qué tipos de trabajo tardan más y cuáles técnicos resuelven más rápido, para mejorar la asignación.' },
     { value: 'r3', label: 'Vol. Técnicos', icon: Users, desc: 'Asignaciones', info: 'Muestra la carga de trabajo real de cada técnico: cuántos trabajos tomó, cerró y tiene en curso. Útil para detectar sobrecarga o subutilización.' },
     { value: 'r4', label: 'Propiedades', icon: Building2, desc: 'Con más incidentes', info: 'Identifica las propiedades con mayor frecuencia de incidentes y costos de mantenimiento. Permite justificar inspecciones o renegociar contratos.' },
-    { value: 'r5', label: 'Rentabilidad', icon: DollarSign, desc: 'Por refacción', info: 'Muestra la comisión real de ISBA (cobrado al cliente menos pagado al técnico) por cada tipo de servicio. Permite priorizar categorías más rentables.' },
+    { value: 'r5', label: 'Rentabilidad', icon: DollarSign, desc: 'Por refacción', info: 'Muestra la comisión real de Traki (cobrado al cliente menos pagado al técnico) por cada tipo de servicio. Permite priorizar categorías más rentables.' },
     { value: 'r6', label: 'Desempeño', icon: Star, desc: 'Ranking técnicos', info: 'Ranking integral de técnicos: productividad (cierre de trabajos), asignaciones rechazadas, tiempo de respuesta y satisfacción del cliente. No disponible en ninguna otra sección.' },
-    { value: 'r7', label: 'Satisfacción', icon: Star, desc: 'Calificaciones ISBA', info: 'Distribución detallada de calificaciones por técnico con comentarios reales de clientes. Permite detectar problemas de atención antes de que escalen.' },
+    { value: 'r7', label: 'Satisfacción', icon: Star, desc: 'Calificaciones Traki', info: 'Distribución detallada de calificaciones por técnico con comentarios reales de clientes. Permite detectar problemas de atención antes de que escalen.' },
     { value: 'r8', label: 'Costos', icon: Wrench, desc: 'Mantenimiento', info: 'Desglose de costos de presupuesto (materiales, mano de obra, gastos admin) por categoría. Requiere que los presupuestos estén cargados con montos reales.' },
     { value: 'r10', label: 'Rent. Inmueble', icon: Building2, desc: 'Por propiedad', info: 'Compara ingresos vs costos por propiedad, mostrando cuáles generan mayor margen. Útil para priorizar la cartera y negociar condiciones con propietarios.' },
     { value: 'r11', label: 'Comparativo', icon: TrendingUp, desc: 'Período a período', info: 'Compara KPIs clave (incidentes, tiempos, ingresos, satisfacción) entre dos períodos consecutivos, mostrando tendencia de mejora o deterioro del negocio.' },
@@ -1476,10 +1477,7 @@ export function ExportarContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Informes y Reportes</h2>
-        <p className="text-muted-foreground mt-1">12 reportes analíticos con filtros, exportación CSV y PDF para impresión.</p>
-      </div>
+      <AdminPageHeader title="Informes y Reportes" subtitle="12 reportes analíticos con filtros, exportación CSV y PDF para impresión." />
 
       <TooltipProvider>
       <Tabs defaultValue="r1">

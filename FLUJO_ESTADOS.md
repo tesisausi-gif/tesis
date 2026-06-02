@@ -127,14 +127,23 @@ sequenceDiagram
     A->>C: Aprueba conformidad
 
     %% ─────────────────────────────────────────
-    Note over C,T: ESTADO: finalizado
+    Note over C,T: ESTADO: en_proceso — SUB-ESTADO 8: pendiente_pago
     %% ─────────────────────────────────────────
 
-    Note over C: Ve pestaña "Finalizados" — puede ver el historial
-    Note over A: Card verde — puede registrar cobro al cliente y pago al técnico
-    Note over T: Ve trabajo en historial — puede ver el cobro registrado
+    Note over C: Ve pestaña "Finalizados" — trabajo resuelto, espera cobro
+    Note over A: Badge teal — "Cobrar cliente" — botón ACTIVO 🔔 → Ir a Pagos
+    Note over T: Ve badge "Cobro pend." — disabled, espera cobro al cliente
 
-    A->>C: Registra cobro al cliente (OBLIGATORIO antes del pago al técnico)
+    A->>C: Registra cobro al cliente
+
+    %% ─────────────────────────────────────────
+    Note over C,T: ESTADO: finalizado (verdaderamente cerrado)
+    %% ─────────────────────────────────────────
+
+    Note over C: Ve pestaña "Finalizados" — historial completo
+    Note over A: Card verde — puede registrar pago al técnico
+    Note over T: Ve trabajo en historial con link "Ver cobro"
+
     A->>T: Registra pago al técnico
 ```
 
@@ -149,7 +158,7 @@ sequenceDiagram
 | `pendiente` | "Pendiente" — sin acción | Card amarilla — **Asignar técnico** | Nada |
 | `asignacion_solicitada` | "En proceso" — sin acción | Card azul — **Reasignar** si demora | Incidente en "Disponibles" — **Aceptar / Rechazar** |
 | `en_proceso` | Según sub-estado (ver abajo) | Según sub-estado (ver abajo) | Según sub-estado (ver abajo) |
-| `finalizado` | Historial de incidente | Card verde — **Cobrar** / **Pagar técnico** | Historial de trabajos |
+| `finalizado` | Historial — pagado y cerrado | Card verde — **Pagar técnico** | Historial con "Ver cobro" |
 
 ### Sub-estados de `en_proceso`
 
@@ -162,6 +171,7 @@ sequenceDiagram
 | 5 | `en_curso` | En curso | "Trabajo en progreso" | Badge disabled | **Subir conform.** |
 | 6 | `completada_pendiente` | Conf. subida | "Conf. para revisar" | **Ver conform.** 🔔 | Badge disabled |
 | 7 | `conformidad_rechazada` | Conf. rechazada | No visible en lista | Badge rojo — sin acción | **Resubir** |
+| 8 | `pendiente_pago` | Pend. cobro | Ve "Finalizados" (work done) | **Cobrar cliente** 🔔 | Badge "Cobro pend." |
 
 > **Nota:** Los sub-estados 1, 2 y 3 son invisibles para el cliente. Los tres aparecen agrupados como "En curso / Trabajo en progreso". El sub-estado 7 tampoco es visible para el cliente en la lista; solo aparece en el timeline interno del incidente.
 

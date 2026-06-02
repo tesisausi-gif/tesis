@@ -36,14 +36,14 @@ export function LandingHeader() {
               className="text-white font-bold text-xs tracking-tight"
               style={{ fontFamily: 'var(--font-syne)' }}
             >
-              IS
+              TK
             </span>
           </div>
           <span
             className="font-bold text-white text-sm tracking-tight"
             style={{ fontFamily: 'var(--font-syne)' }}
           >
-            ISBA
+            Traki
           </span>
         </Link>
 

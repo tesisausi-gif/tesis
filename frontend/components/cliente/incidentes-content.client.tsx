@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Plus, AlertCircle, Clock, Send, Wrench, CheckCircle,
-  Bell, MapPin, ClipboardList, FileText,
+  Bell, MapPin, ClipboardList, FileText, CreditCard,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { createClient } from '@/shared/lib/supabase/client'
@@ -66,11 +66,16 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     setPendientesPresupuesto(s => { const n = new Set(s); n.delete(id); return n })
   }
 
+  // Incidente "resuelto" para el cliente = finalizado en DB, O en_proceso con fue_resuelto (pendiente_pago)
+  const esResueltoParaCliente = (i: typeof incidentes[0]) =>
+    i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado' ||
+    (i.estado_actual === 'en_proceso' && i.fue_resuelto)
+
   // asignacion_solicitada se agrupa con pendiente — el cliente no necesita ver esa distinción
   const porEstado = {
     pendiente: incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada'),
-    en_proceso: incidentes.filter(i => i.estado_actual === 'en_proceso'),
-    resuelto:   incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado'),
+    en_proceso: incidentes.filter(i => i.estado_actual === 'en_proceso' && !i.fue_resuelto),
+    resuelto:   incidentes.filter(esResueltoParaCliente),
   }
 
   const incidentesFiltrados = filtro === 'todos'
@@ -78,8 +83,8 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     : filtro === 'pendiente'
       ? incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada')
       : filtro === 'resuelto'
-        ? incidentes.filter(i => i.estado_actual === 'resuelto' || i.estado_actual === 'finalizado')
-        : incidentes.filter(i => i.estado_actual === filtro)
+        ? incidentes.filter(esResueltoParaCliente)
+        : incidentes.filter(i => i.estado_actual === filtro && !i.fue_resuelto)
 
   const filtros = [
     { id: 'todos',      label: 'Todos',       count: incidentes.length,            Icon: ClipboardList },
@@ -155,24 +160,32 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
               const direccion = ubi ? `${dir}, ${ubi}` : dir || 'Sin dirección'
               const tienePresupuestoPendiente = pendientesPresupuesto.has(incidente.id_incidente)
               const tieneConformidadSubida = incidentesConConformidadSubida.includes(incidente.id_incidente)
+              const pendienteCobro = !!(incidente.fue_resuelto && incidente.estado_actual === 'en_proceso')
+              const pendienteCobroCfg = pendienteCobro ? SUB_ESTADO_EN_PROCESO_CONFIG['pendiente_pago'] : null
 
               return (
-                <div key={incidente.id_incidente} className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${estadoCfg.bgGradient} to-white ${estadoCfg.stripe}`}>
+                <div key={incidente.id_incidente} className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${pendienteCobroCfg?.bgGradient ?? estadoCfg.bgGradient} to-white ${pendienteCobroCfg?.stripe ?? estadoCfg.stripe}`}>
                   {tienePresupuestoPendiente && (
                     <div className="flex items-center gap-2 bg-amber-500 px-4 py-2">
                       <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
                       <span className="text-xs font-bold text-white">Presupuesto listo — tocá para revisar</span>
                     </div>
                   )}
+                  {pendienteCobro && (
+                    <div className="flex items-center gap-2 bg-teal-500 px-4 py-2">
+                      <CreditCard className="h-3.5 w-3.5 text-white flex-shrink-0" />
+                      <span className="text-xs font-bold text-white">Trabajo completado — cobro pendiente</span>
+                    </div>
+                  )}
                   <div className="px-4 py-4">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-[11px] font-bold text-slate-400 shrink-0 tabular-nums">#{incidente.id_incidente}</span>
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${estadoCfg.badge}`}>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-inset shrink-0 ${pendienteCobroCfg?.badge ?? estadoCfg.badge}`}>
                         <Icon className="w-2.5 h-2.5" />
-                        {estadoCfg.labelCliente}
+                        {pendienteCobroCfg ? pendienteCobroCfg.labelBadge : estadoCfg.labelCliente}
                       </span>
                     </div>
-                    {incidente.estado_actual === 'en_proceso' && !tienePresupuestoPendiente && (() => {
+                    {incidente.estado_actual === 'en_proceso' && !tienePresupuestoPendiente && !pendienteCobro && (() => {
                       const subKey = tieneConformidadSubida ? 'completada_pendiente' as const : 'en_curso' as const
                       const subcfg = SUB_ESTADO_EN_PROCESO_CONFIG[subKey]
                       return (

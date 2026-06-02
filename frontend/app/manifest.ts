@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ISBA - Sistema de Gestión de Incidentes',
-    short_name: 'ISBA',
-    description: 'Sistema de gestión de incidentes para inmobiliaria ISBA',
+    name: 'Traki — Gestión de Incidentes',
+    short_name: 'Traki',
+    description: 'Sistema de gestión de incidentes Traki',
     start_url: '/',
     display: 'standalone',
     background_color: '#f9fafb',

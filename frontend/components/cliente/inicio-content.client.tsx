@@ -5,12 +5,13 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import {
   Plus, ChevronRight, Calendar, Clock,
-  AlertCircle, CreditCard, Building2, CheckCircle2,
-  Home, FileText, Zap,
+  AlertCircle, CreditCard, CheckCircle2,
+  FileText, Zap, Wrench,
 } from 'lucide-react'
 import { format, parseISO, isToday, isTomorrow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { cn } from '@/shared/utils'
+import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
+import type { Notificacion } from '@/features/notificaciones/notificaciones.types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -27,13 +28,7 @@ export interface InicioContentProps {
   } | null
   presupuestosPendientes: number
   pagosPendientes: number
-  propiedades: {
-    id_inmueble: number
-    tipo: string
-    direccion: string
-    incidentes_activos: number
-  }[]
-  totalInmuebles: number
+  notificaciones: Notificacion[]
 }
 
 // ── Animated number counter ───────────────────────────────────────────────────
@@ -98,8 +93,7 @@ export function InicioContent({
   proximaVisita,
   presupuestosPendientes,
   pagosPendientes,
-  propiedades,
-  totalInmuebles,
+  notificaciones,
 }: InicioContentProps) {
   const tieneAcciones = presupuestosPendientes > 0 || pagosPendientes > 0
   const todoEnOrden = stats.activos === 0 && !tieneAcciones
@@ -115,42 +109,21 @@ export function InicioContent({
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <motion.div
         variants={cardVariants}
-        className="-mx-4 px-5 pt-8 pb-9 relative overflow-hidden"
+        className="-mx-4 px-5 pt-8 pb-9 relative overflow-hidden rounded-b-[2rem]"
         style={{
-          background:
-            'radial-gradient(ellipse at 88% 0%, rgba(217,119,6,0.22) 0%, transparent 52%), linear-gradient(148deg, #1c1a17 0%, #252018 60%, #1a1f2e 100%)',
+          background: 'linear-gradient(155deg, #1c1a17 0%, #252018 60%, #1a1f2e 100%)',
         }}
       >
-        {/* Fine grid overlay */}
         <div
-          className="absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,1) 1px, transparent 1px)',
-            backgroundSize: '36px 36px',
-          }}
+          className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none opacity-20"
+          style={{ background: 'radial-gradient(circle, rgba(217,119,6,0.6) 0%, transparent 70%)' }}
         />
-
-        {/* Ambient glow */}
-        <motion.div
-          animate={{ scale: [1, 1.18, 1], opacity: [0.28, 0.42, 0.28] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-20 -right-20 w-64 h-64 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(217,119,6,0.4) 0%, transparent 68%)' }}
-        />
-
-        {/* Small accent dot row */}
-        <div className="absolute top-5 right-5 flex gap-1 opacity-30">
-          {[0,1,2].map(i => (
-            <div key={i} className="h-1 w-1 rounded-full bg-amber-400" />
-          ))}
-        </div>
 
         <div className="relative">
           <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-amber-500/70 mb-2.5">
             {fechaHoy}
           </p>
-          <h1 className="text-[2.15rem] font-black text-white leading-none tracking-tighter mb-4">
+          <h1 className="text-[1.85rem] font-black text-white leading-none tracking-tighter mb-3">
             Hola, {nombre}.
           </h1>
 
@@ -175,21 +148,26 @@ export function InicioContent({
         <motion.div variants={cardVariants}>
           <Link href="/cliente/presupuestos">
             <motion.div
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-3 rounded-2xl p-4 border-l-[3px] border-l-amber-500 border border-amber-200/50 bg-gradient-to-r from-amber-50/80 to-white"
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
             >
-              <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                <FileText className="h-4 w-4 text-amber-600" />
+              <div className="h-11 w-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: '#0e1929' }}>
+                <FileText className="h-5 w-5 text-blue-300" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-amber-900">
+                <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-0.5">Presupuesto</p>
+                <p className="text-sm font-semibold text-gray-900 leading-snug">
                   {presupuestosPendientes === 1
                     ? 'Tenés un presupuesto para revisar'
                     : `${presupuestosPendientes} presupuestos para revisar`}
                 </p>
-                <p className="text-xs text-amber-700/70">Tu aprobación está pendiente</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-amber-400 shrink-0" />
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="text-xs font-black text-blue-300 px-2 py-0.5 rounded-full" style={{ background: 'rgba(14,25,41,0.85)' }}>{presupuestosPendientes}</span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
+              </div>
             </motion.div>
           </Link>
         </motion.div>
@@ -199,19 +177,24 @@ export function InicioContent({
         <motion.div variants={cardVariants}>
           <Link href="/cliente/pagos">
             <motion.div
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-3 rounded-2xl p-4 border-l-[3px] border-l-rose-500 border border-rose-200/50 bg-gradient-to-r from-rose-50/70 to-white"
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
             >
-              <div className="h-9 w-9 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
-                <CreditCard className="h-4 w-4 text-rose-600" />
+              <div className="h-11 w-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: '#0e1929' }}>
+                <CreditCard className="h-5 w-5 text-blue-300" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-rose-900">
-                  {pagosPendientes === 1 ? '1 pago pendiente' : `${pagosPendientes} pagos pendientes`}
+                <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-0.5">Pagos</p>
+                <p className="text-sm font-semibold text-gray-900 leading-snug">
+                  {pagosPendientes === 1 ? '1 cobro pendiente de pago' : `${pagosPendientes} cobros pendientes de pago`}
                 </p>
-                <p className="text-xs text-rose-700/70">Completá el pago del servicio</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-rose-400 shrink-0" />
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="text-xs font-black text-blue-300 px-2 py-0.5 rounded-full" style={{ background: 'rgba(14,25,41,0.85)' }}>{pagosPendientes}</span>
+                <ChevronRight className="h-4 w-4 text-gray-300" />
+              </div>
             </motion.div>
           </Link>
         </motion.div>
@@ -220,30 +203,39 @@ export function InicioContent({
       {/* ── STATS ─────────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants} className="grid grid-cols-3 gap-2">
         {[
-          { label: 'Activos',   value: stats.activos,     accent: 'bg-amber-400' },
-          { label: 'En curso',  value: stats.en_proceso,  accent: 'bg-blue-400' },
-          { label: 'Cerrados',  value: stats.finalizados, accent: 'bg-emerald-400' },
-        ].map(({ label, value, accent }) => (
-          <motion.div
-            key={label}
-            whileHover={{ rotateY: 5, rotateX: -2, scale: 1.03 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-            style={{ transformStyle: 'preserve-3d', perspective: '700px' }}
-            className="bg-white rounded-2xl px-3.5 pt-4 pb-3.5 border border-gray-100 shadow-sm flex flex-col gap-1"
-          >
-            <div className={cn('h-[3px] w-7 rounded-full mb-1', accent)} />
-            <p className="text-3xl font-black text-gray-900 tracking-tighter leading-none">
-              <AnimatedCounter value={value} />
-            </p>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.12em]">
-              {label}
-            </p>
-          </motion.div>
+          { label: 'Activos',     value: stats.activos,     Icon: AlertCircle,  iconColor: 'text-amber-500',   tab: 'pendiente' },
+          { label: 'En Proceso',  value: stats.en_proceso,  Icon: Wrench,       iconColor: 'text-blue-500',    tab: 'en_proceso' },
+          { label: 'Finalizados', value: stats.finalizados, Icon: CheckCircle2, iconColor: 'text-emerald-500', tab: 'resuelto' },
+        ].map(({ label, value, Icon, iconColor, tab }) => (
+          <Link key={label} href={`/cliente/incidentes?tab=${tab}`} className="block">
+            <motion.div
+              whileHover={{ y: -2, boxShadow: '0 4px 16px -4px rgba(0,0,0,0.08)' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              className="bg-white rounded-xl border border-gray-100 shadow-sm p-4"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium text-gray-500">{label}</p>
+                <Icon className={`h-4 w-4 ${iconColor}`} />
+              </div>
+              <p className="text-2xl font-bold text-gray-900 tabular-nums leading-none">
+                <AnimatedCounter value={value} />
+              </p>
+            </motion.div>
+          </Link>
         ))}
       </motion.div>
 
-      {/* ── PRÓXIMA VISITA ────────────────────────────────────────────────── */}
+      {/* ── NOTIFICACIONES ──────────────────────────────────────────────── */}
+      <motion.div variants={cardVariants}>
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-4 pt-4 pb-2">
+            <NotificacionesPanel notificaciones={notificaciones} rol="cliente" />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── AGENDA / PRÓXIMA VISITA ───────────────────────────────────────── */}
       {proximaVisita && (
         <motion.div variants={cardVariants}>
           <div
@@ -265,7 +257,6 @@ export function InicioContent({
                     Próxima visita
                   </p>
                 </div>
-                {/* Large day number decoration */}
                 <div className="text-right">
                   <p className="text-[2.2rem] font-black leading-none text-blue-400/25">
                     {format(parseISO(proximaVisita.fecha), 'd')}
@@ -301,121 +292,54 @@ export function InicioContent({
       <motion.div variants={cardVariants}>
         <Link href="/cliente/incidentes/nuevo">
           <motion.div
-            whileTap={{ scale: 0.97 }}
-            whileHover={{ scale: 1.01 }}
-            className="rounded-2xl p-5 flex items-center justify-between"
-            style={{ background: 'linear-gradient(130deg, #d97706 0%, #b45309 100%)' }}
-          >
-            <div className="flex items-center gap-3.5">
-              <div className="h-11 w-11 rounded-xl bg-white/15 flex items-center justify-center">
-                <Plus className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-[13px] font-black text-white uppercase tracking-wide leading-tight">
-                  Reportar incidente
-                </p>
-                <p className="text-xs text-amber-200/70 mt-0.5">Informá un problema en tu inmueble</p>
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-white/50 shrink-0" />
-          </motion.div>
-        </Link>
-      </motion.div>
-
-      {/* ── VER INCIDENTES (link secundario) ─────────────────────────────── */}
-      <motion.div variants={cardVariants}>
-        <Link href="/cliente/incidentes">
-          <motion.div
+            whileHover={{ y: -2 }}
             whileTap={{ scale: 0.98 }}
-            className="rounded-2xl px-5 py-4 flex items-center justify-between bg-white border border-gray-100 shadow-sm"
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
           >
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center">
-                <AlertCircle className="h-4 w-4 text-gray-500" />
-              </div>
-              <span className="text-sm font-semibold text-gray-800">Ver todos mis incidentes</span>
+            <div className="h-11 w-11 rounded-2xl bg-gray-900 flex items-center justify-center shrink-0">
+              <Plus className="h-5 w-5 text-white" />
             </div>
-            <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-0.5">Nueva solicitud</p>
+              <p className="text-sm font-bold text-gray-900">Reportar incidente</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-gray-300 shrink-0" />
           </motion.div>
         </Link>
       </motion.div>
 
-      {/* ── MIS PROPIEDADES ──────────────────────────────────────────────── */}
-      {propiedades.length > 0 && (
-        <motion.div variants={cardVariants} className="space-y-2">
-          <div className="flex items-center justify-between px-1">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.18em]">
-              Mis propiedades
-            </p>
-            <Link href="/cliente/propiedades" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              Ver todas
-            </Link>
-          </div>
-
-          {propiedades.map((prop, idx) => {
-            const tieneProblemas = prop.incidentes_activos > 0
-            return (
-              <motion.div
-                key={prop.id_inmueble}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.18 + idx * 0.05, type: 'spring', stiffness: 360, damping: 30 }}
-                whileHover={{ x: 3 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Link href="/cliente/incidentes">
-                  <div className={cn(
-                    'flex items-center gap-3 bg-white rounded-xl p-3.5 border-l-[3px] border border-r-gray-100 border-t-gray-100 border-b-gray-100',
-                    tieneProblemas ? 'border-l-amber-400' : 'border-l-emerald-400',
-                  )}>
-                    <div className={cn(
-                      'h-9 w-9 rounded-lg flex items-center justify-center shrink-0',
-                      tieneProblemas ? 'bg-amber-50' : 'bg-emerald-50',
-                    )}>
-                      <Building2 className={cn(
-                        'h-4 w-4',
-                        tieneProblemas ? 'text-amber-500' : 'text-emerald-500',
-                      )} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{prop.tipo}</p>
-                      <p className="text-xs text-gray-400 truncate">{prop.direccion}</p>
-                    </div>
-                    {tieneProblemas ? (
-                      <span className="text-[11px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                        {prop.incidentes_activos} activo{prop.incidentes_activos !== 1 ? 's' : ''}
-                      </span>
-                    ) : (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    )}
-                  </div>
-                </Link>
-              </motion.div>
-            )
-          })}
-        </motion.div>
-      )}
-
-      {/* ── SIN INMUEBLES ─────────────────────────────────────────────────── */}
-      {totalInmuebles === 0 && (
-        <motion.div variants={cardVariants}>
-          <Link href="/cliente/propiedades">
-            <motion.div
-              whileTap={{ scale: 0.98 }}
-              className="rounded-2xl border-2 border-dashed border-gray-200 p-5 flex items-center gap-3"
-            >
-              <div className="h-10 w-10 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                <Home className="h-5 w-5 text-gray-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-600">Registrá un inmueble primero</p>
-                <p className="text-xs text-gray-400 mt-0.5">Es necesario antes de reportar incidentes</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-gray-300 shrink-0" />
-            </motion.div>
-          </Link>
-        </motion.div>
-      )}
+      {/* ── MIS PAGOS ────────────────────────────────────────────────────── */}
+      <motion.div variants={cardVariants}>
+        <Link href="/cliente/pagos" className="block">
+          <motion.div
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
+          >
+            <div className={`h-11 w-11 rounded-2xl flex items-center justify-center shrink-0 ${pagosPendientes > 0 ? 'bg-rose-50' : 'bg-emerald-50'}`}>
+              <CreditCard className={`h-5 w-5 ${pagosPendientes > 0 ? 'text-rose-500' : 'text-emerald-500'}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-[10px] font-bold tracking-widest uppercase mb-0.5 ${pagosPendientes > 0 ? 'text-rose-500' : 'text-gray-400'}`}>
+                Mis pagos
+              </p>
+              <p className="text-sm font-semibold text-gray-900">
+                {pagosPendientes > 0
+                  ? (pagosPendientes === 1 ? '1 pago pendiente' : `${pagosPendientes} pagos pendientes`)
+                  : 'Todo al día'}
+              </p>
+            </div>
+            <div className="shrink-0 flex items-center gap-2">
+              {pagosPendientes > 0 && (
+                <span className="text-xs font-black text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">{pagosPendientes}</span>
+              )}
+              <ChevronRight className="h-4 w-4 text-gray-300" />
+            </div>
+          </motion.div>
+        </Link>
+      </motion.div>
 
       <div className="h-2" />
     </motion.div>

@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Settings, Wrench, Plus, X, Check } from 'lucide-react'
+import { Wrench, Plus, X, Check } from 'lucide-react'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { toast } from 'sonner'
 import {
   crearEspecialidad,
@@ -80,13 +81,7 @@ export function ConfiguracionContent({ especialidades: esp }: ConfiguracionConte
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Settings className="h-7 w-7 text-gray-700" />
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Configuración del Sistema</h1>
-          <p className="text-sm text-gray-600">Parámetros generales del sistema ISBA</p>
-        </div>
-      </div>
+      <AdminPageHeader title="Configuración del Sistema" subtitle="Parámetros generales del sistema Traki" />
 
       {/* Especialidades */}
       <Card>
@@ -197,12 +192,12 @@ export function ConfiguracionContent({ especialidades: esp }: ConfiguracionConte
       <Card>
         <CardHeader>
           <CardTitle>Información del Sistema</CardTitle>
-          <CardDescription>Datos generales del sistema ISBA</CardDescription>
+          <CardDescription>Datos generales del sistema Traki</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-500">Sistema</span>
-            <span className="font-medium">ISBA - Gestión de Incidentes</span>
+            <span className="font-medium">Traki — Gestión de Incidentes</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Versión</span>

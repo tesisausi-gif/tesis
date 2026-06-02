@@ -7,7 +7,7 @@ import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Bell, CheckCheck, XCircle, CheckCircle2,
-  AlertTriangle, Info, X, ExternalLink, ChevronDown, Hash,
+  AlertTriangle, Info, X, ChevronDown, Hash, ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/lib/supabase/client'
@@ -134,47 +134,37 @@ function NotifItem({
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: -6 }}
+      initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: 20 }}
+      exit={{ opacity: 0, x: 16 }}
       transition={{ duration: 0.15 }}
     >
       <div
         onClick={() => esClickeable && onNavigate(n)}
-        className={`group/item relative flex items-start gap-3 px-5 py-3.5 -mx-5 transition-colors ${
-          esClickeable ? 'cursor-pointer hover:bg-gray-50/80' : ''
+        className={`group/item relative flex items-start gap-3 border-b border-gray-100 last:border-0 px-3 py-3 rounded-md transition-colors ${
+          esClickeable ? 'cursor-pointer hover:bg-gray-50' : ''
         }`}
       >
-        {/* Icon */}
-        <div className="shrink-0 mt-0.5">
-          <Icon className={`h-4 w-4 ${cfg.iconColor}`} />
+        <div className={`mt-0.5 shrink-0 ${cfg.iconColor}`}>
+          <Icon size={16} />
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 leading-snug pr-6">
+        <div className="flex-1 min-w-0 space-y-0.5">
+          <p className="text-sm font-semibold text-gray-800 leading-snug pr-5">
             {n.titulo}
           </p>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] text-gray-400">{formatFecha(n.fecha_creacion)}</span>
-            {esClickeable && (
-              <span className={`text-[11px] font-medium flex items-center gap-0.5 ${cfg.iconColor} opacity-0 group-hover/item:opacity-100 transition-opacity`}>
-                Ver <ExternalLink className="h-2.5 w-2.5" />
-              </span>
-            )}
-          </div>
+          <p className="text-xs text-gray-400">{formatFecha(n.fecha_creacion)}</p>
         </div>
 
-        {/* Far right: unread dot + dismiss */}
-        <div className="absolute right-5 top-3.5 flex items-center gap-1.5">
+        <div className="absolute right-3 top-3 flex items-center gap-1.5">
           <button
             onClick={e => onDescartar(e, n.id_notificacion)}
-            className="p-1 rounded-md hover:bg-gray-200 transition-colors opacity-0 group-hover/item:opacity-100"
+            className="p-0.5 rounded hover:bg-gray-200 transition-colors opacity-0 group-hover/item:opacity-100"
             title="Descartar"
           >
             <X className="h-3 w-3 text-gray-400" />
           </button>
-          <span className={`h-2 w-2 rounded-full shrink-0 ${cfg.dot} group-hover/item:opacity-0 transition-opacity`} />
+          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${cfg.dot} group-hover/item:opacity-0 transition-opacity`} />
         </div>
       </div>
     </motion.div>
@@ -268,7 +258,7 @@ function GrupoIncidente({
             transition={{ duration: 0.15 }}
             className="overflow-hidden"
           >
-            <div className="bg-white border-t border-gray-100 divide-y divide-gray-50">
+            <div className="bg-white border-t border-gray-100">
               {notifs.map(n => {
                 const ncfg = getCategoriaConfig(n.tipo)
                 const NIcon = ncfg.icon
@@ -279,16 +269,16 @@ function GrupoIncidente({
                     exit={{ opacity: 0, x: 16 }}
                     transition={{ duration: 0.12 }}
                     onClick={() => handleClickNotif(n)}
-                    className="group/inner relative flex items-start gap-2.5 px-3.5 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="group/inner relative flex items-start gap-2.5 border-b border-gray-100 last:border-0 px-3.5 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors"
                   >
                     <NIcon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${ncfg.iconColor}`} />
-                    <div className="flex-1 min-w-0 pr-6">
+                    <div className="flex-1 min-w-0 pr-6 space-y-0.5">
                       <p className="text-xs font-semibold text-gray-800 leading-snug">{n.titulo}</p>
-                      <span className="text-[10px] text-gray-400">{formatFecha(n.fecha_creacion)}</span>
+                      <p className="text-[10px] text-gray-400">{formatFecha(n.fecha_creacion)}</p>
                     </div>
                     <button
                       onClick={e => onDescartar(e, n.id_notificacion)}
-                      className="absolute right-3 top-2.5 p-1 rounded-md hover:bg-gray-200 transition-colors opacity-0 group-hover/inner:opacity-100"
+                      className="absolute right-3 top-2.5 p-0.5 rounded hover:bg-gray-200 transition-colors opacity-0 group-hover/inner:opacity-100"
                     >
                       <X className="h-3 w-3 text-gray-400" />
                     </button>

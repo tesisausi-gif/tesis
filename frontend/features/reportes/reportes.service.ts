@@ -2,7 +2,7 @@
 
 /**
  * Servicio de Reportes
- * Datos agregados para los 8 informes de valor agregado del sistema ISBA
+ * Datos agregados para los 8 informes de valor agregado del sistema Traki
  */
 
 import { createAdminClient } from '@/shared/lib/supabase/admin'

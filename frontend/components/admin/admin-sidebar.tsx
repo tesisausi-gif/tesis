@@ -42,7 +42,7 @@ const menuItems: { title: string; icon: React.ElementType; href: string; badge?:
   { title: 'Empleados', icon: UserCog, href: '/dashboard/usuarios' },
   { title: 'Presupuestos', icon: DollarSign, href: '/dashboard/presupuestos', badge: 'presupuestos' },
   { title: 'Conformidades', icon: ClipboardCheck, href: '/dashboard/conformidades', badge: 'conformidades' },
-  { title: 'Pagos', icon: FileCheck, href: '/dashboard/pagos', badge: 'pagos' },
+  { title: 'Cobros y Pagos', icon: FileCheck, href: '/dashboard/pagos', badge: 'pagos' },
   { title: 'Indicadores', icon: BarChart2, href: '/dashboard/metricas' },
 ]
 
@@ -99,7 +99,7 @@ export function AdminSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold px-4 py-4">
-            Sistema ISBA
+            Traki
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

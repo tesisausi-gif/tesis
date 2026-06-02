@@ -14,11 +14,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Plus, Edit, Eye, Power, CheckCircle2, XCircle, Filter, Building2 } from 'lucide-react'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface Cliente {
   id_cliente: number
@@ -244,21 +245,18 @@ export default function ClientesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Gestión de Clientes</h2>
-          <p className="text-muted-foreground">
-            Administra los clientes del sistema
-          </p>
-        </div>
+      <AdminPageHeader
+        title="Gestión de Clientes"
+        subtitle="Administrá los clientes del sistema"
+        right={
+          <Button size="sm" onClick={() => setDialogOpen(true)} className="bg-white/10 hover:bg-white/20 text-white border border-white/20">
+            <Plus className="h-4 w-4 mr-1.5" />
+            Nuevo Cliente
+          </Button>
+        }
+      />
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Cliente
-            </Button>
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Cliente</DialogTitle>
@@ -348,7 +346,6 @@ export default function ClientesPage() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
 
       {/* Estadísticas */}
       <div className="grid gap-4 md:grid-cols-3">

@@ -13,12 +13,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { UserRole } from '@/shared/types/enums'
 import { Plus, Trash2, Eye, Power, Edit, CheckCircle2, XCircle, Filter } from 'lucide-react'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface Usuario {
   id: string
@@ -236,21 +237,18 @@ export default function UsuariosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Gestión de Empleados</h2>
-          <p className="text-muted-foreground">
-            Administra empleados internos (administradores y gestores)
-          </p>
-        </div>
+      <AdminPageHeader
+        title="Gestión de Empleados"
+        subtitle="Administrá empleados internos (administradores y gestores)"
+        right={
+          <Button size="sm" onClick={() => setDialogOpen(true)} className="bg-white/10 hover:bg-white/20 text-white border border-white/20">
+            <Plus className="h-4 w-4 mr-1.5" />
+            Nuevo Empleado
+          </Button>
+        }
+      />
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Empleado
-            </Button>
-          </DialogTrigger>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Empleado</DialogTitle>
@@ -327,7 +325,6 @@ export default function UsuariosPage() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
 
       {/* Estadísticas */}
       <div className="grid gap-4 md:grid-cols-3">

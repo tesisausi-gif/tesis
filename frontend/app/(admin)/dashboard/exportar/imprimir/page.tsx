@@ -61,7 +61,7 @@ export default async function ImprimirPage({ searchParams }: PrintPageProps) {
   return (
     <html lang="es">
       <head>
-        <title>{titulo} — ISBA</title>
+        <title>{titulo} — Traki</title>
         <style>{`
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 20px; }
@@ -80,7 +80,7 @@ export default async function ImprimirPage({ searchParams }: PrintPageProps) {
       </head>
       <body>
         <h1>{titulo}</h1>
-        <p className="meta">Sistema ISBA · Generado el {fecha} · {filas.length} registros</p>
+        <p className="meta">Traki · Generado el {fecha} · {filas.length} registros</p>
 
         <button
           onClick={() => window.print()}
@@ -110,7 +110,7 @@ export default async function ImprimirPage({ searchParams }: PrintPageProps) {
           </table>
         )}
 
-        <p className="footer">ISBA · Sistema de Gestión de Incidentes</p>
+        <p className="footer">Traki · Sistema de Gestión de Incidentes</p>
       </body>
     </html>
   )

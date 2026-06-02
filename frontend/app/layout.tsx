@@ -28,13 +28,13 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "ISBA - Gestión de Incidentes",
-  description: "Sistema de gestión de incidentes para inmobiliaria ISBA",
+  title: "Traki — Gestión de Incidentes",
+  description: "Sistema de gestión de incidentes Traki",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "ISBA",
+    title: "Traki",
   },
 };
 
