@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ClienteNav } from '@/components/cliente/cliente-nav'
 import { CambiarPasswordPrimerAcceso } from '@/components/cliente/cambiar-password-primer-acceso.client'
+import { VerificarEmailOverlay } from '@/components/cliente/verificar-email-overlay.client'
 import { AIHelpChat } from '@/components/ai-help-chat'
 import { PageTransitionProvider, PageTransition } from '@/components/ui/page-transition'
 import { PullToRefresh } from '@/components/ui/pull-to-refresh'
@@ -16,18 +17,50 @@ const clienteRoutes = [
   '/cliente/perfil',
 ]
 
+interface ClienteVerificacion {
+  idCliente: number
+  email: string
+  nombre: string
+}
+
 export default function ClienteLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const [debeCambiarPassword, setDebeCambiarPassword] = useState(false)
+  const [verificacionPendiente, setVerificacionPendiente] = useState<ClienteVerificacion | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.user_metadata?.debe_cambiar_password === true) {
+
+    supabase.auth.getUser().then(async ({ data }) => {
+      const user = data.user
+      if (!user) return
+
+      if (user.user_metadata?.debe_cambiar_password === true) {
         setDebeCambiarPassword(true)
+      }
+
+      // Verificar si el cliente ya confirmó su email
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('id_cliente, clientes(nombre, email_verificado)')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!usuario?.id_cliente) return
+
+      const clienteData = Array.isArray(usuario.clientes)
+        ? usuario.clientes[0]
+        : usuario.clientes
+
+      if (clienteData && clienteData.email_verificado === false) {
+        setVerificacionPendiente({
+          idCliente: usuario.id_cliente,
+          email: user.email ?? '',
+          nombre: clienteData.nombre ?? '',
+        })
       }
     })
   }, [])
@@ -46,6 +79,14 @@ export default function ClienteLayout({
         <AIHelpChat />
       </div>
       {debeCambiarPassword && <CambiarPasswordPrimerAcceso onSuccess={() => setDebeCambiarPassword(false)} />}
+      {verificacionPendiente && (
+        <VerificarEmailOverlay
+          idCliente={verificacionPendiente.idCliente}
+          email={verificacionPendiente.email}
+          nombre={verificacionPendiente.nombre}
+          onSuccess={() => setVerificacionPendiente(null)}
+        />
+      )}
     </PageTransitionProvider>
   )
 }

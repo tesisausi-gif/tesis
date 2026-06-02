@@ -23,6 +23,9 @@ export interface Database {
           esta_activo: boolean
           fecha_creacion: string
           fecha_modificacion: string
+          email_verificado: boolean
+          codigo_verificacion: string | null
+          codigo_verificacion_expira: string | null
         }
         Insert: {
           id_cliente?: number
@@ -35,6 +38,9 @@ export interface Database {
           esta_activo?: boolean
           fecha_creacion?: string
           fecha_modificacion?: string
+          email_verificado?: boolean
+          codigo_verificacion?: string | null
+          codigo_verificacion_expira?: string | null
         }
         Update: {
           id_cliente?: number
@@ -47,6 +53,9 @@ export interface Database {
           esta_activo?: boolean
           fecha_creacion?: string
           fecha_modificacion?: string
+          email_verificado?: boolean
+          codigo_verificacion?: string | null
+          codigo_verificacion_expira?: string | null
         }
       }
       inmuebles: {
