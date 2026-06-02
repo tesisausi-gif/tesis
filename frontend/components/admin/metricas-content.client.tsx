@@ -32,10 +32,13 @@ import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import type { MetricasDashboard } from '@/features/incidentes/incidentes.types'
 import { ReportesContent } from '@/components/admin/reportes-content.client'
 import type { ReportesData } from '@/features/reportes/reportes.service'
+import { PpisContent } from '@/components/admin/ppis-content.client'
+import type { TodosPpisData } from '@/features/reportes/metricas-ppis.service'
 
 interface MetricasContentProps {
   metricas: MetricasDashboard
   reportes: ReportesData
+  ppis: TodosPpisData
 }
 
 type Periodo = '7d' | '30d' | '90d' | '6m' | '1y' | 'custom' | 'todo'
@@ -58,7 +61,10 @@ const PERIODOS: { valor: Periodo; label: string }[] = [
   { valor: 'custom', label: 'Personalizado' },
 ]
 
-export function MetricasContent({ metricas: metricasIniciales, reportes }: MetricasContentProps) {
+type SeccionActiva = 'indicadores' | 'ppis'
+
+export function MetricasContent({ metricas: metricasIniciales, reportes, ppis }: MetricasContentProps) {
+  const [seccion, setSeccion] = useState<SeccionActiva>('indicadores')
   const [metricas, setMetricas] = useState(metricasIniciales)
   const [periodo, setPeriodo] = useState<Periodo>('todo')
   const [customDesde, setCustomDesde] = useState('')
@@ -102,18 +108,50 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
   return (
     <div className="space-y-5">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      {/* Header + Selector de sección */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Indicadores</h2>
-          <p className="text-sm text-muted-foreground">Análisis de rendimiento y reportes del sistema ISBA</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Métricas e Informes</h2>
+          <p className="text-sm text-muted-foreground">Análisis de rendimiento y PPIs del sistema ISBA</p>
         </div>
-        {cargando && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Actualizando...
-          </div>
-        )}
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+          <button
+            onClick={() => setSeccion('indicadores')}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+              seccion === 'indicadores'
+                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+            }`}
+          >
+            Indicadores
+          </button>
+          <button
+            onClick={() => setSeccion('ppis')}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+              seccion === 'ppis'
+                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+            }`}
+          >
+            PPIs de Proceso
+          </button>
+        </div>
       </div>
+
+      {/* ── Sección PPIs ────────────────────────────────────────────────────── */}
+      {seccion === 'ppis' && (
+        <PpisContent ppis={ppis} />
+      )}
+
+      {/* ── Sección Indicadores (existentes) ──────────────────────────────── */}
+      {seccion === 'indicadores' && (<>
+
+      {/* Loading indicator */}
+      {cargando && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground justify-end">
+          <Loader2 className="h-4 w-4 animate-spin" /> Actualizando...
+        </div>
+      )}
 
       {/* Filtro de período */}
       <Card className="border-slate-200">
@@ -378,6 +416,8 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
       {/* 13 secciones analíticas */}
       <ReportesContent data={reportes} />
+
+      </>)}
 
     </div>
   )
