@@ -158,11 +158,11 @@ export function InicioTecnicoContent({
               transition={{ type: 'spring', stiffness: 380, damping: 28 }}
               className="flex items-center gap-3.5 rounded-2xl p-4 bg-white border border-slate-200 shadow-sm"
             >
-              <div className="h-11 w-11 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
-                <Bell className="h-5 w-5 text-blue-500" />
+              <div className="h-11 w-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: '#0e1929' }}>
+                <Bell className="h-5 w-5 text-blue-300" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold tracking-widest uppercase text-blue-500 mb-0.5">Conformidades</p>
+                <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-0.5">Conformidades</p>
                 <p className="text-sm font-semibold text-gray-900 leading-snug">
                   {trabajosPendientes === 1
                     ? '1 trabajo listo para subir conformidad'
@@ -170,7 +170,7 @@ export function InicioTecnicoContent({
                 </p>
               </div>
               <div className="shrink-0 flex items-center gap-2">
-                <span className="text-xs font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">{trabajosPendientes}</span>
+                <span className="text-xs font-black text-blue-300 px-2 py-0.5 rounded-full" style={{ background: 'rgba(14,25,41,0.85)' }}>{trabajosPendientes}</span>
                 <ChevronRight className="h-4 w-4 text-gray-300" />
               </div>
             </motion.div>

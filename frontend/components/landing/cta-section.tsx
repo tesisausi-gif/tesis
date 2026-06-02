@@ -4,75 +4,84 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { User, Wrench, CheckCircle, ArrowRight } from 'lucide-react'
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
+const card = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' as const } },
 }
 
 export function CTASection() {
   return (
-    <section className="py-20 md:py-28" style={{ background: 'white' }}>
+    <section
+      className="py-24 md:py-32 relative overflow-hidden"
+      style={{ background: '#060d1a' }}
+    >
+      {/* Top separator line */}
+      <div className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: 'linear-gradient(to right, transparent, rgba(59,130,246,0.3), transparent)' }} />
+
       <div className="max-w-5xl mx-auto px-6">
         {/* Heading */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.55 }}
           className="text-center mb-14"
         >
-          <h2
-            className="text-3xl md:text-4xl font-bold text-slate-900 mb-4"
-            style={{ fontFamily: 'var(--font-syne)', letterSpacing: '-0.02em' }}
-          >
+          <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-blue-400/60 mb-3"
+            style={{ fontFamily: 'var(--font-outfit)' }}>
             Comenzá ahora
-          </h2>
-          <p className="text-slate-500 text-base md:text-lg" style={{ fontFamily: 'var(--font-outfit)' }}>
-            Elegí cómo querés usar la plataforma
           </p>
+          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight"
+            style={{ fontFamily: 'var(--font-syne)', letterSpacing: '-0.02em' }}>
+            Elegí cómo usar la plataforma
+          </h2>
         </motion.div>
 
         {/* Cards */}
         <div className="grid gap-5 md:grid-cols-2 max-w-2xl mx-auto">
+
           {/* Cliente */}
           <motion.div
-            variants={cardVariants}
+            variants={card}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            className="rounded-2xl p-8 flex flex-col"
+            viewport={{ once: true, margin: '-40px' }}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="rounded-2xl p-8 flex flex-col relative overflow-hidden"
             style={{
-              background: '#F7F6F3',
-              border: '1px solid rgba(0,0,0,0.06)',
+              background: 'rgba(14,25,41,0.8)',
+              border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center mb-5"
-              style={{ background: 'rgba(37,99,235,0.1)' }}
-            >
-              <User className="h-6 w-6" style={{ color: '#2563eb' }} />
+            <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)', transform: 'translate(30%,-30%)' }} />
+
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
+              style={{ background: '#0e1929', border: '1px solid rgba(59,130,246,0.15)' }}>
+              <User className="h-6 w-6 text-blue-300" />
             </div>
-            <h3
-              className="text-xl font-bold text-slate-900 mb-1"
-              style={{ fontFamily: 'var(--font-syne)' }}
-            >
+            <h3 className="text-xl font-black text-white mb-1.5"
+              style={{ fontFamily: 'var(--font-syne)' }}>
               Soy Cliente
             </h3>
-            <p className="text-slate-500 text-sm mb-5" style={{ fontFamily: 'var(--font-outfit)' }}>
+            <p className="text-slate-400 text-sm mb-6"
+              style={{ fontFamily: 'var(--font-outfit)' }}>
               Reportá incidentes en tus propiedades
             </p>
-            <ul className="space-y-2.5 mb-7 flex-1">
-              {['Crea reportes de incidentes', 'Seguí el estado en tiempo real', 'Calificá el servicio recibido'].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-sm text-slate-600" style={{ fontFamily: 'var(--font-outfit)' }}>
-                  <CheckCircle className="h-4 w-4 flex-shrink-0 text-green-500" />
+            <ul className="space-y-2.5 mb-8 flex-1">
+              {['Reportes con foto y descripción', 'Seguí el estado en tiempo real', 'Calificá el servicio recibido'].map((item) => (
+                <li key={item} className="flex items-center gap-2.5 text-sm text-slate-400"
+                  style={{ fontFamily: 'var(--font-outfit)' }}>
+                  <CheckCircle className="h-3.5 w-3.5 shrink-0 text-blue-400" />
                   {item}
                 </li>
               ))}
             </ul>
             <Link
               href="/register?tipo=cliente"
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm text-white transition-all"
-              style={{ background: '#2563eb', fontFamily: 'var(--font-syne)' }}
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-all hover:brightness-110 active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)', fontFamily: 'var(--font-syne)' }}
             >
               Registrarme como Cliente
               <ArrowRight className="h-4 w-4" />
@@ -81,46 +90,48 @@ export function CTASection() {
 
           {/* Técnico */}
           <motion.div
-            variants={cardVariants}
+            variants={card}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
+            viewport={{ once: true, margin: '-40px' }}
             transition={{ delay: 0.1 }}
-            className="rounded-2xl p-8 flex flex-col"
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="rounded-2xl p-8 flex flex-col relative overflow-hidden"
             style={{
-              background: '#F7F6F3',
-              border: '1px solid rgba(0,0,0,0.06)',
+              background: 'rgba(14,25,41,0.8)',
+              border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center mb-5"
-              style={{ background: 'rgba(217,119,6,0.1)' }}
-            >
-              <Wrench className="h-6 w-6" style={{ color: '#d97706' }} />
+            <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%)', transform: 'translate(30%,-30%)' }} />
+
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
+              style={{ background: '#0e1929', border: '1px solid rgba(59,130,246,0.15)' }}>
+              <Wrench className="h-6 w-6 text-blue-300" />
             </div>
-            <h3
-              className="text-xl font-bold text-slate-900 mb-1"
-              style={{ fontFamily: 'var(--font-syne)' }}
-            >
+            <h3 className="text-xl font-black text-white mb-1.5"
+              style={{ fontFamily: 'var(--font-syne)' }}>
               Soy Técnico
             </h3>
-            <p className="text-slate-500 text-sm mb-5" style={{ fontFamily: 'var(--font-outfit)' }}>
+            <p className="text-slate-400 text-sm mb-6"
+              style={{ fontFamily: 'var(--font-outfit)' }}>
               Ofrecé tus servicios profesionales
             </p>
-            <ul className="space-y-2.5 mb-7 flex-1">
-              {['Recibí trabajos según tu especialidad', 'Gestioná tus asignaciones', 'Construí tu reputación'].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-sm text-slate-600" style={{ fontFamily: 'var(--font-outfit)' }}>
-                  <CheckCircle className="h-4 w-4 flex-shrink-0 text-green-500" />
+            <ul className="space-y-2.5 mb-8 flex-1">
+              {['Trabajos según tu especialidad', 'Gestioná tus asignaciones', 'Construí tu reputación'].map((item) => (
+                <li key={item} className="flex items-center gap-2.5 text-sm text-slate-400"
+                  style={{ fontFamily: 'var(--font-outfit)' }}>
+                  <CheckCircle className="h-3.5 w-3.5 shrink-0 text-blue-400" />
                   {item}
                 </li>
               ))}
             </ul>
             <Link
               href="/register?tipo=tecnico"
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all"
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:bg-white/10 active:scale-95"
               style={{
-                border: '1px solid rgba(0,0,0,0.12)',
-                color: '#374151',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: 'rgba(255,255,255,0.75)',
                 fontFamily: 'var(--font-syne)',
               }}
             >
@@ -134,13 +145,13 @@ export function CTASection() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-10 text-center text-sm text-slate-500"
+          transition={{ duration: 0.5, delay: 0.35 }}
+          className="mt-10 text-center text-sm text-slate-600"
           style={{ fontFamily: 'var(--font-outfit)' }}
         >
-          ¿Ya tienes una cuenta?{' '}
-          <Link href="/login" className="text-blue-600 font-medium hover:text-blue-700 transition-colors">
-            Inicia sesión aquí
+          ¿Ya tenés cuenta?{' '}
+          <Link href="/login" className="text-blue-400 font-medium hover:text-blue-300 transition-colors">
+            Iniciá sesión aquí
           </Link>
         </motion.p>
       </div>
