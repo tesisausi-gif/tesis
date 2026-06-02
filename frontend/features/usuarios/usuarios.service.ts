@@ -278,7 +278,14 @@ export async function toggleActivoTecnico(
   nuevoEstado: boolean
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
+
+    // Obtener email del técnico para localizar el auth user
+    const { data: tec } = await supabase
+      .from('tecnicos')
+      .select('correo_electronico')
+      .eq('id_tecnico', idTecnico)
+      .maybeSingle()
 
     const { error } = await supabase
       .from('tecnicos')
@@ -286,8 +293,19 @@ export async function toggleActivoTecnico(
       .eq('id_tecnico', idTecnico)
 
     if (error) return { success: false, error: error.message }
+
+    // Si se da de baja, cerrar sesión activa en todos los dispositivos
+    if (!nuevoEstado && tec?.correo_electronico) {
+      const { data: usr } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('correo_electronico', tec.correo_electronico)
+        .maybeSingle()
+      if (usr?.id) await cerrarSesionesUsuario(usr.id)
+    }
+
     return { success: true, data: undefined }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -305,7 +323,26 @@ export async function actualizarTecnico(
   }
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
+
+    // Si el email cambió, sincronizar con auth.users y usuarios
+    const { data: tecActual } = await supabase
+      .from('tecnicos')
+      .select('correo_electronico')
+      .eq('id_tecnico', idTecnico)
+      .maybeSingle()
+
+    if (tecActual?.correo_electronico && tecActual.correo_electronico !== data.correo_electronico) {
+      const { data: usr } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('correo_electronico', tecActual.correo_electronico)
+        .maybeSingle()
+      if (usr?.id) {
+        await supabase.auth.admin.updateUserById(usr.id, { email: data.correo_electronico, email_confirm: true })
+        await supabase.from('usuarios').update({ correo_electronico: data.correo_electronico }).eq('id', usr.id)
+      }
+    }
 
     const { error } = await supabase
       .from('tecnicos')
@@ -317,7 +354,7 @@ export async function actualizarTecnico(
 
     if (error) return { success: false, error: error.message }
     return { success: true, data: undefined }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Error inesperado al actualizar técnico' }
   }
 }
@@ -687,7 +724,7 @@ export async function toggleActivoEmpleado(
   nuevoEstado: boolean
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { error } = await supabase
       .from('usuarios')
@@ -695,8 +732,12 @@ export async function toggleActivoEmpleado(
       .eq('id', id)
 
     if (error) return { success: false, error: error.message }
+
+    // id ya es el auth UUID — cerrar sesión al dar de baja
+    if (!nuevoEstado) await cerrarSesionesUsuario(id)
+
     return { success: true, data: undefined }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Error inesperado' }
   }
 }
@@ -714,7 +755,27 @@ export async function actualizarCliente(
   }
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
+
+    // Si el email cambió, sincronizar con auth.users y usuarios
+    const { data: cliActual } = await supabase
+      .from('clientes')
+      .select('correo_electronico')
+      .eq('id_cliente', idCliente)
+      .maybeSingle()
+
+    if (data.correo_electronico && cliActual?.correo_electronico &&
+        cliActual.correo_electronico !== data.correo_electronico) {
+      const { data: usr } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('correo_electronico', cliActual.correo_electronico)
+        .maybeSingle()
+      if (usr?.id) {
+        await supabase.auth.admin.updateUserById(usr.id, { email: data.correo_electronico, email_confirm: true })
+        await supabase.from('usuarios').update({ correo_electronico: data.correo_electronico }).eq('id', usr.id)
+      }
+    }
 
     const { error } = await supabase
       .from('clientes')
@@ -723,7 +784,7 @@ export async function actualizarCliente(
 
     if (error) return { success: false, error: error.message }
     return { success: true, data: undefined }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Error inesperado al actualizar cliente' }
   }
 }
@@ -733,7 +794,13 @@ export async function toggleActivoCliente(
   nuevoEstado: boolean
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
+
+    const { data: cli } = await supabase
+      .from('clientes')
+      .select('correo_electronico')
+      .eq('id_cliente', idCliente)
+      .maybeSingle()
 
     const { error } = await supabase
       .from('clientes')
@@ -741,8 +808,34 @@ export async function toggleActivoCliente(
       .eq('id_cliente', idCliente)
 
     if (error) return { success: false, error: error.message }
+
+    if (!nuevoEstado && cli?.correo_electronico) {
+      const { data: usr } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('correo_electronico', cli.correo_electronico)
+        .maybeSingle()
+      if (usr?.id) await cerrarSesionesUsuario(usr.id)
+    }
+
     return { success: true, data: undefined }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Error inesperado' }
   }
+}
+
+// ── Helper: cerrar todas las sesiones de un auth user ────────────────────────
+async function cerrarSesionesUsuario(authUserId: string): Promise<void> {
+  try {
+    await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users/${authUserId}/logout?scope=global`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        },
+      }
+    )
+  } catch { /* best effort — no bloquear el flujo principal */ }
 }
