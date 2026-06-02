@@ -211,10 +211,13 @@ function GrupoIncidente({
 
   return (
     <div className={`rounded-xl border border-gray-100 border-l-[3px] overflow-hidden ${cfg.groupBorder}`}>
-      {/* Cabecera */}
-      <button
+      {/* Cabecera — div en vez de button para poder anidar el botón de descartar */}
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setAbierto(v => !v)}
-        className="w-full flex items-center gap-2.5 px-3.5 py-3 hover:bg-gray-50 transition-colors text-left"
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setAbierto(v => !v) }}
+        className="w-full flex items-center gap-2.5 px-3.5 py-3 hover:bg-gray-50 transition-colors text-left cursor-pointer"
       >
         <Icon className={`h-3.5 w-3.5 shrink-0 ${cfg.iconColor}`} />
 
@@ -253,7 +256,7 @@ function GrupoIncidente({
           </button>
           <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`} />
         </div>
-      </button>
+      </div>
 
       {/* Items colapsables */}
       <AnimatePresence initial={false}>
