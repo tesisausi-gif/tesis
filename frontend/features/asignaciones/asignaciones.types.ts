@@ -55,6 +55,9 @@ export interface AsignacionTecnico extends AsignacionBase {
       correo_electronico?: string | null
     } | null
   } | null
+  // Datos de visitas — inyectados en la page antes de pasar al componente
+  visita_activa?: { estado: string; fuera_de_disponibilidad: boolean } | null
+  tiene_disponibilidad?: boolean
 }
 
 // DTO para crear asignación

@@ -68,6 +68,9 @@ export const ESTADO_INCIDENTE_CONFIG: Record<string, {
 //   3. Agregar el icono en ICON_BY_SUB_ESTADO de cada componente
 // ─────────────────────────────────────────────────────────────────────────────
 export type SubEstadoEnProceso =
+  | 'visita_pendiente'
+  | 'visita_propuesta'
+  | 'visita_programada'
   | 'pendiente_inspeccion'
   | 'aceptada'
   | 'presupuesto_enviado'
@@ -90,6 +93,42 @@ export const SUB_ESTADO_EN_PROCESO_CONFIG: Record<SubEstadoEnProceso, {
   bannerText: string | null
   timelineColor: string    // bg-* del evento que ENTRA a este sub-estado
 }> = {
+  visita_pendiente: {
+    labelGrupo:    'Sin visita agendada',
+    labelBadge:    'Sin visita',
+    stripe:        'border-l-cyan-400',
+    bgGradient:    'from-cyan-50/50',
+    badge:         'bg-cyan-100 text-cyan-800 ring-cyan-200',
+    groupHeaderCls:'text-cyan-700 bg-cyan-50 border-cyan-200',
+    groupDotCls:   'bg-cyan-400 animate-pulse',
+    bannerBg:      null,
+    bannerText:    null,
+    timelineColor: 'bg-cyan-400',
+  },
+  visita_propuesta: {
+    labelGrupo:    'Esperando confirmación del cliente',
+    labelBadge:    'Esp. confirmación',
+    stripe:        'border-l-violet-400',
+    bgGradient:    'from-violet-50/50',
+    badge:         'bg-violet-100 text-violet-800 ring-violet-200',
+    groupHeaderCls:'text-violet-700 bg-violet-50 border-violet-200',
+    groupDotCls:   'bg-violet-500 animate-pulse',
+    bannerBg:      'bg-violet-500',
+    bannerText:    'Visita propuesta — aguarda confirmación del cliente',
+    timelineColor: 'bg-violet-400',
+  },
+  visita_programada: {
+    labelGrupo:    'Visita confirmada',
+    labelBadge:    'Visita agendada',
+    stripe:        'border-l-teal-400',
+    bgGradient:    'from-teal-50/50',
+    badge:         'bg-teal-100 text-teal-800 ring-teal-200',
+    groupHeaderCls:'text-teal-700 bg-teal-50 border-teal-200',
+    groupDotCls:   'bg-teal-500',
+    bannerBg:      null,
+    bannerText:    null,
+    timelineColor: 'bg-teal-400',
+  },
   pendiente_inspeccion: {
     labelGrupo:    'Pendiente inspección',
     labelBadge:    'Pend. inspección',

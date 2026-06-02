@@ -90,6 +90,9 @@ function getProximoPaso(
 // ── Iconos por sub-estado (los colores/labels vienen de SUB_ESTADO_EN_PROCESO_CONFIG) ──
 
 const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
+  visita_pendiente:      Clock,
+  visita_propuesta:      Clock,
+  visita_programada:     CheckCircle,
   pendiente_inspeccion:  ClipboardList,
   aceptada:              FileText,
   presupuesto_enviado:   FileText,
@@ -108,6 +111,9 @@ const QUICK_ACTION_TECNICO: Record<SubEstadoEnProceso, {
   disabled: boolean
   tab: string
 }> = {
+  visita_pendiente:      { label: 'Agendar visita',  Icon: Clock,         color: 'text-cyan-600',   disabled: false, tab: 'visitas'      },
+  visita_propuesta:      { label: 'Esp. cliente',    Icon: Clock,         color: 'text-violet-400', disabled: true,  tab: 'visitas'      },
+  visita_programada:     { label: 'Visita lista',    Icon: CheckCircle,   color: 'text-teal-600',   disabled: true,  tab: 'visitas'      },
   pendiente_inspeccion:  { label: 'Ir a Inspección', Icon: ClipboardList, color: 'text-blue-600',   disabled: false, tab: 'inspecciones' },
   aceptada:              { label: 'Cargar presup.',   Icon: FileText,      color: 'text-blue-600',   disabled: false, tab: 'presupuesto'  },
   presupuesto_enviado:   { label: 'Pend. admin',      Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'presupuesto'  },
@@ -140,7 +146,15 @@ function getStatusKey(
     if (estadoPresupuesto === 'enviado') return 'presupuesto_enviado'
     if (estadoPresupuesto === 'aprobado_admin') return 'presupuesto_cliente'
     if (estadoPresupuesto === 'aprobado') return 'en_curso'
-    if (a.estado_asignacion === 'aceptada' && !tieneInspeccion) return 'pendiente_inspeccion'
+    if (a.estado_asignacion === 'aceptada' && !tieneInspeccion) {
+      if (a.tiene_disponibilidad) {
+        const ev = a.visita_activa?.estado
+        if (ev === 'propuesta')  return 'visita_propuesta'
+        if (ev === 'confirmada') return 'visita_programada'
+        return 'visita_pendiente'
+      }
+      return 'pendiente_inspeccion'
+    }
   }
 
   return a.estado_asignacion
@@ -484,7 +498,7 @@ export function TrabajosContent({
                     {listaFiltrada.length}
                   </span>
                 </button>
-                {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
+                {(['visita_pendiente', 'visita_propuesta', 'visita_programada', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
                   const count = listaFiltrada.filter(a => sk(a) === tipo).length
                   const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
                   const active = subFiltro === tipo
@@ -505,7 +519,7 @@ export function TrabajosContent({
                 })}
               </div>
               <div className="space-y-6">
-              {((['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
+              {((['visita_pendiente', 'visita_propuesta', 'visita_programada', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
                 .map(tipo => ({
                   tipo,
                   items: listaFiltrada.filter(a => sk(a) === tipo),

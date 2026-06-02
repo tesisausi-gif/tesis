@@ -70,6 +70,10 @@ import { crearAvance } from '@/features/avances/avances.service'
 import { getFranjasDisponibilidad, getCompromisoDeAsignacion, guardarCompromisoTecnico } from '@/features/disponibilidad/disponibilidad.service'
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import type { CompromisoTecnico } from '@/features/disponibilidad/disponibilidad.types'
+import { getVisitaActivaDeIncidente } from '@/features/visitas/visitas.service'
+import type { VisitaResumen } from '@/features/visitas/visitas.types'
+import { PropVisitaSection } from '@/components/tecnico/proponer-visita-section.client'
+import { ConfirmarVisitaPanel } from '@/components/cliente/confirmar-visita-panel.client'
 import { createClient } from '@/shared/lib/supabase/client'
 import { PresupuestosClienteList } from '@/components/cliente/presupuestos-cliente-list'
 import { getMisPagosDeIncidente } from '@/features/pagos/cobros-clientes.service'
@@ -369,6 +373,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [conformidad, setConformidad] = useState<Conformidad | null>(null)
   const [franjas, setFranjas] = useState<FranjaInput[]>([])
   const [compromiso, setCompromiso] = useState<CompromisoTecnico | null>(null)
+  const [visitaActiva, setVisitaActiva] = useState<VisitaResumen | null>(null)
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -471,16 +476,18 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       // Cargar datos específicos por rol
       if (rol === 'tecnico' || rol === 'admin') {
         try {
-          const [inspeccionesData, presupuestosData, conformidadData, franjasData] = await Promise.all([
+          const [inspeccionesData, presupuestosData, conformidadData, franjasData, visitaData] = await Promise.all([
             getInspeccionesDelIncidente(incidenteId),
             getPresupuestosDelIncidente(incidenteId),
             getConformidadDelIncidente(incidenteId),
             getFranjasDisponibilidad(incidenteId),
+            getVisitaActivaDeIncidente(incidenteId),
           ])
           setInspecciones(inspeccionesData)
           setPresupuestos(presupuestosData)
           setConformidad(conformidadData)
           setFranjas(franjasData as FranjaInput[])
+          setVisitaActiva(visitaData)
 
           // Para técnico: cargar compromiso de la asignación activa
           if (rol === 'tecnico') {
@@ -499,15 +506,18 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       if (rol === 'cliente') {
         try {
-          const presupuestosData = await getPresupuestosDelIncidente(incidenteId)
+          const [presupuestosData, visitaData] = await Promise.all([
+            getPresupuestosDelIncidente(incidenteId),
+            getVisitaActivaDeIncidente(incidenteId),
+          ])
           // El cliente solo ve presupuestos que la inmobiliaria ya aprobó y ajustó.
-          // No ve: 'enviado' (precio original del técnico) ni 'rechazado' por admin (decisión interna).
           const visiblesParaCliente = presupuestosData.filter(p =>
             [EstadoPresupuesto.APROBADO_ADMIN, EstadoPresupuesto.APROBADO].includes(p.estado_presupuesto as EstadoPresupuesto)
           )
           setPresupuestos(visiblesParaCliente)
+          setVisitaActiva(visitaData)
         } catch (error) {
-          console.error('Error al cargar presupuestos del cliente:', error)
+          console.error('Error al cargar datos del cliente:', error)
         }
       }
 
@@ -1395,6 +1405,14 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 )}
               </div>
 
+              {/* Panel confirmación de visita — solo para cliente con visita activa */}
+              {rol === 'cliente' && visitaActiva && (
+                <ConfirmarVisitaPanel
+                  visita={visitaActiva}
+                  onCambio={() => cargarIncidente()}
+                />
+              )}
+
               <Separator />
 
               {/* Información del Inmueble */}
@@ -1826,6 +1844,20 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             {/* Tab Inspecciones (para técnicos con asignación confirmada) */}
             {hasTecnicoTabs && incidente && activeTab === 'inspecciones' && (
               <div className="mt-4">
+                {/* Panel de visitas — solo si el cliente tiene disponibilidad y aún no hay inspección */}
+                {franjas.length > 0 && !tieneInspeccion && (() => {
+                  const asigActiva = asignaciones.find(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion)) as any
+                  return asigActiva ? (
+                    <PropVisitaSection
+                      idIncidente={incidente.id_incidente}
+                      idTecnico={asigActiva.id_tecnico}
+                      franjas={franjas}
+                      initialVisita={visitaActiva}
+                      onCambio={() => cargarIncidente()}
+                      onIrAInspeccion={() => {}}
+                    />
+                  ) : null
+                })()}
                 <InspeccionesList
                   incidenteId={incidente.id_incidente}
                   idTecnico={asignaciones.find(a => a.estado_asignacion !== 'rechazada')?.id_tecnico || 0}

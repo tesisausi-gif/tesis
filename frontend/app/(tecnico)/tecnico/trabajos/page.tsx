@@ -5,6 +5,8 @@ import { getPresupuestosDeTecnico } from '@/features/presupuestos/presupuestos.s
 import { getConformidadesPorIncidentes } from '@/features/conformidades/conformidades.service'
 import { getMisIncidentesPagados } from '@/features/pagos/pagos-tecnicos.service'
 import { getInspeccionesDeTecnico } from '@/features/inspecciones/inspecciones.service'
+import { getVisitasActivasPorIncidentes } from '@/features/visitas/visitas.service'
+import { getFranjasParaIncidentes } from '@/features/disponibilidad/disponibilidad.service'
 import { TrabajosContent } from '@/components/tecnico/trabajos-content.client'
 
 export default async function TecnicoTrabajosPage() {
@@ -25,7 +27,6 @@ export default async function TecnicoTrabajosPage() {
     if (insp.id_incidente) tieneInspeccionPorIncidente[insp.id_incidente] = true
   }
 
-  // Mapa de id_incidente → estado del presupuesto
   const estadoPresupuestoPorIncidente: Record<number, string> = {}
   for (const p of presupuestos) {
     if (p.id_incidente) {
@@ -33,18 +34,27 @@ export default async function TecnicoTrabajosPage() {
     }
   }
 
-  // Conformidades de los incidentes activos
   const idIncidentes = asignaciones.map(a => a.id_incidente).filter(Boolean) as number[]
-  const conformidades = await getConformidadesPorIncidentes(idIncidentes)
+  const [conformidades, visitasActivas, franjasPorIncidente] = await Promise.all([
+    getConformidadesPorIncidentes(idIncidentes),
+    getVisitasActivasPorIncidentes(idIncidentes),
+    getFranjasParaIncidentes(idIncidentes),
+  ])
 
   const conformidadesPorIncidente: Record<number, { id_conformidad: number; id_incidente: number; esta_firmada: number | boolean; esta_rechazada?: boolean | null; url_documento: string | null }> = {}
   for (const c of conformidades) {
     conformidadesPorIncidente[c.id_incidente] = c
   }
 
+  const asignacionesConVisitas = asignaciones.map(a => ({
+    ...a,
+    visita_activa:        a.id_incidente ? (visitasActivas[a.id_incidente] ?? null) : null,
+    tiene_disponibilidad: a.id_incidente ? (franjasPorIncidente[a.id_incidente]?.length ?? 0) > 0 : false,
+  }))
+
   return (
     <TrabajosContent
-      asignaciones={asignaciones}
+      asignaciones={asignacionesConVisitas}
       estadoPresupuestoPorIncidente={estadoPresupuestoPorIncidente}
       conformidadesPorIncidente={conformidadesPorIncidente}
       idTecnico={user.id_tecnico!}

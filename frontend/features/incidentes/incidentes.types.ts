@@ -86,6 +86,9 @@ export interface IncidenteConClienteAdmin extends IncidenteConCliente {
   presupuestos?: PresupuestoResumen[]
   conformidades?: ConformidadResumen[]
   inspecciones?: InspeccionResumen[]
+  // Datos de visitas — inyectados en la page antes de pasar al componente
+  visita_activa?: { estado: string; fuera_de_disponibilidad: boolean } | null
+  tiene_disponibilidad?: boolean
 }
 
 // Filtros para métricas y reportes

@@ -39,6 +39,9 @@ const ICON_BY_ESTADO: Record<string, React.ElementType> = {
 }
 
 const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
+  visita_pendiente:      Clock,
+  visita_propuesta:      Bell,
+  visita_programada:     CheckCircle,
   pendiente_inspeccion:  ClipboardList,
   aceptada:              FileText,
   presupuesto_enviado:   FileText,
@@ -54,6 +57,9 @@ const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
 type AccionPendiente =
   | { tipo: 'asignar' }
   | { tipo: 'reasignar' }
+  | { tipo: 'visita_pendiente' }
+  | { tipo: 'visita_propuesta' }
+  | { tipo: 'visita_programada' }
   | { tipo: 'pendiente_inspeccion' }
   | { tipo: 'aceptada' }
   | { tipo: 'presupuesto_enviado' }
@@ -91,6 +97,12 @@ function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
     const presAprobado = inc.presupuestos?.find(p => p.estado_presupuesto === 'aprobado')
     if (asigActiva?.estado_asignacion === 'aceptada' && !presAprobado) {
       const tieneInspeccion = (inc.inspecciones?.length ?? 0) > 0
+      if (!tieneInspeccion && inc.tiene_disponibilidad) {
+        const ev = inc.visita_activa?.estado
+        if (ev === 'propuesta')  return { tipo: 'visita_propuesta'  }
+        if (ev === 'confirmada') return { tipo: 'visita_programada' }
+        return { tipo: 'visita_pendiente' }
+      }
       return { tipo: tieneInspeccion ? 'aceptada' : 'pendiente_inspeccion' }
     }
     return { tipo: 'en_curso' }
@@ -108,6 +120,9 @@ const ACCION_CONFIG: Record<AccionPendiente['tipo'], {
 }> = {
   asignar:               { label: 'Asignar técnico',  Icon: Wrench,        activeColor: 'text-blue-600',   pulse: false, disabled: false },
   reasignar:             { label: 'Reasignar',        Icon: RefreshCw,     activeColor: 'text-orange-600', pulse: false, disabled: false },
+  visita_pendiente:      { label: 'Sin visita',        Icon: Clock,         activeColor: 'text-gray-300',   pulse: false, disabled: true  },
+  visita_propuesta:      { label: 'Esp. confirmación', Icon: Bell,          activeColor: 'text-violet-500', pulse: true,  disabled: true  },
+  visita_programada:     { label: 'Visita agendada',   Icon: CheckCircle,   activeColor: 'text-teal-500',   pulse: false, disabled: true  },
   pendiente_inspeccion:  { label: 'Pend. inspección', Icon: ClipboardList, activeColor: 'text-gray-300',   pulse: false, disabled: true  },
   aceptada:              { label: 'Pend. presupuesto', Icon: FileText,     activeColor: 'text-gray-300',   pulse: false, disabled: true  },
   presupuesto_enviado:   { label: 'Evaluar presup.',  Icon: FileText,      activeColor: 'text-amber-600',  pulse: true,  disabled: false },
@@ -543,7 +558,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
                 {incidentesFiltrados.length}
               </span>
             </button>
-            {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
+            {(['visita_pendiente', 'visita_propuesta', 'visita_programada', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
               const count = incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo).length
               const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
               const active = subFiltro === tipo
@@ -564,7 +579,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
             })}
           </div>
           <div className="space-y-6">
-          {((['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
+          {((['visita_pendiente', 'visita_propuesta', 'visita_programada', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
             .map(tipo => ({
               tipo,
               items: incidentesFiltrados.filter(i => getAccionPendiente(i).tipo === tipo),
