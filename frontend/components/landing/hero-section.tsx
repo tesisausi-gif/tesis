@@ -54,7 +54,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-10"
+          className="mb-7"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium"
             style={{
@@ -70,18 +70,11 @@ export function HeroSection() {
         </motion.div>
 
         {/* Headline — blur-text from 21st.dev */}
-        <h1 className="text-5xl sm:text-6xl md:text-[4.5rem] font-black text-white leading-[1.02] tracking-[-0.03em] mb-6"
+        <h1 className="text-5xl sm:text-6xl md:text-[4.5rem] font-black text-white leading-[1.08] tracking-[-0.03em] mb-6"
           style={{ fontFamily: 'var(--font-syne)' }}>
-          <BlurText text="Gestioná tus" delay={55} direction="bottom" />
-          <br />
-          <BlurText
-            text="incidentes"
-            delay={55}
-            direction="bottom"
-            style={{ color: '#60a5fa' }}
-          />
-          <br />
-          <BlurText text="sin fricciones." delay={55} direction="bottom" />
+          <span className="block"><BlurText text="Gestioná tus" delay={55} direction="bottom" /></span>
+          <span className="block" style={{ color: '#60a5fa' }}><BlurText text="incidentes" delay={55} direction="bottom" /></span>
+          <span className="block"><BlurText text="sin fricciones." delay={55} direction="bottom" /></span>
         </h1>
 
         {/* Subtitle */}
