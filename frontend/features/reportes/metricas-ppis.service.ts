@@ -1611,8 +1611,102 @@ export interface TodosPpisData {
   oee: OeeData
 }
 
+// ─── SP9 · Tasa de Rechazo por Incompatibilidad de Horario ───────────────────
+
+export interface Sp9PorTecnico {
+  id_tecnico: number
+  nombre:     string
+  apellido:   string
+  propuestas: number
+  rechazadas: number
+  tasa:       number
+  semaforo:   Semaforo
+}
+
+export interface Sp9Data {
+  tasaGlobal:       number | null
+  semaforoGlobal:   Semaforo
+  totalPropuestas:  number
+  totalRechazadas:  number
+  porTecnico:       Sp9PorTecnico[]
+}
+
+/**
+ * Calcula la Tasa de Rechazo por Incompatibilidad de Horario (SP9).
+ *
+ * Separado de SP2-B (reasignación por rechazo/cancelación de asignación).
+ * Este indicador mide específicamente cuántas veces el técnico propone una
+ * visita FUERA del horario declarado por el cliente y el cliente la rechaza.
+ * Un valor alto indica que los técnicos no respetan la disponibilidad del cliente.
+ *
+ * Semáforo: Verde < 5% | Amarillo 5–15% | Rojo > 15%
+ */
+export async function getSp9Data(): Promise<Sp9Data> {
+  const supabase = createAdminClient()
+
+  const { data: visitas } = await supabase
+    .from('visitas')
+    .select('id_tecnico, estado, tecnicos(nombre, apellido)')
+    .in('estado', ['propuesta', 'confirmada', 'completada', 'rechazada'])
+
+  if (!visitas?.length) {
+    return { tasaGlobal: null, semaforoGlobal: 'sin_datos', totalPropuestas: 0, totalRechazadas: 0, porTecnico: [] }
+  }
+
+  const tecMap = new Map<number, { nombre: string; apellido: string; propuestas: number; rechazadas: number }>()
+
+  for (const v of visitas as any[]) {
+    const entry = tecMap.get(v.id_tecnico) ?? {
+      nombre:    v.tecnicos?.nombre    ?? '',
+      apellido:  v.tecnicos?.apellido  ?? '',
+      propuestas: 0,
+      rechazadas: 0,
+    }
+    entry.propuestas++
+    if (v.estado === 'rechazada') entry.rechazadas++
+    tecMap.set(v.id_tecnico, entry)
+  }
+
+  const totalPropuestas = visitas.length
+  const totalRechazadas = visitas.filter((v: any) => v.estado === 'rechazada').length
+  const tasaGlobal = totalPropuestas > 0 ? Math.round((totalRechazadas / totalPropuestas) * 100) : null
+
+  const sp9Semaforo = (tasa: number | null): Semaforo =>
+    tasa === null ? 'sin_datos' : tasa < 5 ? 'verde' : tasa <= 15 ? 'amarillo' : 'rojo'
+
+  const porTecnico: Sp9PorTecnico[] = [...tecMap.entries()]
+    .map(([id, v]) => {
+      const tasa = v.propuestas > 0 ? Math.round((v.rechazadas / v.propuestas) * 100) : 0
+      return { id_tecnico: id, ...v, tasa, semaforo: sp9Semaforo(tasa) }
+    })
+    .sort((a, b) => b.rechazadas - a.rechazadas)
+
+  return {
+    tasaGlobal,
+    semaforoGlobal: sp9Semaforo(tasaGlobal),
+    totalPropuestas,
+    totalRechazadas,
+    porTecnico,
+  }
+}
+
+// ─── Export combinado de todos los PPIs ───────────────────────────────────────
+
+export interface TodosPpisData {
+  tci: TciData
+  fpy: FpyData
+  wip: WipData
+  reasignacion: ReasignacionData
+  tcr: TcrData
+  sp8: Sp8Data
+  isc: IscData
+  cb2: Cb2Data
+  oee: OeeData
+  sp9: Sp9Data
+}
+
 export async function getTodosPpisData(): Promise<TodosPpisData> {
-  const [tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee] = await Promise.all([
+  const [tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9] = await Promise.all([
     getTciData(),
     getFpyData(),
     getWipData(),
@@ -1622,6 +1716,7 @@ export async function getTodosPpisData(): Promise<TodosPpisData> {
     getIscData(),
     getCb2Data(),
     getOeeData(),
+    getSp9Data(),
   ])
-  return { tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee }
+  return { tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9 }
 }

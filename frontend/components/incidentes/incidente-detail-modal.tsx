@@ -50,6 +50,7 @@ import {
   X,
   Check,
   UserX,
+  CalendarDays,
 } from 'lucide-react'
 import { EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
@@ -70,7 +71,7 @@ import { crearAvance } from '@/features/avances/avances.service'
 import { getFranjasDisponibilidad, getCompromisoDeAsignacion, guardarCompromisoTecnico } from '@/features/disponibilidad/disponibilidad.service'
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import type { CompromisoTecnico } from '@/features/disponibilidad/disponibilidad.types'
-import { getVisitaActivaDeIncidente } from '@/features/visitas/visitas.service'
+import { getVisitaActivaDeIncidente, getVisitasDeIncidente as getVisitasDeIncidenteTimeline } from '@/features/visitas/visitas.service'
 import type { VisitaResumen } from '@/features/visitas/visitas.types'
 import { PropVisitaSection } from '@/components/tecnico/proponer-visita-section.client'
 import { ConfirmarVisitaPanel } from '@/components/cliente/confirmar-visita-panel.client'
@@ -108,7 +109,7 @@ interface TimelineEventMetadata {
 
 interface TimelineEvent {
   id: string
-  tipo: 'creacion' | 'asignacion' | 'inspeccion' | 'presupuesto' | 'pago' | 'conformidad' | 'calificacion' | 'estado' | 'avance'
+  tipo: 'creacion' | 'asignacion' | 'inspeccion' | 'presupuesto' | 'pago' | 'conformidad' | 'calificacion' | 'estado' | 'avance' | 'visita'
   titulo: string
   descripcion: string
   fecha: string
@@ -610,8 +611,45 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       // "completada" queda cubierto por los eventos de conformidad — no duplicar
     })
 
-    // Cargar inspecciones, presupuestos, pagos, avances y conformidades para timeline
-    const { inspecciones, presupuestos, pagos, avances, conformidades } = await getTimelineData(incidenteData.id_incidente)
+    // Cargar inspecciones, presupuestos, pagos, avances, conformidades y visitas para timeline
+    const [{ inspecciones, presupuestos, pagos, avances, conformidades }, visitasTimeline] = await Promise.all([
+      getTimelineData(incidenteData.id_incidente),
+      getVisitasDeIncidenteTimeline(incidenteData.id_incidente),
+    ])
+
+    // Visitas — aparecen en el timeline para admin y técnico
+    visitasTimeline?.forEach((v) => {
+      if (rolActual === 'cliente') return
+      const ESTADO_VISITA: Record<string, { titulo: string; color: string }> = {
+        propuesta:  { titulo: 'Visita propuesta',   color: 'bg-violet-400' },
+        confirmada: { titulo: 'Visita confirmada',  color: 'bg-teal-500'   },
+        completada: { titulo: 'Visita completada',  color: 'bg-teal-600'   },
+        cancelada:  { titulo: 'Visita cancelada',   color: 'bg-gray-400'   },
+        rechazada:  { titulo: 'Visita rechazada',   color: 'bg-red-400'    },
+      }
+      const cfg = ESTADO_VISITA[v.estado] ?? { titulo: 'Visita', color: 'bg-gray-400' }
+      const TIPO_LABELS: Record<string, string> = {
+        inspeccion:  'Inspección inicial',
+        reparacion:  'Reparación',
+        seguimiento: 'Seguimiento',
+      }
+      const detalle: TimelineEventDetalle[] = [
+        { label: 'Tipo', value: TIPO_LABELS[v.tipo] ?? v.tipo },
+        { label: 'Hora', value: `${v.hora_inicio}${v.hora_fin_estimada ? ` – ${v.hora_fin_estimada}` : ''}` },
+        ...(v.fuera_de_disponibilidad ? [{ label: 'Aviso', value: 'Fuera de disponibilidad declarada' }] : []),
+        ...(v.notas_tecnico ? [{ label: 'Notas', value: v.notas_tecnico }] : []),
+      ]
+      timelineEvents.push({
+        id: `visita-${v.id_visita}`,
+        tipo: 'visita',
+        titulo: cfg.titulo,
+        descripcion: new Date(v.fecha_visita + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }),
+        fecha: v.fecha_creacion,
+        icono: <CalendarDays className="h-4 w-4" />,
+        color: cfg.color,
+        detalleItems: detalle,
+      })
+    })
 
     inspecciones?.forEach((insp: any) => {
       const tecnicoNombre = insp.tecnicos ? `${insp.tecnicos.nombre} ${insp.tecnicos.apellido}`.trim() : null

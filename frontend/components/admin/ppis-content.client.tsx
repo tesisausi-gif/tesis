@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle2, XCircle, AlertCircle, Info, Clock, TrendingUp, Tag, Layers, Repeat2, Gauge, Zap, User, Wrench, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
-import type { TodosPpisData, TciData, FpyData, FpyEtapa, WipData, WipEtapa, ReasignacionData, ReasignacionPorTecnico, Semaforo, TciPorPrioridad, TciPorCategoria, TcrData, TcrPorTecnico, Sp8Data, Sp8ItemPendiente, IscData, IscPorTecnico, Cb2Data, OeeData, IrtTecnico } from '@/features/reportes/metricas-ppis.service'
+import type { TodosPpisData, TciData, FpyData, FpyEtapa, WipData, WipEtapa, ReasignacionData, ReasignacionPorTecnico, Semaforo, TciPorPrioridad, TciPorCategoria, TcrData, TcrPorTecnico, Sp8Data, Sp8ItemPendiente, IscData, IscPorTecnico, Cb2Data, OeeData, IrtTecnico, Sp9Data, Sp9PorTecnico } from '@/features/reportes/metricas-ppis.service'
 
 // ─── Helpers visuales ─────────────────────────────────────────────────────────
 
@@ -1313,6 +1313,116 @@ function IscMetrica({ data }: { data: IscData }) {
   )
 }
 
+// ─── SP9 · Tasa de Rechazo por Incompatibilidad de Horario ───────────────────
+
+function FilaTecnicoSp9({ t, max }: { t: Sp9PorTecnico; max: number }) {
+  const col = SEMAFORO_COLORES[t.semaforo]
+  const nombre = `${t.nombre} ${t.apellido}`.trim()
+  return (
+    <div className={`rounded-xl border p-3 space-y-2 ${col.bg} ${col.border}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+          <span className="text-sm font-medium text-slate-700 truncate">{nombre}</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <SemaforoIcon s={t.semaforo} />
+          <span className={`text-lg font-bold tabular-nums ${col.text}`}>{t.tasa}%</span>
+        </div>
+      </div>
+      <div className="w-full bg-white/70 rounded-full h-1.5 overflow-hidden">
+        <div className={`h-full rounded-full ${col.barra}`} style={{ width: `${Math.max((t.tasa / max) * 100, 4)}%` }} />
+      </div>
+      <p className="text-[10px] text-slate-500">{t.rechazadas} rechazadas de {t.propuestas} propuestas</p>
+    </div>
+  )
+}
+
+function Sp9Metrica({ data }: { data: Sp9Data }) {
+  const col = SEMAFORO_COLORES[data.semaforoGlobal]
+  const maxTasa = Math.max(...(data.porTecnico.map(t => t.tasa)), 1)
+
+  return (
+    <div className="space-y-5">
+      <ExplicacionMetrica
+        numero="10"
+        titulo="SP9 · Tasa de Rechazo por Incompatibilidad de Horario"
+        resumen="¿Con qué frecuencia los técnicos proponen visitas en horarios que el cliente no declaró como disponibles, y el cliente las rechaza? Un valor alto indica que los técnicos no respetan la disponibilidad."
+        proceso="Calidad del proceso de coordinación de visitas (SP nuevo). Mide cuántas veces el sistema tuvo que reasignar un técnico porque propuso un horario fuera de la disponibilidad declarada por el cliente."
+        porque="Separado de SP2-B (reasignaciones por rechazo de asignación) porque tiene causa y acción diferente. Aquí el problema no es el matching técnico-incidente sino el respeto a los tiempos del cliente. Cada rechazo genera una reasignación completa — el costo operativo es el mismo que en SP2-B pero el origen es evitable con capacitación."
+        accion="🔴 Técnico con tasa alta → capacitar en revisar disponibilidad del cliente antes de proponer horario. Si es sistémico en todos → revisar si la UI muestra claramente la disponibilidad o si las franjas del cliente son demasiado restrictivas."
+        formula="SP9 = (Visitas rechazadas / Total visitas propuestas) × 100 · Fuente: visitas.estado='rechazada' / total · Verde <5% | Amarillo 5–15% | Rojo >15%"
+      />
+
+      <div className="grid sm:grid-cols-3 gap-4">
+        <div className={`rounded-2xl border-2 p-5 flex flex-col justify-between ${col.bg} ${col.border}`}>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Tasa Global SP9</p>
+            <div className={`text-5xl font-bold tabular-nums ${col.text}`}>
+              {data.tasaGlobal !== null ? `${data.tasaGlobal}%` : '—'}
+            </div>
+            <p className="text-xs text-slate-400 mt-1">{data.totalRechazadas} rechazadas de {data.totalPropuestas} propuestas</p>
+          </div>
+          <div className="mt-4 space-y-1.5">
+            <SemaforoBadge
+              s={data.semaforoGlobal}
+              texto={
+                data.semaforoGlobal === 'verde'    ? 'Coordinación adecuada' :
+                data.semaforoGlobal === 'amarillo' ? 'Revisar práctica' :
+                data.semaforoGlobal === 'rojo'     ? 'Alta fricción horaria' :
+                'Sin datos — feature nueva'
+              }
+            />
+            <div className="flex gap-3 text-[10px] text-slate-400">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />{'<5%'}</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />5–15%</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />{'>15%'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Detalle global</p>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: 'Propuestas totales', value: data.totalPropuestas, color: 'text-slate-700' },
+              { label: 'Rechazadas',         value: data.totalRechazadas, color: 'text-red-600'   },
+              { label: 'Aceptadas',          value: data.totalPropuestas - data.totalRechazadas, color: 'text-emerald-600' },
+            ].map(item => (
+              <div key={item.label} className="bg-white rounded-xl border border-slate-200 p-3 text-center space-y-1">
+                <p className={`text-2xl font-bold tabular-nums ${item.color}`}>{item.value}</p>
+                <p className="text-[10px] text-slate-500 leading-tight">{item.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-400 italic">
+            Los datos se acumularán a medida que los técnicos propongan visitas usando el nuevo sistema de coordinación de horarios.
+          </p>
+        </div>
+      </div>
+
+      {data.porTecnico.length > 0 && (
+        <Card className="border-slate-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
+              <Wrench className="h-4 w-4 text-slate-400" />
+              SP9 por Técnico — ordenado por rechazos
+            </CardTitle>
+            <p className="text-xs text-slate-400">Un técnico con tasa alta propone sistemáticamente fuera del horario del cliente. Requiere retroalimentación directa.</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {data.porTecnico.slice(0, 8).map(t => (
+                <FilaTecnicoSp9 key={t.id_tecnico} t={t} max={maxTasa} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
 // ─── CB-2 · Takt Time del Sistema vs Throughput Rate ─────────────────────────
 
 function Cb2Metrica({ data }: { data: Cb2Data }) {
@@ -1668,7 +1778,7 @@ export function PpisContent({ ppis }: { ppis: TodosPpisData }) {
   const estadosPorTab: Record<SubTab, { label: string; semaforo: Semaforo }[]> = {
     tiempo:   [{ label: 'TCI', semaforo: ppis.tci.semaforoGlobal }, { label: 'Takt Time', semaforo: ppis.cb2.semaforoRatio }],
     calidad:  [{ label: 'FPY', semaforo: ppis.fpy.semaforoGlobal }, { label: 'TCR', semaforo: ppis.tcr.semaforoGlobal }, { label: 'ISC', semaforo: ppis.isc.semaforoGlobal }],
-    proceso:  [{ label: 'Reasignación', semaforo: ppis.reasignacion.semaforoGlobal }],
+    proceso:  [{ label: 'Reasignación', semaforo: ppis.reasignacion.semaforoGlobal }, { label: 'Rechazo horario', semaforo: ppis.sp9.semaforoGlobal }],
     finanzas: [{ label: 'Cobros (DPC)', semaforo: ppis.sp8.dpcSemaforo }, { label: 'Pagos (DPT)', semaforo: ppis.sp8.dptSemaforo }],
     tecnicos: [{ label: 'IRT del equipo', semaforo: ppis.oee.semaforoGlobal }],
   }
@@ -1732,6 +1842,8 @@ export function PpisContent({ ppis }: { ppis: TodosPpisData }) {
           <WipMetrica data={ppis.wip} />
           <div className="border-t border-slate-100 pt-2" />
           <ReasignacionMetrica data={ppis.reasignacion} />
+          <div className="border-t border-slate-100 pt-2" />
+          <Sp9Metrica data={ppis.sp9} />
         </div>
       )}
 
