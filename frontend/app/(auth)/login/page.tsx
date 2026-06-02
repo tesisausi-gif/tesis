@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
@@ -112,6 +113,17 @@ function LoginPageContent() {
       initial="hidden"
       animate="show"
     >
+      {/* Volver */}
+      <motion.div variants={fadeUp} className="mb-5">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-[12px] text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          <ArrowLeft className="h-3 w-3" />
+          Volver al inicio
+        </Link>
+      </motion.div>
+
       {/* Card */}
       <motion.div
         variants={fadeUp}

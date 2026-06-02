@@ -47,7 +47,7 @@ export function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-6 py-28 flex flex-col items-center text-center">
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-6 py-16 sm:py-24 flex flex-col items-center text-center">
 
         {/* Badge */}
         <motion.div
