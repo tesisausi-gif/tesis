@@ -123,6 +123,7 @@ interface IncidenteCompleto {
   id_incidente: number
   descripcion_problema: string
   disponibilidad: string | null
+  url_foto_diagnostico: string | null
   categoria: string | null
   nivel_prioridad: string | null
   estado_actual: string
@@ -1412,6 +1413,29 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   {incidente.descripcion_problema}
                 </p>
               </div>
+
+              {/* Foto del incidente */}
+              {incidente.url_foto_diagnostico && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    Foto del incidente
+                  </h4>
+                  <a
+                    href={incidente.url_foto_diagnostico}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={incidente.url_foto_diagnostico}
+                      alt="Foto del incidente"
+                      className="w-full max-h-64 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity cursor-zoom-in"
+                    />
+                    <p className="text-xs text-gray-400 mt-1 text-center">Tocá para ver en tamaño completo</p>
+                  </a>
+                </div>
+              )}
 
               {/* Disponibilidad — lista de franjas */}
               <div className="space-y-2">
