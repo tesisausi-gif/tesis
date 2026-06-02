@@ -96,7 +96,7 @@ export function InicioTecnicoContent({
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <motion.div
         variants={cardVariants}
-        className="-mx-4 px-5 pt-8 pb-9 relative overflow-hidden"
+        className="-mx-4 px-5 pt-8 pb-9 relative overflow-hidden rounded-b-[2rem]"
         style={{
           background: 'linear-gradient(155deg, #0e1929 0%, #131e32 60%, #0f1e2e 100%)',
         }}

@@ -54,21 +54,17 @@ export default async function TecnicoDashboard() {
     : '?'
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
-      <div className="px-4">
-        <InicioTecnicoContent
-          nombre={tecnico?.nombre ?? 'Técnico'}
-          iniciales={iniciales}
-          especialidadesLabel={especialidadesLabel}
-          calificacionPromedio={tecnico?.calificacion_promedio ?? null}
-          cntAsignado={badgeCounts.disponibles}
-          cntEnProceso={cntEnProceso}
-          cntFinalizado={cntFinalizado}
-          trabajosPendientes={badgeCounts.trabajos}
-          notificaciones={notificaciones}
-          compromisos={compromisos}
-        />
-      </div>
-    </div>
+    <InicioTecnicoContent
+      nombre={tecnico?.nombre ?? 'Técnico'}
+      iniciales={iniciales}
+      especialidadesLabel={especialidadesLabel}
+      calificacionPromedio={tecnico?.calificacion_promedio ?? null}
+      cntAsignado={badgeCounts.disponibles}
+      cntEnProceso={cntEnProceso}
+      cntFinalizado={cntFinalizado}
+      trabajosPendientes={badgeCounts.trabajos}
+      notificaciones={notificaciones}
+      compromisos={compromisos}
+    />
   )
 }
