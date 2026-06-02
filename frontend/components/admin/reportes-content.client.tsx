@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import type { ReportesData, TrabajosPorCategoria, TrabajoCategoriaItem } from '@/features/reportes/reportes.service'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 function NavLink({ href, children, className = '' }: { href: string; children: React.ReactNode; className?: string }) {
   return (
@@ -218,6 +219,7 @@ export function ReportesContent({ data }: { data: ReportesData }) {
 
   return (
     <div className="space-y-10">
+      <AdminPageHeader title="Reportes" subtitle="Análisis detallado del sistema por categoría" />
 
       {/* ══════════════════════════════════════════════════════════════
           GRUPO 1 — INCIDENTES

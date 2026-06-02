@@ -35,6 +35,7 @@ import type {
   R7Resultado, R8Resultado, R10Resultado, R11Resultado, R12Resultado,
   R13Resultado,
 } from '@/features/exportar/exportar.types'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 // ─── CSV helpers ──────────────────────────────────────────────────────────────
 
@@ -1476,10 +1477,7 @@ export function ExportarContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Informes y Reportes</h2>
-        <p className="text-muted-foreground mt-1">12 reportes analíticos con filtros, exportación CSV y PDF para impresión.</p>
-      </div>
+      <AdminPageHeader title="Informes y Reportes" subtitle="12 reportes analíticos con filtros, exportación CSV y PDF para impresión." />
 
       <TooltipProvider>
       <Tabs defaultValue="r1">

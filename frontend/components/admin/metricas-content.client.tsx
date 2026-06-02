@@ -32,6 +32,7 @@ import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import type { MetricasDashboard } from '@/features/incidentes/incidentes.types'
 import { ReportesContent } from '@/components/admin/reportes-content.client'
 import type { ReportesData } from '@/features/reportes/reportes.service'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface MetricasContentProps {
   metricas: MetricasDashboard
@@ -101,19 +102,15 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
 
   return (
     <div className="space-y-5">
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Indicadores</h2>
-          <p className="text-sm text-muted-foreground">Análisis de rendimiento y reportes del sistema ISBA</p>
-        </div>
-        {cargando && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <AdminPageHeader
+        title="Indicadores"
+        subtitle="Análisis de rendimiento y reportes del sistema ISBA"
+        right={cargando ? (
+          <div className="flex items-center gap-2 text-sm text-white/50">
             <Loader2 className="h-4 w-4 animate-spin" /> Actualizando...
           </div>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* Filtro de período */}
       <Card className="border-slate-200">

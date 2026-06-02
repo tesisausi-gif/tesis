@@ -19,6 +19,7 @@ import { getEstadoPresupuestoColor, getEstadoPresupuestoLabel } from '@/shared/u
 import { normalizeSearch } from '@/shared/utils'
 import { aprobarPresupuesto, rechazarPresupuesto } from '@/features/presupuestos/presupuestos.service'
 import type { PresupuestoConDetalle } from '@/features/presupuestos/presupuestos.types'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface PresupuestosAdminContentProps {
   presupuestos: PresupuestoConDetalle[]
@@ -196,10 +197,7 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Presupuestos</h1>
-        <p className="text-gray-600 mt-1">Gestión y aprobación de presupuestos de incidentes</p>
-      </div>
+      <AdminPageHeader title="Presupuestos" subtitle="Gestión y aprobación de presupuestos de incidentes" />
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">

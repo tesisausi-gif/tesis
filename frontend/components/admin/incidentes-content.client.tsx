@@ -23,6 +23,7 @@ import { Paginacion } from '@/components/ui/paginacion'
 import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEnProceso } from '@/shared/utils/colors'
 import { normalizeSearch } from '@/shared/utils'
 import { darDeBajaIncidente } from '@/features/asignaciones/asignaciones.service'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface IncidentesAdminContentProps {
   incidentes: IncidenteConClienteAdmin[]
@@ -479,11 +480,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Gestión de Incidentes</h1>
-        <p className="text-gray-600 mt-1">Administrá y gestioná todos los incidentes reportados</p>
-      </div>
+      <AdminPageHeader title="Gestión de Incidentes" subtitle="Administrá y gestioná todos los incidentes reportados" />
 
       {/* Search + Filter chips */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 space-y-3">

@@ -6,6 +6,7 @@ import TecnicosTab from '@/components/admin/tecnicos/TecnicosTab'
 import SolicitudesTab from '@/components/admin/tecnicos/SolicitudesTab'
 import EspecialidadesTab from '@/components/admin/tecnicos/EspecialidadesTab'
 import { getAdminBadgeCounts } from '@/features/notificaciones/badge-counts.service'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 export default function TecnicosPage() {
   const [solicitudesCount, setSolicitudesCount] = useState(0)
@@ -16,12 +17,7 @@ export default function TecnicosPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Gestión de Técnicos</h1>
-        <p className="text-gray-600 mt-1">
-          Administra técnicos, solicitudes y especialidades
-        </p>
-      </div>
+      <AdminPageHeader title="Gestión de Técnicos" subtitle="Administrá técnicos, solicitudes y especialidades" />
 
       <Tabs defaultValue="tecnicos" className="space-y-4">
         <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">

@@ -29,6 +29,7 @@ import { aprobarConformidad, rechazarConformidad } from '@/features/conformidade
 import { Paginacion } from '@/components/ui/paginacion'
 import { getTimelineIncidente } from '@/features/incidentes/incidentes.service'
 import type { EventoTimeline } from '@/features/incidentes/incidentes.service'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface ConformidadItem {
   id_conformidad: number
@@ -247,13 +248,8 @@ export function ConformidadesContent({ conformidades, historial }: Conformidades
   }
 
   return (
-    <div className="space-y-4 px-4 py-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Conformidades</h1>
-        <p className="text-gray-600 text-sm mt-1">
-          Hacé clic en una conformidad para ver el historial completo y aprobar o rechazar.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <AdminPageHeader title="Conformidades" subtitle="Hacé clic en una conformidad para ver el historial completo y aprobar o rechazar." />
 
       {/* Filtro */}
       <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">

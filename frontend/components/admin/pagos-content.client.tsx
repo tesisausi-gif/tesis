@@ -32,6 +32,7 @@ import type { PendienteCobroCliente, CobroClienteRegistrado } from '@/features/p
 import { getTimelineIncidente } from '@/features/incidentes/incidentes.service'
 import type { EventoTimeline } from '@/features/incidentes/incidentes.service'
 import { Paginacion } from '@/components/ui/paginacion'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 const AR = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const fmt$ = (n: number) => AR.format(n)
@@ -894,11 +895,8 @@ export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendiente
   }, [])
 
   return (
-    <div className="space-y-4 px-4 py-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Cobros y Pagos</h1>
-        <p className="text-gray-600 text-sm mt-1">Gestión de cobros a clientes y pagos a técnicos</p>
-      </div>
+    <div className="space-y-4">
+      <AdminPageHeader title="Cobros y Pagos" subtitle="Gestión de cobros a clientes y pagos a técnicos" />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
           <TabsTrigger value="cobros-clientes" className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">
