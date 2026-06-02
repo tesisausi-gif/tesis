@@ -1384,18 +1384,26 @@ export async function getCb2Data(): Promise<Cb2Data> {
     i.fecha_cierre && i.fecha_cierre >= hace30
   )
 
-  const taktTime      = Math.round((nuevos30d.length   / 30) * 10) / 10
+  // Usar conteos enteros para el ratio — no los valores redondeados para display,
+  // porque con volúmenes bajos (ej: 1/30 = 0.03) el redondeo a 1 decimal produce 0.0
+  // y el ratio resultante sería incorrecto (0% en vez de 25%).
+  const taktTime       = Math.round((nuevos30d.length    / 30) * 10) / 10
   const throughputRate = Math.round((finalizados30d.length / 30) * 10) / 10
-  const ratioAbsorcion = taktTime > 0 ? Math.round((throughputRate / taktTime) * 100) : 0
+  const ratioAbsorcion = nuevos30d.length > 0
+    ? Math.round((finalizados30d.length / nuevos30d.length) * 100)
+    : 0
   const semaforoRatio: Semaforo =
-    taktTime === 0          ? 'sin_datos' :
-    ratioAbsorcion > 100    ? 'verde' :
-    ratioAbsorcion >= 85    ? 'amarillo' : 'rojo'
+    nuevos30d.length === 0      ? 'sin_datos' :
+    ratioAbsorcion > 100        ? 'verde' :
+    ratioAbsorcion >= 85        ? 'amarillo' : 'rojo'
 
   const wipActual = todos.filter(i =>
     i.estado_actual !== 'finalizado' && i.estado_actual !== 'resuelto'
   ).length
-  const tcProyectado = throughputRate > 0 ? Math.round(wipActual / throughputRate) : null
+  // TC proyectado usa también el conteo entero para evitar división por 0.0 redondeado
+  const tcProyectado = finalizados30d.length > 0
+    ? Math.round(wipActual / (finalizados30d.length / 30))
+    : null
 
   // Tendencia semanal últimas 8 semanas
   const tendenciaSemanal: Cb2Semana[] = []
