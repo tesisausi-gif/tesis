@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -39,6 +39,7 @@ export default function NuevoIncidentePage() {
 
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const isSubmittingRef = useRef(false)
   const [idCliente, setIdCliente] = useState<number | null>(null)
   const [inmuebles, setInmuebles] = useState<Inmueble[]>([])
 
@@ -140,8 +141,12 @@ export default function NuevoIncidentePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (isSubmittingRef.current) return
+    isSubmittingRef.current = true
+
     if (!inmuebleSeleccionado) {
       toast.error('Selecciona un inmueble')
+      isSubmittingRef.current = false
       return
     }
 
@@ -149,21 +154,25 @@ export default function NuevoIncidentePage() {
 
     if (!descripcion.trim()) {
       toast.error('Describe el problema')
+      isSubmittingRef.current = false
       return
     }
 
     if (descripcion.trim().length < 20) {
       toast.error('La descripción debe tener al menos 20 caracteres')
+      isSubmittingRef.current = false
       return
     }
 
     if (franjas.length === 0) {
       toast.error('Indicá al menos una franja de disponibilidad horaria')
+      isSubmittingRef.current = false
       return
     }
     const franjasConSlot = franjas.filter(f => f.hora_inicio && f.hora_fin)
     if (franjasConSlot.length === 0) {
       toast.error('Agregá horarios para los días seleccionados')
+      isSubmittingRef.current = false
       return
     }
 
@@ -188,6 +197,7 @@ export default function NuevoIncidentePage() {
         toast.error('Error al reportar incidente', {
           description: error.message
         })
+        isSubmittingRef.current = false
         return
       }
 
@@ -223,6 +233,7 @@ export default function NuevoIncidentePage() {
       console.error('Error:', error)
       toast.error('Error inesperado')
     } finally {
+      isSubmittingRef.current = false
       setSubmitting(false)
     }
   }
