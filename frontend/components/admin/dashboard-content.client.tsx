@@ -11,6 +11,7 @@ import { createClient } from '@/shared/lib/supabase/client'
 import { getDashboardStats } from '@/features/incidentes/incidentes.service'
 import { NotificacionesPanel } from '@/components/shared/notificaciones-panel.client'
 import type { Notificacion } from '@/features/notificaciones/notificaciones.types'
+import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface Stats {
   incidentesPendientes: number
@@ -150,6 +151,11 @@ export function DashboardContent({
       animate="show"
       className="space-y-3"
     >
+
+      {/* ── HEADER ───────────────────────────────────────────────────────── */}
+      <motion.div variants={cardVariants}>
+        <AdminPageHeader title="Panel de Control" subtitle="Resumen general del sistema ISBA" />
+      </motion.div>
 
       {/* ── STATUS LINE ──────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants} className="flex items-center gap-1.5 pb-1">
