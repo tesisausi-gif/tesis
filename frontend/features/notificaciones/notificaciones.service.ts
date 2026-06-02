@@ -18,8 +18,8 @@ async function sendEmail(
   const apiKey = process.env.BREVO_API_KEY
   if (!apiKey) return // En desarrollo sin configurar, no falla
 
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@isba.com'
-  const senderName = process.env.BREVO_SENDER_NAME || 'ISBA - Sistema de Gestión'
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@traki.app'
+  const senderName = process.env.BREVO_SENDER_NAME || 'Traki'
 
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
@@ -59,7 +59,7 @@ function plantillaBase(titulo: string, saludo: string, cuerpo: string, cta?: { t
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
         <!-- Header -->
         <tr><td style="background:#1d4ed8;padding:24px 32px;">
-          <p style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">ISBA</p>
+          <p style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Traki</p>
           <p style="margin:4px 0 0;color:#bfdbfe;font-size:12px;">Sistema de Gestión de Incidentes</p>
         </td></tr>
         <!-- Body -->
@@ -75,7 +75,7 @@ function plantillaBase(titulo: string, saludo: string, cuerpo: string, cta?: { t
         </td></tr>
         <!-- Footer -->
         <tr><td style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb;">
-          <p style="margin:0;font-size:11px;color:#9ca3af;">Este mensaje fue enviado automáticamente por el Sistema de Gestión de Incidentes ISBA. Por favor no respondas este email.</p>
+          <p style="margin:0;font-size:11px;color:#9ca3af;">Este mensaje fue enviado automáticamente por el Traki. Por favor no respondas este email.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -137,7 +137,7 @@ export async function notificarNuevaAsignacion(
 
   await sendEmail(
     { email: tec.correo_electronico, name: `${tec.nombre} ${tec.apellido}` },
-    `[ISBA] Nueva asignación: Incidente #${inc?.id_incidente}`,
+    `[Traki] Nueva asignación: Incidente #${inc?.id_incidente}`,
     html,
   )
 }
@@ -175,7 +175,7 @@ export async function notificarPresupuestoCreado(idPresupuesto: number): Promise
 
   await sendEmail(
     { email: cliente.correo_electronico, name: `${cliente.nombre} ${cliente.apellido}` },
-    `[ISBA] Presupuesto #${pres?.id_presupuesto} listo para revisar`,
+    `[Traki] Presupuesto #${pres?.id_presupuesto} listo para revisar`,
     html,
   )
 }
@@ -202,7 +202,7 @@ export async function notificarPresupuestoAprobadoAdmin(idPresupuesto: number): 
 
   const html = plantillaBase(
     'Presupuesto aprobado — su aprobación requerida',
-    `Estimado/a ${cliente.nombre}, el equipo de ISBA aprobó el presupuesto de su incidente. Ahora requiere su confirmación.`,
+    `Estimado/a ${cliente.nombre}, el equipo de Traki aprobó el presupuesto de su incidente. Ahora requiere su confirmación.`,
     tablaDatos([
       fila('Presupuesto #', String(pres?.id_presupuesto || '')),
       fila('Incidente #', String(inc?.id_incidente || '')),
@@ -213,7 +213,7 @@ export async function notificarPresupuestoAprobadoAdmin(idPresupuesto: number): 
 
   await sendEmail(
     { email: cliente.correo_electronico, name: `${cliente.nombre} ${cliente.apellido}` },
-    `[ISBA] Se requiere su aprobación — Presupuesto #${pres?.id_presupuesto}`,
+    `[Traki] Se requiere su aprobación — Presupuesto #${pres?.id_presupuesto}`,
     html,
   )
 }
@@ -243,12 +243,12 @@ export async function notificarPresupuestoRechazado(idPresupuesto: number): Prom
       fila('Presupuesto #', String(pres?.id_presupuesto || '')),
       fila('Incidente #', String(inc?.id_incidente || '')),
       fila('Descripción', inc?.descripcion_problema || ''),
-    ]) + `<p style="font-size:13px;color:#374151;margin:0;">El equipo de ISBA revisará su caso y se pondrá en contacto. También puede comunicarse directamente con nosotros.</p>`,
+    ]) + `<p style="font-size:13px;color:#374151;margin:0;">El equipo de Traki revisará su caso y se pondrá en contacto. También puede comunicarse directamente con nosotros.</p>`,
   )
 
   await sendEmail(
     { email: cliente.correo_electronico, name: `${cliente.nombre} ${cliente.apellido}` },
-    `[ISBA] Presupuesto #${pres?.id_presupuesto} rechazado`,
+    `[Traki] Presupuesto #${pres?.id_presupuesto} rechazado`,
     html,
   )
 }
@@ -282,12 +282,12 @@ export async function notificarIncidenteResuelto(idIncidente: number): Promise<v
       fila('Descripción', inc?.descripcion_problema || ''),
       fila('Categoría', inc?.categoria || ''),
       ...(direccion ? [fila('Propiedad', direccion)] : []),
-    ]) + `<p style="font-size:13px;color:#374151;margin:0;">Si tiene alguna consulta o considera que el problema persiste, por favor contacte a ISBA.</p>`,
+    ]) + `<p style="font-size:13px;color:#374151;margin:0;">Si tiene alguna consulta o considera que el problema persiste, por favor contacte a Traki.</p>`,
   )
 
   await sendEmail(
     { email: cliente.correo_electronico, name: `${cliente.nombre} ${cliente.apellido}` },
-    `[ISBA] Incidente #${inc?.id_incidente} resuelto`,
+    `[Traki] Incidente #${inc?.id_incidente} resuelto`,
     html,
   )
 }
@@ -331,7 +331,7 @@ export async function notificarNuevoAvance(
 
   await sendEmail(
     { email: cliente.correo_electronico, name: `${cliente.nombre} ${cliente.apellido}` },
-    `[ISBA] Avance registrado — Incidente #${inc?.id_incidente}`,
+    `[Traki] Avance registrado — Incidente #${inc?.id_incidente}`,
     html,
   )
 }
@@ -369,12 +369,12 @@ export async function notificarPagoRegistrado(idPago: number): Promise<void> {
       fila('Método', pago?.metodo_pago || ''),
       fila('Fecha', fechaStr),
       fila('Incidente #', String(inc?.id_incidente || '')),
-    ]) + `<p style="font-size:13px;color:#374151;margin:0;">Guarde este email como comprobante. Ante cualquier consulta contáctese con ISBA.</p>`,
+    ]) + `<p style="font-size:13px;color:#374151;margin:0;">Guarde este email como comprobante. Ante cualquier consulta contáctese con Traki.</p>`,
   )
 
   await sendEmail(
     { email: cliente.correo_electronico, name: `${cliente.nombre} ${cliente.apellido}` },
-    `[ISBA] Pago confirmado — ${AR.format(pago?.monto_pagado || 0)}`,
+    `[Traki] Pago confirmado — ${AR.format(pago?.monto_pagado || 0)}`,
     html,
   )
 }
@@ -426,7 +426,7 @@ export async function notificarConformidadParaFirmar(
 
   await sendEmail(
     { email: cliente.correo_electronico, name: `${cliente.nombre} ${cliente.apellido}` },
-    `[ISBA] Conformidad ${tipoLabel} lista para firmar — Incidente #${inc?.id_incidente}`,
+    `[Traki] Conformidad ${tipoLabel} lista para firmar — Incidente #${inc?.id_incidente}`,
     html,
   )
 }
@@ -471,7 +471,7 @@ export async function notificarTecnicoPresupuestoAprobado(idPresupuesto: number)
 
   await sendEmail(
     { email: tec.correo_electronico, name: `${tec.nombre} ${tec.apellido}` },
-    `[ISBA] Presupuesto #${pres?.id_presupuesto} aprobado — puede iniciar el trabajo`,
+    `[Traki] Presupuesto #${pres?.id_presupuesto} aprobado — puede iniciar el trabajo`,
     html,
   )
 }
@@ -509,7 +509,7 @@ export async function notificarTecnicoConformidadRechazada(idIncidente: number):
 
   await sendEmail(
     { email: tec.correo_electronico, name: `${tec.nombre} ${tec.apellido}` },
-    `[ISBA] Conformidad rechazada — Incidente #${inc?.id_incidente}`,
+    `[Traki] Conformidad rechazada — Incidente #${inc?.id_incidente}`,
     html,
   )
 }
@@ -553,7 +553,7 @@ export async function notificarTecnicoPresupuestoRechazado(idPresupuesto: number
 
   await sendEmail(
     { email: tec.correo_electronico, name: `${tec.nombre} ${tec.apellido}` },
-    `[ISBA] Presupuesto #${pres?.id_presupuesto} rechazado`,
+    `[Traki] Presupuesto #${pres?.id_presupuesto} rechazado`,
     html,
   )
 }

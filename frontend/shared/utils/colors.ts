@@ -1,5 +1,5 @@
 /**
- * Mapeos de colores y etiquetas centralizados para el sistema ISBA
+ * Mapeos de colores y etiquetas centralizados para el sistema Traki
  * Evita duplicación de definiciones de colores y asegura consistencia visual.
  */
 

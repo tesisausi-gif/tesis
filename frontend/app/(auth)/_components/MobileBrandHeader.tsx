@@ -47,7 +47,7 @@ export function MobileBrandHeader() {
           letterSpacing: '-6px',
         }}
       >
-        ISBA
+        Traki
       </div>
 
       {/* Content */}
@@ -70,10 +70,10 @@ export function MobileBrandHeader() {
             }}
             transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' as const }}
           >
-            <span className="text-white font-bold text-sm" style={{ fontFamily: 'var(--font-syne)' }}>IS</span>
+            <span className="text-white font-bold text-sm" style={{ fontFamily: 'var(--font-syne)' }}>TK</span>
           </motion.div>
           <span className="text-white/35 text-xs tracking-[0.25em] uppercase" style={{ fontFamily: 'var(--font-syne)' }}>
-            ISBA
+            Traki
           </span>
         </motion.div>
 

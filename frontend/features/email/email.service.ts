@@ -52,7 +52,7 @@ export async function enviarCredencialesTecnico({
 <body>
   <div class="container">
     <div class="header">
-      <h1>Sistema ISBA</h1>
+      <h1>Traki</h1>
       <p>Gestión de Incidentes</p>
     </div>
     <div class="body">
@@ -76,16 +76,16 @@ export async function enviarCredencialesTecnico({
       <a href="${APP_URL}/login" class="btn">Ingresar al sistema</a>
     </div>
     <div class="footer">
-      Este es un correo automático del Sistema ISBA. No respondas a este mensaje.
+      Este es un correo automático del Traki. No respondas a este mensaje.
     </div>
   </div>
 </body>
 </html>`.trim()
 
   await transport.sendMail({
-    from: `Sistema ISBA <${process.env.GMAIL_USER}>`,
+    from: `Traki <${process.env.GMAIL_USER}>`,
     to: destinatario,
-    subject: 'Tu cuenta en Sistema ISBA fue aprobada',
+    subject: 'Tu cuenta en Traki fue aprobada',
     html,
   })
 }

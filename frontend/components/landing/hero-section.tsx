@@ -42,7 +42,7 @@ export function HeroSection() {
           letterSpacing: '-0.06em',
           lineHeight: 1,
         }}>
-          ISBA
+          Traki
         </span>
       </div>
 
@@ -65,7 +65,7 @@ export function HeroSection() {
               letterSpacing: '0.04em',
             }}>
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 animate-pulse" />
-            Inmobiliaria ISBA — Sistema activo
+            Traki — Sistema activo
           </div>
         </motion.div>
 

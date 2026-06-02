@@ -104,7 +104,7 @@ export function MetricasContent({ metricas: metricasIniciales, reportes }: Metri
     <div className="space-y-5">
       <AdminPageHeader
         title="Indicadores"
-        subtitle="Análisis de rendimiento y reportes del sistema ISBA"
+        subtitle="Análisis de rendimiento y reportes del sistema Traki"
         right={cargando ? (
           <div className="flex items-center gap-2 text-sm text-white/50">
             <Loader2 className="h-4 w-4 animate-spin" /> Actualizando...

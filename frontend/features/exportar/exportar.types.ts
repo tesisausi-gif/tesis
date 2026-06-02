@@ -178,7 +178,7 @@ export interface R5FilaTipo {
   tipo: string
   ingresoBruto: number        // cobrado al cliente (cobros_clientes.monto_cobro)
   costoPagadoTecnico: number  // pagado al técnico (pagos_tecnicos.monto_pago)
-  comision: number            // ingresoBruto - costoPagadoTecnico (margen ISBA)
+  comision: number            // ingresoBruto - costoPagadoTecnico (margen Traki)
   margen: number              // comision / ingresoBruto * 100
 }
 
@@ -248,7 +248,7 @@ export interface R6Resultado {
   tecnicos: R6FilaTecnico[]
 }
 
-// ─── R7: Satisfacción de ISBA ─────────────────────────────────────────────────
+// ─── R7: Satisfacción Traki ─────────────────────────────────────────────────
 
 export interface R7FilaTecnico {
   id_tecnico: number

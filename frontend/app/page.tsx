@@ -23,7 +23,7 @@ export default function Home() {
         }}
       >
         <div className="max-w-5xl mx-auto px-6 text-center text-sm" style={{ color: '#334155' }}>
-          © {new Date().getFullYear()} ISBA — Sistema de Gestión de Incidentes
+          © {new Date().getFullYear()} Traki — Sistema de Gestión de Incidentes
         </div>
       </footer>
     </div>

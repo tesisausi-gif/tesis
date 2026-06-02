@@ -154,7 +154,7 @@ export function DashboardContent({
 
       {/* ── HEADER ───────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants}>
-        <AdminPageHeader title="Panel de Control" subtitle="Resumen general del sistema ISBA" />
+        <AdminPageHeader title="Panel de Control" subtitle="Resumen general del sistema Traki" />
       </motion.div>
 
       {/* ── STATUS LINE ──────────────────────────────────────────────────── */}

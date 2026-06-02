@@ -99,7 +99,7 @@ export function AdminSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold px-4 py-4">
-            Sistema ISBA
+            Traki
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
