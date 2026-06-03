@@ -402,7 +402,18 @@ export async function cancelarAsignacionAceptada(
     const tec = asig?.tecnicos as any
     const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
 
-    // 5b. Liberar compromiso de visita si existía
+    // 5b. Cancelar visita activa en tabla visitas (propuesta o confirmada)
+    try {
+      const { createAdminClient: adminForVisitas } = await import('@/shared/lib/supabase/admin')
+      await adminForVisitas()
+        .from('visitas')
+        .update({ estado: 'cancelada' })
+        .eq('id_incidente', idIncidente)
+        .eq('id_tecnico', idTecnico)
+        .in('estado', ['propuesta', 'confirmada'])
+    } catch { /* no bloquear */ }
+
+    // 5c. Liberar fecha_visita_programada de asignaciones_tecnico
     try {
       const { liberarCompromisoDeIncidente } = await import('@/features/disponibilidad/disponibilidad.service')
       await liberarCompromisoDeIncidente(idIncidente)

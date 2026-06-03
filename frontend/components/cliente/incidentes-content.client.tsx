@@ -123,29 +123,32 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
       ) : (
         <>
           {/* ── Filter chips ────────────────────────── */}
-          <div className="flex gap-1 px-4 py-3 overflow-x-auto bg-slate-100 border-b border-gray-100 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {filtros.map(({ id, label, count, Icon }) => {
-              const active = filtro === id
-              return (
-                <button
-                  key={id}
-                  onClick={() => setFiltro(id)}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-                    active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {label}
-                  {count > 0 && (
-                    <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
-                      active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'
-                    }`}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+          <div className="relative bg-slate-100 border-b border-gray-100">
+            <div className="flex gap-1 px-4 py-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {filtros.map(({ id, label, count, Icon }) => {
+                const active = filtro === id
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setFiltro(id)}
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {label}
+                    {count > 0 && (
+                      <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${
+                        active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 to-transparent" />
           </div>
 
           {/* ── Incident list ────────────────────────── */}
@@ -255,36 +258,39 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                 <div className="px-4 pt-3 space-y-4">
                   {/* Sub-filtros */}
                   {grupos.length > 1 && (
-                    <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
-                      <button
-                        onClick={() => setSubFiltro('todos')}
-                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          subFiltro === 'todos' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
-                        }`}
-                      >
-                        Todos
-                        <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${subFiltro === 'todos' ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
-                          {incidentesFiltrados.length}
-                        </span>
-                      </button>
-                      {grupos.map(({ subKey, items }) => {
-                        const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[subKey]
-                        const active = subFiltro === subKey
-                        return (
-                          <button
-                            key={subKey}
-                            onClick={() => setSubFiltro(subKey)}
-                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                              active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
-                            }`}
-                          >
-                            {gcfg.labelBadge}
-                            <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
-                              {items.length}
-                            </span>
-                          </button>
-                        )
-                      })}
+                    <div className="relative">
+                      <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
+                        <button
+                          onClick={() => setSubFiltro('todos')}
+                          className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            subFiltro === 'todos' ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                          }`}
+                        >
+                          Todos
+                          <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${subFiltro === 'todos' ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                            {incidentesFiltrados.length}
+                          </span>
+                        </button>
+                        {grupos.map(({ subKey, items }) => {
+                          const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[subKey]
+                          const active = subFiltro === subKey
+                          return (
+                            <button
+                              key={subKey}
+                              onClick={() => setSubFiltro(subKey)}
+                              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                active ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                              }`}
+                            >
+                              {gcfg.labelBadge}
+                              <span className={`text-[10px] font-bold rounded-full px-1.5 py-px ${active ? 'bg-slate-200 text-slate-700' : 'bg-slate-200/60 text-slate-400'}`}>
+                                {items.length}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-gray-50 to-transparent rounded-r-xl" />
                     </div>
                   )}
                   <div className="space-y-6">

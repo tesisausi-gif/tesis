@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { CalendarDays, CheckCircle2, Clock, RefreshCw, Wrench } from 'lucide-react'
+import { AlertTriangle, CalendarDays, CheckCircle2, Clock, RefreshCw, Wrench, X } from 'lucide-react'
 import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
 import { proponerVisita, completarVisita } from '@/features/visitas/visitas.service'
 import type { VisitaResumen } from '@/features/visitas/visitas.types'
@@ -13,9 +13,7 @@ interface Props {
   idTecnico:    number
   franjas:      FranjaInput[]
   initialVisita: VisitaResumen | null
-  /** Llamado al cambiar el estado de la visita para que el padre pueda refrescar */
   onCambio: () => void
-  /** Llamado cuando el técnico quiere ir a subir la inspección */
   onIrAInspeccion?: () => void
 }
 
@@ -25,6 +23,8 @@ const TIPO_LABELS = {
   seguimiento: 'Visita de seguimiento',
 } as const
 
+type SeleccionPendiente = { fecha: string; horaInicio: string; horaFin: string }
+
 export function PropVisitaSection({
   idIncidente,
   idTecnico,
@@ -33,21 +33,23 @@ export function PropVisitaSection({
   onCambio,
   onIrAInspeccion,
 }: Props) {
-  const [visita, setVisita]     = useState<VisitaResumen | null>(initialVisita)
-  const [tipo, setTipo]         = useState<'inspeccion' | 'reparacion' | 'seguimiento'>('inspeccion')
-  const [loading, setLoading]   = useState(false)
+  const [visita, setVisita]               = useState<VisitaResumen | null>(initialVisita)
+  const [tipo, setTipo]                   = useState<'inspeccion' | 'reparacion' | 'seguimiento'>('inspeccion')
+  const [loading, setLoading]             = useState(false)
   const [postCompletar, setPostCompletar] = useState(false)
+  const [pendiente, setPendiente]         = useState<SeleccionPendiente | null>(null)
 
-  const handleProponerVisita = async (data: { fecha: string; horaInicio: string; horaFin: string }) => {
+  const confirmarYProponer = async () => {
+    if (!pendiente) return
     setLoading(true)
     try {
       const res = await proponerVisita({
         idIncidente,
         idTecnico,
         tipo,
-        fecha:      data.fecha,
-        horaInicio: data.horaInicio,
-        horaFin:    data.horaFin,
+        fecha:      pendiente.fecha,
+        horaInicio: pendiente.horaInicio,
+        horaFin:    pendiente.horaFin,
       })
       if (!res.success) { toast.error(res.error); return }
 
@@ -56,6 +58,7 @@ export function PropVisitaSection({
       } else {
         toast.success('Visita propuesta — aguardando confirmación del cliente')
       }
+      setPendiente(null)
       onCambio()
     } finally {
       setLoading(false)
@@ -82,7 +85,7 @@ export function PropVisitaSection({
     setPostCompletar(false)
   }
 
-  // ── Post-completar: bifurcación ──────────────────────────────────────────────
+  // ── Post-completar ───────────────────────────────────────────────────────────
   if (postCompletar) {
     return (
       <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 space-y-3 mb-4">
@@ -175,6 +178,54 @@ export function PropVisitaSection({
     )
   }
 
+  // ── Alerta de confirmación (acción irreversible) ─────────────────────────────
+  if (pendiente) {
+    const fechaLeg = new Date(pendiente.fecha + 'T00:00:00').toLocaleDateString('es-AR', {
+      weekday: 'long', day: 'numeric', month: 'long',
+    })
+    return (
+      <div className="rounded-xl border-2 border-orange-400 bg-orange-50 p-4 space-y-4 mb-4">
+        <div className="flex items-start gap-3">
+          <div className="shrink-0 w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center">
+            <AlertTriangle className="h-5 w-5 text-orange-600" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-orange-800">Acción irreversible</p>
+            <p className="text-xs text-orange-700 mt-0.5 leading-relaxed">
+              Estás por comprometerte a visitar al cliente el{' '}
+              <strong className="capitalize">{fechaLeg}</strong> de{' '}
+              <strong>{pendiente.horaInicio}</strong> a <strong>{pendiente.horaFin}</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-orange-100 rounded-lg px-3 py-2.5 text-[11px] text-orange-800 leading-relaxed">
+          Una vez confirmado, <strong>no podrás modificar</strong> la fecha ni la hora.
+          Si necesitás cancelar, deberás <strong>darte de baja del incidente</strong> desde la tarjeta del trabajo.
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPendiente(null)}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border border-orange-300 bg-white text-orange-700 text-xs font-semibold hover:bg-orange-50 disabled:opacity-50 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+            Cancelar
+          </button>
+          <button
+            onClick={confirmarYProponer}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-orange-600 text-white text-xs font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            {loading ? 'Enviando...' : 'Sí, confirmar fecha'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // ── Sin visita — mostrar selector ────────────────────────────────────────────
   return (
     <div className="rounded-xl border border-cyan-200 bg-cyan-50/60 p-4 space-y-3 mb-4">
@@ -207,7 +258,7 @@ export function PropVisitaSection({
       <CalendarioDisponibilidad
         modo="comprometer"
         franjas={franjas}
-        onComprometer={loading ? undefined : handleProponerVisita}
+        onComprometer={loading ? undefined : (data) => setPendiente(data)}
       />
     </div>
   )
