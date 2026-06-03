@@ -68,7 +68,7 @@ function ExplicacionMetrica({
           onClick={() => setAbierto(!abierto)}
           className="shrink-0 flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 transition-colors mt-0.5"
         >
-          {abierto ? 'Ocultar' : 'Cómo usarlo'}
+          {abierto ? 'Ocultar' : 'Ver explicación'}
           {abierto ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </button>
       </div>
@@ -76,20 +76,20 @@ function ExplicacionMetrica({
         <div className="border-t border-slate-200 px-4 py-3 bg-blue-50/40 space-y-3">
           <div className="grid sm:grid-cols-3 gap-3 text-xs">
             <div className="space-y-1">
-              <p className="font-semibold text-slate-600">¿Qué está midiendo?</p>
+              <p className="font-semibold text-slate-600">¿Qué estamos viendo?</p>
               <p className="text-slate-500 leading-relaxed">{proceso}</p>
             </div>
             <div className="space-y-1">
-              <p className="font-semibold text-slate-600">¿Por qué importa?</p>
+              <p className="font-semibold text-slate-600">¿Por qué es importante?</p>
               <p className="text-slate-500 leading-relaxed">{porque}</p>
             </div>
             <div className="space-y-1">
-              <p className="font-semibold text-slate-600">¿Qué hacer si está en rojo?</p>
+              <p className="font-semibold text-slate-600">¿Qué hacer cuando el número es malo?</p>
               <p className="text-slate-500 leading-relaxed">{accion}</p>
             </div>
           </div>
           <div className="pt-2 border-t border-blue-100">
-            <p className="text-[10px] text-blue-600 font-mono leading-relaxed">{formula}</p>
+            <p className="text-[10px] text-slate-400 leading-relaxed italic">Referencia técnica: {formula}</p>
           </div>
         </div>
       )}
@@ -187,12 +187,12 @@ function TciMetrica({ data }: { data: TciData }) {
 
       {/* Explicación */}
       <ExplicacionMetrica
-        numero="01"
-        titulo="PPI-E2E · Tiempo de Ciclo del Incidente (TCI)"
-        resumen="¿Cuánto tarda en resolverse un incidente? Mide el tiempo real entre que el cliente reporta el problema y que se cierra. Cuanto más bajo, más rápido llega la solución."
-        proceso="Ciclo completo de atención al cliente: desde que el cliente reporta un problema hasta que el incidente queda cerrado y resuelto. Es el PPI ancla del sistema — todos los demás indicadores son sub-componentes de este."
-        porque="Sin este indicador, la organización no sabe si está cumpliendo los tiempos de servicio comprometidos. Un TCI elevado impacta directamente en la satisfacción del cliente y en la reputación del servicio. La desagregación por prioridad es crítica: un promedio global puede ocultar que los urgentes tardan demasiado."
-        accion="🔴 Rojo → activar análisis de subprocesos para identificar en qué etapa se pierde el tiempo. El TCI diagnostica el síntoma; los PPIs de subproceso (Tasa de Reasignación, Tiempo de Presupuesto, etc.) identifican la causa raíz."
+        numero="TCI"
+        titulo="¿Cuántos días tardamos en resolver los problemas de los clientes?"
+        resumen="Mide el tiempo que pasa desde que el cliente reporta un problema hasta que queda solucionado. Cuanto menor sea el número, mejor. Cada prioridad tiene su propio límite aceptable: un problema urgente no puede tardar lo mismo que uno de baja prioridad."
+        proceso="Cuenta los días desde que el cliente reporta un problema hasta que se cierra. Permite ver si los más urgentes se resuelven rápido y si hay tipos de problemas que siempre tardan demasiado."
+        porque="Si no sabemos cuánto tarda cada tipo de problema, no podemos saber si estamos cumpliendo con los clientes. Un problema urgente que tarda mucho puede dañar seriamente la confianza del cliente. Separarlo por prioridad ayuda a detectar si el retraso está en los urgentes o en los de baja prioridad."
+        accion="🔴 Si está en rojo: buscar en qué paso se pierde el tiempo. ¿Tarda en asignarse el técnico? ¿El técnico tarda en hacer el presupuesto? ¿El cliente tarda en aprobarlo? Los otros indicadores de esta sección ayudan a localizar el cuello."
         formula="TCI = (fecha_cierre − fecha_registro) en días · Promedio por período · Fuente: tabla incidentes"
       />
 
@@ -328,13 +328,13 @@ function WipMetrica({ data }: { data: WipData }) {
     <div className="space-y-5">
 
       <ExplicacionMetrica
-        numero="03"
-        titulo="CB-1 · Distribución WIP por Etapa — Cuello de Botella"
-        resumen="¿Dónde se está acumulando el trabajo? Muestra cuántos incidentes están parados en cada etapa. El pico más alto es el cuello de botella que frena al resto del proceso."
-        proceso="Gestión de la capacidad operativa en tiempo real. Muestra cuántos incidentes activos hay en cada etapa del proceso ahora mismo, identificando dónde se acumula el trabajo y quién es el responsable de desbloquear."
-        porque="Concepto directo del ejercicio Sub Shop (U1): la capacidad del sistema está determinada por su cuello de botella. Sin saber dónde se acumulan los incidentes, el admin no sabe dónde intervenir. Una etapa con >40% del WIP total es una señal de alarma que requiere acción inmediata. La Ley de Little permite proyectar el tiempo de ciclo: TC = WIP ÷ Throughput."
-        accion="🔴 Etapa en alerta → intervenir específicamente ahí (no en otras etapas — no mejora la capacidad total). Administración bloqueada: revisar carga del admin. Técnico bloqueado: redistribuir asignaciones. Cliente bloqueado: enviar recordatorio."
-        formula="WIP = Incidentes con estado ≠ finalizado/resuelto · Ley de Little: TC proyectado = WIP ÷ Throughput (inc/día) · Fuente: tabla incidentes + relaciones"
+        numero="WIP"
+        titulo="¿Dónde se están acumulando los trabajos en este momento?"
+        resumen="Muestra cuántos trabajos hay parados en cada etapa del proceso ahora mismo. Si una etapa acumula muchos más que las otras, esa es la que está frenando todo. El 'cuello' marcado en rojo es donde hay que actuar primero."
+        proceso="Muestra en tiempo real dónde están los trabajos que todavía no se cerraron, etapa por etapa. También indica quién es el responsable de desbloquear: el administrador, el técnico o el cliente."
+        porque="Si el trabajo se acumula en una sola etapa, mejorar las otras no sirve de nada. Es como una autopista con un semáforo en rojo: de nada sirve ampliar los carriles antes o después del semáforo. Hay que atacar el cuello primero."
+        accion="🔴 Etapa marcada como cuello: actuar ahí específicamente. Si está bloqueado en Administración → revisar si hay tareas pendientes del admin. Si está en el Técnico → ver si se puede redistribuir el trabajo. Si está en el Cliente → mandarle un recordatorio."
+        formula="Trabajos activos = Incidentes con estado ≠ finalizado · Estimación de tiempo = Trabajos activos ÷ Velocidad de resolución · Fuente: tabla incidentes + relaciones"
       />
 
       {/* Resumen superior */}
@@ -342,18 +342,18 @@ function WipMetrica({ data }: { data: WipData }) {
 
         {/* WIP Total */}
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">WIP Total Activo</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Trabajos en curso ahora</p>
           <div className="text-4xl font-bold text-slate-800 tabular-nums">{data.totalWip}</div>
-          <p className="text-xs text-slate-400 mt-1">incidentes en curso ahora mismo</p>
+          <p className="text-xs text-slate-400 mt-1">incidentes que todavía no se cerraron</p>
         </div>
 
         {/* Throughput Rate */}
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Throughput (últimos 30d)</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Velocidad de resolución (30d)</p>
           <div className="text-4xl font-bold text-blue-700 tabular-nums">
             {data.throughputRate !== null ? `${data.throughputRate}` : '—'}
           </div>
-          <p className="text-xs text-slate-400 mt-1">incidentes resueltos por día</p>
+          <p className="text-xs text-slate-400 mt-1">trabajos resueltos por día</p>
         </div>
 
         {/* TC Proyectado — Ley de Little */}
@@ -363,7 +363,7 @@ function WipMetrica({ data }: { data: WipData }) {
           data.tiempoCicloProyectado <= 45 ? 'border-amber-200 bg-amber-50' :
           'border-red-200 bg-red-50'
         }`}>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">TC Proyectado (Ley de Little)</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Días estimados por trabajo</p>
           <div className={`text-4xl font-bold tabular-nums ${
             data.tiempoCicloProyectado === null ? 'text-slate-400' :
             data.tiempoCicloProyectado <= 30 ? 'text-emerald-700' :
@@ -371,7 +371,7 @@ function WipMetrica({ data }: { data: WipData }) {
           }`}>
             {data.tiempoCicloProyectado !== null ? `${data.tiempoCicloProyectado}d` : '—'}
           </div>
-          <p className="text-xs text-slate-400 mt-1">WIP ÷ Throughput Rate</p>
+          <p className="text-xs text-slate-400 mt-1">calculado según trabajos en curso</p>
         </div>
 
       </div>
@@ -425,10 +425,10 @@ function WipMetrica({ data }: { data: WipData }) {
       {/* Ley de Little explicada */}
       <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4 space-y-2">
         <p className="text-xs font-semibold text-blue-700 flex items-center gap-1.5">
-          <Info className="h-3.5 w-3.5" /> Ley de Little aplicada al sistema
+          <Info className="h-3.5 w-3.5" /> ¿Qué pasa si se acumulan más trabajos sin cerrar?
         </p>
         <p className="text-xs text-slate-600 leading-relaxed">
-          <strong>TC = WIP ÷ Throughput Rate.</strong> Si el WIP sube de {data.totalWip} a {data.totalWip > 0 ? Math.round(data.totalWip * 1.6) : '—'} incidentes con el mismo throughput, el tiempo de ciclo proyectado sube proporcionalmente. Reducir el WIP (desbloqueando el cuello de botella) o aumentar el throughput reduce el TC automáticamente — sin necesidad de trabajar más rápido en todas las etapas.
+          Si la cantidad de trabajos en curso sube de {data.totalWip} a {data.totalWip > 0 ? Math.round(data.totalWip * 1.6) : '—'} manteniendo la misma velocidad de resolución, el tiempo estimado por trabajo sube en la misma proporción. Para bajar ese tiempo, hay que desbloquear la etapa que acumula más — o resolver los trabajos más rápido.
         </p>
       </div>
 
@@ -477,12 +477,12 @@ function ReasignacionMetrica({ data }: { data: ReasignacionData }) {
     <div className="space-y-5">
 
       <ExplicacionMetrica
-        numero="04"
-        titulo="SP2-B · Tasa de Reasignación — LEAN Waste #6"
-        resumen="¿Con qué frecuencia hay que reasignar un trabajo? Cada vez que un técnico rechaza o abandona una asignación, el cliente espera más y el admin tiene que empezar de cero."
-        proceso="Calidad del proceso de asignación inicial (SP2). Mide qué porcentaje de incidentes necesitaron más de una asignación para quedar atendidos, ya sea porque el técnico rechazó antes de aceptar o canceló después de aceptar."
-        porque="LEAN Waste #6 — Reprocesamiento: cada reasignación es un ciclo de trabajo que no agrega valor al cliente. Una tasa alta indica que el proceso de matching técnico-incidente está fallando: puede ser por sobrecarga del técnico, mala distribución de especialidades, o falta de información al asignar. El costo es triple: tiempo extra para el cliente, carga extra para el admin, y desgaste del técnico."
-        accion="🔴 Tasa global alta → analizar desglose por técnico (¿quién genera más rechazos?) y por categoría (¿qué especialidades tienen escasez?). Por técnico alto → conversación de gestión o redistribución. Por categoría alta → contratar o capacitar técnicos en esa especialidad."
+        numero="Reasign."
+        titulo="¿Con qué frecuencia hay que buscar otro técnico para el mismo trabajo?"
+        resumen="Cada vez que un técnico rechaza o abandona una asignación, el cliente queda esperando y el administrador tiene que empezar de cero. Este indicador mide con qué frecuencia pasa eso. Cuanto más bajo, mejor."
+        proceso="Cuenta cuántos trabajos necesitaron que se les asignara más de un técnico, ya sea porque el técnico rechazó o porque se dio de baja después de aceptar."
+        porque="Cada reasignación es tiempo perdido para el cliente y trabajo extra para el administrador. Si el número es alto, puede significar que los técnicos están sobrecargados, que se les asignan trabajos fuera de su especialidad, o que no tienen suficiente información cuando aceptan."
+        accion="🔴 Si está en rojo: ver quién genera más rechazos y en qué tipos de trabajos. Si un técnico específico rechaza mucho → hablar con él y revisar su carga. Si pasa seguido en cierto tipo de problema → puede que falten técnicos especializados en esa área."
         formula="TR = (Incidentes con al menos 1 rechazo o cancelación / Total incidentes asignados) × 100 · Fuente: asignaciones_tecnico estados rechazada y cancelada"
       />
 
@@ -491,7 +491,7 @@ function ReasignacionMetrica({ data }: { data: ReasignacionData }) {
 
         <div className={`rounded-2xl border-2 p-5 col-span-1 flex flex-col justify-between ${colGlobal.bg} ${colGlobal.border}`}>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Tasa de Reasignación</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Trabajos reasignados</p>
             <div className={`text-5xl font-bold tabular-nums ${colGlobal.text}`}>
               {data.tasaGlobal !== null ? `${data.tasaGlobal}%` : '—'}
             </div>
@@ -694,13 +694,13 @@ function TcrMetrica({ data }: { data: TcrData }) {
     <div className="space-y-5">
 
       <ExplicacionMetrica
-        numero="05"
-        titulo="SP7 · Tasa de Conformidades Rechazadas (TCR) — Calidad Técnica"
-        resumen="¿Cuántas veces el admin rechaza el trabajo presentado por el técnico? Es la medida más directa de calidad: cada rechazo significa que el trabajo hay que rehacerlo."
-        proceso="Calidad de ejecución del trabajo técnico (SP7 — Conformidad y Cierre). Mide cuántas veces el administrador considera que el trabajo presentado por el técnico no cumple con el estándar para ser aprobado."
-        porque="Es el equivalente al DPMO (Defectos Por Millón de Oportunidades) de Six Sigma aplicado a servicios: mide defectos de calidad directamente en el output final. Cada rechazo genera Waste #6 LEAN (Reprocesamiento): el técnico debe rehacer o corregir el trabajo, el cliente sigue esperando y el admin duplica su revisión. Una TCR alta es la señal de alerta más directa de fallas técnicas o de comunicación."
-        accion="🔴 Técnico con TCR > 15% → auditoría de trabajos anteriores, plan de capacitación técnica, acompañamiento en próximos trabajos. 🟡 5–15% → monitoreo mensual con retroalimentación. Si el rechazo es sistémico en todos los técnicos → revisar criterios de aprobación o calidad de las instrucciones operativas."
-        formula="TCR = (Conformidades con esta_rechazada = true / Total conformidades enviadas) × 100 · Fuente: conformidades.esta_rechazada · Semáforo: Verde < 5% | Amarillo 5–15% | Rojo > 15%"
+        numero="TCR"
+        titulo="¿Cuántas veces el administrador tuvo que rechazar un trabajo por no estar bien hecho?"
+        resumen="Cuando el técnico presenta el trabajo terminado, el administrador lo revisa. Si no cumple, lo rechaza y el técnico tiene que rehacerlo. Este indicador mide con qué frecuencia pasa eso. Un número bajo significa que los técnicos hacen bien su trabajo desde el principio."
+        proceso="Cuenta cuántas veces el administrador rechazó un trabajo que el técnico presentó como terminado. Permite ver si ciertos técnicos generan más rechazos, y si hay tipos de trabajos donde esto pasa más seguido."
+        porque="Cada rechazo significa que el cliente tiene que seguir esperando, el técnico tiene que rehacer el trabajo, y el administrador tiene que revisarlo de nuevo. Todo ese tiempo y esfuerzo no le agrega valor al cliente. Si este número es alto, hay un problema de calidad que hay que corregir."
+        accion="🔴 Si está en rojo: ver qué técnico genera más rechazos y hablar con él. Puede que necesite capacitación, más supervisión, o instrucciones más claras sobre qué se espera del trabajo. Si todos los técnicos tienen rechazos altos → revisar los criterios de aprobación."
+        formula="TCR = (Trabajos rechazados / Total trabajos presentados) × 100 · Fuente: conformidades.esta_rechazada · Verde < 5% | Amarillo 5–15% | Rojo > 15%"
       />
 
       {/* KPI Global + Contexto */}
@@ -708,7 +708,7 @@ function TcrMetrica({ data }: { data: TcrData }) {
 
         <div className={`rounded-2xl border-2 p-5 col-span-1 flex flex-col justify-between ${colGlobal.bg} ${colGlobal.border}`}>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Tasa Global TCR</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Trabajos rechazados</p>
             <div className={`text-5xl font-bold tabular-nums ${colGlobal.text}`}>
               {data.tasaGlobal !== null ? `${data.tasaGlobal}%` : '—'}
             </div>
@@ -1019,19 +1019,19 @@ function Sp8Metrica({ data }: { data: Sp8Data }) {
     <div className="space-y-5">
 
       <ExplicacionMetrica
-        numero="06"
-        titulo="SP8-A/B · Deuda Pendiente de Cobros y Pagos — Costo de Oportunidad"
-        resumen="¿Cuánto dinero está trabado? Muestra lo que ya se trabajó pero todavía no se cobró al cliente (DPC), y lo que se le debe a los técnicos por trabajos completados (DPT)."
-        proceso="Gestión financiera del cierre del servicio (SP8). SP8-A mide el dinero de trabajos terminados que aún no fue cobrado al cliente. SP8-B mide lo que se le debe al técnico por trabajos con presupuesto aprobado."
-        porque="Aplica directamente el Costo de Oportunidad (U1): un trabajo entregado y no cobrado no generó ingreso real — el valor fue creado pero no capturado. Para los técnicos, la demora en el pago genera resistencia al cambio (U3): si el sistema procesa el trabajo pero tarda en pagar, erosiona la confianza del equipo técnico y dificulta la adopción del sistema."
-        accion="🔴 DPC con antigüedad >15d → contacto proactivo al cliente, revisar el flujo de cierre financiero. 🔴 DPT con antigüedad >15d → procesar pagos como prioridad antes de asignar nuevos trabajos. Patrón sistémico en ambos → automatizar notificaciones de cobro/pago al aprobarse la conformidad."
-        formula="DPC = Σ presupuesto.costo_total donde estado='aprobado' + incidente finalizado + sin registro en cobros_clientes · DPT = Σ (costo_materiales + costo_mano_obra) donde presupuesto='aprobado' + sin registro en pagos_tecnicos"
+        numero="$"
+        titulo="¿Cuánto dinero está pendiente de cobrar a clientes y de pagar a técnicos?"
+        resumen="Muestra el dinero de trabajos ya terminados que todavía no se cobró al cliente, y el dinero que se le debe al técnico por su trabajo. Mientras ese dinero esté trabado, no está disponible para la empresa ni para el técnico."
+        proceso="Dos listas: (1) trabajos entregados al cliente que aún no se cobraron, y (2) trabajos realizados por técnicos que aún no recibieron su pago. Se ordena por antigüedad para identificar los casos más urgentes."
+        porque="Un trabajo entregado pero no cobrado es un ingreso que la empresa no puede usar. Y un técnico que no recibe su pago a tiempo puede desmotivarse y perder la confianza en el sistema. Cuanto más tiempo pase, más difícil se vuelve cobrar."
+        accion="🔴 Si hay cobros pendientes de más de 15 días: contactar al cliente proactivamente. 🔴 Si hay pagos a técnicos de más de 15 días: procesarlos con prioridad antes de asignar nuevos trabajos. En ambos casos, cuanto antes se resuelva, mejor para todos."
+        formula="Por cobrar = Σ montos de trabajos finalizados sin registro de cobro al cliente · Por pagar = Σ montos de trabajos aprobados sin registro de pago al técnico"
       />
 
       <div className="grid lg:grid-cols-2 gap-6">
         <PanelDeuda
-          titulo="SP8-A · Deuda de Cobro al Cliente (DPC)"
-          subtitulo="Trabajos entregados al cliente sin cobro registrado"
+          titulo="Cobros pendientes al cliente"
+          subtitulo="Trabajos ya entregados que todavía no se cobraron"
           monto={data.dpcMonto}
           count={data.dpcCount}
           semaforo={data.dpcSemaforo}
@@ -1040,8 +1040,8 @@ function Sp8Metrica({ data }: { data: Sp8Data }) {
           colorAccent="blue"
         />
         <PanelDeuda
-          titulo="SP8-B · Deuda de Pago al Técnico (DPT)"
-          subtitulo="Presupuestos aprobados sin pago al técnico registrado"
+          titulo="Pagos pendientes a técnicos"
+          subtitulo="Trabajos realizados por técnicos que todavía no recibieron su pago"
           monto={data.dptMonto}
           count={data.dptCount}
           semaforo={data.dptSemaforo}
@@ -1107,13 +1107,13 @@ function IscMetrica({ data }: { data: IscData }) {
     <div className="space-y-5">
 
       <ExplicacionMetrica
-        numero="07"
-        titulo="KPI-1 · Índice de Satisfacción del Cliente (ISC) — Validación Externa"
-        resumen="¿Qué tan satisfechos están los clientes? Es la calificación promedio de 1 a 5 que dan al cerrar un incidente. La tendencia mes a mes dice más que el número de hoy."
-        proceso="Percepción global del cliente sobre el servicio recibido (KPI de nivel estratégico). Mide si el cliente siente que su problema fue resuelto de manera satisfactoria, más allá de los indicadores internos de proceso."
-        porque="Es la validación externa de todos los PPIs: si TCI, FPY y TCR están en verde pero el ISC cae, hay un problema de experiencia que los indicadores internos no capturan (trato, comunicación, gestión de expectativas). La tendencia importa más que el valor puntual — una caída sostenida en 2+ meses es señal de alerta."
-        accion="🔴 ISC < 3.5 → cruzar con TCR (calidad técnica) y TCI (demora) para identificar causa raíz. Tiempo correcto pero calificación baja → problema de comunicación o trato del técnico. TCR alto → problema de calidad técnica. 🟡 3.5–4.4 → plan de mejora focalizado en el técnico con menor ISC individual."
-        formula="ISC = Promedio(calificaciones.puntuacion) en escala 1–5 · Verde ≥ 4.5 | Amarillo 3.5–4.4 | Rojo < 3.5 · Fuente: calificaciones.puntuacion + calificaciones.resolvio_problema"
+        numero="ISC"
+        titulo="¿Qué tan contentos quedaron los clientes con el servicio recibido?"
+        resumen="Es la calificación de 1 a 5 que dan los clientes al cerrarse cada trabajo. Cuanto más alto, mejor. Lo importante es ver la tendencia: si viene bajando mes a mes, hay algo que mejorar aunque el número todavía parezca aceptable."
+        proceso="Promedio de las calificaciones que dan los clientes al terminar un trabajo. Permite ver qué técnico genera más satisfacción, en qué tipo de problema los clientes quedan menos conformes, y cómo evolucionó la satisfacción mes a mes."
+        porque="Todos los demás indicadores miden el proceso desde adentro. Este mide cómo lo vive el cliente. Un proceso que parece funcionar bien internamente puede generar clientes insatisfechos si hay problemas de trato, comunicación o expectativas mal gestionadas. Es la prueba definitiva de si el servicio realmente funciona."
+        accion="🔴 Si está en rojo: ver si el problema es la demora (trabajos que tardan mucho), la calidad del trabajo (muchos rechazos del admin), o el trato del técnico (calificaciones bajas aunque el trabajo esté bien). Cada causa tiene una solución distinta."
+        formula="ISC = Promedio de calificaciones en escala 1–5 · Verde ≥ 4.5 | Amarillo 3.5–4.4 | Rojo < 3.5 · Fuente: calificaciones.puntuacion + calificaciones.resolvio_problema"
       />
 
       {/* KPI Global + Distribución de estrellas */}
@@ -1122,7 +1122,7 @@ function IscMetrica({ data }: { data: IscData }) {
         {/* Score global */}
         <div className={`rounded-2xl border-2 p-5 flex flex-col justify-between col-span-1 ${col.bg} ${col.border}`}>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">ISC Global</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Satisfacción promedio</p>
             <div className={`text-6xl font-bold tabular-nums leading-none ${col.text}`}>
               {data.promedioGlobal !== null ? data.promedioGlobal.toFixed(1) : '—'}
             </div>
@@ -1345,19 +1345,19 @@ function Sp9Metrica({ data }: { data: Sp9Data }) {
   return (
     <div className="space-y-5">
       <ExplicacionMetrica
-        numero="10"
-        titulo="SP9 · Tasa de Rechazo por Incompatibilidad de Horario"
-        resumen="¿Con qué frecuencia los técnicos proponen visitas en horarios que el cliente no declaró como disponibles, y el cliente las rechaza? Un valor alto indica que los técnicos no respetan la disponibilidad."
-        proceso="Calidad del proceso de coordinación de visitas (SP nuevo). Mide cuántas veces el sistema tuvo que reasignar un técnico porque propuso un horario fuera de la disponibilidad declarada por el cliente."
-        porque="Separado de SP2-B (reasignaciones por rechazo de asignación) porque tiene causa y acción diferente. Aquí el problema no es el matching técnico-incidente sino el respeto a los tiempos del cliente. Cada rechazo genera una reasignación completa — el costo operativo es el mismo que en SP2-B pero el origen es evitable con capacitación."
-        accion="🔴 Técnico con tasa alta → capacitar en revisar disponibilidad del cliente antes de proponer horario. Si es sistémico en todos → revisar si la UI muestra claramente la disponibilidad o si las franjas del cliente son demasiado restrictivas."
-        formula="SP9 = (Visitas rechazadas / Total visitas propuestas) × 100 · Fuente: visitas.estado='rechazada' / total · Verde <5% | Amarillo 5–15% | Rojo >15%"
+        numero="Horarios"
+        titulo="¿Con qué frecuencia los técnicos proponen horarios que el cliente no puede?"
+        resumen="Cuando el técnico propone una visita en un horario que el cliente no declaró como disponible, el cliente puede rechazarla. Este indicador mide con qué frecuencia pasa eso. Si es alto, los técnicos no están leyendo la disponibilidad del cliente antes de proponer."
+        proceso="Cuenta cuántas veces el cliente rechazó una propuesta de visita porque el horario no coincidía con el que había declarado disponible. Se desglosa por técnico para ver si hay alguno que sistemáticamente ignora la disponibilidad."
+        porque="Cada visita rechazada por horario significa que hay que buscar otro técnico o que el técnico tiene que proponer otro horario. Es tiempo perdido para todos: el cliente sigue esperando, el técnico no puede ir, y el administrador tiene que intervenir. Y todo era evitable si el técnico hubiera mirado la disponibilidad."
+        accion="🔴 Si está en rojo: ver qué técnico propone más visitas fuera de horario y explicarle que debe revisar la disponibilidad del cliente antes de proponer. Si pasa con todos → puede que la información de disponibilidad no sea clara en la aplicación."
+        formula="SP9 = (Visitas rechazadas por horario / Total visitas propuestas) × 100 · Verde <5% | Amarillo 5–15% | Rojo >15%"
       />
 
       <div className="grid sm:grid-cols-3 gap-4">
         <div className={`rounded-2xl border-2 p-5 flex flex-col justify-between ${col.bg} ${col.border}`}>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Tasa Global SP9</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Horarios no aceptados</p>
             <div className={`text-5xl font-bold tabular-nums ${col.text}`}>
               {data.tasaGlobal !== null ? `${data.tasaGlobal}%` : '—'}
             </div>
@@ -1433,53 +1433,53 @@ function Cb2Metrica({ data }: { data: Cb2Data }) {
     <div className="space-y-5">
 
       <ExplicacionMetrica
-        numero="08"
-        titulo="CB-2 · Takt Time del Sistema vs Throughput Rate — Capacidad LEAN"
-        resumen="¿El sistema puede con la demanda? Compara cuántos incidentes entran por día contra cuántos se resuelven. Si entran más de los que se cierran, la cola crece en silencio."
-        proceso="Planificación de capacidad operativa y detección temprana de saturación. Mide si el sistema está resolviendo incidentes al mismo ritmo al que entran — o si la cola está creciendo de forma invisible pero matemáticamente inevitable."
-        porque="Concepto directo del material LEAN (U3): el Takt Time define el ritmo de la demanda. Si el Throughput Rate cae por debajo del Takt Time, la deuda operativa crece cada día aunque todos los indicadores de calidad estén en verde. La Ley de Little (TC = WIP / Throughput) permite proyectar cuántos días tardará el sistema en resolver el backlog actual."
-        accion="🔴 Ratio < 85% por 2 semanas → alerta de saturación: revisar si hay categoría creando un pico, si un técnico está fuera de servicio, o si una etapa específica está frenando el throughput. Cruzar con CB-1 (WIP por etapa) para ubicar el cuello de botella."
-        formula="Takt Time = Incidentes nuevos / 30 días · Throughput = Incidentes finalizados / 30 días · Ratio de Absorción = (Throughput / Takt) × 100 · TC proyectado = WIP actual / Throughput · Verde >100% | Amarillo 85–100% | Rojo <85%"
+        numero="Capacidad"
+        titulo="¿El equipo puede resolver los trabajos al mismo ritmo al que entran?"
+        resumen="Compara cuántos trabajos entran por día contra cuántos se resuelven. Si entran más de los que se cierran, la lista de espera crece en silencio aunque nadie lo note. Este indicador lo detecta temprano, antes de que el problema se acumule."
+        proceso="Cuenta cuántos trabajos nuevos entraron en los últimos 30 días y cuántos se resolvieron. Si los resueltos son menos que los nuevos, el sistema está quedando 'en deuda' operativa cada día que pasa."
+        porque="Un equipo puede estar trabajando bien pero si entran más trabajos de los que se cierran, la lista de espera crece igual. Esta situación es peligrosa porque no se nota hasta que ya hay demasiados trabajos acumulados. Detectarlo temprano permite tomar acción antes de que sea un problema serio."
+        accion="🔴 Si está en rojo por dos semanas seguidas: hay que reforzar la capacidad de resolución. Ver si hay trabajos acumulados en una etapa específica (indicador anterior) o si algún técnico está fuera de servicio. A veces con redistribuir los trabajos es suficiente."
+        formula="Nuevos por día = Trabajos nuevos / 30 días · Resueltos por día = Trabajos cerrados / 30 días · Capacidad = (Resueltos / Nuevos) × 100 · Verde >100% | Amarillo 85–100% | Rojo <85%"
       />
 
       {/* Tres KPIs principales */}
       <div className="grid sm:grid-cols-3 gap-4">
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-1">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Takt Time</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Trabajos nuevos por día</p>
           <div className="text-4xl font-bold tabular-nums text-slate-700">
             {data.taktTime.toFixed(1)}
           </div>
-          <p className="text-xs text-slate-400">inc. nuevos / día (30d)</p>
+          <p className="text-xs text-slate-400">promedio de los últimos 30 días</p>
           <p className="text-[10px] text-slate-400 mt-2 italic">
-            {data.totalNuevos30d} incidentes nuevos en 30 días
+            {data.totalNuevos30d} trabajos nuevos en 30 días
           </p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-1">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Throughput Rate</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Trabajos resueltos por día</p>
           <div className="text-4xl font-bold tabular-nums text-slate-700">
             {data.throughputRate.toFixed(1)}
           </div>
-          <p className="text-xs text-slate-400">inc. finalizados / día (30d)</p>
+          <p className="text-xs text-slate-400">promedio de los últimos 30 días</p>
           <p className="text-[10px] text-slate-400 mt-2 italic">
-            {data.totalFinalizados30d} incidentes cerrados en 30 días
+            {data.totalFinalizados30d} trabajos cerrados en 30 días
           </p>
         </div>
 
         <div className={`rounded-2xl border-2 p-5 space-y-1 ${col.bg} ${col.border}`}>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Ratio de Absorción</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">¿El sistema puede con la carga?</p>
           <div className={`text-4xl font-bold tabular-nums ${col.text}`}>
             {data.taktTime === 0 ? '—' : `${data.ratioAbsorcion}%`}
           </div>
-          <p className="text-xs text-slate-400">throughput / takt time</p>
+          <p className="text-xs text-slate-400">resueltos vs. nuevos</p>
           <div className="mt-2">
             <SemaforoBadge
               s={data.semaforoRatio}
               texto={
-                data.semaforoRatio === 'verde'    ? 'Sistema absorbiendo' :
+                data.semaforoRatio === 'verde'    ? 'Puede con la carga' :
                 data.semaforoRatio === 'amarillo' ? 'Equilibrio frágil'  :
-                data.semaforoRatio === 'rojo'     ? 'Cola creciendo'     :
+                data.semaforoRatio === 'rojo'     ? 'Lista creciendo'    :
                 'Sin datos'
               }
             />
@@ -1497,8 +1497,8 @@ function Cb2Metrica({ data }: { data: Cb2Data }) {
           <div className="space-y-3">
             <div>
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-slate-500">Takt Time (demanda)</span>
-                <span className="font-semibold text-slate-700">{data.taktTime.toFixed(1)} inc/día</span>
+                <span className="text-slate-500">Trabjos nuevos por día</span>
+                <span className="font-semibold text-slate-700">{data.taktTime.toFixed(1)} por día</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
                 <div
@@ -1509,8 +1509,8 @@ function Cb2Metrica({ data }: { data: Cb2Data }) {
             </div>
             <div>
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-slate-500">Throughput (capacidad)</span>
-                <span className="font-semibold text-slate-700">{data.throughputRate.toFixed(1)} inc/día</span>
+                <span className="text-slate-500">Trabajos resueltos por día</span>
+                <span className="font-semibold text-slate-700">{data.throughputRate.toFixed(1)} por día</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
                 <div
@@ -1530,22 +1530,22 @@ function Cb2Metrica({ data }: { data: Cb2Data }) {
         {/* Ley de Little */}
         <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 space-y-3">
           <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide flex items-center gap-1.5">
-            <Gauge className="h-3.5 w-3.5" /> Ley de Little — TC Proyectado
+            <Gauge className="h-3.5 w-3.5" /> Si entra más trabajo sin resolver más...
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white rounded-xl border border-indigo-100 p-3 text-center space-y-1">
               <p className="text-2xl font-bold text-indigo-700 tabular-nums">{data.wipActual}</p>
-              <p className="text-[10px] text-slate-500 leading-tight">WIP actual (inc. en curso)</p>
+              <p className="text-[10px] text-slate-500 leading-tight">trabajos en curso ahora mismo</p>
             </div>
             <div className="bg-white rounded-xl border border-indigo-100 p-3 text-center space-y-1">
               <p className="text-2xl font-bold text-indigo-700 tabular-nums">
                 {data.tcProyectado !== null ? `${data.tcProyectado}d` : '—'}
               </p>
-              <p className="text-[10px] text-slate-500 leading-tight">TC proyectado (WIP / Throughput)</p>
+              <p className="text-[10px] text-slate-500 leading-tight">días estimados por trabajo</p>
             </div>
           </div>
           <p className="text-[10px] text-slate-500 italic leading-relaxed">
-            Ley de Little: TC = WIP / Throughput Rate. Si el WIP sube con el mismo throughput, el tiempo de ciclo sube automáticamente — sin que nadie trabaje más lento.
+            Si la cantidad de trabajos en curso sube y la velocidad de resolución no cambia, el tiempo de espera sube automáticamente — aunque todos trabajen igual de bien.
           </p>
         </div>
 
@@ -1569,8 +1569,8 @@ function Cb2Metrica({ data }: { data: Cb2Data }) {
             <div className="space-y-3">
               {/* Leyenda */}
               <div className="flex gap-4 text-[10px] text-slate-400">
-                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm bg-slate-400 inline-block" />Nuevos (demanda)</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm bg-emerald-400 inline-block" />Finalizados (throughput)</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm bg-slate-400 inline-block" />Trabajos nuevos</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm bg-emerald-400 inline-block" />Trabajos resueltos</span>
               </div>
               {data.tendenciaSemanal.map(sem => (
                 <div key={sem.label} className="flex items-center gap-3">
@@ -1671,13 +1671,13 @@ function OeeMetrica({ data }: { data: OeeData }) {
     <div className="space-y-5">
 
       <ExplicacionMetrica
-        numero="09"
-        titulo="OEE-1 · Índice de Rendimiento del Técnico (IRT) — OEE Aplicado a Personas"
-        resumen="¿Cómo rinde cada técnico en general? Un puntaje único que combina tres cosas: qué tan seguido responde cuando lo llaman, qué tan rápido termina los trabajos, y qué tan bien los hace."
-        proceso="Gestión del capital humano técnico con un único índice compuesto y comparable entre técnicos. Transpone el marco OEE (Overall Equipment Effectiveness) del material LEAN (U3) al rol del técnico como 'equipo' central del proceso."
-        porque="La ventaja sobre métricas individuales es que el IRT captura la imagen completa. Dos técnicos con el mismo ISC pueden tener IRT muy distintos si uno responde tarde o trabaja lento. El producto de los tres factores revela dónde está la pérdida real: un IRT de 60% con Disponibilidad 95% señala que el problema es técnico (Eficiencia o Calidad), no de compromiso."
-        accion="🔴 IRT < 55% → desagregar los 3 factores para identificar la causa raíz. Disponibilidad baja → política de respuesta y gestión de carga. Eficiencia baja → capacitación técnica o mejores herramientas. Calidad baja → supervisión o mentoría en los trabajos con más rechazos."
-        formula="IRT = Disponibilidad × Eficiencia × Calidad · D = respondidas/total asignaciones · E = trabajos ≤ avg categoría/total trabajos · C = conf. sin rechazo/total conf. · Verde >75% | Amarillo 55–75% | Rojo <55%"
+        numero="IRT"
+        titulo="¿Cómo rinde cada técnico? Respuesta, velocidad y calidad en un solo número"
+        resumen="Un puntaje del 0% al 100% que resume tres cosas de cada técnico: qué tan seguido acepta los trabajos que le asignan, qué tan rápido los termina, y qué tan bien los hace. Cuanto más alto, mejor técnico. Permite comparar técnicos de forma justa."
+        proceso="Combina tres indicadores en uno: (1) Disponibilidad: acepta los trabajos que le asignan. (2) Eficiencia: los termina en un tiempo razonable para ese tipo de trabajo. (3) Calidad: el administrador no tuvo que rechazar su trabajo."
+        porque="Si solo miramos la satisfacción del cliente o los rechazos por separado, podemos no ver el problema completo. Un técnico puede tener buenas calificaciones pero siempre estar lento, o aceptar todos los trabajos pero hacer muchos mal. Este puntaje combina todo para tener una imagen completa de cada persona."
+        accion="🔴 Si está en rojo: ver cuál de los tres factores lo baja. Disponibilidad baja → el técnico rechaza o no responde los trabajos → hablar con él sobre su carga. Velocidad baja → le cuesta terminar a tiempo → puede necesitar más herramientas o capacitación. Calidad baja → le rechazan mucho el trabajo → necesita supervisión o instrucciones más claras."
+        formula="IRT = Disponibilidad × Velocidad × Calidad · D = aceptaciones/total asignaciones · V = trabajos a tiempo/total trabajos · C = trabajos sin rechazo/total trabajos · Verde >75% | Amarillo 55–75% | Rojo <55%"
       />
 
       {/* Promedio global + Explicación del modelo */}
@@ -1685,7 +1685,7 @@ function OeeMetrica({ data }: { data: OeeData }) {
 
         <div className={`rounded-2xl border-2 p-5 flex flex-col justify-between col-span-1 ${col.bg} ${col.border}`}>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">IRT Promedio del Equipo</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Rendimiento promedio del equipo</p>
             <div className={`text-5xl font-bold tabular-nums ${col.text}`}>
               {data.promedioIrt !== null ? `${data.promedioIrt}%` : '—'}
             </div>
@@ -1711,7 +1711,7 @@ function OeeMetrica({ data }: { data: OeeData }) {
 
         {/* Leyenda de factores */}
         <div className="col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-4">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Los 3 factores del IRT</p>
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">El puntaje combina 3 cosas</p>
           <div className="grid grid-cols-3 gap-3">
             {[
               { color: 'bg-blue-100 border-blue-200', dot: 'bg-blue-400', label: 'Disponibilidad', desc: 'Respondidas / total asignaciones recibidas', icono: '📶' },
@@ -1728,7 +1728,7 @@ function OeeMetrica({ data }: { data: OeeData }) {
             ))}
           </div>
           <p className="text-[10px] text-slate-400 italic">
-            El IRT es el producto de los tres factores. Un técnico con D=95% E=85% C=90% tiene IRT=72.7% — la paradoja del OEE: ningún factor individual parece grave, pero el producto revela la pérdida real.
+            El puntaje es el resultado de multiplicar los tres factores. Un técnico con 95% de respuesta, 85% de velocidad y 90% de calidad tiene un puntaje de 72.7% — aunque cada número por separado parece bueno, el conjunto muestra que hay margen de mejora.
           </p>
         </div>
 
@@ -1743,7 +1743,7 @@ function OeeMetrica({ data }: { data: OeeData }) {
         <div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
             <Wrench className="h-3.5 w-3.5" />
-            Ranking IRT por Técnico — ordenado de mayor a menor
+            Puntaje por técnico — del mejor al que más necesita apoyo
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.porTecnico.map(t => (
@@ -1776,11 +1776,11 @@ export function PpisContent({ ppis }: { ppis: TodosPpisData }) {
   const [subTab, setSubTab] = useState<SubTab>('tiempo')
 
   const estadosPorTab: Record<SubTab, { label: string; semaforo: Semaforo }[]> = {
-    tiempo:   [{ label: 'TCI', semaforo: ppis.tci.semaforoGlobal }, { label: 'Takt Time', semaforo: ppis.cb2.semaforoRatio }],
-    calidad:  [{ label: 'FPY', semaforo: ppis.fpy.semaforoGlobal }, { label: 'TCR', semaforo: ppis.tcr.semaforoGlobal }, { label: 'ISC', semaforo: ppis.isc.semaforoGlobal }],
-    proceso:  [{ label: 'Reasignación', semaforo: ppis.reasignacion.semaforoGlobal }, { label: 'Rechazo horario', semaforo: ppis.sp9.semaforoGlobal }],
-    finanzas: [{ label: 'Cobros (DPC)', semaforo: ppis.sp8.dpcSemaforo }, { label: 'Pagos (DPT)', semaforo: ppis.sp8.dptSemaforo }],
-    tecnicos: [{ label: 'IRT del equipo', semaforo: ppis.oee.semaforoGlobal }],
+    tiempo:   [{ label: 'Tiempo promedio', semaforo: ppis.tci.semaforoGlobal }, { label: 'Carga del sistema', semaforo: ppis.cb2.semaforoRatio }],
+    calidad:  [{ label: 'Sin correcciones', semaforo: ppis.fpy.semaforoGlobal }, { label: 'Rechazos', semaforo: ppis.tcr.semaforoGlobal }, { label: 'Satisfacción', semaforo: ppis.isc.semaforoGlobal }],
+    proceso:  [{ label: 'Reasignaciones', semaforo: ppis.reasignacion.semaforoGlobal }, { label: 'Horarios rechazados', semaforo: ppis.sp9.semaforoGlobal }],
+    finanzas: [{ label: 'Por cobrar', semaforo: ppis.sp8.dpcSemaforo }, { label: 'Por pagar', semaforo: ppis.sp8.dptSemaforo }],
+    tecnicos: [{ label: 'Rendimiento', semaforo: ppis.oee.semaforoGlobal }],
   }
 
   return (
@@ -1914,12 +1914,12 @@ function FpyMetrica({ data }: { data: FpyData }) {
 
       {/* Explicación */}
       <ExplicacionMetrica
-        numero="02"
-        titulo="FPY-0 · First-Pass Yield Global del Proceso"
-        resumen="¿Cuántos incidentes pasaron por todo el proceso sin necesidad de corregir algo? Mide el porcentaje que salió bien a la primera, en cada etapa y en el total. 100% sería perfecto."
-        proceso="Eficiencia integral del ciclo E2E: mide qué porcentaje de incidentes completan todas las etapas del proceso (asignación, presupuesto, conformidad) sin ningún retrabajo. Es el indicador de calidad más completo del sistema."
-        porque="La paradoja del FPY: aunque cada etapa individualmente parezca razonable (ej. 85%), el FPY global es el producto de todas. Con 3 etapas al 85% el resultado es 0,85³ ≈ 61%. Sin este indicador, los problemas de calidad quedan ocultos en los promedios por etapa."
-        accion="🔴 Rojo → desagregar por etapa para identificar cuál arrastra el global. Cada etapa tiene su causa raíz y su plan de acción específico. La etapa con menor FPY es el cuello de calidad del sistema."
+        numero="FPY"
+        titulo="¿Cuántos trabajos salieron bien a la primera, sin necesidad de corregir nada?"
+        resumen="Mide el porcentaje de problemas que se resolvieron completamente sin que ningún paso tuviera que rehacerse: sin que el técnico rechazara la asignación, sin que el presupuesto fuera rechazado, y sin que el trabajo final fuera rechazado. 100% sería perfecto."
+        proceso="Cuenta cuántos incidentes pasaron por todos los pasos del proceso sin ninguna corrección. Se desglosa por etapa para ver en cuál se genera más retrabajo: en la asignación del técnico, en el presupuesto, o al presentar el trabajo final."
+        porque="Un proceso puede parecer que funciona bien etapa por etapa, pero si en cada paso hay un 15% que falla, al final solo el 60% de los trabajos salió bien a la primera. Sin este indicador, los problemas se ocultan en los promedios. Cada corrección significa más tiempo para el cliente y más trabajo para el equipo."
+        accion="🔴 Si está en rojo: ver en cuál de las tres etapas hay más correcciones y enfocar la mejora ahí. ¿Es en la asignación? → mejorar el proceso de elección del técnico. ¿En el presupuesto? → mejorar la estimación. ¿En la conformidad? → mejorar la calidad del trabajo técnico."
         formula="FPY Global = (Incidentes finalizados sin retrabajo en ninguna etapa / Total finalizados) × 100 · Fuente: asignaciones_tecnico, presupuestos, conformidades"
       />
 
@@ -1927,7 +1927,7 @@ function FpyMetrica({ data }: { data: FpyData }) {
       <div className="grid sm:grid-cols-2 gap-4">
         <div className={`rounded-2xl border-2 p-6 flex flex-col justify-between ${colGlobal.bg} ${colGlobal.border}`}>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">FPY Global</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Trabajos sin correcciones</p>
             <div className={`text-5xl font-bold tabular-nums ${colGlobal.text}`}>
               {data.fpyGlobal !== null ? `${data.fpyGlobal}%` : '—'}
             </div>
