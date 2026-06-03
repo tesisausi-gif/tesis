@@ -225,28 +225,6 @@ function TciMetrica({ data }: { data: TciData }) {
         </div>
       </div>
 
-      {/* Desglose por Prioridad */}
-      <Card className="border-slate-200">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-            <AlertCircle className="h-4 w-4 text-slate-400" />
-            TCI por Nivel de Prioridad
-          </CardTitle>
-          <p className="text-xs text-slate-400">Cada prioridad tiene umbrales propios. Un incidente urgente tiene tolerancia menor que uno normal.</p>
-        </CardHeader>
-        <CardContent>
-          {data.porPrioridad.length === 0 ? (
-            <p className="text-sm text-slate-400 py-4 text-center">Sin datos suficientes</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {data.porPrioridad.map(item => (
-                <TarjetaTciPrioridad key={item.prioridad} item={item} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Desglose por Categoría + Tendencia mensual */}
       <div className="grid lg:grid-cols-2 gap-5">
 
@@ -1559,7 +1537,7 @@ function Cb2Metrica({ data }: { data: Cb2Data }) {
             Nuevos vs Finalizados — Tendencia Semanal (8 semanas)
           </CardTitle>
           <p className="text-xs text-slate-400">
-            Semanas donde la barra azul supera la verde indican acumulación de backlog. Un patrón sostenido de barras azules más altas es la señal más temprana de saturación operativa.
+            Cada semana muestra dos barras: <strong className="text-slate-600">gris</strong> = trabajos nuevos que entraron, <strong className="text-slate-600">verde/naranja</strong> = trabajos resueltos ese semana. Si la barra gris supera a la de color, significa que se cerraron menos de los que entraron y el backlog crece.
           </p>
         </CardHeader>
         <CardContent>
@@ -1595,8 +1573,12 @@ function Cb2Metrica({ data }: { data: Cb2Data }) {
                       <span className="text-[9px] text-slate-400 tabular-nums w-4 text-right">{sem.finalizados}</span>
                     </div>
                   </div>
-                  <span className={`text-[10px] font-semibold tabular-nums w-10 text-right ${sem.ratio >= 100 ? 'text-emerald-600' : sem.ratio >= 85 ? 'text-amber-600' : 'text-red-500'}`}>
-                    {sem.nuevos > 0 ? `${sem.ratio}%` : '—'}
+                  <span className={`text-[10px] font-semibold tabular-nums w-12 text-right ${sem.finalizados >= sem.nuevos ? 'text-emerald-600' : sem.finalizados >= sem.nuevos * 0.85 ? 'text-amber-600' : 'text-red-500'}`}>
+                    {sem.nuevos === 0
+                      ? (sem.finalizados > 0 ? '↑↑↑' : '—')
+                      : sem.finalizados >= sem.nuevos
+                        ? `+${sem.finalizados - sem.nuevos}`
+                        : `−${sem.nuevos - sem.finalizados}`}
                   </span>
                 </div>
               ))}
