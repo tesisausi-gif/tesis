@@ -6,3 +6,6 @@
 .env.keys
 .env.local
 .env.*.local
+
+# Seeds de datos de prueba — no versionar
+seed_*.sql

@@ -561,30 +561,34 @@ function ReasignacionMetrica({ data }: { data: ReasignacionData }) {
           <CardContent>
             {data.porCategoria.length === 0 ? (
               <p className="text-sm text-slate-400 py-4 text-center">Sin datos</p>
-            ) : (
-              <div className="space-y-2">
-                {data.porCategoria.map(cat => {
-                  const s: Semaforo = cat.tasa <= 10 ? 'verde' : cat.tasa <= 25 ? 'amarillo' : 'rojo'
-                  const col = SEMAFORO_COLORES[s]
-                  return (
-                    <div key={cat.categoria} className="flex items-center gap-3">
-                      <span className="text-xs text-slate-500 w-24 shrink-0 truncate">{cat.categoria}</span>
-                      <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
-                        <div
-                          className={`h-full ${col.barra} rounded-full flex items-center justify-end pr-2`}
-                          style={{ width: `${Math.max(cat.tasa, 6)}%` }}
-                        >
-                          {cat.tasa >= 10 && <span className="text-[9px] font-bold text-white">{cat.tasa}%</span>}
+            ) : (() => {
+                const maxCatReasig = Math.max(...data.porCategoria.map(c => c.tasa), 1)
+                return (
+                  <div className="space-y-2">
+                    {data.porCategoria.map(cat => {
+                      const s: Semaforo = cat.tasa <= 10 ? 'verde' : cat.tasa <= 25 ? 'amarillo' : 'rojo'
+                      const col = SEMAFORO_COLORES[s]
+                      const pct = Math.max((cat.tasa / maxCatReasig) * 100, cat.tasa > 0 ? 5 : 0)
+                      return (
+                        <div key={cat.categoria} className="flex items-center gap-3">
+                          <span className="text-xs text-slate-500 w-24 shrink-0 truncate">{cat.categoria}</span>
+                          <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                            <div
+                              className={`h-full ${col.barra} rounded-full flex items-center justify-end pr-2`}
+                              style={{ width: `${pct}%` }}
+                            >
+                              {cat.tasa > 0 && <span className="text-[9px] font-bold text-white">{cat.tasa}%</span>}
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-slate-400 w-16 text-right tabular-nums">
+                            {cat.conReasignacion}/{cat.totalAsignados}
+                          </span>
                         </div>
-                      </div>
-                      <span className="text-[10px] text-slate-400 w-16 text-right tabular-nums">
-                        {cat.conReasignacion}/{cat.totalAsignados}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+                      )
+                    })}
+                  </div>
+                )
+              })()}
           </CardContent>
         </Card>
 
@@ -602,30 +606,34 @@ function ReasignacionMetrica({ data }: { data: ReasignacionData }) {
         <CardContent>
           {data.tendenciaMensual.length === 0 ? (
             <p className="text-sm text-slate-400 py-4 text-center">Sin datos suficientes</p>
-          ) : (
-            <div className="space-y-2">
-              {data.tendenciaMensual.map(item => {
-                const s: Semaforo = item.tasa <= 10 ? 'verde' : item.tasa <= 25 ? 'amarillo' : 'rojo'
-                const col = SEMAFORO_COLORES[s]
-                return (
-                  <div key={item.mes} className="flex items-center gap-3">
-                    <span className="text-xs text-slate-500 w-12 shrink-0">{item.label}</span>
-                    <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
-                      <div
-                        className={`h-full ${col.barra} rounded-full flex items-center justify-end pr-2 transition-all`}
-                        style={{ width: `${Math.max(item.tasa, 5)}%` }}
-                      >
-                        <span className="text-[10px] font-bold text-white">{item.tasa}%</span>
+          ) : (() => {
+              const maxTasaReasigMes = Math.max(...data.tendenciaMensual.map(m => m.tasa), 1)
+              return (
+                <div className="space-y-2">
+                  {data.tendenciaMensual.map(item => {
+                    const s: Semaforo = item.tasa <= 10 ? 'verde' : item.tasa <= 25 ? 'amarillo' : 'rojo'
+                    const col = SEMAFORO_COLORES[s]
+                    const pct = Math.max((item.tasa / maxTasaReasigMes) * 100, item.tasa > 0 ? 5 : 0)
+                    return (
+                      <div key={item.mes} className="flex items-center gap-3">
+                        <span className="text-xs text-slate-500 w-12 shrink-0">{item.label}</span>
+                        <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                          <div
+                            className={`h-full ${col.barra} rounded-full flex items-center justify-end pr-2 transition-all`}
+                            style={{ width: `${pct}%` }}
+                          >
+                            <span className="text-[10px] font-bold text-white">{item.tasa}%</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-slate-400 w-20 text-right tabular-nums">
+                          {item.conReasignacion}/{item.totalAsignados} inc.
+                        </span>
                       </div>
-                    </div>
-                    <span className="text-[10px] text-slate-400 w-20 text-right tabular-nums">
-                      {item.conReasignacion}/{item.totalAsignados} inc.
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+                    )
+                  })}
+                </div>
+              )
+            })()}
         </CardContent>
       </Card>
 
@@ -784,30 +792,34 @@ function TcrMetrica({ data }: { data: TcrData }) {
           <CardContent>
             {data.porCategoria.length === 0 ? (
               <p className="text-sm text-slate-400 py-4 text-center">Sin datos</p>
-            ) : (
-              <div className="space-y-2">
-                {data.porCategoria.map(cat => {
-                  const s: Semaforo = cat.tasa < 5 ? 'verde' : cat.tasa <= 15 ? 'amarillo' : 'rojo'
-                  const col = SEMAFORO_COLORES[s]
-                  return (
-                    <div key={cat.categoria} className="flex items-center gap-3">
-                      <span className="text-xs text-slate-500 w-24 shrink-0 truncate">{cat.categoria}</span>
-                      <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
-                        <div
-                          className={`h-full ${col.barra} rounded-full flex items-center justify-end pr-2`}
-                          style={{ width: `${Math.max(cat.tasa, 5)}%` }}
-                        >
-                          {cat.tasa >= 8 && <span className="text-[9px] font-bold text-white">{cat.tasa}%</span>}
+            ) : (() => {
+                const maxCatTcr = Math.max(...data.porCategoria.map(c => c.tasa), 1)
+                return (
+                  <div className="space-y-2">
+                    {data.porCategoria.map(cat => {
+                      const s: Semaforo = cat.tasa < 5 ? 'verde' : cat.tasa <= 15 ? 'amarillo' : 'rojo'
+                      const col = SEMAFORO_COLORES[s]
+                      const pct = Math.max((cat.tasa / maxCatTcr) * 100, cat.tasa > 0 ? 5 : 0)
+                      return (
+                        <div key={cat.categoria} className="flex items-center gap-3">
+                          <span className="text-xs text-slate-500 w-24 shrink-0 truncate">{cat.categoria}</span>
+                          <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                            <div
+                              className={`h-full ${col.barra} rounded-full flex items-center justify-end pr-2`}
+                              style={{ width: `${pct}%` }}
+                            >
+                              {cat.tasa > 0 && <span className="text-[9px] font-bold text-white">{cat.tasa}%</span>}
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-slate-400 w-16 text-right tabular-nums">
+                            {cat.rechazadas}/{cat.totalConformidades}
+                          </span>
                         </div>
-                      </div>
-                      <span className="text-[10px] text-slate-400 w-16 text-right tabular-nums">
-                        {cat.rechazadas}/{cat.totalConformidades}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+                      )
+                    })}
+                  </div>
+                )
+              })()}
           </CardContent>
         </Card>
 
@@ -827,30 +839,34 @@ function TcrMetrica({ data }: { data: TcrData }) {
         <CardContent>
           {data.tendenciaMensual.length === 0 ? (
             <p className="text-sm text-slate-400 py-4 text-center">Sin datos suficientes</p>
-          ) : (
-            <div className="space-y-2">
-              {data.tendenciaMensual.map(item => {
-                const s: Semaforo = item.tasa < 5 ? 'verde' : item.tasa <= 15 ? 'amarillo' : 'rojo'
-                const col = SEMAFORO_COLORES[s]
-                return (
-                  <div key={item.mes} className="flex items-center gap-3">
-                    <span className="text-xs text-slate-500 w-12 shrink-0">{item.label}</span>
-                    <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
-                      <div
-                        className={`h-full ${col.barra} rounded-full flex items-center justify-end pr-2 transition-all`}
-                        style={{ width: `${Math.max(item.tasa, 5)}%` }}
-                      >
-                        <span className="text-[10px] font-bold text-white">{item.tasa}%</span>
+          ) : (() => {
+              const maxTasaTcrMes = Math.max(...data.tendenciaMensual.map(m => m.tasa), 1)
+              return (
+                <div className="space-y-2">
+                  {data.tendenciaMensual.map(item => {
+                    const s: Semaforo = item.tasa < 5 ? 'verde' : item.tasa <= 15 ? 'amarillo' : 'rojo'
+                    const col = SEMAFORO_COLORES[s]
+                    const pct = Math.max((item.tasa / maxTasaTcrMes) * 100, item.tasa > 0 ? 5 : 0)
+                    return (
+                      <div key={item.mes} className="flex items-center gap-3">
+                        <span className="text-xs text-slate-500 w-12 shrink-0">{item.label}</span>
+                        <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                          <div
+                            className={`h-full ${col.barra} rounded-full flex items-center justify-end pr-2 transition-all`}
+                            style={{ width: `${pct}%` }}
+                          >
+                            <span className="text-[10px] font-bold text-white">{item.tasa}%</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-slate-400 w-24 text-right tabular-nums">
+                          {item.rechazadas}/{item.totalConformidades} conf.
+                        </span>
                       </div>
-                    </div>
-                    <span className="text-[10px] text-slate-400 w-24 text-right tabular-nums">
-                      {item.rechazadas}/{item.totalConformidades} conf.
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+                    )
+                  })}
+                </div>
+              )
+            })()}
         </CardContent>
       </Card>
 
