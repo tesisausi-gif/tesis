@@ -453,7 +453,7 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
               <Input
                 id="barrio"
                 value={barrio}
-                onChange={(e) => setBarrio(e.target.value)}
+                onChange={(e) => setBarrio(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ0-9°\s]/g, ''))}
                 placeholder="Ej: Palermo, Recoleta, Centro... (opcional)"
                 disabled={submitting}
               />
@@ -468,7 +468,7 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
                 <Input
                   id="calle"
                   value={calle}
-                  onChange={(e) => setCalle(e.target.value)}
+                  onChange={(e) => setCalle(e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ0-9°\s]/g, ''))}
                   placeholder="Ej: Av. 7"
                   required
                   disabled={submitting}

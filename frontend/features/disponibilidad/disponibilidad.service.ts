@@ -141,8 +141,8 @@ export async function getCompromisoDeAsignacion(idAsignacion: number): Promise<i
   }
 }
 
-// Agenda del técnico — lee las franjas de disponibilidad del cliente
-// para los incidentes activos asignados a este técnico.
+// Agenda del técnico — muestra las visitas propuestas/confirmadas por el técnico
+// (no las franjas de disponibilidad del cliente, que solo sirven de referencia).
 export async function getFranjasAgendaTecnico(idTecnico: number): Promise<FranjaAgenda[]> {
   if (!idTecnico) return []
   const supabase = createAdminClient()
@@ -160,24 +160,27 @@ export async function getFranjasAgendaTecnico(idTecnico: number): Promise<Franja
     asignaciones.map(a => [a.id_incidente, a.id_asignacion])
   )
 
-  const { data: franjas } = await supabase
-    .from('franjas_disponibilidad')
+  // Traer visitas propuestas o confirmadas del técnico para esos incidentes
+  const { data: visitas } = await supabase
+    .from('visitas')
     .select(`
-      id_franja, id_incidente, fecha, hora_inicio, hora_fin,
+      id_visita, id_incidente, fecha_visita, hora_inicio, hora_fin_estimada,
       incidentes(descripcion_problema, categoria, inmuebles(calle, altura, barrio, localidad))
     `)
+    .eq('id_tecnico', idTecnico)
     .in('id_incidente', idIncidentes)
-    .order('fecha')
+    .in('estado', ['propuesta', 'confirmada'])
+    .order('fecha_visita')
     .order('hora_inicio')
 
-  return (franjas ?? []).map((f: any) => ({
-    id_franja:    f.id_franja,
-    id_incidente: f.id_incidente,
-    id_asignacion: asigPorIncidente[f.id_incidente],
-    fecha:        f.fecha as string,
-    hora_inicio:  (f.hora_inicio as string).slice(0, 5),
-    hora_fin:     (f.hora_fin as string).slice(0, 5),
-    incidentes:   f.incidentes ?? null,
+  return (visitas ?? []).map((v: any) => ({
+    id_franja:     v.id_visita,
+    id_incidente:  v.id_incidente,
+    id_asignacion: asigPorIncidente[v.id_incidente],
+    fecha:         v.fecha_visita as string,
+    hora_inicio:   (v.hora_inicio as string).slice(0, 5),
+    hora_fin:      v.hora_fin_estimada ? (v.hora_fin_estimada as string).slice(0, 5) : '',
+    incidentes:    v.incidentes ?? null,
   }))
 }
 

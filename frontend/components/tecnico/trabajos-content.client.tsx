@@ -66,6 +66,20 @@ function getProximoPaso(
 
   if (['finalizado', 'resuelto'].includes(estadoInc)) return null
 
+  // Visitas: detectar antes que el check de presupuesto
+  if (asig.tiene_disponibilidad) {
+    const ev = asig.visita_activa?.estado
+    if (ev === 'propuesta') {
+      return { mensaje: 'Esperando que el cliente confirme el horario de visita', urgente: false }
+    }
+    if (ev === 'confirmada') {
+      return { mensaje: 'Visita confirmada — llegado el día podés realizarla', urgente: false }
+    }
+    if (!ev && !estadoPresupuesto) {
+      return { mensaje: 'Agendá una visita para comenzar', urgente: true }
+    }
+  }
+
   if (!estadoPresupuesto) {
     return { mensaje: 'Cargá el presupuesto para continuar', urgente: true }
   }

@@ -114,10 +114,10 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Si el usuario está autenticado y trata de acceder a login, redirigir según rol
-  if (user && pathname === '/login') {
+  // Si el usuario está autenticado y trata de acceder a login o landing, redirigir según rol
+  if (user && (pathname === '/login' || pathname === '/')) {
     const redirectUrl = request.nextUrl.clone()
-    if (userRole === 'admin') {
+    if (userRole === 'admin' || userRole === 'gestor') {
       redirectUrl.pathname = '/dashboard'
     } else if (userRole === 'tecnico') {
       redirectUrl.pathname = '/tecnico'
