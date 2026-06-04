@@ -34,7 +34,8 @@ import {
   ImageIcon,
   ExternalLink,
 } from 'lucide-react'
-import { getTecnicosParaAsignacion, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
+import { getTecnicosParaAsignacion, getEspecialidadesActivas, getFiabilidadTecnicos } from '@/features/usuarios/usuarios.service'
+import type { FiabilidadTecnico } from '@/features/usuarios/usuarios.service'
 import { crearAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { actualizarIncidente } from '@/features/incidentes/incidentes.service'
 import { getFranjasDisponibilidad, getConflictosTecnicos } from '@/features/disponibilidad/disponibilidad.service'
@@ -177,6 +178,7 @@ export function GestionarPendienteModal({
   const [categoria, setCategoria] = useState('')
   const [guardandoCategoria, setGuardandoCategoria] = useState(false)
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
+  const [fiabilidad, setFiabilidad] = useState<Record<number, FiabilidadTecnico>>({})
   const [cargandoTecnicos, setCargandoTecnicos] = useState(false)
   const [errorTecnicos, setErrorTecnicos] = useState(false)
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState<Tecnico | null>(null)
@@ -216,8 +218,12 @@ export function GestionarPendienteModal({
     setCargandoTecnicos(true)
     setErrorTecnicos(false)
     try {
-      const data = await getTecnicosParaAsignacion()
+      const [data, fData] = await Promise.all([
+        getTecnicosParaAsignacion(),
+        getFiabilidadTecnicos(),
+      ])
       setTecnicos(data)
+      setFiabilidad(fData)
     } catch {
       setErrorTecnicos(true)
       toast.error('Error al cargar técnicos')
@@ -453,6 +459,13 @@ export function GestionarPendienteModal({
                     const especialidad = Array.isArray(t.especialidades) && t.especialidades.length > 0
                       ? t.especialidades.join(', ')
                       : (t.especialidad ?? null)
+                    const fData = fiabilidad[t.id_tecnico]
+                    const tasa = fData?.tasaCancelacion ?? 0
+                    const confiabilidad =
+                      tasa === 0              ? { label: 'Sin bajas', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' } :
+                      tasa <= 10             ? { label: 'Muy confiable', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' } :
+                      tasa <= 25             ? { label: `${tasa}% bajas`, cls: 'bg-amber-50 text-amber-700 border-amber-200' } :
+                                               { label: `${tasa}% bajas`, cls: 'bg-red-50 text-red-700 border-red-200' }
                     return (
                       <div
                         key={t.id_tecnico}
@@ -476,9 +489,15 @@ export function GestionarPendienteModal({
                               </span>
                             )}
                           </div>
-                          {especialidad && (
-                            <p className="text-xs text-gray-500 truncate">{especialidad}</p>
-                          )}
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            {especialidad && (
+                              <p className="text-xs text-gray-500 truncate">{especialidad}</p>
+                            )}
+                            {/* Badge de confiabilidad */}
+                            <span className={`text-[10px] font-semibold border px-1.5 py-0.5 rounded-full shrink-0 ${confiabilidad.cls}`}>
+                              {confiabilidad.label}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Rating + trabajos + agenda */}

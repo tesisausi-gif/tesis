@@ -337,17 +337,19 @@ export async function crearAsignacion(data: {
 export async function cancelarAsignacionAceptada(
   idAsignacion: number,
   idIncidente: number,
+  motivo?: string,
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient()
     const idTecnico = await requireTecnicoId()
 
-    // 1. Marcar asignación como cancelada
+    // 1. Marcar asignación como cancelada — guardar motivo en observaciones
     const { error: errAsig } = await supabase
       .from('asignaciones_tecnico')
       .update({
         estado_asignacion: 'cancelada',
         fecha_rechazo: new Date().toISOString(),
+        observaciones: motivo ?? null,
       })
       .eq('id_asignacion', idAsignacion)
       .eq('id_tecnico', idTecnico)
@@ -362,37 +364,10 @@ export async function cancelarAsignacionAceptada(
 
     if (errInc) return { success: false, error: errInc.message }
 
-    // 3. Registrar calificación penalización de 1 estrella (usando admin para bypass RLS)
-    const { createAdminClient } = await import('@/shared/lib/supabase/admin')
-    const adminClient = createAdminClient()
+    // Nota: se eliminó la penalización de 1 estrella.
+    // La baja queda registrada y afecta el factor Disponibilidad del IRT automáticamente.
 
-    await adminClient.from('calificaciones').insert({
-      id_incidente: idIncidente,
-      id_tecnico: idTecnico,
-      puntuacion: 1,
-      comentarios: 'Trabajo cancelado por el técnico',
-      resolvio_problema: 0,
-      fecha_calificacion: new Date().toISOString(),
-    })
-
-    // 4. Recalcular promedio del técnico
-    const { data: cals } = await adminClient
-      .from('calificaciones')
-      .select('puntuacion')
-      .eq('id_tecnico', idTecnico)
-
-    if (cals && cals.length > 0) {
-      const avg = cals.reduce((s: number, c: any) => s + c.puntuacion, 0) / cals.length
-      await adminClient
-        .from('tecnicos')
-        .update({
-          calificacion_promedio: parseFloat(avg.toFixed(2)),
-          cantidad_trabajos_realizados: cals.length,
-        })
-        .eq('id_tecnico', idTecnico)
-    }
-
-    // 5. Obtener nombre del técnico para la notificación
+    // 3. Obtener nombre del técnico para la notificación
     const { data: asig } = await supabase
       .from('asignaciones_tecnico')
       .select('tecnicos(nombre, apellido)')
@@ -425,7 +400,7 @@ export async function cancelarAsignacionAceptada(
       await crearNotificacionAdmin({
         tipo: 'asignacion_cancelada',
         titulo: 'Técnico canceló el trabajo',
-        mensaje: `${tecNombre} canceló el incidente #${idIncidente}. El incidente volvió a Pendiente y requiere reasignación urgente.`,
+        mensaje: `${tecNombre} se dio de baja del incidente #${idIncidente}${motivo ? ` — Motivo: ${motivo}` : ''}. Requiere reasignación urgente.`,
         id_incidente: idIncidente,
       })
     } catch { /* no bloquear la operación principal */ }

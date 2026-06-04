@@ -191,6 +191,7 @@ export function TrabajosContent({
   const [modalTab, setModalTab] = useState('detalles')
   const [modalOpen, setModalOpen] = useState(false)
   const [cancelDialog, setCancelDialog] = useState<AsignacionTecnico | null>(null)
+  const [motivoBaja, setMotivoBaja] = useState('')
   const [isCancelling, setIsCancelling] = useState(false)
   const [contactoExpandido, setContactoExpandido] = useState<number | null>(null)
 
@@ -201,16 +202,17 @@ export function TrabajosContent({
   }
 
   const confirmarCancelacion = async () => {
-    if (!cancelDialog) return
+    if (!cancelDialog || !motivoBaja) return
     setIsCancelling(true)
     try {
-      const res = await cancelarAsignacionAceptada(cancelDialog.id_asignacion, cancelDialog.id_incidente)
+      const res = await cancelarAsignacionAceptada(cancelDialog.id_asignacion, cancelDialog.id_incidente, motivoBaja)
       if (res.success) {
-        toast.success('Trabajo cancelado', { description: `Incidente #${cancelDialog.id_incidente} devuelto a pendiente.` })
+        toast.success('Baja registrada', { description: `Incidente #${cancelDialog.id_incidente} devuelto a pendiente.` })
         setCancelDialog(null)
+        setMotivoBaja('')
         router.refresh()
       } else {
-        toast.error(res.error ?? 'No se pudo cancelar el trabajo')
+        toast.error(res.error ?? 'No se pudo registrar la baja')
       }
     } finally {
       setIsCancelling(false)
@@ -588,58 +590,85 @@ export function TrabajosContent({
         onUpdate={() => router.refresh()}
       />
 
-      {/* Dialog de confirmación de cancelación */}
+      {/* Dialog de baja con motivo obligatorio */}
       {cancelDialog && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => !isCancelling && setCancelDialog(null)} />
+          <div className="absolute inset-0 bg-black/50" onClick={() => !isCancelling && (setCancelDialog(null), setMotivoBaja(''))} />
           <div className="relative bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden">
-            {/* Header rojo */}
+
+            {/* Header */}
             <div className="bg-red-500 px-5 pt-5 pb-4 flex items-start gap-3">
               <div className="bg-white/20 rounded-full p-2 flex-shrink-0">
                 <AlertTriangle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-white font-bold text-base leading-tight">¿Cancelar este trabajo?</p>
+                <p className="text-white font-bold text-base leading-tight">Darme de baja del trabajo</p>
                 <p className="text-red-100 text-xs mt-0.5">Incidente #{cancelDialog.id_incidente}</p>
               </div>
             </div>
 
             {/* Cuerpo */}
-            <div className="px-5 py-4 space-y-3">
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-1.5">
-                <div className="flex items-center gap-2 text-sm text-red-700 font-medium">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                  Consecuencias de cancelar:
-                </div>
-                <ul className="text-xs text-red-600 space-y-1 pl-6 list-disc">
-                  <li>Se registrará una <strong>calificación de 1 estrella</strong> en tu historial</li>
-                  <li>El incidente volverá a <strong>pendiente</strong> para que se asigne a otro técnico</li>
+            <div className="px-5 py-4 space-y-4">
+
+              {/* Aviso */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 space-y-1">
+                <p className="font-semibold">¿Qué pasa si me doy de baja?</p>
+                <ul className="space-y-0.5 pl-4 list-disc">
+                  <li>El incidente vuelve a <strong>pendiente</strong> para reasignarlo</li>
+                  <li>Queda registrado en tu <strong>historial de confiabilidad</strong></li>
                   <li>Esta acción <strong>no se puede deshacer</strong></li>
                 </ul>
+              </div>
+
+              {/* Selector de motivo */}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-700">¿Por qué te das de baja?</p>
+                <div className="space-y-2">
+                  {[
+                    'Emergencia personal o familiar',
+                    'Problema de movilidad o transporte',
+                    'No puedo cumplir con el horario acordado',
+                    'El trabajo excede mis capacidades técnicas',
+                    'Otro motivo',
+                  ].map(opcion => (
+                    <button
+                      key={opcion}
+                      type="button"
+                      onClick={() => setMotivoBaja(opcion)}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${
+                        motivoBaja === opcion
+                          ? 'border-red-400 bg-red-50 text-red-700 font-semibold'
+                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {opcion}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Botones */}
             <div className="flex gap-3 px-5 pb-6">
               <button
-                onClick={() => setCancelDialog(null)}
+                onClick={() => { setCancelDialog(null); setMotivoBaja('') }}
                 disabled={isCancelling}
                 className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-700 active:bg-gray-50 disabled:opacity-50"
               >
-                No, continuar
+                Volver
               </button>
               <button
                 onClick={confirmarCancelacion}
-                disabled={isCancelling}
-                className="flex-1 py-3 rounded-xl bg-red-500 text-sm font-semibold text-white active:bg-red-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                disabled={!motivoBaja || isCancelling}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-sm font-semibold text-white active:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isCancelling ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Cancelando...
+                    Procesando...
                   </>
                 ) : (
-                  'Sí, cancelar'
+                  'Confirmar baja'
                 )}
               </button>
             </div>

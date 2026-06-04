@@ -169,6 +169,44 @@ export async function getTecnicosParaAsignacion(): Promise<Tecnico[]> {
   return data as Tecnico[]
 }
 
+export interface FiabilidadTecnico {
+  id_tecnico: number
+  /** % de asignaciones que canceló (0–100) */
+  tasaCancelacion: number
+  totalAsignaciones: number
+}
+
+/**
+ * Calcula la tasa de cancelación de cada técnico activo.
+ * Se usa en el modal de asignación para mostrar confiabilidad.
+ */
+export async function getFiabilidadTecnicos(): Promise<Record<number, FiabilidadTecnico>> {
+  const supabase = createAdminClient()
+
+  const { data } = await supabase
+    .from('asignaciones_tecnico')
+    .select('id_tecnico, estado_asignacion')
+    .in('estado_asignacion', ['completada', 'cancelada', 'en_curso', 'aceptada', 'rechazada'])
+
+  const stats: Record<number, { total: number; canceladas: number }> = {}
+  for (const row of (data ?? []) as any[]) {
+    if (!stats[row.id_tecnico]) stats[row.id_tecnico] = { total: 0, canceladas: 0 }
+    stats[row.id_tecnico].total++
+    if (row.estado_asignacion === 'cancelada') stats[row.id_tecnico].canceladas++
+  }
+
+  const result: Record<number, FiabilidadTecnico> = {}
+  for (const [id, s] of Object.entries(stats)) {
+    const idN = Number(id)
+    result[idN] = {
+      id_tecnico: idN,
+      tasaCancelacion: s.total > 0 ? Math.round((s.canceladas / s.total) * 100) : 0,
+      totalAsignaciones: s.total,
+    }
+  }
+  return result
+}
+
 /**
  * Obtener técnico por ID
  */
