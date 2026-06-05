@@ -319,6 +319,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
   const searchParams = useSearchParams()
   const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
+  const [campoBusqueda, setCampoBusqueda] = useState<'todos' | 'id' | 'descripcion' | 'cliente' | 'direccion' | 'categoria' | 'prioridad' | 'tecnico'>('todos')
   const [filtro, setFiltro] = useState('todos')
   const [subFiltro, setSubFiltro] = useState<string>('todos')
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
@@ -456,7 +457,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
   ]
 
   // Reset page + subfiltro when filters change
-  useEffect(() => { setPagina(1); setSubFiltro('todos') }, [filtro, busqueda])
+  useEffect(() => { setPagina(1); setSubFiltro('todos') }, [filtro, busqueda, campoBusqueda])
 
   // Filter by estado + search
   const incidentesFiltrados = incidentes.filter(inc => {
@@ -475,17 +476,26 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
 
     if (busqueda.trim()) {
       const q = normalizeSearch(busqueda)
-      const matchId = inc.id_incidente.toString().includes(q)
-      const matchDesc = normalizeSearch(inc.descripcion_problema).includes(q)
-      const matchCliente = normalizeSearch(`${inc.clientes?.nombre ?? ''} ${inc.clientes?.apellido ?? ''}`).includes(q)
-      const matchDir = normalizeSearch(`${inc.inmuebles?.calle ?? ''} ${inc.inmuebles?.altura ?? ''} ${inc.inmuebles?.barrio ?? ''} ${inc.inmuebles?.localidad ?? ''}`).includes(q)
+      const matchId       = inc.id_incidente.toString().includes(q)
+      const matchDesc     = normalizeSearch(inc.descripcion_problema).includes(q)
+      const matchCliente  = normalizeSearch(`${inc.clientes?.nombre ?? ''} ${inc.clientes?.apellido ?? ''}`).includes(q)
+      const matchDir      = normalizeSearch(`${inc.inmuebles?.calle ?? ''} ${inc.inmuebles?.altura ?? ''} ${inc.inmuebles?.barrio ?? ''} ${inc.inmuebles?.localidad ?? ''}`).includes(q)
       const matchCategoria = normalizeSearch(inc.categoria).includes(q)
       const matchPrioridad = normalizeSearch(inc.nivel_prioridad).includes(q)
-      const matchTecnico = inc.asignaciones_tecnico?.some(a => {
+      const matchTecnico  = inc.asignaciones_tecnico?.some(a => {
         const t = a.tecnicos
         return t ? normalizeSearch(`${t.nombre} ${t.apellido}`).includes(q) : false
       }) ?? false
-      if (!matchId && !matchDesc && !matchCliente && !matchDir && !matchCategoria && !matchPrioridad && !matchTecnico) return false
+      const pasa = campoBusqueda === 'todos'
+        ? matchId || matchDesc || matchCliente || matchDir || matchCategoria || matchPrioridad || matchTecnico
+        : campoBusqueda === 'id'          ? matchId
+        : campoBusqueda === 'descripcion' ? matchDesc
+        : campoBusqueda === 'cliente'     ? matchCliente
+        : campoBusqueda === 'direccion'   ? matchDir
+        : campoBusqueda === 'categoria'   ? matchCategoria
+        : campoBusqueda === 'prioridad'   ? matchPrioridad
+        : matchTecnico
+      if (!pasa) return false
     }
 
     return true
@@ -506,14 +516,39 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
 
       {/* Search + Filter chips */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Buscar por ID, descripción, cliente, dirección, categoría, técnico..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder={{
+                todos:       'Buscar por ID, descripción, cliente, dirección, categoría, técnico...',
+                id:          'Buscar por número de incidente...',
+                descripcion: 'Buscar por descripción del problema...',
+                cliente:     'Buscar por nombre o apellido del cliente...',
+                direccion:   'Buscar por calle, barrio o localidad...',
+                categoria:   'Buscar por categoría...',
+                prioridad:   'Buscar por prioridad (Urgente, Alta, Normal)...',
+                tecnico:     'Buscar por nombre del técnico asignado...',
+              }[campoBusqueda]}
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <select
+            value={campoBusqueda}
+            onChange={(e) => { setCampoBusqueda(e.target.value as typeof campoBusqueda); setBusqueda('') }}
+            className="h-9 shrink-0 text-xs border border-gray-200 rounded-lg px-2.5 text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer"
+          >
+            <option value="todos">Todos los campos</option>
+            <option value="id">Nº Incidente</option>
+            <option value="descripcion">Descripción</option>
+            <option value="cliente">Cliente</option>
+            <option value="direccion">Dirección</option>
+            <option value="categoria">Categoría</option>
+            <option value="prioridad">Prioridad</option>
+            <option value="tecnico">Técnico asignado</option>
+          </select>
         </div>
         <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
           {filtros.map(({ id, label, count, Icon }) => {
