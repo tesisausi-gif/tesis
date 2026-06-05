@@ -8,12 +8,14 @@ import Link from 'next/link'
 import {
   MapPin, ClipboardList, Clock, Wrench, FileText, CheckCircle, AlertTriangle, XCircle,
   Phone, Mail, ChevronDown, ChevronUp, AlertCircle, CalendarDays, CreditCard, RefreshCw,
+  Banknote, Building2, Wallet, X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.types'
 import { createClient } from '@/shared/lib/supabase/client'
 import { cancelarAsignacionAceptada } from '@/features/asignaciones/asignaciones.service'
+import { getMisPagosComoTecnico, type MiPagoRecibido, type MiPagoPendiente } from '@/features/pagos/pagos-tecnicos.service'
 import { SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEnProceso } from '@/shared/utils/colors'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
@@ -194,6 +196,23 @@ export function TrabajosContent({
   const [motivoBaja, setMotivoBaja] = useState('')
   const [isCancelling, setIsCancelling] = useState(false)
   const [contactoExpandido, setContactoExpandido] = useState<number | null>(null)
+  const [cobrosOpen, setCobrosOpen] = useState(false)
+  const [cobrosLoading, setCobrosLoading] = useState(false)
+  const [cobrosRecibidos, setCobrosRecibidos] = useState<MiPagoRecibido[]>([])
+  const [cobrosPendientes, setCobrosPendientes] = useState<MiPagoPendiente[]>([])
+
+  const abrirHistorialCobros = async () => {
+    setCobrosOpen(true)
+    if (cobrosRecibidos.length > 0 || cobrosPendientes.length > 0) return
+    setCobrosLoading(true)
+    try {
+      const { pendientes, recibidos } = await getMisPagosComoTecnico()
+      setCobrosRecibidos(recibidos)
+      setCobrosPendientes(pendientes)
+    } finally {
+      setCobrosLoading(false)
+    }
+  }
 
   const abrirModal = (id: number, tab = 'detalles') => {
     setIncidenteSeleccionado(id)
@@ -459,8 +478,19 @@ export function TrabajosContent({
 
       {/* Header */}
       <div className="bg-white px-5 pt-6 pb-5 border-b border-gray-100">
-        <h1 className="text-2xl font-bold text-gray-900 mb-0.5">Incidentes</h1>
-        <p className="text-sm text-gray-400">Mis trabajos</p>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-0.5">Incidentes</h1>
+            <p className="text-sm text-gray-400">Mis trabajos</p>
+          </div>
+          <button
+            onClick={abrirHistorialCobros}
+            className="flex items-center gap-1.5 mt-1 shrink-0 text-xs font-semibold text-slate-500 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            Mis cobros
+          </button>
+        </div>
       </div>
 
       {asignaciones.length === 0 ? (
@@ -589,6 +619,109 @@ export function TrabajosContent({
         initialTab={modalTab}
         onUpdate={() => router.refresh()}
       />
+
+      {/* Bottom-sheet historial de cobros */}
+      {cobrosOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setCobrosOpen(false)} />
+          <div className="relative bg-white w-full max-w-lg rounded-t-2xl shadow-xl flex flex-col max-h-[80vh]">
+
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
+            </div>
+
+            {/* Header del sheet */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-emerald-600" />
+                <span className="font-bold text-gray-900 text-base">Historial de cobros</span>
+              </div>
+              <button onClick={() => setCobrosOpen(false)} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Contenido */}
+            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
+              {cobrosLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <span className="w-6 h-6 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" />
+                </div>
+              ) : cobrosRecibidos.length === 0 && cobrosPendientes.length === 0 ? (
+                <div className="text-center py-10 text-gray-400">
+                  <CreditCard className="w-10 h-10 mx-auto mb-2 text-gray-200" />
+                  <p className="text-sm">No hay cobros registrados aún</p>
+                </div>
+              ) : (
+                <>
+                  {/* Pendientes */}
+                  {cobrosPendientes.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> Pendientes de recibir ({cobrosPendientes.length})
+                      </p>
+                      {cobrosPendientes.map(p => (
+                        <div key={p.id_presupuesto} className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-amber-700 font-semibold">Incidente #{p.id_incidente}</span>
+                            <span className="text-sm font-bold text-amber-600">
+                              {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(p.monto_a_recibir)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 line-clamp-1">{p.descripcion_problema}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Recibidos */}
+                  {cobrosRecibidos.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Recibidos ({cobrosRecibidos.length})
+                      </p>
+                      {cobrosRecibidos.map(r => {
+                        const m = r.metodo_pago?.toLowerCase()
+                        const MetIcon = m === 'efectivo' ? Banknote : m === 'transferencia' ? Building2 : m === 'debito' || m === 'credito' ? CreditCard : Wallet
+                        const LABELS: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', debito: 'Débito', credito: 'Crédito' }
+                        return (
+                          <div key={r.id_pago_tecnico} className="bg-white border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs text-gray-500 font-medium">Incidente #{r.id_incidente}</span>
+                              <span className="text-sm font-bold text-emerald-600">
+                                {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(r.monto_pago)}
+                              </span>
+                            </div>
+                            {r.descripcion_problema && (
+                              <p className="text-xs text-gray-400 line-clamp-1 mb-2">{r.descripcion_problema}</p>
+                            )}
+                            <div className="flex items-center justify-between">
+                              {r.metodo_pago && (
+                                <span className="flex items-center gap-1 text-[11px] text-gray-500">
+                                  <MetIcon className="w-3 h-3" />
+                                  {LABELS[r.metodo_pago] ?? r.metodo_pago}
+                                  {r.banco && <span className="text-gray-300">· {r.banco}</span>}
+                                </span>
+                              )}
+                              <span className="text-[11px] text-gray-400 tabular-nums">
+                                {format(new Date(r.fecha_pago), "d MMM yy", { locale: es })}
+                              </span>
+                            </div>
+                            {r.referencia_pago && (
+                              <p className="text-[11px] text-gray-400 mt-1">Ref: <span className="font-mono">{r.referencia_pago}</span></p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dialog de baja con motivo obligatorio */}
       {cancelDialog && (
