@@ -192,7 +192,7 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
 
       limpiarFormulario()
       setDialogOpen(false)
-      router.refresh()
+      window.location.reload()
     } catch (error) {
       console.error('Error:', error)
       toast.error('Error inesperado')
@@ -216,7 +216,7 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
           ? 'Inmueble activado exitosamente'
           : 'Inmueble dado de baja exitosamente'
       )
-      router.refresh()
+      window.location.reload()
     } catch (error) {
       console.error('Error:', error)
       toast.error('Error inesperado')
