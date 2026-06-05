@@ -348,14 +348,21 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
     return () => { supabase.removeChannel(canal) }
   }, [])
 
-  // URL params: tab + highlight
+  // URL params: tab + highlight + openModal
   useEffect(() => {
     const tab = searchParams.get('tab')
     if (tab) setFiltro(tab)
 
     const id = searchParams.get('highlight')
     if (!id) return
-    setHighlightId(parseInt(id))
+    const parsedId = parseInt(id)
+    setHighlightId(parsedId)
+
+    if (searchParams.get('openModal')) {
+      setIncidenteSeleccionado(parsedId)
+      setModalTab('detalles')
+      setModalOpen(true)
+    }
   }, [])
 
   // Scroll al elemento destacado con retry: usa interval hasta que el DOM lo tenga
