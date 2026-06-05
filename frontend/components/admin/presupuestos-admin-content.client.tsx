@@ -157,7 +157,7 @@ export function PresupuestosAdminContent({ presupuestos: initialPresupuestos }: 
                 </TableCell>
                 <TableCell>
                   <Link
-                    href={`/dashboard/incidentes?highlight=${p.id_incidente}`}
+                    href={`/dashboard/incidentes?highlight=${p.id_incidente}&openModal=1`}
                     className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     <ExternalLink className="h-3 w-3" />
