@@ -29,7 +29,7 @@ export default async function TecnicoDashboard() {
     : { data: [] }
 
   const [badgeCounts, notificaciones, compromisos] = await Promise.all([
-    getTecnicoBadgeCounts().catch(() => ({ disponibles: 0, trabajos: 0, pagos: 0, notificaciones: 0 })),
+    getTecnicoBadgeCounts().catch(() => ({ disponibles: 0, trabajos: 0, aceptadas: 0, sinConformidad: 0, pagos: 0, notificaciones: 0 })),
     getNotificacionesTecnico().catch(() => []),
     getFranjasAgendaTecnico(tecnico?.id_tecnico ?? 0).catch(() => []),
   ])
@@ -62,7 +62,8 @@ export default async function TecnicoDashboard() {
       cntAsignado={badgeCounts.disponibles}
       cntEnProceso={cntEnProceso}
       cntFinalizado={cntFinalizado}
-      trabajosPendientes={badgeCounts.trabajos}
+      sinConformidad={badgeCounts.sinConformidad}
+      aceptadas={badgeCounts.aceptadas}
       notificaciones={notificaciones}
       compromisos={compromisos}
     />
