@@ -270,7 +270,7 @@ export async function getMisPagosComoTecnico(): Promise<{ pendientes: MiPagoPend
     .from('asignaciones_tecnico')
     .select('id_incidente')
     .eq('id_tecnico', idTecnico)
-    .in('estado_asignacion', ['en_curso', 'completado', 'aceptada'])
+    .in('estado_asignacion', ['en_curso', 'completada', 'aceptada'])
 
   if (!asignaciones?.length) return { pendientes: [], recibidos: [] }
   const idIncidentes = asignaciones.map((a: any) => a.id_incidente).filter(Boolean) as number[]
@@ -290,14 +290,15 @@ export async function getMisPagosComoTecnico(): Promise<{ pendientes: MiPagoPend
 
   const idPresupuestos = presupuestos.map((p: any) => p.id_presupuesto)
 
-  // Pagos ya recibidos
-  const { data: pagos } = await supabase
+  // Pagos ya recibidos — admin client para no depender de políticas RLS sobre pagos_tecnicos
+  const { data: pagos } = await createAdminClient()
     .from('pagos_tecnicos')
     .select(`
       id_pago_tecnico, id_incidente, id_presupuesto,
       monto_pago, metodo_pago, referencia_pago, banco, cuotas, observaciones, fecha_pago,
       incidentes (descripcion_problema)
     `)
+    .eq('id_tecnico', idTecnico)
     .in('id_presupuesto', idPresupuestos)
     .order('fecha_pago', { ascending: false })
 
