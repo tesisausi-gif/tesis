@@ -8,7 +8,7 @@ import Link from 'next/link'
 import {
   MapPin, ClipboardList, Clock, Wrench, FileText, CheckCircle, AlertTriangle, XCircle,
   Phone, Mail, ChevronDown, ChevronUp, AlertCircle, CalendarDays, CreditCard, RefreshCw,
-  Banknote, Building2, Wallet, X,
+  Banknote, Building2, Wallet, X, Search,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -16,6 +16,7 @@ import type { AsignacionTecnico } from '@/features/asignaciones/asignaciones.typ
 import { createClient } from '@/shared/lib/supabase/client'
 import { cancelarAsignacionAceptada } from '@/features/asignaciones/asignaciones.service'
 import { getMisPagosComoTecnico, type MiPagoRecibido, type MiPagoPendiente } from '@/features/pagos/pagos-tecnicos.service'
+import { normalizeSearch } from '@/shared/utils'
 import { SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEnProceso } from '@/shared/utils/colors'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
@@ -196,6 +197,7 @@ export function TrabajosContent({
   const [motivoBaja, setMotivoBaja] = useState('')
   const [isCancelling, setIsCancelling] = useState(false)
   const [contactoExpandido, setContactoExpandido] = useState<number | null>(null)
+  const [busqueda, setBusqueda] = useState('')
   const [cobrosOpen, setCobrosOpen] = useState(false)
   const [cobrosLoading, setCobrosLoading] = useState(false)
   const [cobrosRecibidos, setCobrosRecibidos] = useState<MiPagoRecibido[]>([])
@@ -266,7 +268,7 @@ export function TrabajosContent({
 
   // ── Filtros ─────────────────────────────────────────────────────────────
 
-  useEffect(() => { setSubFiltro('todos') }, [filtro])
+  useEffect(() => { setSubFiltro('todos'); setBusqueda('') }, [filtro])
 
   const sk = (a: AsignacionTecnico) =>
     getStatusKey(
@@ -286,10 +288,24 @@ export function TrabajosContent({
     { id: 'resueltos',  label: 'Finalizados', count: resueltas.length,    Icon: CheckCircle },
   ]
 
-  const listaFiltrada =
+  const listaFiltradaBase =
     filtro === 'resueltos' ? resueltas :
     filtro === 'en_proceso' ? enProceso :
     asignaciones
+
+  const listaFiltrada = busqueda.trim()
+    ? listaFiltradaBase.filter(a => {
+        const q = normalizeSearch(busqueda)
+        const inc = a.incidentes
+        return (
+          a.id_incidente.toString().includes(q) ||
+          normalizeSearch(inc?.descripcion_problema ?? '').includes(q) ||
+          normalizeSearch(inc?.categoria ?? '').includes(q) ||
+          normalizeSearch(`${inc?.inmuebles?.calle ?? ''} ${inc?.inmuebles?.barrio ?? ''} ${inc?.inmuebles?.localidad ?? ''}`).includes(q) ||
+          normalizeSearch(`${inc?.clientes?.nombre ?? ''} ${inc?.clientes?.apellido ?? ''}`).includes(q)
+        )
+      })
+    : listaFiltradaBase
 
   // ── Card ────────────────────────────────────────────────────────────────
 
@@ -526,6 +542,25 @@ export function TrabajosContent({
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 to-transparent" />
           </div>
 
+          {/* Barra de búsqueda */}
+          <div className="bg-white border-b border-gray-100 px-4 py-2.5">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por ID, descripción, dirección, categoría..."
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                className="w-full pl-8 pr-8 py-2 text-xs rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white transition-colors"
+              />
+              {busqueda && (
+                <button onClick={() => setBusqueda('')} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                  <X className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Lista */}
           {listaFiltrada.length === 0 ? (
             <div className="px-4 pt-3 text-center py-12 text-gray-400 text-sm">
@@ -642,6 +677,30 @@ export function TrabajosContent({
               </button>
             </div>
 
+            {/* Totales — solo cuando hay datos */}
+            {!cobrosLoading && (cobrosRecibidos.length > 0 || cobrosPendientes.length > 0) && (
+              <div className="grid grid-cols-2 divide-x divide-gray-100 border-b border-gray-100 bg-gray-50">
+                <div className="text-center px-4 py-3">
+                  <p className="text-[10px] font-semibold text-amber-500 uppercase tracking-wide mb-0.5">Por recibir</p>
+                  <p className="text-lg font-bold text-amber-600 tabular-nums">
+                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
+                      cobrosPendientes.reduce((s, p) => s + p.monto_a_recibir, 0)
+                    )}
+                  </p>
+                  <p className="text-[10px] text-gray-400">{cobrosPendientes.length} pendiente{cobrosPendientes.length !== 1 ? 's' : ''}</p>
+                </div>
+                <div className="text-center px-4 py-3">
+                  <p className="text-[10px] font-semibold text-emerald-500 uppercase tracking-wide mb-0.5">Total recibido</p>
+                  <p className="text-lg font-bold text-emerald-600 tabular-nums">
+                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
+                      cobrosRecibidos.reduce((s, r) => s + r.monto_pago, 0)
+                    )}
+                  </p>
+                  <p className="text-[10px] text-gray-400">{cobrosRecibidos.length} pago{cobrosRecibidos.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            )}
+
             {/* Contenido */}
             <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
               {cobrosLoading ? (
@@ -662,7 +721,11 @@ export function TrabajosContent({
                         <Clock className="w-3 h-3" /> Pendientes de recibir ({cobrosPendientes.length})
                       </p>
                       {cobrosPendientes.map(p => (
-                        <div key={p.id_presupuesto} className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                        <button
+                          key={p.id_presupuesto}
+                          onClick={() => { setCobrosOpen(false); abrirModal(p.id_incidente, 'detalles') }}
+                          className="w-full text-left bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 hover:bg-amber-100/70 active:bg-amber-100 transition-colors"
+                        >
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs text-amber-700 font-semibold">Incidente #{p.id_incidente}</span>
                             <span className="text-sm font-bold text-amber-600">
@@ -670,7 +733,7 @@ export function TrabajosContent({
                             </span>
                           </div>
                           <p className="text-xs text-gray-500 line-clamp-1">{p.descripcion_problema}</p>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -686,7 +749,11 @@ export function TrabajosContent({
                         const MetIcon = m === 'efectivo' ? Banknote : m === 'transferencia' ? Building2 : m === 'debito' || m === 'credito' ? CreditCard : Wallet
                         const LABELS: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', debito: 'Débito', credito: 'Crédito' }
                         return (
-                          <div key={r.id_pago_tecnico} className="bg-white border border-gray-100 rounded-xl px-4 py-3 shadow-sm">
+                          <button
+                            key={r.id_pago_tecnico}
+                            onClick={() => { setCobrosOpen(false); abrirModal(r.id_incidente, 'detalles') }}
+                            className="w-full text-left bg-white border border-gray-100 rounded-xl px-4 py-3 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                          >
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-xs text-gray-500 font-medium">Incidente #{r.id_incidente}</span>
                               <span className="text-sm font-bold text-emerald-600">
@@ -711,7 +778,7 @@ export function TrabajosContent({
                             {r.referencia_pago && (
                               <p className="text-[11px] text-gray-400 mt-1">Ref: <span className="font-mono">{r.referencia_pago}</span></p>
                             )}
-                          </div>
+                          </button>
                         )
                       })}
                     </div>
