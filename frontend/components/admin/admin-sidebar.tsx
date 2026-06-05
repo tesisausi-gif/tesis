@@ -26,6 +26,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { createClient } from '@/shared/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -59,6 +60,9 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  const closeSidebarOnMobile = () => { if (isMobile) setOpenMobile(false) }
   const [counts, setCounts] = useState<AdminBadgeCounts>({ incidentes: 0, conformidades: 0, presupuestos: 0, pagos: 0, solicitudes: 0, reasignaciones: 0, notificaciones: 0 })
 
   useEffect(() => {
@@ -111,7 +115,7 @@ export function AdminSidebar() {
                       asChild
                       isActive={pathname === item.href}
                     >
-                      <Link href={item.href} className="flex items-center gap-2 w-full">
+                      <Link href={item.href} className="flex items-center gap-2 w-full" onClick={closeSidebarOnMobile}>
                         <item.icon className="h-4 w-4 shrink-0" />
                         <span className="flex-1">{item.title}</span>
                         <NavBadge count={badgeCount} />
@@ -128,7 +132,7 @@ export function AdminSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="/dashboard/configuracion">
+              <Link href="/dashboard/configuracion" onClick={closeSidebarOnMobile}>
                 <Settings className="h-4 w-4" />
                 <span>Configuración</span>
               </Link>
