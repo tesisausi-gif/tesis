@@ -23,7 +23,7 @@ function TecnicoNavComponent() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const [counts, setCounts] = useState<TecnicoBadgeCounts>({ disponibles: 0, trabajos: 0, pagos: 0, notificaciones: 0 })
+  const [counts, setCounts] = useState<TecnicoBadgeCounts>({ disponibles: 0, trabajos: 0, aceptadas: 0, sinConformidad: 0, pagos: 0, notificaciones: 0 })
 
   useEffect(() => {
     const refresh = () => getTecnicoBadgeCounts().then(setCounts).catch(() => {})
