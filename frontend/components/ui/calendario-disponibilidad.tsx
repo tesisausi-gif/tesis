@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { es } from 'date-fns/locale'
 import { format, parseISO, isValid } from 'date-fns'
-import { ChevronLeft, ChevronRight, Plus, X, Clock, CalendarDays, CheckCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, X, Clock, CalendarDays, CheckCircle, AlertTriangle } from 'lucide-react'
 import { cn } from '@/shared/utils'
 
 export interface FranjaInput {
@@ -201,6 +201,7 @@ function CompromisoEditor({
   const diasDisponibles = [...new Set(franjas.map(f => f.fecha))].sort()
   const franjasDelDia = franjas.filter(f => f.fecha === diaSeleccionado)
   const horaFin = sumarMinutos(horaInicio, duracionMin)
+  const dentroDeRango = franjasDelDia.some(f => horaInicio >= f.hora_inicio && horaFin <= f.hora_fin)
 
   const confirmar = async () => {
     if (!diaSeleccionado) return
@@ -302,6 +303,22 @@ function CompromisoEditor({
             <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             <span>Salida estimada: <strong>{horaFin}</strong></span>
           </div>
+
+          {/* Alerta irreversible — solo cuando el horario cae dentro del rango del cliente */}
+          {dentroDeRango && (
+            <div className="rounded-xl border-2 border-orange-300 bg-orange-50 p-3 flex items-start gap-2.5">
+              <div className="shrink-0 w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center mt-0.5">
+                <AlertTriangle className="w-4 h-4 text-orange-600" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-orange-800">Acción irreversible</p>
+                <p className="text-[11px] text-orange-700 leading-relaxed">
+                  Una vez confirmada, <strong>no podrás cambiar la fecha ni la hora</strong>.
+                  Si necesitás cancelar, solo podrás <strong>darte de baja del incidente</strong>.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Confirmar */}
           <button type="button" onClick={confirmar} disabled={guardando}
