@@ -10,8 +10,8 @@ import {
   useThread,
   type ChatModelAdapter,
 } from '@assistant-ui/react'
-import { Button } from '@/components/ui/button'
 import { X, Send, ImagePlus, XCircle, ArrowRight } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { sendMessageToWalter } from '@/features/walter/walter.service'
 import type { WalterMessage, WalterRol, WalterSuggestedAction } from '@/features/walter/walter.types'
 import Link from 'next/link'
@@ -177,8 +177,8 @@ function WalterChatPanel({
                 <div className="flex justify-start mb-3">
                   <div className="max-w-[82%] space-y-1 flex flex-col items-start">
                     {textContent && (
-                      <div className="px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed whitespace-pre-wrap text-slate-800 bg-slate-100">
-                        {textContent}
+                      <div className="px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed text-slate-800 bg-slate-100 walter-prose">
+                        <ReactMarkdown>{textContent}</ReactMarkdown>
                       </div>
                     )}
                   </div>
@@ -308,7 +308,8 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setPosition({ x: window.innerWidth - 64, y: window.innerHeight - 160 })
+      // Keep button above bottom nav bars (64px) + safe area + margin
+      setPosition({ x: window.innerWidth - 72, y: window.innerHeight - 220 })
       setMounted(true)
     }
   }, [])
@@ -482,6 +483,14 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         .animate-float { animation: float 3s ease-in-out infinite; }
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .walter-prose p { margin: 0 0 0.5rem 0; }
+        .walter-prose p:last-child { margin-bottom: 0; }
+        .walter-prose strong { font-weight: 700; color: #1e293b; }
+        .walter-prose ul { list-style: disc; padding-left: 1.25rem; margin: 0.25rem 0 0.5rem; }
+        .walter-prose ol { list-style: decimal; padding-left: 1.25rem; margin: 0.25rem 0 0.5rem; }
+        .walter-prose li { margin-bottom: 0.15rem; }
+        .walter-prose h1, .walter-prose h2, .walter-prose h3 { font-weight: 700; margin: 0.5rem 0 0.25rem; color: #0f172a; }
       `}</style>
     </>
   )
