@@ -65,7 +65,7 @@ const PERIODOS: { valor: Periodo; label: string }[] = [
 type SeccionActiva = 'indicadores' | 'ppis'
 
 export function MetricasContent({ metricas: metricasIniciales, reportes, ppis }: MetricasContentProps) {
-  const [seccion, setSeccion] = useState<SeccionActiva>('indicadores')
+  const [seccion, setSeccion] = useState<SeccionActiva>('ppis')
   const [metricas, setMetricas] = useState(metricasIniciales)
   const [periodo, setPeriodo] = useState<Periodo>('todo')
   const [customDesde, setCustomDesde] = useState('')
@@ -118,9 +118,9 @@ export function MetricasContent({ metricas: metricasIniciales, reportes, ppis }:
         ) : undefined}
       />
 
-      {/* Selector de sección */}
+      {/* Selector de sección — tab "Indicadores" oculto temporalmente */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl self-start">
-        <button
+        {/* <button
           onClick={() => setSeccion('indicadores')}
           className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
             seccion === 'indicadores'
@@ -129,7 +129,7 @@ export function MetricasContent({ metricas: metricasIniciales, reportes, ppis }:
           }`}
         >
           Indicadores
-        </button>
+        </button> */}
         <button
           onClick={() => setSeccion('ppis')}
           className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
