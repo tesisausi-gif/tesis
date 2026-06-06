@@ -29,6 +29,23 @@ export async function getVisitaActivaDeIncidente(idIncidente: number): Promise<V
   return data as VisitaResumen | null
 }
 
+export async function getVisitaActivaPorTipo(
+  idIncidente: number,
+  tipo: TipoVisita,
+): Promise<VisitaResumen | null> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('visitas')
+    .select('id_visita, id_incidente, tipo, fecha_visita, hora_inicio, hora_fin_estimada, estado, fuera_de_disponibilidad, notas_tecnico')
+    .eq('id_incidente', idIncidente)
+    .eq('tipo', tipo)
+    .in('estado', ['propuesta', 'confirmada'])
+    .order('fecha_creacion', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  return data as VisitaResumen | null
+}
+
 // Bulk para alimentar listas de incidentes
 export async function getVisitasActivasPorIncidentes(
   ids: number[],

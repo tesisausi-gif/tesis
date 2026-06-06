@@ -72,7 +72,7 @@ import { crearAvance } from '@/features/avances/avances.service'
 import { getFranjasDisponibilidad, getCompromisoDeAsignacion, guardarCompromisoTecnico } from '@/features/disponibilidad/disponibilidad.service'
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import type { CompromisoTecnico } from '@/features/disponibilidad/disponibilidad.types'
-import { getVisitaActivaDeIncidente, getVisitasDeIncidente as getVisitasDeIncidenteTimeline } from '@/features/visitas/visitas.service'
+import { getVisitaActivaDeIncidente, getVisitaActivaPorTipo, getVisitasDeIncidente as getVisitasDeIncidenteTimeline } from '@/features/visitas/visitas.service'
 import type { VisitaResumen } from '@/features/visitas/visitas.types'
 import { PropVisitaSection } from '@/components/tecnico/proponer-visita-section.client'
 import { ConfirmarVisitaPanel } from '@/components/cliente/confirmar-visita-panel.client'
@@ -378,6 +378,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [franjas, setFranjas] = useState<FranjaInput[]>([])
   const [compromiso, setCompromiso] = useState<CompromisoTecnico | null>(null)
   const [visitaActiva, setVisitaActiva] = useState<VisitaResumen | null>(null)
+  const [visitaReparacionActiva, setVisitaReparacionActiva] = useState<VisitaResumen | null>(null)
 
   // Form state para gestión
   const [nuevoEstado, setNuevoEstado] = useState('')
@@ -484,18 +485,20 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       // Cargar datos específicos por rol
       if (rol === 'tecnico' || rol === 'admin') {
         try {
-          const [inspeccionesData, presupuestosData, conformidadData, franjasData, visitaData] = await Promise.all([
+          const [inspeccionesData, presupuestosData, conformidadData, franjasData, visitaData, visitaReparData] = await Promise.all([
             getInspeccionesDelIncidente(incidenteId),
             getPresupuestosDelIncidente(incidenteId),
             getConformidadDelIncidente(incidenteId),
             getFranjasDisponibilidad(incidenteId),
             getVisitaActivaDeIncidente(incidenteId),
+            getVisitaActivaPorTipo(incidenteId, 'reparacion'),
           ])
           setInspecciones(inspeccionesData)
           setPresupuestos(presupuestosData)
           setConformidad(conformidadData)
           setFranjas(franjasData as FranjaInput[])
           setVisitaActiva(visitaData)
+          setVisitaReparacionActiva(visitaReparData)
 
           // Para técnico: cargar compromiso de la asignación activa
           if (rol === 'tecnico') {
@@ -634,22 +637,33 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         cancelada:  { titulo: 'Visita cancelada',   color: 'bg-gray-400'   },
         rechazada:  { titulo: 'Visita rechazada',   color: 'bg-red-400'    },
       }
-      const cfg = ESTADO_VISITA[v.estado] ?? { titulo: 'Visita', color: 'bg-gray-400' }
       const TIPO_LABELS: Record<string, string> = {
         inspeccion:  'Inspección inicial',
         reparacion:  'Reparación',
         seguimiento: 'Seguimiento',
       }
+      const TIPO_COLOR: Record<string, string> = {
+        inspeccion:  'bg-cyan-500',
+        reparacion:  'bg-amber-500',
+        seguimiento: 'bg-purple-500',
+      }
+      const tipoColor = TIPO_COLOR[v.tipo] ?? 'bg-gray-400'
+      const cfg = {
+        ...( ESTADO_VISITA[v.estado] ?? { titulo: 'Visita', color: 'bg-gray-400' }),
+        color: tipoColor,
+      }
+      const tipoLabel = TIPO_LABELS[v.tipo] ?? v.tipo
       const detalle: TimelineEventDetalle[] = [
-        { label: 'Tipo', value: TIPO_LABELS[v.tipo] ?? v.tipo },
+        { label: 'Tipo', value: tipoLabel },
         { label: 'Hora', value: `${v.hora_inicio}${v.hora_fin_estimada ? ` – ${v.hora_fin_estimada}` : ''}` },
+        { label: 'Estado', value: ESTADO_VISITA[v.estado]?.titulo ?? v.estado },
         ...(v.fuera_de_disponibilidad ? [{ label: 'Aviso', value: 'Fuera de disponibilidad declarada' }] : []),
         ...(v.notas_tecnico ? [{ label: 'Notas', value: v.notas_tecnico }] : []),
       ]
       timelineEvents.push({
         id: `visita-${v.id_visita}`,
         tipo: 'visita',
-        titulo: cfg.titulo,
+        titulo: `${ESTADO_VISITA[v.estado]?.titulo ?? 'Visita'} · ${tipoLabel}`,
         descripcion: new Date(v.fecha_visita + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }),
         fecha: v.fecha_creacion,
         icono: <CalendarDays className="h-4 w-4" />,
@@ -2258,6 +2272,23 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       </div>
                     ) : (
                       <>
+                        {/* Coordinación de visita de reparación */}
+                        {franjas.length > 0 && (() => {
+                          const asigActiva = asignaciones.find(a =>
+                            ['aceptada', 'en_curso'].includes(a.estado_asignacion)
+                          ) as any
+                          return asigActiva ? (
+                            <PropVisitaSection
+                              idIncidente={incidente.id_incidente}
+                              idTecnico={asigActiva.id_tecnico}
+                              franjas={franjas}
+                              initialVisita={visitaReparacionActiva}
+                              tipoForzado="reparacion"
+                              onCambio={() => cargarIncidente()}
+                            />
+                          ) : null
+                        })()}
+
                         {/* Presupuestos adicionales */}
                         <div className="space-y-3">
                           <h4 className="font-semibold text-sm text-gray-600 flex items-center gap-2">

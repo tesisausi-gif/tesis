@@ -9,13 +9,21 @@ import type { VisitaResumen } from '@/features/visitas/visitas.types'
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 
 interface Props {
-  idIncidente:  number
-  idTecnico:    number
-  franjas:      FranjaInput[]
+  idIncidente:   number
+  idTecnico:     number
+  franjas:       FranjaInput[]
   initialVisita: VisitaResumen | null
-  onCambio: () => void
+  onCambio:      () => void
   onIrAInspeccion?: () => void
+  /** Si se pasa, bloquea el selector de tipo y usa este valor. */
+  tipoForzado?: 'inspeccion' | 'reparacion' | 'seguimiento'
 }
+
+const TIPO_CONFIG = {
+  inspeccion:  { titulo: 'Coordinar visita de inspección', color: 'cyan',   border: 'border-cyan-200',   bg: 'bg-cyan-50/60',   text: 'text-cyan-800',  icon: 'text-cyan-600'  },
+  reparacion:  { titulo: 'Coordinar visita de obra',       color: 'amber',  border: 'border-amber-200',  bg: 'bg-amber-50/60',  text: 'text-amber-800', icon: 'text-amber-600' },
+  seguimiento: { titulo: 'Coordinar visita de seguimiento', color: 'purple', border: 'border-purple-200', bg: 'bg-purple-50/60', text: 'text-purple-800', icon: 'text-purple-600' },
+} as const
 
 const TIPO_LABELS = {
   inspeccion:  'Inspección inicial',
@@ -32,9 +40,11 @@ export function PropVisitaSection({
   initialVisita,
   onCambio,
   onIrAInspeccion,
+  tipoForzado,
 }: Props) {
   const [visita, setVisita]               = useState<VisitaResumen | null>(initialVisita)
-  const [tipo, setTipo]                   = useState<'inspeccion' | 'reparacion' | 'seguimiento'>('inspeccion')
+  const [tipo, setTipo]                   = useState<'inspeccion' | 'reparacion' | 'seguimiento'>(tipoForzado ?? 'inspeccion')
+  const tcfg                              = TIPO_CONFIG[tipoForzado ?? tipo]
   const [loading, setLoading]             = useState(false)
   const [postCompletar, setPostCompletar] = useState(false)
   const [pendiente, setPendiente]         = useState<SeleccionPendiente | null>(null)
@@ -228,32 +238,34 @@ export function PropVisitaSection({
 
   // ── Sin visita — mostrar selector ────────────────────────────────────────────
   return (
-    <div className="rounded-xl border border-cyan-200 bg-cyan-50/60 p-4 space-y-3 mb-4">
+    <div className={`rounded-xl border p-4 space-y-3 mb-4 ${tcfg.border} ${tcfg.bg}`}>
       <div className="flex items-center gap-2">
-        <CalendarDays className="h-4 w-4 text-cyan-600" />
-        <p className="text-sm font-semibold text-cyan-800">Proponer visita al cliente</p>
+        <CalendarDays className={`h-4 w-4 ${tcfg.icon}`} />
+        <p className={`text-sm font-semibold ${tcfg.text}`}>{tcfg.titulo}</p>
       </div>
-      <p className="text-xs text-cyan-700">
+      <p className={`text-xs ${tcfg.text} opacity-80`}>
         Seleccioná un día disponible del cliente y el horario al que vas a ir. El cliente recibirá
         una notificación para confirmar.
       </p>
 
-      {/* Selector de tipo de visita */}
-      <div className="flex gap-2 flex-wrap">
-        {(['inspeccion', 'reparacion', 'seguimiento'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTipo(t)}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
-              tipo === t
-                ? 'bg-cyan-700 text-white'
-                : 'bg-white border border-cyan-200 text-cyan-700 hover:bg-cyan-100'
-            }`}
-          >
-            {TIPO_LABELS[t]}
-          </button>
-        ))}
-      </div>
+      {/* Selector de tipo de visita — solo si no hay tipo forzado */}
+      {!tipoForzado && (
+        <div className="flex gap-2 flex-wrap">
+          {(['inspeccion', 'reparacion', 'seguimiento'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTipo(t)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                tipo === t
+                  ? 'bg-slate-800 text-white'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {TIPO_LABELS[t]}
+            </button>
+          ))}
+        </div>
+      )}
 
       <CalendarioDisponibilidad
         modo="comprometer"
