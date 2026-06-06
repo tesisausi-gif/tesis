@@ -583,9 +583,10 @@ export interface ReasignacionPorTecnico {
   nombre: string
   apellido: string
   totalAsignaciones: number
-  rechazadas: number       // El técnico rechazó antes de aceptar
-  canceladas: number       // El técnico canceló después de aceptar
-  tasaProblema: number     // (rechazadas + canceladas) / total × 100
+  rechazadas: number              // El técnico rechazó antes de aceptar
+  canceladas: number              // El técnico canceló después de aceptar
+  presupuestosRechazados: number  // El técnico presentó el presupuesto y el admin no lo aceptó
+  tasaProblema: number            // (rechazadas + canceladas + presupuestosRechazados) / total × 100
   semaforo: Semaforo
 }
 
@@ -610,8 +611,9 @@ export interface ReasignacionData {
   totalIncidentesAsignados: number
   totalConReasignacion: number
   motivoDesglose: {
-    rechazadas: number    // asignaciones en estado 'rechazada' (tech no quiso)
-    canceladas: number    // asignaciones en estado 'cancelada' (tech abandonó)
+    rechazadas: number             // asignaciones en estado 'rechazada' (tech no quiso)
+    canceladas: number             // asignaciones en estado 'cancelada' (tech abandonó)
+    presupuestosRechazados: number // presupuesto presentado por el técnico y rechazado por admin
   }
   porTecnico: ReasignacionPorTecnico[]
   porCategoria: ReasignacionPorCategoria[]
@@ -631,19 +633,29 @@ export interface ReasignacionData {
 export async function getReasignacionData(): Promise<ReasignacionData> {
   const supabase = createAdminClient()
 
-  // Traer todas las asignaciones con datos del técnico e incidente
-  const { data: asignaciones } = await supabase
-    .from('asignaciones_tecnico')
-    .select(`
-      id_asignacion,
-      id_incidente,
-      id_tecnico,
-      estado_asignacion,
-      fecha_asignacion,
-      tecnicos ( nombre, apellido ),
-      incidentes ( categoria, fecha_registro )
-    `)
-    .order('fecha_asignacion', { ascending: true })
+  // Traer todas las asignaciones con datos del técnico e incidente, y presupuestos rechazados
+  const [{ data: asignaciones }, { data: presRechazadosRaw }] = await Promise.all([
+    supabase
+      .from('asignaciones_tecnico')
+      .select(`
+        id_asignacion,
+        id_incidente,
+        id_tecnico,
+        estado_asignacion,
+        fecha_asignacion,
+        tecnicos ( nombre, apellido ),
+        incidentes ( categoria, fecha_registro )
+      `)
+      .order('fecha_asignacion', { ascending: true }),
+    supabase
+      .from('presupuestos')
+      .select('id_incidente')
+      .eq('estado_presupuesto', 'rechazado'),
+  ])
+
+  const incidentesConPresRechazado = new Set(
+    (presRechazadosRaw || []).map((p: any) => p.id_incidente as number)
+  )
 
   if (!asignaciones?.length) {
     return {
@@ -651,7 +663,7 @@ export async function getReasignacionData(): Promise<ReasignacionData> {
       semaforoGlobal: 'sin_datos',
       totalIncidentesAsignados: 0,
       totalConReasignacion: 0,
-      motivoDesglose: { rechazadas: 0, canceladas: 0 },
+      motivoDesglose: { rechazadas: 0, canceladas: 0, presupuestosRechazados: incidentesConPresRechazado.size },
       porTecnico: [],
       porCategoria: [],
       tendenciaMensual: [],
@@ -666,8 +678,9 @@ export async function getReasignacionData(): Promise<ReasignacionData> {
   }
 
   const totalIncidentesAsignados = porIncidente.size
-  const conReasignacion = [...porIncidente.values()].filter(asigs =>
-    asigs.some(a => a.estado_asignacion === 'rechazada' || a.estado_asignacion === 'cancelada')
+  const conReasignacion = [...porIncidente.entries()].filter(([idInc, asigs]) =>
+    asigs.some(a => a.estado_asignacion === 'rechazada' || a.estado_asignacion === 'cancelada') ||
+    incidentesConPresRechazado.has(idInc)
   )
   const totalConReasignacion = conReasignacion.length
   const tasaGlobal = totalIncidentesAsignados > 0
@@ -679,14 +692,15 @@ export async function getReasignacionData(): Promise<ReasignacionData> {
     : tasaGlobal <= 25 ? 'amarillo'
     : 'rojo'
 
-  // ── Desglose por motivo (rechazadas vs canceladas) ─────────────────────────
+  // ── Desglose por motivo ────────────────────────────────────────────────────
   const rechazadas = asignaciones.filter(a => a.estado_asignacion === 'rechazada').length
   const canceladas  = asignaciones.filter(a => a.estado_asignacion === 'cancelada').length
+  const presupuestosRechazados = incidentesConPresRechazado.size
 
   // ── Por técnico ────────────────────────────────────────────────────────────
   const tecnicoMap = new Map<number, {
     nombre: string; apellido: string
-    total: number; rechazadas: number; canceladas: number
+    total: number; rechazadas: number; canceladas: number; presRechazados: number
   }>()
 
   for (const asig of asignaciones) {
@@ -695,7 +709,7 @@ export async function getReasignacionData(): Promise<ReasignacionData> {
       tecnicoMap.set(asig.id_tecnico, {
         nombre: tec?.nombre ?? '—',
         apellido: tec?.apellido ?? '',
-        total: 0, rechazadas: 0, canceladas: 0,
+        total: 0, rechazadas: 0, canceladas: 0, presRechazados: 0,
       })
     }
     const t = tecnicoMap.get(asig.id_tecnico)!
@@ -704,9 +718,18 @@ export async function getReasignacionData(): Promise<ReasignacionData> {
     if (asig.estado_asignacion === 'cancelada')  t.canceladas++
   }
 
+  // Atribuir presupuestos rechazados al técnico con asignación activa en ese incidente
+  for (const idInc of incidentesConPresRechazado) {
+    const asigs = porIncidente.get(idInc) ?? []
+    const asigActiva = asigs.find(a => !['rechazada', 'cancelada'].includes(a.estado_asignacion))
+    if (asigActiva && tecnicoMap.has(asigActiva.id_tecnico)) {
+      tecnicoMap.get(asigActiva.id_tecnico)!.presRechazados++
+    }
+  }
+
   const porTecnico: ReasignacionPorTecnico[] = [...tecnicoMap.entries()]
     .map(([id, t]) => {
-      const tasa = t.total > 0 ? Math.round(((t.rechazadas + t.canceladas) / t.total) * 100) : 0
+      const tasa = t.total > 0 ? Math.round(((t.rechazadas + t.canceladas + t.presRechazados) / t.total) * 100) : 0
       return {
         id_tecnico: id,
         nombre: t.nombre,
@@ -714,6 +737,7 @@ export async function getReasignacionData(): Promise<ReasignacionData> {
         totalAsignaciones: t.total,
         rechazadas: t.rechazadas,
         canceladas: t.canceladas,
+        presupuestosRechazados: t.presRechazados,
         tasaProblema: tasa,
         semaforo: (tasa <= 20 ? 'verde' : tasa <= 40 ? 'amarillo' : 'rojo') as Semaforo,
       }
@@ -723,12 +747,15 @@ export async function getReasignacionData(): Promise<ReasignacionData> {
   // ── Por categoría ──────────────────────────────────────────────────────────
   const categoriaMap = new Map<string, { total: number; conReasig: number }>()
 
-  for (const [, asigs] of porIncidente) {
+  for (const [idInc, asigs] of porIncidente) {
     const cat = (asigs[0]?.incidentes as any)?.categoria ?? 'Sin categoría'
     if (!categoriaMap.has(cat)) categoriaMap.set(cat, { total: 0, conReasig: 0 })
     const c = categoriaMap.get(cat)!
     c.total++
-    if (asigs.some(a => a.estado_asignacion === 'rechazada' || a.estado_asignacion === 'cancelada')) {
+    if (
+      asigs.some(a => a.estado_asignacion === 'rechazada' || a.estado_asignacion === 'cancelada') ||
+      incidentesConPresRechazado.has(idInc)
+    ) {
       c.conReasig++
     }
   }
@@ -765,7 +792,10 @@ export async function getReasignacionData(): Promise<ReasignacionData> {
       const totalMes = incidentesMes.size
       const conReasigMes = [...incidentesMes.keys()].filter(id => {
         const todasAsigs = porIncidente.get(id) ?? []
-        return todasAsigs.some(a => a.estado_asignacion === 'rechazada' || a.estado_asignacion === 'cancelada')
+        return (
+          todasAsigs.some(a => a.estado_asignacion === 'rechazada' || a.estado_asignacion === 'cancelada') ||
+          incidentesConPresRechazado.has(id)
+        )
       }).length
       return {
         mes: m,
@@ -782,7 +812,7 @@ export async function getReasignacionData(): Promise<ReasignacionData> {
     semaforoGlobal,
     totalIncidentesAsignados,
     totalConReasignacion,
-    motivoDesglose: { rechazadas, canceladas },
+    motivoDesglose: { rechazadas, canceladas, presupuestosRechazados },
     porTecnico,
     porCategoria,
     tendenciaMensual,

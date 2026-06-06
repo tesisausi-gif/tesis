@@ -437,10 +437,11 @@ function FilaTecnicoReasig({ t, max }: { t: ReasignacionPorTecnico; max: number 
           style={{ width: `${Math.max((t.tasaProblema / max) * 100, 4)}%` }}
         />
       </div>
-      <div className="flex gap-3 text-[10px] text-slate-500">
+      <div className="flex gap-3 text-[10px] text-slate-500 flex-wrap">
         <span>{t.totalAsignaciones} asignaciones</span>
-        {t.rechazadas > 0 && <span className="text-amber-600">{t.rechazadas} rechazadas</span>}
+        {t.rechazadas > 0 && <span className="text-amber-600">{t.rechazadas} no aceptó trabajo</span>}
         {t.canceladas  > 0 && <span className="text-red-600">{t.canceladas} canceladas</span>}
+        {t.presupuestosRechazados > 0 && <span className="text-orange-600">{t.presupuestosRechazados} presup. rechazado</span>}
       </div>
     </div>
   )
@@ -458,10 +459,10 @@ function ReasignacionMetrica({ data }: { data: ReasignacionData }) {
         numero="Reasign."
         titulo="¿Con qué frecuencia hay que buscar otro técnico para el mismo trabajo?"
         resumen="Cada vez que un técnico rechaza o abandona una asignación, el cliente queda esperando y el administrador tiene que empezar de cero. Este indicador mide con qué frecuencia pasa eso. Cuanto más bajo, mejor."
-        proceso="Cuenta cuántos trabajos necesitaron que se les asignara más de un técnico, ya sea porque el técnico rechazó o porque se dio de baja después de aceptar."
-        porque="Cada reasignación es tiempo perdido para el cliente y trabajo extra para el administrador. Si el número es alto, puede significar que los técnicos están sobrecargados, que se les asignan trabajos fuera de su especialidad, o que no tienen suficiente información cuando aceptan."
-        accion="🔴 Si está en rojo: ver quién genera más rechazos y en qué tipos de trabajos. Si un técnico específico rechaza mucho → hablar con él y revisar su carga. Si pasa seguido en cierto tipo de problema → puede que falten técnicos especializados en esa área."
-        formula="TR = (Incidentes con al menos 1 rechazo o cancelación / Total incidentes asignados) × 100 · Fuente: asignaciones_tecnico estados rechazada y cancelada"
+        proceso="Cuenta cuántos trabajos tuvieron al menos uno de estos tres problemas: el técnico no aceptó el trabajo, el técnico aceptó y luego abandonó, o el técnico presentó un presupuesto y el administrador lo rechazó."
+        porque="Cada una de estas situaciones genera retraso para el cliente y trabajo extra para el administrador. Si el número es alto, puede significar que los técnicos están sobrecargados, que se les asignan trabajos fuera de su especialidad, o que sus presupuestos no están bien fundamentados."
+        accion="🔴 Si está en rojo: ver quién genera más rechazos y en qué tipos de trabajos. Si un técnico rechaza mucho el trabajo → revisar su carga. Si sus presupuestos se rechazan seguido → necesita capacitación en presupuestación."
+        formula="TR = (Incidentes con al menos 1 rechazo, cancelación o presupuesto rechazado / Total incidentes asignados) × 100 · Fuentes: asignaciones_tecnico (rechazada, cancelada) + presupuestos (rechazado)"
       />
 
       {/* KPI Global + Desglose por motivo */}
@@ -506,18 +507,24 @@ function ReasignacionMetrica({ data }: { data: ReasignacionData }) {
           <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide flex items-center gap-1.5">
             <RefreshCw className="h-3.5 w-3.5" /> Desglose por motivo
           </p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="bg-white rounded-xl border border-amber-200 p-4">
-              <p className="text-[10px] font-semibold text-amber-600 uppercase tracking-wide mb-1">Rechazadas por técnico</p>
+              <p className="text-[10px] font-semibold text-amber-600 uppercase tracking-wide mb-1">No aceptó el trabajo</p>
               <p className="text-3xl font-bold text-amber-700 tabular-nums">{data.motivoDesglose.rechazadas}</p>
               <p className="text-xs text-slate-400 mt-1">El técnico no quiso tomar el trabajo</p>
               <p className="text-[10px] text-amber-600 mt-1 italic">Causa: sobrecarga, distancia, especialidad</p>
             </div>
             <div className="bg-white rounded-xl border border-red-200 p-4">
-              <p className="text-[10px] font-semibold text-red-600 uppercase tracking-wide mb-1">Canceladas por técnico</p>
+              <p className="text-[10px] font-semibold text-red-600 uppercase tracking-wide mb-1">Canceló el trabajo</p>
               <p className="text-3xl font-bold text-red-700 tabular-nums">{data.motivoDesglose.canceladas}</p>
               <p className="text-xs text-slate-400 mt-1">El técnico aceptó y luego abandonó</p>
               <p className="text-[10px] text-red-600 mt-1 italic">Más grave: cliente ya esperaba respuesta</p>
+            </div>
+            <div className="bg-white rounded-xl border border-orange-200 p-4">
+              <p className="text-[10px] font-semibold text-orange-600 uppercase tracking-wide mb-1">Presupuesto rechazado</p>
+              <p className="text-3xl font-bold text-orange-700 tabular-nums">{data.motivoDesglose.presupuestosRechazados}</p>
+              <p className="text-xs text-slate-400 mt-1">El técnico presentó presupuesto y admin no lo aprobó</p>
+              <p className="text-[10px] text-orange-600 mt-1 italic">Causa: costo mal estimado, trabajo mal descrito</p>
             </div>
           </div>
           <p className="text-[10px] text-slate-400 italic">
@@ -535,7 +542,7 @@ function ReasignacionMetrica({ data }: { data: ReasignacionData }) {
               <Wrench className="h-4 w-4 text-slate-400" />
               Tasa de Problema por Técnico
             </CardTitle>
-            <p className="text-xs text-slate-400">Suma de rechazos + cancelaciones sobre el total de asignaciones recibidas. Un técnico con tasa alta requiere análisis de causa raíz inmediato.</p>
+            <p className="text-xs text-slate-400">Suma de no-aceptaciones, cancelaciones y presupuestos rechazados sobre el total de asignaciones. Un técnico con tasa alta requiere análisis de causa raíz inmediato.</p>
           </CardHeader>
           <CardContent>
             {data.porTecnico.length === 0 ? (
