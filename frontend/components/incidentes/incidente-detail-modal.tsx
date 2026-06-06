@@ -64,7 +64,8 @@ import {
   actualizarIncidente,
 } from '@/features/incidentes/incidentes.service'
 import { crearAsignacion, completarAsignacion } from '@/features/asignaciones/asignaciones.service'
-import { getTecnicosParaAsignacion, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
+import { getTecnicosParaAsignacion, getEspecialidadesActivas, getFiabilidadTecnicos } from '@/features/usuarios/usuarios.service'
+import type { FiabilidadTecnico } from '@/features/usuarios/usuarios.service'
 import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rechazarPresupuesto, responderOportunidadTecnico } from '@/features/presupuestos/presupuestos.service'
 import { getConformidadDelIncidente, crearConformidadPorTecnico, aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
 import { crearAvance } from '@/features/avances/avances.service'
@@ -369,6 +370,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
   const [avancesRegistrados, setAvancesRegistrados] = useState<any[]>([])
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
+  const [fiabilidad, setFiabilidad] = useState<Record<number, FiabilidadTecnico>>({})
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([])
   const [inspecciones, setInspecciones] = useState<any[]>([])
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([])
@@ -454,8 +456,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
   const cargarTecnicos = async () => {
     try {
-      const data = await getTecnicosParaAsignacion()
+      const [data, fData] = await Promise.all([
+        getTecnicosParaAsignacion(),
+        getFiabilidadTecnicos(),
+      ])
       setTecnicos(data)
+      setFiabilidad(fData)
     } catch (error) {
       console.error('Error cargando técnicos:', error)
     }
@@ -1840,11 +1846,30 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           <SelectValue placeholder="Seleccionar técnico" />
                         </SelectTrigger>
                         <SelectContent>
-                          {tecnicos.map((tecnico) => (
-                            <SelectItem key={tecnico.id_tecnico} value={tecnico.id_tecnico.toString()}>
-                              {tecnico.nombre} {tecnico.apellido} {tecnico.especialidad && `(${tecnico.especialidad})`}
-                            </SelectItem>
-                          ))}
+                          {tecnicos.map((tecnico) => {
+                            const f = fiabilidad[tecnico.id_tecnico]
+                            const rechazos = f?.rechazadas ?? 0
+                            const cancelaciones = f?.canceladas ?? 0
+                            const total = f?.totalAsignaciones ?? 0
+                            const stats = total > 0
+                              ? [
+                                  rechazos > 0 ? `${rechazos} rechazó` : null,
+                                  cancelaciones > 0 ? `${cancelaciones} canceló` : null,
+                                ].filter(Boolean).join(' · ')
+                              : null
+                            return (
+                              <SelectItem key={tecnico.id_tecnico} value={tecnico.id_tecnico.toString()}>
+                                <div className="flex flex-col">
+                                  <span>{tecnico.nombre} {tecnico.apellido} {tecnico.especialidad && `(${tecnico.especialidad})`}</span>
+                                  {stats ? (
+                                    <span className="text-[10px] text-amber-600">{stats} de {total} asignaciones</span>
+                                  ) : total > 0 ? (
+                                    <span className="text-[10px] text-emerald-600">Sin rechazos ni cancelaciones</span>
+                                  ) : null}
+                                </div>
+                              </SelectItem>
+                            )
+                          })}
                         </SelectContent>
                       </Select>
                     </div>

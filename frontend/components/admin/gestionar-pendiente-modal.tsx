@@ -460,12 +460,16 @@ export function GestionarPendienteModal({
                       ? t.especialidades.join(', ')
                       : (t.especialidad ?? null)
                     const fData = fiabilidad[t.id_tecnico]
-                    const tasa = fData?.tasaCancelacion ?? 0
-                    const confiabilidad =
-                      tasa === 0              ? { label: 'Sin bajas', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' } :
-                      tasa <= 10             ? { label: 'Muy confiable', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' } :
-                      tasa <= 25             ? { label: `${tasa}% bajas`, cls: 'bg-amber-50 text-amber-700 border-amber-200' } :
-                                               { label: `${tasa}% bajas`, cls: 'bg-red-50 text-red-700 border-red-200' }
+                    const tasaCancel = fData?.tasaCancelacion ?? 0
+                    const tasaRechaz = fData?.tasaRechazo ?? 0
+                    const badgeCancel =
+                      tasaCancel === 0  ? { label: 'Sin cancelaciones', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' } :
+                      tasaCancel <= 10  ? { label: `${tasaCancel}% canceló`, cls: 'bg-amber-50 text-amber-700 border-amber-200' } :
+                                          { label: `${tasaCancel}% canceló`, cls: 'bg-red-50 text-red-700 border-red-200' }
+                    const badgeRechaz =
+                      tasaRechaz === 0  ? null :
+                      tasaRechaz <= 20  ? { label: `${tasaRechaz}% rechazó`, cls: 'bg-amber-50 text-amber-700 border-amber-200' } :
+                                          { label: `${tasaRechaz}% rechazó`, cls: 'bg-red-50 text-red-700 border-red-200' }
                     return (
                       <div
                         key={t.id_tecnico}
@@ -493,10 +497,14 @@ export function GestionarPendienteModal({
                             {especialidad && (
                               <p className="text-xs text-gray-500 truncate">{especialidad}</p>
                             )}
-                            {/* Badge de confiabilidad */}
-                            <span className={`text-[10px] font-semibold border px-1.5 py-0.5 rounded-full shrink-0 ${confiabilidad.cls}`}>
-                              {confiabilidad.label}
+                            <span className={`text-[10px] font-semibold border px-1.5 py-0.5 rounded-full shrink-0 ${badgeCancel.cls}`}>
+                              {badgeCancel.label}
                             </span>
+                            {badgeRechaz && (
+                              <span className={`text-[10px] font-semibold border px-1.5 py-0.5 rounded-full shrink-0 ${badgeRechaz.cls}`}>
+                                {badgeRechaz.label}
+                              </span>
+                            )}
                           </div>
                         </div>
 
