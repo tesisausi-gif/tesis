@@ -416,40 +416,8 @@ function WipMetrica({ data }: { data: WipData }) {
 
 // ─── SP2-B · Tasa de Reasignación ────────────────────────────────────────────
 
-function FilaTecnicoReasig({ t, max }: { t: ReasignacionPorTecnico; max: number }) {
-  const col = SEMAFORO_COLORES[t.semaforo]
-  const nombreCompleto = `${t.nombre} ${t.apellido}`.trim()
-  return (
-    <div className={`rounded-xl border p-3 space-y-2 ${col.bg} ${col.border}`}>
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-          <span className="text-sm font-medium text-slate-700 truncate">{nombreCompleto}</span>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <SemaforoIcon s={t.semaforo} />
-          <span className={`text-lg font-bold tabular-nums ${col.text}`}>{t.tasaProblema}%</span>
-        </div>
-      </div>
-      <div className="w-full bg-white/70 rounded-full h-1.5 overflow-hidden">
-        <div
-          className={`h-full rounded-full ${col.barra}`}
-          style={{ width: `${Math.max((t.tasaProblema / max) * 100, 4)}%` }}
-        />
-      </div>
-      <div className="flex gap-3 text-[10px] text-slate-500 flex-wrap">
-        <span>{t.totalAsignaciones} asignaciones</span>
-        {t.rechazadas > 0 && <span className="text-amber-600">{t.rechazadas} no aceptó trabajo</span>}
-        {t.canceladas  > 0 && <span className="text-red-600">{t.canceladas} canceladas</span>}
-        {t.presupuestosRechazados > 0 && <span className="text-orange-600">{t.presupuestosRechazados} presup. rechazado</span>}
-      </div>
-    </div>
-  )
-}
-
 function ReasignacionMetrica({ data }: { data: ReasignacionData }) {
   const colGlobal = SEMAFORO_COLORES[data.semaforoGlobal]
-  const maxTasaTecnico = Math.max(...(data.porTecnico.map(t => t.tasaProblema)), 1)
   const maxCatCount    = Math.max(...(data.porCategoria.map(c => c.tasa)), 1)
 
   return (
@@ -533,25 +501,86 @@ function ReasignacionMetrica({ data }: { data: ReasignacionData }) {
         </div>
       </div>
 
-      {/* Por técnico + Por categoría */}
+      {/* Por técnico: rechazos + cancelaciones */}
       <div className="grid lg:grid-cols-2 gap-5">
 
         <Card className="border-slate-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-              <Wrench className="h-4 w-4 text-slate-400" />
-              Tasa de Problema por Técnico
+              <Wrench className="h-4 w-4 text-amber-400" />
+              Rechazos por Técnico
             </CardTitle>
-            <p className="text-xs text-slate-400">Suma de no-aceptaciones, cancelaciones y presupuestos rechazados sobre el total de asignaciones. Un técnico con tasa alta requiere análisis de causa raíz inmediato.</p>
+            <p className="text-xs text-slate-400">Veces que el técnico no aceptó el trabajo asignado. Un valor alto puede indicar sobrecarga o asignaciones fuera de su especialidad.</p>
           </CardHeader>
           <CardContent>
-            {data.porTecnico.length === 0 ? (
-              <p className="text-sm text-slate-400 py-4 text-center">Sin datos</p>
+            {data.porTecnico.filter(t => t.rechazadas > 0).length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">Ningún técnico rechazó trabajos</p>
             ) : (
               <div className="space-y-2">
-                {data.porTecnico.slice(0, 8).map(t => (
-                  <FilaTecnicoReasig key={t.id_tecnico} t={t} max={maxTasaTecnico} />
-                ))}
+                {data.porTecnico
+                  .filter(t => t.rechazadas > 0)
+                  .sort((a, b) => b.rechazadas - a.rechazadas)
+                  .slice(0, 8)
+                  .map(t => {
+                    const maxRech = Math.max(...data.porTecnico.map(x => x.rechazadas), 1)
+                    return (
+                      <div key={t.id_tecnico} className="rounded-xl border border-amber-100 bg-amber-50 p-3 space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                            <span className="text-sm font-medium text-slate-700 truncate">{t.nombre} {t.apellido}</span>
+                          </div>
+                          <span className="text-lg font-bold tabular-nums text-amber-700 shrink-0">{t.rechazadas}</span>
+                        </div>
+                        <div className="w-full bg-white/70 rounded-full h-1.5 overflow-hidden">
+                          <div className="h-full rounded-full bg-amber-400" style={{ width: `${Math.max((t.rechazadas / maxRech) * 100, 4)}%` }} />
+                        </div>
+                        <p className="text-[10px] text-slate-500">{t.totalAsignaciones} asignaciones totales · {Math.round((t.rechazadas / t.totalAsignaciones) * 100)}% de rechazo</p>
+                      </div>
+                    )
+                  })
+                }
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
+              <Wrench className="h-4 w-4 text-red-400" />
+              Cancelaciones por Técnico
+            </CardTitle>
+            <p className="text-xs text-slate-400">Veces que el técnico aceptó y luego abandonó el trabajo. Más grave que el rechazo: el cliente ya había recibido confirmación de atención.</p>
+          </CardHeader>
+          <CardContent>
+            {data.porTecnico.filter(t => t.canceladas > 0).length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">Ningún técnico canceló trabajos</p>
+            ) : (
+              <div className="space-y-2">
+                {data.porTecnico
+                  .filter(t => t.canceladas > 0)
+                  .sort((a, b) => b.canceladas - a.canceladas)
+                  .slice(0, 8)
+                  .map(t => {
+                    const maxCanc = Math.max(...data.porTecnico.map(x => x.canceladas), 1)
+                    return (
+                      <div key={t.id_tecnico} className="rounded-xl border border-red-100 bg-red-50 p-3 space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                            <span className="text-sm font-medium text-slate-700 truncate">{t.nombre} {t.apellido}</span>
+                          </div>
+                          <span className="text-lg font-bold tabular-nums text-red-700 shrink-0">{t.canceladas}</span>
+                        </div>
+                        <div className="w-full bg-white/70 rounded-full h-1.5 overflow-hidden">
+                          <div className="h-full rounded-full bg-red-400" style={{ width: `${Math.max((t.canceladas / maxCanc) * 100, 4)}%` }} />
+                        </div>
+                        <p className="text-[10px] text-slate-500">{t.totalAsignaciones} asignaciones totales · {Math.round((t.canceladas / t.totalAsignaciones) * 100)}% de cancelación</p>
+                      </div>
+                    )
+                  })
+                }
               </div>
             )}
           </CardContent>
