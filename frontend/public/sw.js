@@ -44,8 +44,9 @@ self.addEventListener('fetch', (event) => {
     event.request.mode !== 'navigate'
   ) return
 
-  // Network-first: intentar la red, fallar silenciosamente al shell cacheado
+  // Network-first con cache: 'no-store' para garantizar HTML siempre fresco
+  // (evita que el caché HTTP del browser sirva versiones antiguas al abrir la PWA)
   event.respondWith(
-    fetch(event.request).catch(() => caches.match('/'))
+    fetch(event.request, { cache: 'no-store' }).catch(() => caches.match('/'))
   )
 })
