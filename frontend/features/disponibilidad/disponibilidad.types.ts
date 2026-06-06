@@ -4,6 +4,7 @@ export interface FranjaDisponibilidad {
   fecha: string       // 'YYYY-MM-DD'
   hora_inicio: string // 'HH:MM'
   hora_fin: string    // 'HH:MM'
+  fase?: 'inspeccion' | 'reparacion'
 }
 
 // Visita programada — mapeada desde asignaciones_tecnico (fecha_visita_programada + hora_fin_programada)

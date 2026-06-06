@@ -9,14 +9,18 @@ import type { FranjaDisponibilidad, FranjaAgenda } from './disponibilidad.types'
 export async function guardarFranjasDisponibilidad(
   idIncidente: number,
   franjas: Omit<FranjaDisponibilidad, 'id_franja' | 'id_incidente'>[],
+  fase: 'inspeccion' | 'reparacion' = 'inspeccion',
 ): Promise<ActionResult> {
   try {
     const supabase = createAdminClient()
-    // Reemplazar todas las franjas existentes del incidente
-    await supabase.from('franjas_disponibilidad').delete().eq('id_incidente', idIncidente)
+    // Reemplazar solo las franjas de la fase indicada
+    await supabase.from('franjas_disponibilidad')
+      .delete()
+      .eq('id_incidente', idIncidente)
+      .eq('fase', fase)
     if (franjas.length === 0) return { success: true, data: undefined }
     const { error } = await supabase.from('franjas_disponibilidad').insert(
-      franjas.map(f => ({ id_incidente: idIncidente, ...f }))
+      franjas.map(f => ({ id_incidente: idIncidente, fase, ...f }))
     )
     if (error) return { success: false, error: error.message }
     return { success: true, data: undefined }
@@ -25,12 +29,16 @@ export async function guardarFranjasDisponibilidad(
   }
 }
 
-export async function getFranjasDisponibilidad(idIncidente: number): Promise<FranjaDisponibilidad[]> {
+export async function getFranjasDisponibilidad(
+  idIncidente: number,
+  fase: 'inspeccion' | 'reparacion' = 'inspeccion',
+): Promise<FranjaDisponibilidad[]> {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('franjas_disponibilidad')
     .select('*')
     .eq('id_incidente', idIncidente)
+    .eq('fase', fase)
     .order('fecha')
     .order('hora_inicio')
   if (error) return []

@@ -69,7 +69,8 @@ import type { FiabilidadTecnico } from '@/features/usuarios/usuarios.service'
 import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rechazarPresupuesto, responderOportunidadTecnico } from '@/features/presupuestos/presupuestos.service'
 import { getConformidadDelIncidente, crearConformidadPorTecnico, aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
 import { crearAvance } from '@/features/avances/avances.service'
-import { getFranjasDisponibilidad, getCompromisoDeAsignacion, guardarCompromisoTecnico } from '@/features/disponibilidad/disponibilidad.service'
+import { getFranjasDisponibilidad, guardarFranjasDisponibilidad, getCompromisoDeAsignacion, guardarCompromisoTecnico } from '@/features/disponibilidad/disponibilidad.service'
+import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import type { CompromisoTecnico } from '@/features/disponibilidad/disponibilidad.types'
 import { getVisitaActivaDeIncidente, getVisitaActivaPorTipo, getVisitasDeIncidente as getVisitasDeIncidenteTimeline } from '@/features/visitas/visitas.service'
@@ -361,6 +362,79 @@ function StepperTecnico({
   )
 }
 
+function DisponibilidadReparacionPanel({
+  idIncidente,
+  franjasActuales,
+  onGuardar,
+}: {
+  idIncidente: number
+  franjasActuales: FranjaInput[]
+  onGuardar: () => void
+}) {
+  const [franjas, setFranjas] = useState<FranjaInput[]>(franjasActuales)
+  const [guardando, setGuardando] = useState(false)
+
+  const handleGuardar = async () => {
+    setGuardando(true)
+    try {
+      const res = await guardarFranjasDisponibilidad(
+        idIncidente,
+        franjas.map(f => ({ fecha: f.fecha, hora_inicio: f.hora_inicio, hora_fin: f.hora_fin })),
+        'reparacion',
+      )
+      if (res.success) {
+        toast.success('Disponibilidad para la obra guardada')
+        onGuardar()
+      } else {
+        toast.error(res.error ?? 'Error al guardar')
+      }
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+          <CalendarDays className="h-4 w-4 text-amber-600" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-amber-800">Coordinación de la obra</p>
+          <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+            El presupuesto fue aprobado. Para que el técnico pueda iniciar la obra,
+            indicá en qué días y horarios podés recibir la visita.
+          </p>
+        </div>
+      </div>
+
+      {franjasActuales.length > 0 && (
+        <div className="bg-amber-100/60 rounded-lg px-3 py-2 text-[11px] text-amber-800">
+          <span className="font-semibold">Disponibilidad actual registrada</span> — podés actualizarla si cambió.
+        </div>
+      )}
+
+      <CalendarioDisponibilidad
+        modo="editar"
+        franjas={franjas}
+        onChange={setFranjas}
+      />
+
+      <button
+        onClick={handleGuardar}
+        disabled={guardando || franjas.length === 0}
+        className="w-full py-2.5 rounded-xl bg-amber-600 text-white text-sm font-semibold disabled:opacity-50 hover:bg-amber-700 transition-colors flex items-center justify-center gap-2"
+      >
+        {guardando ? (
+          <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Guardando...</>
+        ) : (
+          <><CalendarDays className="w-4 h-4" />{franjasActuales.length > 0 ? 'Actualizar disponibilidad' : 'Confirmar disponibilidad'}</>
+        )}
+      </button>
+    </div>
+  )
+}
+
 export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, onDarBaja, rol = 'admin', initialTab, hideTabs = false }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -376,6 +450,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([])
   const [conformidad, setConformidad] = useState<Conformidad | null>(null)
   const [franjas, setFranjas] = useState<FranjaInput[]>([])
+  const [franjasReparacion, setFranjasReparacion] = useState<FranjaInput[]>([])
   const [compromiso, setCompromiso] = useState<CompromisoTecnico | null>(null)
   const [visitaActiva, setVisitaActiva] = useState<VisitaResumen | null>(null)
   const [visitaReparacionActiva, setVisitaReparacionActiva] = useState<VisitaResumen | null>(null)
@@ -485,11 +560,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       // Cargar datos específicos por rol
       if (rol === 'tecnico' || rol === 'admin') {
         try {
-          const [inspeccionesData, presupuestosData, conformidadData, franjasData, visitaData, visitaReparData] = await Promise.all([
+          const [inspeccionesData, presupuestosData, conformidadData, franjasData, franjasReparData, visitaData, visitaReparData] = await Promise.all([
             getInspeccionesDelIncidente(incidenteId),
             getPresupuestosDelIncidente(incidenteId),
             getConformidadDelIncidente(incidenteId),
-            getFranjasDisponibilidad(incidenteId),
+            getFranjasDisponibilidad(incidenteId, 'inspeccion'),
+            getFranjasDisponibilidad(incidenteId, 'reparacion'),
             getVisitaActivaDeIncidente(incidenteId),
             getVisitaActivaPorTipo(incidenteId, 'reparacion'),
           ])
@@ -497,6 +573,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           setPresupuestos(presupuestosData)
           setConformidad(conformidadData)
           setFranjas(franjasData as FranjaInput[])
+          setFranjasReparacion(franjasReparData as FranjaInput[])
           setVisitaActiva(visitaData)
           setVisitaReparacionActiva(visitaReparData)
 
@@ -517,9 +594,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       if (rol === 'cliente') {
         try {
-          const [presupuestosData, visitaData] = await Promise.all([
+          const [presupuestosData, visitaData, franjasData, franjasReparData] = await Promise.all([
             getPresupuestosDelIncidente(incidenteId),
             getVisitaActivaDeIncidente(incidenteId),
+            getFranjasDisponibilidad(incidenteId, 'inspeccion'),
+            getFranjasDisponibilidad(incidenteId, 'reparacion'),
           ])
           // El cliente solo ve presupuestos que la inmobiliaria ya aprobó y ajustó.
           const visiblesParaCliente = presupuestosData.filter(p =>
@@ -527,6 +606,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           )
           setPresupuestos(visiblesParaCliente)
           setVisitaActiva(visitaData)
+          setFranjas(franjasData as FranjaInput[])
+          setFranjasReparacion(franjasReparData as FranjaInput[])
         } catch (error) {
           console.error('Error al cargar datos del cliente:', error)
         }
@@ -1495,6 +1576,20 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 />
               )}
 
+              {/* Disponibilidad para visita de obra — cliente ingresa nueva disponibilidad cuando presupuesto aprobado */}
+              {rol === 'cliente' && (() => {
+                const presAprobado = presupuestos.some(p => p.estado_presupuesto === EstadoPresupuesto.APROBADO)
+                const estaCompletado = asignaciones.some(a => a.estado_asignacion === 'completada')
+                if (!presAprobado || estaCompletado) return null
+                return (
+                  <DisponibilidadReparacionPanel
+                    idIncidente={incidente.id_incidente}
+                    franjasActuales={franjasReparacion}
+                    onGuardar={() => cargarIncidente()}
+                  />
+                )
+              })()}
+
               <Separator />
 
               {/* Información del Inmueble */}
@@ -2273,20 +2368,34 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     ) : (
                       <>
                         {/* Coordinación de visita de reparación */}
-                        {franjas.length > 0 && (() => {
+                        {(() => {
                           const asigActiva = asignaciones.find(a =>
                             ['aceptada', 'en_curso'].includes(a.estado_asignacion)
                           ) as any
-                          return asigActiva ? (
+                          if (!asigActiva) return null
+                          if (franjasReparacion.length === 0) {
+                            return (
+                              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+                                <CalendarDays className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                                <div>
+                                  <p className="text-sm font-semibold text-amber-800">Esperando disponibilidad del cliente</p>
+                                  <p className="text-xs text-amber-700 mt-0.5">
+                                    El cliente debe indicar en qué días puede recibir la visita de obra. Una vez que lo haga, podrás coordinar la fecha aquí.
+                                  </p>
+                                </div>
+                              </div>
+                            )
+                          }
+                          return (
                             <PropVisitaSection
                               idIncidente={incidente.id_incidente}
                               idTecnico={asigActiva.id_tecnico}
-                              franjas={franjas}
+                              franjas={franjasReparacion}
                               initialVisita={visitaReparacionActiva}
                               tipoForzado="reparacion"
                               onCambio={() => cargarIncidente()}
                             />
-                          ) : null
+                          )
                         })()}
 
                         {/* Presupuestos adicionales */}
