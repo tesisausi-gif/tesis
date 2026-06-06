@@ -21,7 +21,7 @@ export default function AdminLayout({
           </div>
         </main>
       </div>
-      <AIHelpChat variant="admin" />
+      <AIHelpChat variant="admin" rol="admin" />
     </SidebarProvider>
   )
 }

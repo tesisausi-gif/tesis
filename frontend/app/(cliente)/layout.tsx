@@ -76,7 +76,7 @@ export default function ClienteLayout({
             </PageTransition>
           </main>
         </PullToRefresh>
-        <AIHelpChat />
+        <AIHelpChat rol="cliente" />
       </div>
       {debeCambiarPassword && <CambiarPasswordPrimerAcceso onSuccess={() => setDebeCambiarPassword(false)} />}
       {verificacionPendiente && (
