@@ -583,7 +583,7 @@ export function TrabajosContent({
                     {listaFiltrada.length}
                   </span>
                 </button>
-                {(['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
+                {(['visita_pendiente', 'visita_propuesta', 'visita_programada', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
                   const count = listaFiltrada.filter(a => sk(a) === tipo).length
                   const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
                   const active = subFiltro === tipo
@@ -606,7 +606,7 @@ export function TrabajosContent({
               <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-gray-50 to-transparent rounded-r-xl" />
               </div>
               <div className="space-y-6">
-              {((['pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
+              {((['visita_pendiente', 'visita_propuesta', 'visita_programada', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
                 .map(tipo => ({
                   tipo,
                   items: listaFiltrada.filter(a => sk(a) === tipo),
