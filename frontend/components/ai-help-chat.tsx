@@ -351,13 +351,17 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
 
       const result = await sendMessageToWalter(walterMessages, rol)
 
-      if (!result.success) {
-        throw new Error(result.error ?? 'Error desconocido')
-      }
-
-      // Update state after successful run
+      // Update state after run (éxito o error)
       pendingImageRef.current = null
       clearPendingImageRef.current()
+
+      if (!result.success) {
+        setSuggestedActionRef.current(null)
+        return {
+          content: [{ type: 'text', text: result.error ?? 'No pude procesar tu consulta. Intentá de nuevo.' }],
+        }
+      }
+
       setSuggestedActionRef.current(result.suggestedAction ?? null)
 
       return {

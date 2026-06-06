@@ -196,6 +196,11 @@ export async function sendMessageToWalter(
   messages: WalterMessage[],
   rol: WalterRol,
 ): Promise<WalterResponse> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('[Walter] ANTHROPIC_API_KEY no está configurada en el entorno')
+    return { success: false, error: 'El asistente no está configurado. Falta la clave de API.' }
+  }
+
   try {
     const systemPrompt = SYSTEM_PROMPTS[rol]
     let anthropicMessages = buildAnthropicMessages(messages)
@@ -258,7 +263,15 @@ export async function sendMessageToWalter(
 
     return { success: true, content: cleanContent, suggestedAction }
   } catch (err) {
-    console.error('[Walter] Error:', err)
-    return { success: false, error: 'No pude procesar tu consulta. Intentá de nuevo en un momento.' }
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[Walter] Error llamando a Anthropic:', msg)
+
+    if (msg.includes('401') || msg.includes('authentication') || msg.includes('API key')) {
+      return { success: false, error: 'Error de autenticación con la IA. Verificá la API key.' }
+    }
+    if (msg.includes('429') || msg.includes('rate') || msg.includes('credit')) {
+      return { success: false, error: 'Límite de la API alcanzado. Intentá en unos minutos.' }
+    }
+    return { success: false, error: `Error al conectar con la IA: ${msg.slice(0, 100)}` }
   }
 }
