@@ -8,7 +8,7 @@ import Link from 'next/link'
 import {
   MapPin, ClipboardList, Clock, Wrench, FileText, CheckCircle, AlertTriangle, XCircle,
   Phone, Mail, ChevronDown, ChevronUp, AlertCircle, CalendarDays, CreditCard, RefreshCw,
-  Banknote, Building2, Wallet, X, Search,
+  Banknote, Building2, Wallet, X, Search, ChevronRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -515,7 +515,7 @@ export function TrabajosContent({
         <>
           {/* Filter chips */}
           <div className="relative bg-slate-100 border-b border-gray-100">
-            <div className="flex gap-1 px-4 py-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-1 px-4 py-3 pr-10 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {filtros.map(({ id, label, count, Icon }) => {
                 const active = filtro === id
                 return (
@@ -539,7 +539,9 @@ export function TrabajosContent({
                 )
               })}
             </div>
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 via-slate-100/80 to-transparent flex items-center justify-end pr-1">
+              <ChevronRight className="w-4 h-4 text-slate-400 animate-pulse" />
+            </div>
           </div>
 
           {/* Barra de búsqueda */}
@@ -571,7 +573,7 @@ export function TrabajosContent({
             <div className="px-4 pt-3 space-y-4">
               {/* Sub-filtro */}
               <div className="relative">
-              <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
+              <div className="flex gap-1 overflow-x-auto pr-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
                 <button
                   onClick={() => setSubFiltro('todos')}
                   className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
@@ -603,7 +605,9 @@ export function TrabajosContent({
                   )
                 })}
               </div>
-              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-gray-50 to-transparent rounded-r-xl" />
+              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 via-slate-100/80 to-transparent rounded-r-xl flex items-center justify-end pr-1">
+                <ChevronRight className="w-4 h-4 text-slate-400 animate-pulse" />
+              </div>
               </div>
               <div className="space-y-6">
               {((['visita_pendiente', 'visita_propuesta', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)

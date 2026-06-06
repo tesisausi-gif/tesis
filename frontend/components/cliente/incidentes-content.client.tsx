@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Plus, AlertCircle, Clock, Send, Wrench, CheckCircle,
-  Bell, MapPin, ClipboardList, FileText, CreditCard,
+  Bell, MapPin, ClipboardList, FileText, CreditCard, ChevronRight,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { createClient } from '@/shared/lib/supabase/client'
@@ -124,7 +124,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
         <>
           {/* ── Filter chips ────────────────────────── */}
           <div className="relative bg-slate-100 border-b border-gray-100">
-            <div className="flex gap-1 px-4 py-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-1 px-4 py-3 pr-10 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {filtros.map(({ id, label, count, Icon }) => {
                 const active = filtro === id
                 return (
@@ -148,7 +148,9 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                 )
               })}
             </div>
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 via-slate-100/80 to-transparent flex items-center justify-end pr-1">
+              <ChevronRight className="w-4 h-4 text-slate-400 animate-pulse" />
+            </div>
           </div>
 
           {/* ── Incident list ────────────────────────── */}
