@@ -13,7 +13,7 @@ import {
 import { X, Send, ImagePlus, XCircle, ArrowRight } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { sendMessageToWalter } from '@/features/walter/walter.service'
-import type { WalterMessage, WalterRol, WalterSuggestedAction } from '@/features/walter/walter.types'
+import type { WalterMessage, WalterRol, WalterSuggestedAction, WalterChart } from '@/features/walter/walter.types'
 import Link from 'next/link'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -68,7 +68,40 @@ interface WalterChatPanelProps {
   fileInputRef: React.RefObject<HTMLInputElement | null>
   suggestedAction: WalterSuggestedAction | null
   onClearSuggestedAction: () => void
+  chart: WalterChart | null
+  onClearChart: () => void
   imagePreviewsRef: React.MutableRefObject<Map<string, string>>
+}
+
+function WalterBarChart({ chart }: { chart: WalterChart }) {
+  const max = Math.max(...chart.data.map((d) => d.value), 1)
+  return (
+    <div className="mx-3 my-1 rounded-xl overflow-hidden border border-slate-200 bg-white shrink-0">
+      <div className="px-3 py-2 border-b border-slate-100">
+        <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">{chart.title}</p>
+      </div>
+      <div className="p-3 space-y-2">
+        {chart.data.map((item, i) => (
+          <div key={i}>
+            <div className="flex justify-between items-center mb-0.5">
+              <span className="text-xs text-slate-700 truncate max-w-[75%]">{item.label}</span>
+              <span className="text-xs font-bold text-slate-800 ml-2">{item.value}</span>
+            </div>
+            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${(item.value / max) * 100}%`,
+                  background: chart.color ?? 'linear-gradient(90deg, #1e3a5f 0%, #1d4ed8 100%)',
+                  transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)',
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function WalterChatPanel({
@@ -81,17 +114,22 @@ function WalterChatPanel({
   fileInputRef,
   suggestedAction,
   onClearSuggestedAction,
+  chart,
+  onClearChart,
   imagePreviewsRef,
 }: WalterChatPanelProps) {
   const threadRuntime = useThreadRuntime()
   const isRunning = useThread((s) => s.isRunning)
-  const messageCount = useThread((s) => s.messages.length)
   const hasUserMessages = useThread((s) => s.messages.some((m) => m.role === 'user'))
   const quickActions = QUICK_ACTIONS[rol]
 
-  // Clear suggested action when a new user message is being processed
+  // Clear suggested action and chart when a new message starts processing
   useEffect(() => {
-    if (isRunning) onClearSuggestedAction()
+    if (isRunning) {
+      onClearSuggestedAction()
+      onClearChart()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning])
 
   const sendQuickAction = (message: string) => {
@@ -207,6 +245,9 @@ function WalterChatPanel({
           )}
         </ThreadPrimitive.Viewport>
 
+        {/* Chart */}
+        {chart && !isRunning && <WalterBarChart chart={chart} />}
+
         {/* Suggested action button */}
         {suggestedAction && !isRunning && (
           <div className="px-3 py-2 bg-white border-t border-slate-100 shrink-0">
@@ -293,6 +334,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const [mounted, setMounted] = useState(false)
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null)
   const [suggestedAction, setSuggestedAction] = useState<WalterSuggestedAction | null>(null)
+  const [chart, setChart] = useState<WalterChart | null>(null)
 
   // Drag state
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -306,10 +348,12 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const pendingImageRef = useRef<PendingImage | null>(null)
   const imagePreviewsRef = useRef(new Map<string, string>())
   const setSuggestedActionRef = useRef(setSuggestedAction)
+  const setChartRef = useRef(setChart)
   const clearPendingImageRef = useRef(() => setPendingImage(null))
 
   useEffect(() => { pendingImageRef.current = pendingImage }, [pendingImage])
   useEffect(() => { setSuggestedActionRef.current = setSuggestedAction }, [])
+  useEffect(() => { setChartRef.current = setChart }, [])
   useEffect(() => { clearPendingImageRef.current = () => setPendingImage(null) }, [])
 
   useEffect(() => {
@@ -364,12 +408,14 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
 
         if (!result.success) {
           setSuggestedActionRef.current(null)
+          setChartRef.current(null)
           return {
             content: [{ type: 'text', text: result.error ?? 'No pude procesar tu consulta. Intentá de nuevo.' }],
           }
         }
 
         setSuggestedActionRef.current(result.suggestedAction ?? null)
+        setChartRef.current(result.chart ?? null)
 
         return {
           content: [{ type: 'text', text: result.content ?? '' }],
@@ -378,6 +424,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         pendingImageRef.current = null
         clearPendingImageRef.current()
         setSuggestedActionRef.current(null)
+        setChartRef.current(null)
         const msg = err instanceof Error ? err.message : String(err)
         console.error('[Walter adapter]', msg)
         return {
@@ -492,6 +539,8 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           fileInputRef={fileInputRef}
           suggestedAction={suggestedAction}
           onClearSuggestedAction={() => setSuggestedAction(null)}
+          chart={chart}
+          onClearChart={() => setChart(null)}
           imagePreviewsRef={imagePreviewsRef}
         />
       </AssistantRuntimeProvider>

@@ -13,10 +13,23 @@ export interface WalterSuggestedAction {
   url: string
 }
 
+export interface WalterChartDataPoint {
+  label: string
+  value: number
+}
+
+export interface WalterChart {
+  type: 'bar'
+  title: string
+  data: WalterChartDataPoint[]
+  color?: string
+}
+
 export interface WalterResponse {
   success: boolean
   content?: string
   suggestedAction?: WalterSuggestedAction
+  chart?: WalterChart
   error?: string
 }
 
