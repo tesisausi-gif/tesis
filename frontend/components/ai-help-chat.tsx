@@ -148,8 +148,14 @@ function WalterChatPanel({
           {/* Message list */}
           <ThreadPrimitive.Messages>
             {({ message }) => {
-              const parts = (message as unknown as { content: Array<{ type: string; text?: string }> }).content
+              const typedMsg = message as unknown as {
+                content: Array<{ type: string; text?: string }>
+                status?: { type?: string; reason?: string; error?: string }
+              }
+              const parts = typedMsg.content ?? []
               const textContent = parts.find((p) => p.type === 'text')?.text ?? ''
+              const errorText = typedMsg.status?.reason === 'error' ? (typedMsg.status.error ?? '') : ''
+              const displayText = textContent || errorText
 
               if (message.role === 'user') {
                 const imagePreview = imagePreviewsRef.current.get(message.id)
@@ -172,13 +178,13 @@ function WalterChatPanel({
                 )
               }
 
-              // Assistant message
+              // Assistant message (or error state)
               return (
                 <div className="flex justify-start mb-3">
                   <div className="max-w-[82%] space-y-1 flex flex-col items-start">
-                    {textContent && (
-                      <div className="px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed text-slate-800 bg-slate-100 walter-prose">
-                        <ReactMarkdown>{textContent}</ReactMarkdown>
+                    {displayText && (
+                      <div className={`px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed walter-prose ${errorText && !textContent ? 'text-red-700 bg-red-50' : 'text-slate-800 bg-slate-100'}`}>
+                        <ReactMarkdown>{displayText}</ReactMarkdown>
                       </div>
                     )}
                   </div>
@@ -318,54 +324,65 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
 
   const adapter = useMemo((): ChatModelAdapter => ({
     async run({ messages }) {
-      const pendingImg = pendingImageRef.current
+      try {
+        const pendingImg = pendingImageRef.current
 
-      // Get last user message for image attachment and preview storage
-      const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')
+        // Get last user message for image attachment and preview storage
+        const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')
 
-      // Store image preview keyed by message ID for display
-      if (pendingImg && lastUserMsg) {
-        imagePreviewsRef.current.set(lastUserMsg.id, pendingImg.preview)
-      }
-
-      // Convert library ThreadMessage[] → WalterMessage[]
-      const walterMessages: WalterMessage[] = messages
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .map((msg) => {
-          const parts = (msg as unknown as { content: Array<{ type: string; text?: string }> }).content
-          const text = parts.find((p) => p.type === 'text')?.text ?? ''
-
-          if (msg.role === 'user') {
-            const isLast = msg === lastUserMsg
-            return {
-              role: 'user' as const,
-              content: text,
-              ...(isLast && pendingImg
-                ? { imageBase64: pendingImg.base64, imageMimeType: pendingImg.mimeType }
-                : {}),
-            }
-          }
-
-          return { role: 'assistant' as const, content: text }
-        })
-
-      const result = await sendMessageToWalter(walterMessages, rol)
-
-      // Update state after run (éxito o error)
-      pendingImageRef.current = null
-      clearPendingImageRef.current()
-
-      if (!result.success) {
-        setSuggestedActionRef.current(null)
-        return {
-          content: [{ type: 'text', text: result.error ?? 'No pude procesar tu consulta. Intentá de nuevo.' }],
+        // Store image preview keyed by message ID for display
+        if (pendingImg && lastUserMsg) {
+          imagePreviewsRef.current.set(lastUserMsg.id, pendingImg.preview)
         }
-      }
 
-      setSuggestedActionRef.current(result.suggestedAction ?? null)
+        // Convert library ThreadMessage[] → WalterMessage[]
+        const walterMessages: WalterMessage[] = messages
+          .filter((m) => m.role === 'user' || m.role === 'assistant')
+          .map((msg) => {
+            const parts = (msg as unknown as { content: Array<{ type: string; text?: string }> }).content
+            const text = parts.find((p) => p.type === 'text')?.text ?? ''
 
-      return {
-        content: [{ type: 'text', text: result.content ?? '' }],
+            if (msg.role === 'user') {
+              const isLast = msg === lastUserMsg
+              return {
+                role: 'user' as const,
+                content: text,
+                ...(isLast && pendingImg
+                  ? { imageBase64: pendingImg.base64, imageMimeType: pendingImg.mimeType }
+                  : {}),
+              }
+            }
+
+            return { role: 'assistant' as const, content: text }
+          })
+
+        const result = await sendMessageToWalter(walterMessages, rol)
+
+        // Clear pending image regardless of outcome
+        pendingImageRef.current = null
+        clearPendingImageRef.current()
+
+        if (!result.success) {
+          setSuggestedActionRef.current(null)
+          return {
+            content: [{ type: 'text', text: result.error ?? 'No pude procesar tu consulta. Intentá de nuevo.' }],
+          }
+        }
+
+        setSuggestedActionRef.current(result.suggestedAction ?? null)
+
+        return {
+          content: [{ type: 'text', text: result.content ?? '' }],
+        }
+      } catch (err) {
+        pendingImageRef.current = null
+        clearPendingImageRef.current()
+        setSuggestedActionRef.current(null)
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[Walter adapter]', msg)
+        return {
+          content: [{ type: 'text', text: `Ocurrió un error al contactar al asistente: ${msg.slice(0, 120)}` }],
+        }
       }
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
