@@ -799,57 +799,61 @@ export async function sendMessageToWalter(
       messages: anthropicMessages,
     })
 
-    // Multi-turn tool use loop (máx 5 iteraciones para cubrir múltiples tools en secuencia)
+    // Multi-turn tool use loop — procesa TODOS los tool_use de cada respuesta en paralelo
+    // para evitar el error 400 "tool_use id without matching tool_result".
     let iterations = 0
     let incidenteCreado: { id_incidente: number } | undefined
     while (response.stop_reason === 'tool_use' && iterations < 5) {
       iterations++
 
-      const toolUseBlock = response.content.find(
+      const toolUseBlocks = response.content.filter(
         (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
       )
-      if (!toolUseBlock) break
+      if (!toolUseBlocks.length) break
 
-      let toolResult: string
-      if (toolUseBlock.name === 'consultar_estado_incidente') {
-        const input = toolUseBlock.input as { id_incidente: number }
-        toolResult = await executeConsultarEstado(Number(input.id_incidente), rol)
-      } else if (toolUseBlock.name === 'listar_incidentes') {
-        const input = toolUseBlock.input as { estado?: string; limite?: number }
-        toolResult = await executeListarIncidentes(rol, input.estado)
-      } else if (toolUseBlock.name === 'obtener_metricas') {
-        toolResult = await executeObtenerMetricas()
-      } else if (toolUseBlock.name === 'listar_inmuebles_cliente') {
-        const idCliente = await requireClienteId()
-        toolResult = await executeListarInmuebles(idCliente)
-      } else if (toolUseBlock.name === 'crear_incidente') {
-        const idCliente = await requireClienteId()
-        const input = toolUseBlock.input as { id_propiedad: number; descripcion: string; franjas: FranjaInput[] }
-        const result = await executeCrearIncidente(idCliente, input, imageBase64, imageMime)
-        if (result.success && result.id_incidente) {
-          incidenteCreado = { id_incidente: result.id_incidente }
-          toolResult = JSON.stringify({ success: true, id_incidente: result.id_incidente })
-        } else {
-          toolResult = JSON.stringify({ success: false, error: result.error })
+      const executeBlock = async (toolUseBlock: Anthropic.ToolUseBlock): Promise<string> => {
+        if (toolUseBlock.name === 'consultar_estado_incidente') {
+          const input = toolUseBlock.input as { id_incidente: number }
+          return executeConsultarEstado(Number(input.id_incidente), rol)
         }
-      } else {
-        toolResult = 'Herramienta no disponible.'
+        if (toolUseBlock.name === 'listar_incidentes') {
+          const input = toolUseBlock.input as { estado?: string }
+          return executeListarIncidentes(rol, input.estado)
+        }
+        if (toolUseBlock.name === 'obtener_metricas') {
+          return executeObtenerMetricas()
+        }
+        if (toolUseBlock.name === 'listar_inmuebles_cliente') {
+          const idCliente = await requireClienteId()
+          return executeListarInmuebles(idCliente)
+        }
+        if (toolUseBlock.name === 'crear_incidente') {
+          const idCliente = await requireClienteId()
+          const input = toolUseBlock.input as { id_propiedad: number; descripcion: string; franjas: FranjaInput[] }
+          const result = await executeCrearIncidente(idCliente, input, imageBase64, imageMime)
+          if (result.success && result.id_incidente) {
+            incidenteCreado = { id_incidente: result.id_incidente }
+            return JSON.stringify({ success: true, id_incidente: result.id_incidente })
+          }
+          return JSON.stringify({ success: false, error: result.error })
+        }
+        return 'Herramienta no disponible.'
       }
+
+      // Ejecutar todas las herramientas del turno (pueden ser varias) y generar un tool_result por cada una
+      const toolResults = await Promise.all(
+        toolUseBlocks.map(async (block) => ({
+          type: 'tool_result' as const,
+          tool_use_id: block.id,
+          content: await executeBlock(block),
+        })),
+      )
 
       anthropicMessages = [
         ...anthropicMessages,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { role: 'assistant' as const, content: response.content as any },
-        {
-          role: 'user' as const,
-          content: [
-            {
-              type: 'tool_result' as const,
-              tool_use_id: toolUseBlock.id,
-              content: toolResult,
-            },
-          ],
-        },
+        { role: 'user' as const, content: toolResults },
       ]
 
       response = await anthropic.messages.create({
