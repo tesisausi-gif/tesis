@@ -8,9 +8,11 @@ import {
   ComposerPrimitive,
   useThreadRuntime,
   useThread,
+  useComposer,
+  useComposerRuntime,
   type ChatModelAdapter,
 } from '@assistant-ui/react'
-import { X, Send, ImagePlus, XCircle, ArrowRight } from 'lucide-react'
+import { X, Send, ImagePlus, XCircle, ArrowRight, Camera } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { sendMessageToWalter } from '@/features/walter/walter.service'
 import type { WalterMessage, WalterRol, WalterSuggestedAction, WalterChart } from '@/features/walter/walter.types'
@@ -66,6 +68,7 @@ interface WalterChatPanelProps {
   onImageSelect: (e: React.ChangeEvent<HTMLInputElement>) => void
   onImageClear: () => void
   fileInputRef: React.RefObject<HTMLInputElement | null>
+  cameraInputRef: React.RefObject<HTMLInputElement | null>
   suggestedAction: WalterSuggestedAction | null
   onClearSuggestedAction: () => void
   chart: WalterChart | null
@@ -112,6 +115,7 @@ function WalterChatPanel({
   onImageSelect,
   onImageClear,
   fileInputRef,
+  cameraInputRef,
   suggestedAction,
   onClearSuggestedAction,
   chart,
@@ -119,7 +123,9 @@ function WalterChatPanel({
   imagePreviewsRef,
 }: WalterChatPanelProps) {
   const threadRuntime = useThreadRuntime()
+  const composerRuntime = useComposerRuntime()
   const isRunning = useThread((s) => s.isRunning)
+  const isComposerEmpty = useComposer((c) => c.isEmpty)
   const hasUserMessages = useThread((s) => s.messages.some((m) => m.role === 'user'))
   const quickActions = QUICK_ACTIONS[rol]
 
@@ -304,6 +310,15 @@ function WalterChatPanel({
             />
             <button
               type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={isRunning}
+              className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-blue-500 transition-colors shrink-0"
+              title="Tomar foto"
+            >
+              <Camera className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isRunning}
               className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-blue-500 transition-colors shrink-0"
@@ -311,15 +326,24 @@ function WalterChatPanel({
             >
               <ImagePlus className="h-4 w-4" />
             </button>
-            <ComposerPrimitive.Send asChild>
-              <button
-                className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 transition-all disabled:opacity-40"
-                style={{ background: 'linear-gradient(135deg, #0e1929 0%, #1d4ed8 100%)' }}
-              >
-                <Send className="h-3.5 w-3.5 text-white" />
-              </button>
-            </ComposerPrimitive.Send>
+            <button
+              type="button"
+              onClick={() => {
+                if (!isComposerEmpty) {
+                  composerRuntime.send()
+                } else if (pendingImage) {
+                  threadRuntime.append({ role: 'user', content: [{ type: 'text', text: '' }] })
+                }
+              }}
+              disabled={isRunning || (isComposerEmpty && !pendingImage)}
+              className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 transition-all disabled:opacity-40"
+              style={{ background: 'linear-gradient(135deg, #0e1929 0%, #1d4ed8 100%)' }}
+            >
+              <Send className="h-3.5 w-3.5 text-white" />
+            </button>
           </div>
+          {/* capture="environment" abre la cámara trasera directamente en mobile */}
+          <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onImageSelect} />
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onImageSelect} />
         </ComposerPrimitive.Root>
       </ThreadPrimitive.Root>
@@ -343,6 +367,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const wasDraggedRef = useRef(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
   // Refs for adapter closures (always hold current values)
   const pendingImageRef = useRef<PendingImage | null>(null)
@@ -560,6 +585,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           onImageSelect={handleImageSelect}
           onImageClear={() => setPendingImage(null)}
           fileInputRef={fileInputRef}
+          cameraInputRef={cameraInputRef}
           suggestedAction={suggestedAction}
           onClearSuggestedAction={() => setSuggestedAction(null)}
           chart={chart}
