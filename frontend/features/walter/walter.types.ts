@@ -19,10 +19,11 @@ export interface WalterChartDataPoint {
 }
 
 export interface WalterChart {
-  type: 'bar'
+  type: 'bar' | 'pie' | 'donut' | 'line'
   title: string
   data: WalterChartDataPoint[]
   color?: string
+  unit?: string
 }
 
 export interface WalterResponse {

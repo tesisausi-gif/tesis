@@ -76,33 +76,148 @@ interface WalterChatPanelProps {
   imagePreviewsRef: React.MutableRefObject<Map<string, string>>
 }
 
-function WalterBarChart({ chart }: { chart: WalterChart }) {
+// ── Paleta compartida ─────────────────────────────────────────────────────────
+const CHART_COLORS = ['#1d4ed8', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+
+function ChartHeader({ title }: { title: string }) {
+  return (
+    <div className="px-3 py-2 border-b border-slate-100">
+      <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">{title}</p>
+    </div>
+  )
+}
+
+function BarChart({ chart }: { chart: WalterChart }) {
   const max = Math.max(...chart.data.map((d) => d.value), 1)
   return (
-    <div className="mx-3 my-1 rounded-xl overflow-hidden border border-slate-200 bg-white shrink-0">
-      <div className="px-3 py-2 border-b border-slate-100">
-        <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">{chart.title}</p>
-      </div>
-      <div className="p-3 space-y-2">
-        {chart.data.map((item, i) => (
-          <div key={i}>
-            <div className="flex justify-between items-center mb-0.5">
-              <span className="text-xs text-slate-700 truncate max-w-[75%]">{item.label}</span>
-              <span className="text-xs font-bold text-slate-800 ml-2">{item.value}</span>
-            </div>
-            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${(item.value / max) * 100}%`,
-                  background: chart.color ?? 'linear-gradient(90deg, #1e3a5f 0%, #1d4ed8 100%)',
-                  transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)',
-                }}
-              />
-            </div>
+    <div className="p-3 space-y-2">
+      {chart.data.map((item, i) => (
+        <div key={i}>
+          <div className="flex justify-between items-center mb-0.5">
+            <span className="text-xs text-slate-700 truncate max-w-[75%]">{item.label}</span>
+            <span className="text-xs font-bold text-slate-800 ml-2">{item.value}{chart.unit ? ` ${chart.unit}` : ''}</span>
+          </div>
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${(item.value / max) * 100}%`,
+                background: chart.color ?? `linear-gradient(90deg, #1e3a5f 0%, ${CHART_COLORS[i % CHART_COLORS.length]} 100%)`,
+                transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)',
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PieDonutChart({ chart }: { chart: WalterChart }) {
+  const donut = chart.type === 'donut'
+  const total = chart.data.reduce((s, d) => s + d.value, 0)
+  const CX = 50, CY = 50, R = donut ? 28 : 38, INNER_R = 16
+
+  function polarXY(angleDeg: number, r: number) {
+    const rad = ((angleDeg - 90) * Math.PI) / 180
+    return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) }
+  }
+
+  let cursor = 0
+  const slices = chart.data.map((item, i) => {
+    const sweep = (item.value / total) * 360
+    const start = cursor
+    const end = cursor + sweep
+    cursor = end
+
+    const s = polarXY(start, R), e = polarXY(end, R)
+    const largeArc = sweep > 180 ? 1 : 0
+
+    let d: string
+    if (donut) {
+      const si = polarXY(start, INNER_R), ei = polarXY(end, INNER_R)
+      d = `M ${s.x} ${s.y} A ${R} ${R} 0 ${largeArc} 1 ${e.x} ${e.y} L ${ei.x} ${ei.y} A ${INNER_R} ${INNER_R} 0 ${largeArc} 0 ${si.x} ${si.y} Z`
+    } else {
+      d = `M ${CX} ${CY} L ${s.x} ${s.y} A ${R} ${R} 0 ${largeArc} 1 ${e.x} ${e.y} Z`
+    }
+    return { ...item, d, color: CHART_COLORS[i % CHART_COLORS.length], pct: Math.round((item.value / total) * 100) }
+  })
+
+  return (
+    <div className="p-3 flex gap-3 items-center">
+      <svg viewBox="0 0 100 100" className="w-24 h-24 shrink-0">
+        {slices.map((s, i) => <path key={i} d={s.d} fill={s.color} />)}
+      </svg>
+      <div className="flex-1 space-y-1.5 min-w-0">
+        {slices.map((s, i) => (
+          <div key={i} className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
+            <span className="text-xs text-slate-700 truncate flex-1">{s.label}</span>
+            <span className="text-xs font-bold text-slate-800 shrink-0">{s.pct}%</span>
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+function LineChart({ chart }: { chart: WalterChart }) {
+  const W = 260, H = 90
+  const PAD = { t: 8, r: 8, b: 24, l: 28 }
+  const iW = W - PAD.l - PAD.r, iH = H - PAD.t - PAD.b
+  const n = chart.data.length
+  const max = Math.max(...chart.data.map((d) => d.value), 1)
+  const min = Math.min(...chart.data.map((d) => d.value), 0)
+  const range = max - min || 1
+
+  const pts = chart.data.map((d, i) => ({
+    x: PAD.l + (n === 1 ? iW / 2 : (i / (n - 1)) * iW),
+    y: PAD.t + (1 - (d.value - min) / range) * iH,
+    ...d,
+  }))
+
+  const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
+  const areaD = `${pathD} L ${pts[pts.length - 1].x.toFixed(1)} ${(PAD.t + iH).toFixed(1)} L ${PAD.l} ${(PAD.t + iH).toFixed(1)} Z`
+
+  return (
+    <div className="p-3">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+        <defs>
+          <linearGradient id="wlg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#1d4ed8" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* Grid lines */}
+        {[0, 0.5, 1].map((t) => (
+          <line key={t} x1={PAD.l} x2={W - PAD.r} y1={PAD.t + t * iH} y2={PAD.t + t * iH} stroke="#e2e8f0" strokeWidth="0.5" />
+        ))}
+        {/* Area fill */}
+        <path d={areaD} fill="url(#wlg)" />
+        {/* Line */}
+        <path d={pathD} fill="none" stroke="#1d4ed8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Dots + labels */}
+        {pts.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="2.5" fill="#1d4ed8" />
+            <text x={p.x} y={H - 6} textAnchor="middle" fontSize="6.5" fill="#94a3b8">{p.label}</text>
+          </g>
+        ))}
+        {/* Y labels */}
+        <text x={PAD.l - 3} y={PAD.t + 3} textAnchor="end" fontSize="6" fill="#94a3b8">{max}</text>
+        <text x={PAD.l - 3} y={PAD.t + iH + 3} textAnchor="end" fontSize="6" fill="#94a3b8">{min}</text>
+      </svg>
+    </div>
+  )
+}
+
+function WalterChart({ chart }: { chart: WalterChart }) {
+  return (
+    <div className="mx-3 my-1 rounded-xl overflow-hidden border border-slate-200 bg-white shrink-0">
+      <ChartHeader title={chart.title} />
+      {chart.type === 'bar' && <BarChart chart={chart} />}
+      {(chart.type === 'pie' || chart.type === 'donut') && <PieDonutChart chart={chart} />}
+      {chart.type === 'line' && <LineChart chart={chart} />}
     </div>
   )
 }
@@ -252,7 +367,7 @@ function WalterChatPanel({
         </ThreadPrimitive.Viewport>
 
         {/* Chart */}
-        {chart && !isRunning && <WalterBarChart chart={chart} />}
+        {chart && !isRunning && <WalterChart chart={chart} />}
 
         {/* Suggested action button */}
         {suggestedAction && !isRunning && (
