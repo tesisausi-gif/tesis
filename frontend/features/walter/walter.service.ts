@@ -207,7 +207,7 @@ async function executeListarIncidentes(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = supabase
         .from('incidentes')
-        .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, inmuebles(direccion)')
+        .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, inmuebles:id_propiedad(calle, altura)')
         .eq('id_cliente_reporta', idCliente)
         .order('fecha_registro', { ascending: false })
         .limit(cap)
