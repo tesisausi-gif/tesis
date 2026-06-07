@@ -128,4 +128,9 @@ export interface MetricasDashboard {
   tiempoPromedioResolucion: number
   topTecnicos: MetricasTecnico[]
   totalIncidentes: number
+  conteosPorEstado: {
+    pendiente: number
+    en_proceso: number
+    finalizado: number
+  }
 }

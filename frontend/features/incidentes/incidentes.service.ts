@@ -469,6 +469,12 @@ export async function getMetricasDashboard(filtros?: FiltrosMetricas): Promise<M
     .slice(0, 5)
     .map(t => ({ nombre: t.nombre, apellido: t.apellido, incidentesResueltos: t.count }))
 
+  const conteosPorEstado = {
+    pendiente: incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada').length,
+    en_proceso: incidentes.filter(i => i.estado_actual === 'en_proceso').length,
+    finalizado: incidentes.filter(i => i.estado_actual === 'finalizado').length,
+  }
+
   return {
     incidentesPorMes,
     distribucionCategorias,
@@ -476,6 +482,7 @@ export async function getMetricasDashboard(filtros?: FiltrosMetricas): Promise<M
     tiempoPromedioResolucion,
     topTecnicos,
     totalIncidentes: incidentes.length,
+    conteosPorEstado,
   }
 }
 
