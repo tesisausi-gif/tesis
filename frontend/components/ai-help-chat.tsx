@@ -384,8 +384,8 @@ function WalterChatPanel({
 
         {/* Calendario de disponibilidad embebido */}
         {showCalendario && !isRunning && (
-          <div className="bg-white border-t border-slate-100 shrink-0">
-            <div className="px-3 pt-3 pb-1">
+          <div className="bg-white border-t border-slate-100 flex flex-col" style={{ maxHeight: '60vh' }}>
+            <div className="overflow-y-auto flex-1 px-3 pt-3 pb-1">
               <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Seleccioná tu disponibilidad</p>
               <CalendarioDisponibilidad
                 modo="editar"
@@ -394,7 +394,7 @@ function WalterChatPanel({
                 className="text-sm"
               />
             </div>
-            <div className="px-3 pb-3">
+            <div className="px-3 py-3 border-t border-slate-100 shrink-0">
               <button
                 onClick={() => {
                   const validas = calendarioFranjas.filter(f => f.hora_inicio && f.hora_fin)
