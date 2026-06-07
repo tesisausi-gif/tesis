@@ -331,18 +331,20 @@ function WalterChatPanel({
 
               if (message.role === 'user') {
                 const imagePreview = imagePreviewsRef.current.get(message.id)
+                // Strip internal tokens (DISPONIBILIDAD_JSON) from displayed text
+                const userDisplayText = textContent.split('\nDISPONIBILIDAD_JSON:')[0].trim()
                 return (
                   <div className="flex justify-end mb-3">
                     <div className="max-w-[82%] space-y-1 flex flex-col items-end">
                       {imagePreview && (
                         <img src={imagePreview} alt="adjunto" className="rounded-xl max-h-40 object-cover border border-slate-200" />
                       )}
-                      {textContent && (
+                      {userDisplayText && (
                         <div
                           className="px-3.5 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed whitespace-pre-wrap break-words text-white"
                           style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%)' }}
                         >
-                          {textContent}
+                          {userDisplayText}
                         </div>
                       )}
                     </div>
