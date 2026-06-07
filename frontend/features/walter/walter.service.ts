@@ -16,7 +16,7 @@ const SYSTEM_PROMPTS: Record<WalterRol, string> = {
 
 TUS CAPACIDADES (no podés hacer nada fuera de estas):
 1. AYUDA CON EL SISTEMA: Explicar cómo usar las funciones del portal (reportar incidentes, ver estados, gestionar inmuebles, entender presupuestos y pagos).
-2. LISTAR INCIDENTES: Cuando el usuario pregunta por sus incidentes (sin importar si tiene o no el ID), usá la herramienta listar_incidentes para mostrarlos. No le pedís el ID antes de listar.
+2. LISTAR INCIDENTES: Cuando el usuario pregunta por sus incidentes, usá listar_incidentes. La respuesta incluye el total real (campo TOTAL al inicio). Usá ese número para responder preguntas de cantidad — no cuentes los ítems de la lista manualmente.
 3. CONSULTA DE ESTADO: Una vez que el usuario eligió un incidente de la lista, o si directamente te da el ID, usá consultar_estado_incidente para los detalles.
 4. DIAGNÓSTICO Y REPORTE: Analizar fotos o descripciones de problemas y sugerir reportarlos.
 
@@ -50,7 +50,7 @@ Respondé en español argentino estándar: cordial, claro y profesional. Evitá 
 
 TUS CAPACIDADES (no podés hacer nada fuera de estas):
 1. AYUDA CON EL SISTEMA: Explicar el flujo completo (inspección → presupuesto → ejecución → conformidad → cobro) y cómo usar cada función del portal.
-2. LISTAR TRABAJOS: Cuando el técnico pregunta por sus incidentes o trabajos asignados, usá listar_incidentes de inmediato, sin pedirle el ID primero.
+2. LISTAR TRABAJOS: Cuando el técnico pregunta por sus trabajos, usá listar_incidentes de inmediato. La respuesta incluye el total real (campo TOTAL al inicio). Usá ese número para responder preguntas de cantidad — no cuentes los ítems manualmente.
 3. CONSULTA DE ESTADO: Una vez que el técnico eligió un trabajo de la lista, o te da el ID directamente, usá consultar_estado_incidente para los detalles.
 4. ORIENTACIÓN OPERATIVA: Guiar sobre qué hacer en cada etapa de un trabajo según el estado actual.
 
@@ -144,7 +144,7 @@ const LISTAR_INCIDENTES_TOOL: Anthropic.Tool = {
 const OBTENER_METRICAS_TOOL: Anthropic.Tool = {
   name: 'obtener_metricas',
   description:
-    'Obtiene métricas reales del sistema: top técnicos por incidentes resueltos, distribución por categoría y prioridad, tiempo promedio de resolución en días, total de incidentes y tendencia mensual de los últimos 6 meses. Usalo para responder CUALQUIER pregunta analítica sobre rendimiento, estadísticas o reportes.',
+    'Obtiene métricas reales del sistema: conteosPorEstado (cantidad EXACTA de incidentes pendientes, en_proceso y finalizados), top técnicos por incidentes resueltos, distribución por categoría y prioridad, tiempo promedio de resolución en días, total de incidentes y tendencia mensual de los últimos 6 meses. Usalo para cualquier pregunta sobre cantidades, rendimiento, estadísticas o reportes.',
   input_schema: {
     type: 'object',
     properties: {},
@@ -160,11 +160,12 @@ const TOOLS_BY_ROL: Record<WalterRol, Anthropic.Tool[]> = {
 
 // ── Ejecución de herramientas ─────────────────────────────────────────────────
 
-async function executeConsultarEstado(idIncidente: number): Promise<string> {
+async function executeConsultarEstado(idIncidente: number, rol: WalterRol): Promise<string> {
   if (!idIncidente || idIncidente <= 0) return 'ID de incidente inválido.'
 
   try {
-    const supabase = await createClient()
+    // Usamos adminClient para no depender de RLS; verificamos acceso según rol.
+    const supabase = createAdminClient()
 
     const { data, error } = await supabase
       .from('incidentes')
@@ -174,7 +175,9 @@ async function executeConsultarEstado(idIncidente: number): Promise<string> {
         estado_actual,
         fecha_registro,
         fue_resuelto,
+        id_cliente_reporta,
         asignaciones_tecnico (
+          id_tecnico,
           estado_asignacion,
           fecha_asignacion
         ),
@@ -192,8 +195,23 @@ async function executeConsultarEstado(idIncidente: number): Promise<string> {
       .single()
 
     if (error || !data) {
-      return `Incidente #${idIncidente} no encontrado o sin permisos para consultarlo.`
+      return `Incidente #${idIncidente} no encontrado.`
     }
+
+    // Verificar que el rol tiene acceso a este incidente
+    if (rol === 'cliente') {
+      const idCliente = await requireClienteId()
+      if (data.id_cliente_reporta !== idCliente) {
+        return `No tenés acceso al incidente #${idIncidente}.`
+      }
+    } else if (rol === 'tecnico') {
+      const idTecnico = await requireTecnicoId()
+      const asigs = data.asignaciones_tecnico as Array<{ id_tecnico: number }>
+      if (!asigs?.some(a => a.id_tecnico === idTecnico)) {
+        return `El incidente #${idIncidente} no está asignado a vos.`
+      }
+    }
+    // admin puede ver cualquiera
 
     return JSON.stringify(data, null, 2)
   } catch (err) {
@@ -205,31 +223,35 @@ async function executeConsultarEstado(idIncidente: number): Promise<string> {
 async function executeListarIncidentes(
   rol: WalterRol,
   estado?: string,
-  limite = 10,
+  limite = 20,
 ): Promise<string> {
-  const cap = Math.min(limite, 20)
+  // Cliente y técnico: cap más alto porque su dataset es inherentemente acotado por usuario.
+  // Admin: cap moderado; para cantidades exactas debe usar obtener_metricas.
+  const cap = rol === 'admin' ? Math.min(limite, 30) : Math.min(limite, 50)
 
   try {
     if (rol === 'cliente') {
       const idCliente = await requireClienteId()
-      // Usamos adminClient para bypassear RLS — el filtro explícito por id_cliente_reporta
-      // garantiza que el cliente solo vea sus propios incidentes.
       const supabase = createAdminClient()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = supabase
         .from('incidentes')
-        .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, inmuebles:id_propiedad(calle, altura)')
+        .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, inmuebles:id_propiedad(calle, altura)', { count: 'exact' })
         .eq('id_cliente_reporta', idCliente)
         .order('fecha_registro', { ascending: false })
         .limit(cap)
       if (estado) q = q.eq('estado_actual', estado)
-      const { data, error } = await q
+      const { data, error, count } = await q
       if (error) {
         console.error('[Walter listar_incidentes cliente]', error)
         return 'Ocurrió un error al consultar tus incidentes. Por favor, intentá de nuevo.'
       }
-      if (!data?.length) return 'No tenés incidentes registrados en el sistema todavía.'
-      return JSON.stringify(data, null, 2)
+      if (!data?.length) return estado
+        ? `No tenés incidentes con estado "${estado}".`
+        : 'No tenés incidentes registrados en el sistema todavía.'
+      const total = count ?? data.length
+      const aviso = total > data.length ? ` (mostrando ${data.length} de ${total} en total)` : ` (${total} en total)`
+      return `TOTAL${aviso}:\n${JSON.stringify(data, null, 2)}`
     }
 
     if (rol === 'tecnico') {
@@ -238,18 +260,19 @@ async function executeListarIncidentes(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = supabase
         .from('asignaciones_tecnico')
-        .select('estado_asignacion, incidentes(id_incidente, descripcion_problema, estado_actual, fecha_registro)')
+        .select('estado_asignacion, incidentes(id_incidente, descripcion_problema, estado_actual, fecha_registro)', { count: 'exact' })
         .eq('id_tecnico', idTecnico)
         .order('fecha_asignacion', { ascending: false })
         .limit(cap)
-      if (estado) q = q.eq('incidentes.estado_actual', estado)
-      const { data, error } = await q
+      const { data, error, count } = await q
       if (error) {
         console.error('[Walter listar_incidentes tecnico]', error)
         return 'Ocurrió un error al consultar tus trabajos asignados. Por favor, intentá de nuevo.'
       }
       if (!data?.length) return 'No tenés trabajos asignados actualmente.'
-      return JSON.stringify(data, null, 2)
+      const total = count ?? data.length
+      const aviso = total > data.length ? ` (mostrando ${data.length} de ${total} en total)` : ` (${total} en total)`
+      return `TOTAL${aviso}:\n${JSON.stringify(data, null, 2)}`
     }
 
     // admin
@@ -258,17 +281,21 @@ async function executeListarIncidentes(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let q: any = supabase
       .from('incidentes')
-      .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, categoria, nivel_prioridad')
+      .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, categoria, nivel_prioridad', { count: 'exact' })
       .order('fecha_registro', { ascending: false })
       .limit(cap)
     if (estado) q = q.eq('estado_actual', estado)
-    const { data, error } = await q
+    const { data, error, count } = await q
     if (error) {
       console.error('[Walter listar_incidentes admin]', error)
       return 'Ocurrió un error al consultar los incidentes. Por favor, intentá de nuevo.'
     }
     if (!data?.length) return 'No se encontraron incidentes con ese filtro.'
-    return JSON.stringify(data, null, 2)
+    const total = count ?? data.length
+    const aviso = total > data.length
+      ? ` ATENCIÓN: hay ${total} incidentes en total con ese filtro, mostrando solo los ${data.length} más recientes. Para cantidades exactas usá obtener_metricas.`
+      : ` (${total} en total)`
+    return `TOTAL${aviso}:\n${JSON.stringify(data, null, 2)}`
   } catch (err) {
     console.error('[Walter listar_incidentes]', err)
     const msg = err instanceof Error ? err.message : String(err)
@@ -426,7 +453,7 @@ export async function sendMessageToWalter(
       let toolResult: string
       if (toolUseBlock.name === 'consultar_estado_incidente') {
         const input = toolUseBlock.input as { id_incidente: number }
-        toolResult = await executeConsultarEstado(Number(input.id_incidente))
+        toolResult = await executeConsultarEstado(Number(input.id_incidente), rol)
       } else if (toolUseBlock.name === 'listar_incidentes') {
         const input = toolUseBlock.input as { estado?: string; limite?: number }
         toolResult = await executeListarIncidentes(rol, input.estado, input.limite ?? 10)
