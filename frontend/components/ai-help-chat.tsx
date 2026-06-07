@@ -472,37 +472,41 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
 
   // ── Image handling ──────────────────────────────────────────────────────────
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
 
-    // Resize + convert to JPEG via canvas (handles HEIC, large phone photos, etc.)
-    // Max 1024px on longest side, JPEG 0.85 — keeps under Anthropic's 5MB image limit
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string
-      const img = new Image()
-      img.onload = () => {
-        const MAX = 1024
-        const scale = img.width > img.height
-          ? Math.min(1, MAX / img.width)
-          : Math.min(1, MAX / img.height)
-        const w = Math.round(img.width * scale)
-        const h = Math.round(img.height * scale)
+    try {
+      // createImageBitmap con imageOrientation:'from-image' aplica la rotación EXIF
+      // automáticamente (fotos de iPhone rotadas) y acepta HEIC en Safari/iOS.
+      // Es más eficiente que FileReader+Image y libera memoria GPU con bitmap.close().
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
 
-        const canvas = document.createElement('canvas')
-        canvas.width = w
-        canvas.height = h
-        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+      const MAX = 1024
+      const scale = Math.min(1, MAX / Math.max(bitmap.width, bitmap.height))
+      const w = Math.round(bitmap.width * scale)
+      const h = Math.round(bitmap.height * scale)
 
-        const resized = canvas.toDataURL('image/jpeg', 0.85)
-        const base64 = resized.split(',')[1]
-        setPendingImage({ base64, mimeType: 'image/jpeg', preview: resized })
-      }
-      img.src = dataUrl
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      canvas.getContext('2d')!.drawImage(bitmap, 0, 0, w, h)
+      bitmap.close()
+
+      // toBlob es más eficiente que toDataURL (no crea string gigante en memoria)
+      canvas.toBlob((blob) => {
+        if (!blob) return
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+          const dataUrl = ev.target?.result as string
+          setPendingImage({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg', preview: dataUrl })
+        }
+        reader.readAsDataURL(blob)
+      }, 'image/jpeg', 0.85)
+    } catch {
+      // createImageBitmap no soportado (muy raro en browsers modernos) — ignorar
     }
-    reader.readAsDataURL(file)
   }
 
   const handleOpen = () => {
