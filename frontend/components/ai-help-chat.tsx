@@ -521,6 +521,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   // Refs for adapter closures (always hold current values)
   const pendingImageRef = useRef<PendingImage | null>(null)
   const imagePreviewsRef = useRef(new Map<string, string>())
+  const imageDataRef = useRef(new Map<string, { base64: string; mimeType: string }>())
   const setSuggestedActionRef = useRef(setSuggestedAction)
   const setChartRef = useRef(setChart)
   const setIncidenteCreadoRef = useRef(setIncidenteCreado)
@@ -550,9 +551,10 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         // Get last user message for image attachment and preview storage
         const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')
 
-        // Store image preview keyed by message ID for display
+        // Store image preview and data keyed by message ID for display and reuse across turns
         if (pendingImg && lastUserMsg) {
           imagePreviewsRef.current.set(lastUserMsg.id, pendingImg.preview)
+          imageDataRef.current.set(lastUserMsg.id, { base64: pendingImg.base64, mimeType: pendingImg.mimeType })
         }
 
         // Convert library ThreadMessage[] → WalterMessage[]
@@ -563,12 +565,16 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
             const text = parts.find((p) => p.type === 'text')?.text ?? ''
 
             if (msg.role === 'user') {
+              const msgId = (msg as unknown as { id: string }).id
               const isLast = msg === lastUserMsg
+              const savedImage = isLast && pendingImg
+                ? { base64: pendingImg.base64, mimeType: pendingImg.mimeType }
+                : imageDataRef.current.get(msgId)
               return {
                 role: 'user' as const,
                 content: text,
-                ...(isLast && pendingImg
-                  ? { imageBase64: pendingImg.base64, imageMimeType: pendingImg.mimeType }
+                ...(savedImage
+                  ? { imageBase64: savedImage.base64, imageMimeType: savedImage.mimeType }
                   : {}),
               }
             }
