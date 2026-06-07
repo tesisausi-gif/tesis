@@ -362,10 +362,9 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     }
 
     const gruposOrdenados = Array.from(grupos.entries()).sort(([, a], [, b]) => {
-      const prioA = CATEGORIA_PRIORIDAD[getCategoriaMaxGrupo(a)]
-      const prioB = CATEGORIA_PRIORIDAD[getCategoriaMaxGrupo(b)]
-      if (prioB !== prioA) return prioB - prioA
-      return new Date(b[0].fecha_creacion).getTime() - new Date(a[0].fecha_creacion).getTime()
+      const fechaA = Math.max(...a.map(n => new Date(n.fecha_creacion).getTime()))
+      const fechaB = Math.max(...b.map(n => new Date(n.fecha_creacion).getTime()))
+      return fechaB - fechaA
     })
 
     const visibles = verTodosGrupos ? gruposOrdenados : gruposOrdenados.slice(0, MAX_GRUPOS)

@@ -79,7 +79,6 @@ function RegisterPageContent() {
   const [tecnicoTelefono, setTecnicoTelefono] = useState('')
   const [tecnicoDNI, setTecnicoDNI] = useState('')
   const [tecnicoEspecialidades, setTecnicoEspecialidades] = useState<string[]>([])
-  const [tecnicoDireccion, setTecnicoDireccion] = useState('')
 
   useEffect(() => {
     getEspecialidadesActivas()
@@ -165,7 +164,7 @@ function RegisterPageContent() {
       const result = await crearSolicitudRegistro({
         nombre: tecnicoNombre, apellido: tecnicoApellido, email: tecnicoEmail,
         telefono: tecnicoTelefono || null, dni: tecnicoDNI || null,
-        especialidades: tecnicoEspecialidades, direccion: tecnicoDireccion || null,
+        especialidades: tecnicoEspecialidades, direccion: null,
       })
 
       if (!result.success) {
@@ -175,7 +174,7 @@ function RegisterPageContent() {
 
       toast.success('Solicitud enviada', { description: 'Recibirás un email cuando sea aprobada' })
       setTecnicoNombre(''); setTecnicoApellido(''); setTecnicoEmail('')
-      setTecnicoTelefono(''); setTecnicoDNI(''); setTecnicoEspecialidades([]); setTecnicoDireccion('')
+      setTecnicoTelefono(''); setTecnicoDNI(''); setTecnicoEspecialidades([])
       setTimeout(() => router.push('/login'), 3000)
     } catch {
       toast.error('Error inesperado')
@@ -350,10 +349,6 @@ function RegisterPageContent() {
               {tecnicoEspecialidades.length === 0 && (
                 <p className="text-xs text-amber-600 mt-1.5" style={{ fontFamily: 'var(--font-outfit)' }}>Seleccioná al menos una especialidad</p>
               )}
-            </div>
-            <div>
-              <LabelText>Dirección</LabelText>
-              <Input id="tecnico-direccion" value={tecnicoDireccion} onChange={(e) => setTecnicoDireccion(e.target.value)} disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
             </div>
             <SubmitButton loading={loading} label="Enviar Solicitud" loadingLabel="Enviando..." />
           </form>
