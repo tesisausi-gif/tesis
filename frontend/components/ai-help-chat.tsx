@@ -73,6 +73,8 @@ interface WalterChatPanelProps {
   onClearSuggestedAction: () => void
   chart: WalterChart | null
   onClearChart: () => void
+  incidenteCreado: { id_incidente: number } | null
+  onClearIncidenteCreado: () => void
   imagePreviewsRef: React.MutableRefObject<Map<string, string>>
 }
 
@@ -235,6 +237,8 @@ function WalterChatPanel({
   onClearSuggestedAction,
   chart,
   onClearChart,
+  incidenteCreado,
+  onClearIncidenteCreado,
   imagePreviewsRef,
 }: WalterChatPanelProps) {
   const threadRuntime = useThreadRuntime()
@@ -369,6 +373,35 @@ function WalterChatPanel({
         {/* Chart */}
         {chart && !isRunning && <WalterChart chart={chart} />}
 
+        {/* Incidente creado — card de éxito */}
+        {incidenteCreado && !isRunning && (
+          <div className="px-3 py-2 bg-white border-t border-slate-100 shrink-0">
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #052e16 0%, #14532d 100%)' }}>
+              <div className="px-4 py-3 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-emerald-300 leading-tight">Incidente registrado</p>
+                  <p className="text-[11px] text-emerald-200/70 mt-0.5">N.º de reporte: <span className="font-semibold text-emerald-200">#{incidenteCreado.id_incidente}</span></p>
+                </div>
+                <button onClick={onClearIncidenteCreado} className="text-emerald-500/50 hover:text-emerald-400 transition-colors shrink-0">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <Link href="/cliente/incidentes" onClick={onClose}
+                className="flex items-center justify-between px-4 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors border-t border-emerald-500/20">
+                <span className="text-[11px] font-semibold text-emerald-300">Ver mis incidentes</span>
+                <ArrowRight className="h-3.5 w-3.5 text-emerald-400" />
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Suggested action button */}
         {suggestedAction && !isRunning && (
           <div className="px-3 py-2 bg-white border-t border-slate-100 shrink-0">
@@ -474,6 +507,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null)
   const [suggestedAction, setSuggestedAction] = useState<WalterSuggestedAction | null>(null)
   const [chart, setChart] = useState<WalterChart | null>(null)
+  const [incidenteCreado, setIncidenteCreado] = useState<{ id_incidente: number } | null>(null)
 
   // Drag state
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -489,11 +523,13 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const imagePreviewsRef = useRef(new Map<string, string>())
   const setSuggestedActionRef = useRef(setSuggestedAction)
   const setChartRef = useRef(setChart)
+  const setIncidenteCreadoRef = useRef(setIncidenteCreado)
   const clearPendingImageRef = useRef(() => setPendingImage(null))
 
   useEffect(() => { pendingImageRef.current = pendingImage }, [pendingImage])
   useEffect(() => { setSuggestedActionRef.current = setSuggestedAction }, [])
   useEffect(() => { setChartRef.current = setChart }, [])
+  useEffect(() => { setIncidenteCreadoRef.current = setIncidenteCreado }, [])
   useEffect(() => { clearPendingImageRef.current = () => setPendingImage(null) }, [])
 
   useEffect(() => {
@@ -549,6 +585,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         if (!result.success) {
           setSuggestedActionRef.current(null)
           setChartRef.current(null)
+          setIncidenteCreadoRef.current(null)
           return {
             content: [{ type: 'text', text: result.error ?? 'No pude procesar tu consulta. Intentá de nuevo.' }],
           }
@@ -556,6 +593,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
 
         setSuggestedActionRef.current(result.suggestedAction ?? null)
         setChartRef.current(result.chart ?? null)
+        setIncidenteCreadoRef.current(result.incidenteCreado ?? null)
 
         return {
           content: [{ type: 'text', text: result.content ?? '' }],
@@ -565,6 +603,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         clearPendingImageRef.current()
         setSuggestedActionRef.current(null)
         setChartRef.current(null)
+        setIncidenteCreadoRef.current(null)
         const msg = err instanceof Error ? err.message : String(err)
         console.error('[Walter adapter]', msg)
         return {
@@ -705,6 +744,8 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           onClearSuggestedAction={() => setSuggestedAction(null)}
           chart={chart}
           onClearChart={() => setChart(null)}
+          incidenteCreado={incidenteCreado}
+          onClearIncidenteCreado={() => setIncidenteCreado(null)}
           imagePreviewsRef={imagePreviewsRef}
         />
       </AssistantRuntimeProvider>

@@ -31,6 +31,7 @@ export interface WalterResponse {
   content?: string
   suggestedAction?: WalterSuggestedAction
   chart?: WalterChart
+  incidenteCreado?: { id_incidente: number }
   error?: string
 }
 
