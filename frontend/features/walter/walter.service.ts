@@ -42,7 +42,12 @@ PASO 2 — DESCRIPCIÓN:
 
 PASO 3 — DISPONIBILIDAD:
   Preguntá: "¿Qué días y horarios podés recibir al técnico? Por ejemplo: el lunes, el martes de la semana que viene, etc."
-  REGLA CRÍTICA para calcular fechas: Partí siempre desde hoy (${hoyISO}) y calculá la fecha real del próximo día de semana que mencione el usuario. NUNCA uses el número de día que el usuario diga — solo el nombre del día (lunes, martes, etc.) para calcular la fecha correcta. Por ejemplo: si hoy es sábado 7 de junio y el usuario dice "el lunes", la fecha es 2026-06-09. Si dice "lunes 10 de junio" y el 10/06 no es lunes, usá la fecha del lunes correcto y avisale la corrección: "El lunes más próximo es el 9 de junio — ¿te va bien esa fecha?".
+  REGLAS CRÍTICAS para fechas (obligatorio corroborar antes de llamar al tool):
+  · Derivá la fecha SIEMPRE del nombre del día (lunes, martes…), nunca del número que menciona el usuario.
+  · Si el usuario dice "lunes 10 de junio" pero el 10/06/2026 no es lunes, usá la fecha del lunes correcto y avisale: "El lunes más próximo es el 9 de junio — ¿te va bien esa fecha?".
+  · Verificá que la fecha NO sea en el pasado (hoy es ${hoyISO}). Si lo es, pedí que elija otra.
+  · Verificá que la fecha NO supere 31 días desde hoy. Si lo supera, avisale y pedí una dentro del mes siguiente.
+  · Solo llamás a crear_incidente cuando TODAS las fechas pasaron esta validación.
   Convertí la respuesta a franjas: fecha YYYY-MM-DD, hora_inicio HH:MM, hora_fin HH:MM.
   Pedí al menos una franja. Dos o tres opciones son ideales para mayor flexibilidad.
 
@@ -422,6 +427,32 @@ async function executeCrearIncidente(
 
     if (!params.franjas?.length) {
       return { success: false, error: 'Debés indicar al menos una franja de disponibilidad.' }
+    }
+
+    // Validar fechas: reales, no pasadas, dentro del próximo mes
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    const limiteMax = new Date(hoy)
+    limiteMax.setDate(limiteMax.getDate() + 31)
+
+    for (const franja of params.franjas) {
+      const fecha = new Date(franja.fecha + 'T00:00:00')
+      if (isNaN(fecha.getTime())) {
+        return { success: false, error: `Fecha inválida: "${franja.fecha}". Usá el formato YYYY-MM-DD.` }
+      }
+      if (fecha < hoy) {
+        return { success: false, error: `La fecha ${franja.fecha} ya pasó. Solo podés registrar disponibilidad futura.` }
+      }
+      if (fecha > limiteMax) {
+        return { success: false, error: `La fecha ${franja.fecha} supera el plazo máximo de 31 días. Elegí una fecha dentro del próximo mes.` }
+      }
+      const horaRe = /^\d{2}:\d{2}$/
+      if (!horaRe.test(franja.hora_inicio) || !horaRe.test(franja.hora_fin)) {
+        return { success: false, error: `Horario inválido en la franja del ${franja.fecha}. Usá formato HH:MM.` }
+      }
+      if (franja.hora_fin <= franja.hora_inicio) {
+        return { success: false, error: `El horario de fin debe ser posterior al de inicio en la franja del ${franja.fecha}.` }
+      }
     }
 
     const { data: incidente, error: insertError } = await supabase

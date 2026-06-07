@@ -402,18 +402,32 @@ function WalterChatPanel({
           </div>
         )}
 
-        {/* Suggested action button */}
+        {/* Suggested action — dos botones: formulario + reporte guiado por chat */}
         {suggestedAction && !isRunning && (
-          <div className="px-3 py-2 bg-white border-t border-slate-100 shrink-0">
-            <Link href={suggestedAction.url} onClick={onClose}>
+          <div className="px-3 py-2 bg-white border-t border-slate-100 shrink-0 flex flex-col gap-2">
+            {/* Botón 1: ir al formulario */}
+            <Link href={suggestedAction.url} onClick={onClose} className="block">
               <div
                 className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-sm font-semibold cursor-pointer hover:brightness-105 transition-all active:scale-95"
                 style={{ background: 'linear-gradient(135deg, #0e1929 0%, #1e3a5f 100%)', color: '#93c5fd' }}
               >
                 <ArrowRight className="h-3.5 w-3.5 shrink-0" />
-                {suggestedAction.label}
+                Completar formulario de reporte
               </div>
             </Link>
+            {/* Botón 2: reportar guiado desde el chat */}
+            <button
+              onClick={() => {
+                onClearSuggestedAction()
+                sendQuickAction('Quiero reportar este incidente directamente desde el chat.')
+              }}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-sm font-semibold cursor-pointer transition-all active:scale-95 border border-blue-200 text-blue-600 hover:bg-blue-50 w-full"
+            >
+              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-3.038-.477L3 20.25l1.538-3.192A8.895 8.895 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+              Reportar desde el chat
+            </button>
           </div>
         )}
 
