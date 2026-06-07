@@ -201,7 +201,9 @@ async function executeListarIncidentes(
   try {
     if (rol === 'cliente') {
       const idCliente = await requireClienteId()
-      const supabase = await createClient()
+      // Usamos adminClient para bypassear RLS — el filtro explícito por id_cliente_reporta
+      // garantiza que el cliente solo vea sus propios incidentes.
+      const supabase = createAdminClient()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = supabase
         .from('incidentes')
@@ -211,7 +213,11 @@ async function executeListarIncidentes(
         .limit(cap)
       if (estado) q = q.eq('estado_actual', estado)
       const { data, error } = await q
-      if (error || !data?.length) return 'No se encontraron incidentes para tu cuenta.'
+      if (error) {
+        console.error('[Walter listar_incidentes cliente]', error)
+        return 'Ocurrió un error al consultar tus incidentes. Por favor, intentá de nuevo.'
+      }
+      if (!data?.length) return 'No tenés incidentes registrados en el sistema todavía.'
       return JSON.stringify(data, null, 2)
     }
 
@@ -227,7 +233,11 @@ async function executeListarIncidentes(
         .limit(cap)
       if (estado) q = q.eq('incidentes.estado_actual', estado)
       const { data, error } = await q
-      if (error || !data?.length) return 'No tenés incidentes asignados actualmente.'
+      if (error) {
+        console.error('[Walter listar_incidentes tecnico]', error)
+        return 'Ocurrió un error al consultar tus trabajos asignados. Por favor, intentá de nuevo.'
+      }
+      if (!data?.length) return 'No tenés trabajos asignados actualmente.'
       return JSON.stringify(data, null, 2)
     }
 
@@ -242,7 +252,11 @@ async function executeListarIncidentes(
       .limit(cap)
     if (estado) q = q.eq('estado_actual', estado)
     const { data, error } = await q
-    if (error || !data?.length) return 'No se encontraron incidentes.'
+    if (error) {
+      console.error('[Walter listar_incidentes admin]', error)
+      return 'Ocurrió un error al consultar los incidentes. Por favor, intentá de nuevo.'
+    }
+    if (!data?.length) return 'No se encontraron incidentes con ese filtro.'
     return JSON.stringify(data, null, 2)
   } catch (err) {
     console.error('[Walter listar_incidentes]', err)
