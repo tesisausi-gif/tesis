@@ -474,16 +474,35 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || file.size > 10 * 1024 * 1024) return
+    if (!file) return
+    e.target.value = ''
 
+    // Resize + convert to JPEG via canvas (handles HEIC, large phone photos, etc.)
+    // Max 1024px on longest side, JPEG 0.85 — keeps under Anthropic's 5MB image limit
     const reader = new FileReader()
     reader.onload = (ev) => {
-      const result = ev.target?.result as string
-      const base64 = result.split(',')[1]
-      setPendingImage({ base64, mimeType: file.type, preview: result })
+      const dataUrl = ev.target?.result as string
+      const img = new Image()
+      img.onload = () => {
+        const MAX = 1024
+        const scale = img.width > img.height
+          ? Math.min(1, MAX / img.width)
+          : Math.min(1, MAX / img.height)
+        const w = Math.round(img.width * scale)
+        const h = Math.round(img.height * scale)
+
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+
+        const resized = canvas.toDataURL('image/jpeg', 0.85)
+        const base64 = resized.split(',')[1]
+        setPendingImage({ base64, mimeType: 'image/jpeg', preview: resized })
+      }
+      img.src = dataUrl
     }
     reader.readAsDataURL(file)
-    e.target.value = ''
   }
 
   const handleOpen = () => {
