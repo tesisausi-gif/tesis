@@ -26,6 +26,11 @@ export interface WalterChart {
   unit?: string
 }
 
+export interface WalterInmuebleOption {
+  id: number
+  direccion: string
+}
+
 export interface WalterResponse {
   success: boolean
   content?: string
@@ -33,6 +38,7 @@ export interface WalterResponse {
   chart?: WalterChart
   incidenteCreado?: { id_incidente: number }
   showCalendario?: boolean
+  inmueblesList?: WalterInmuebleOption[]
   error?: string
 }
 

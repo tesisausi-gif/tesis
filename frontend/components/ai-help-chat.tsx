@@ -15,7 +15,7 @@ import {
 import { X, Send, ImagePlus, XCircle, ArrowRight, Camera } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { sendMessageToWalter } from '@/features/walter/walter.service'
-import type { WalterMessage, WalterRol, WalterSuggestedAction, WalterChart } from '@/features/walter/walter.types'
+import type { WalterMessage, WalterRol, WalterSuggestedAction, WalterChart, WalterInmuebleOption } from '@/features/walter/walter.types'
 import { CalendarioDisponibilidad, type FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import Link from 'next/link'
 
@@ -80,6 +80,8 @@ interface WalterChatPanelProps {
   calendarioFranjas: FranjaInput[]
   onCalendarioChange: (franjas: FranjaInput[]) => void
   onCalendarioConfirm: () => void
+  inmueblesList: WalterInmuebleOption[] | null
+  onInmuebleSelect: () => void
   imagePreviewsRef: React.MutableRefObject<Map<string, string>>
 }
 
@@ -248,6 +250,8 @@ function WalterChatPanel({
   calendarioFranjas,
   onCalendarioChange,
   onCalendarioConfirm,
+  inmueblesList,
+  onInmuebleSelect,
   imagePreviewsRef,
 }: WalterChatPanelProps) {
   const threadRuntime = useThreadRuntime()
@@ -331,8 +335,11 @@ function WalterChatPanel({
 
               if (message.role === 'user') {
                 const imagePreview = imagePreviewsRef.current.get(message.id)
-                // Strip internal tokens (DISPONIBILIDAD_JSON) from displayed text
-                const userDisplayText = textContent.split('\nDISPONIBILIDAD_JSON:')[0].trim()
+                // Strip internal tokens from displayed text
+                const userDisplayText = textContent
+                  .split('\nDISPONIBILIDAD_JSON:')[0]
+                  .replace(/^INMUEBLE_SELECCIONADO:id=\d+:/, '')
+                  .trim()
                 return (
                   <div className="flex justify-end mb-3">
                     <div className="max-w-[82%] space-y-1 flex flex-col items-end">
@@ -383,6 +390,25 @@ function WalterChatPanel({
 
         {/* Chart */}
         {chart && !isRunning && <WalterChart chart={chart} />}
+
+        {/* Selección de inmueble — botones uno por propiedad */}
+        {inmueblesList && !isRunning && (
+          <div className="bg-white border-t border-slate-100 px-3 py-2.5 shrink-0 space-y-2">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Seleccioná el inmueble</p>
+            {inmueblesList.map((op) => (
+              <button
+                key={op.id}
+                onClick={() => {
+                  onInmuebleSelect()
+                  sendQuickAction(`INMUEBLE_SELECCIONADO:id=${op.id}:${op.direccion}`)
+                }}
+                className="w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-all active:scale-[0.98]"
+              >
+                {op.direccion}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Calendario de disponibilidad embebido */}
         {showCalendario && !isRunning && (
@@ -565,6 +591,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const [incidenteCreado, setIncidenteCreado] = useState<{ id_incidente: number } | null>(null)
   const [showCalendario, setShowCalendario] = useState(false)
   const [calendarioFranjas, setCalendarioFranjas] = useState<FranjaInput[]>([])
+  const [inmueblesList, setInmueblesList] = useState<WalterInmuebleOption[] | null>(null)
 
   // Drag state
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -584,6 +611,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const setChartRef = useRef(setChart)
   const setIncidenteCreadoRef = useRef(setIncidenteCreado)
   const setShowCalendarioRef = useRef(setShowCalendario)
+  const setInmueblesListRef = useRef(setInmueblesList)
   const clearPendingImageRef = useRef(() => setPendingImage(null))
 
   useEffect(() => { pendingImageRef.current = pendingImage }, [pendingImage])
@@ -591,6 +619,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   useEffect(() => { setChartRef.current = setChart }, [])
   useEffect(() => { setIncidenteCreadoRef.current = setIncidenteCreado }, [])
   useEffect(() => { setShowCalendarioRef.current = setShowCalendario }, [])
+  useEffect(() => { setInmueblesListRef.current = setInmueblesList }, [])
   useEffect(() => { clearPendingImageRef.current = () => setPendingImage(null) }, [])
 
   useEffect(() => {
@@ -649,6 +678,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           setChartRef.current(null)
           setIncidenteCreadoRef.current(null)
           setShowCalendarioRef.current(false)
+          setInmueblesListRef.current(null)
           return {
             content: [{ type: 'text', text: result.error ?? 'No pude procesar tu consulta. Intentá de nuevo.' }],
           }
@@ -657,6 +687,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         setSuggestedActionRef.current(result.suggestedAction ?? null)
         setChartRef.current(result.chart ?? null)
         setIncidenteCreadoRef.current(result.incidenteCreado ?? null)
+        setInmueblesListRef.current(result.inmueblesList ?? null)
         if (result.showCalendario) {
           setShowCalendarioRef.current(true)
           setCalendarioFranjas([])
@@ -674,6 +705,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         setChartRef.current(null)
         setIncidenteCreadoRef.current(null)
         setShowCalendarioRef.current(false)
+        setInmueblesListRef.current(null)
         const msg = err instanceof Error ? err.message : String(err)
         console.error('[Walter adapter]', msg)
         return {
@@ -820,6 +852,8 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           calendarioFranjas={calendarioFranjas}
           onCalendarioChange={setCalendarioFranjas}
           onCalendarioConfirm={() => { setShowCalendario(false); setCalendarioFranjas([]) }}
+          inmueblesList={inmueblesList}
+          onInmuebleSelect={() => setInmueblesList(null)}
           imagePreviewsRef={imagePreviewsRef}
         />
       </AssistantRuntimeProvider>

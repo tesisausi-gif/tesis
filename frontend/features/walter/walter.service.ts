@@ -8,7 +8,7 @@ import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import { guardarFranjasDisponibilidad } from '@/features/disponibilidad/disponibilidad.service'
 import { crearNotificacionAdmin } from '@/features/notificaciones/notificaciones-inapp.service'
 import { STORAGE_BUCKET, STORAGE_PATHS } from '@/features/documentos/documentos.types'
-import type { WalterMessage, WalterRol, WalterResponse, WalterSuggestedAction, WalterChart } from './walter.types'
+import type { WalterMessage, WalterRol, WalterResponse, WalterSuggestedAction, WalterChart, WalterInmuebleOption } from './walter.types'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -32,13 +32,14 @@ REPORTE GUIADO — FLUJO PASO A PASO:
 Cuando el usuario quiera reportar un incidente (lo solicita explícitamente, o tras diagnosticar un problema), guialo así en orden:
 
 PASO 1 — INMUEBLE:
-  Usá listar_inmuebles_cliente para obtener sus propiedades activas.
-  Mostrá la lista numerada con dirección completa (calle, altura, barrio) y preguntá cuál es la afectada.
-  Si solo tiene uno, confirmá directamente con él sin preguntar.
-  Cuando el cliente elija, CONFIRMÁ en voz alta la dirección completa del inmueble seleccionado:
-  "Entendido, voy a registrar el incidente para **[calle altura, barrio]**. ¿Es correcto?"
-  Esperá confirmación ("sí", "correcto", etc.) antes de pasar al PASO 2.
-  Esto es obligatorio para evitar errores — el cliente puede decir el nombre de forma incompleta.
+  Llamá a listar_inmuebles_cliente para obtener las propiedades activas del cliente.
+  Escribí un mensaje corto presentando las opciones e incluí al final exactamente (en su propia línea):
+  WALTER_INMUEBLES_JSON:[{"id":ID,"direccion":"CALLE ALTURA, BARRIO"},...]
+  (construí la dirección con calle + altura + barrio del resultado de la herramienta)
+  El sistema mostrará botones de selección al cliente — no listés las propiedades en texto.
+  Cuando el cliente elija, recibirás un mensaje con: INMUEBLE_SELECCIONADO:id=X:DIRECCIÓN
+  El número después de "id=" es el id_propiedad exacto a usar en crear_incidente. Usá ese ID siempre, sin excepciones.
+  Confirmá: "Registraré el incidente para **DIRECCIÓN**. Continuamos con la descripción."
 
 PASO 2 — DESCRIPCIÓN:
   Si ya tenés un diagnóstico del problema en esta conversación, usalo directamente (no la repitas, solo confirmá que vas a usarla).
@@ -556,11 +557,35 @@ function parseAction(content: string): {
   suggestedAction?: WalterSuggestedAction
   chart?: WalterChart
   showCalendario?: boolean
+  inmueblesList?: WalterInmuebleOption[]
 } {
   let cleanContent = content.trim()
   let suggestedAction: WalterSuggestedAction | undefined
   let chart: WalterChart | undefined
   let showCalendario: boolean | undefined
+  let inmueblesList: WalterInmuebleOption[] | undefined
+
+  // Parse WALTER_INMUEBLES_JSON:[...]
+  const inmueblesMarker = 'WALTER_INMUEBLES_JSON:'
+  const inmueblesIdx = cleanContent.indexOf(inmueblesMarker)
+  if (inmueblesIdx !== -1) {
+    const bracketStart = cleanContent.indexOf('[', inmueblesIdx)
+    if (bracketStart !== -1) {
+      let depth = 0, end = -1
+      for (let i = bracketStart; i < cleanContent.length; i++) {
+        if (cleanContent[i] === '[' || cleanContent[i] === '{') depth++
+        else if (cleanContent[i] === ']' || cleanContent[i] === '}') {
+          if (--depth === 0) { end = i + 1; break }
+        }
+      }
+      if (end !== -1) {
+        try {
+          inmueblesList = JSON.parse(cleanContent.slice(bracketStart, end)) as WalterInmuebleOption[]
+          cleanContent = (cleanContent.slice(0, inmueblesIdx) + cleanContent.slice(end)).replace(/\n{3,}/g, '\n\n').trim()
+        } catch { /* JSON inválido — ignorar */ }
+      }
+    }
+  }
 
   // Parse WALTER_CALENDARIO
   if (/\bWALTER_CALENDARIO\b/.test(cleanContent)) {
@@ -622,7 +647,7 @@ function parseAction(content: string): {
     }
   }
 
-  return { cleanContent, suggestedAction, chart, showCalendario }
+  return { cleanContent, suggestedAction, chart, showCalendario, inmueblesList }
 }
 
 // ── Server Action principal ───────────────────────────────────────────────────
@@ -721,9 +746,9 @@ export async function sendMessageToWalter(
 
     const rawContent =
       response.content.find((b): b is Anthropic.TextBlock => b.type === 'text')?.text ?? ''
-    const { cleanContent, suggestedAction, chart, showCalendario } = parseAction(rawContent)
+    const { cleanContent, suggestedAction, chart, showCalendario, inmueblesList } = parseAction(rawContent)
 
-    return { success: true, content: cleanContent, suggestedAction, chart, incidenteCreado, showCalendario }
+    return { success: true, content: cleanContent, suggestedAction, chart, incidenteCreado, showCalendario, inmueblesList }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[Walter] Error llamando a Anthropic:', msg)
