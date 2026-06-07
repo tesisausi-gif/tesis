@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Mail } from 'lucide-react'
+import { ArrowLeft, Mail, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { crearSolicitudRegistro, getEspecialidadesActivas, verificarEmailDisponible } from '@/features/usuarios/usuarios.service'
 import { Input } from '@/components/ui/input'
@@ -79,6 +79,9 @@ function RegisterPageContent() {
   const [tecnicoTelefono, setTecnicoTelefono] = useState('')
   const [tecnicoDNI, setTecnicoDNI] = useState('')
   const [tecnicoEspecialidades, setTecnicoEspecialidades] = useState<string[]>([])
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     getEspecialidadesActivas()
@@ -279,11 +282,21 @@ function RegisterPageContent() {
             </div>
             <div>
               <LabelText>Contraseña *</LabelText>
-              <Input id="cliente-password" type="password" value={clientePassword} onChange={(e) => setClientePassword(e.target.value)} required disabled={loading} minLength={6} placeholder="Mínimo 6 caracteres" className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+              <div className="relative">
+                <Input id="cliente-password" type={showPassword ? 'text' : 'password'} value={clientePassword} onChange={(e) => setClientePassword(e.target.value)} required disabled={loading} minLength={6} placeholder="Mínimo 6 caracteres" className="h-10 text-sm border-slate-200 bg-slate-50/70 pr-10" />
+                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" tabIndex={-1}>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div>
               <LabelText>Confirmar Contraseña *</LabelText>
-              <Input id="cliente-confirm" type="password" value={clienteConfirmPassword} onChange={(e) => setClienteConfirmPassword(e.target.value)} required disabled={loading} minLength={6} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+              <div className="relative">
+                <Input id="cliente-confirm" type={showConfirmPassword ? 'text' : 'password'} value={clienteConfirmPassword} onChange={(e) => setClienteConfirmPassword(e.target.value)} required disabled={loading} minLength={6} className="h-10 text-sm border-slate-200 bg-slate-50/70 pr-10" />
+                <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" tabIndex={-1}>
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <SubmitButton loading={loading} label="Registrarse como Cliente" loadingLabel="Registrando..." />
           </form>
