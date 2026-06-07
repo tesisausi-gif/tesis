@@ -15,7 +15,7 @@ import {
 import { X, Send, ImagePlus, XCircle, ArrowRight, Camera } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { sendMessageToWalter } from '@/features/walter/walter.service'
-import type { WalterMessage, WalterRol, WalterSuggestedAction, WalterChart, WalterInmuebleOption } from '@/features/walter/walter.types'
+import type { WalterMessage, WalterRol, WalterSuggestedAction, WalterChart, WalterInmuebleOption, WalterLink } from '@/features/walter/walter.types'
 import { CalendarioDisponibilidad, type FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import Link from 'next/link'
 
@@ -82,6 +82,8 @@ interface WalterChatPanelProps {
   onCalendarioConfirm: () => void
   inmueblesList: WalterInmuebleOption[] | null
   onInmuebleSelect: () => void
+  links: WalterLink[] | null
+  onClearLinks: () => void
   imagePreviewsRef: React.MutableRefObject<Map<string, string>>
 }
 
@@ -252,6 +254,8 @@ function WalterChatPanel({
   onCalendarioConfirm,
   inmueblesList,
   onInmuebleSelect,
+  links,
+  onClearLinks,
   imagePreviewsRef,
 }: WalterChatPanelProps) {
   const threadRuntime = useThreadRuntime()
@@ -261,11 +265,12 @@ function WalterChatPanel({
   const hasUserMessages = useThread((s) => s.messages.some((m) => m.role === 'user'))
   const quickActions = QUICK_ACTIONS[rol]
 
-  // Clear suggested action and chart when a new message starts processing
+  // Clear suggested action, chart and links when a new message starts processing
   useEffect(() => {
     if (isRunning) {
       onClearSuggestedAction()
       onClearChart()
+      onClearLinks()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning])
@@ -406,6 +411,23 @@ function WalterChatPanel({
               >
                 {op.direccion}
               </button>
+            ))}
+          </div>
+        )}
+
+        {/* Links de navegación — WALTER_LINKS */}
+        {links && links.length > 0 && !isRunning && (
+          <div className="bg-white border-t border-slate-100 px-3 py-2.5 shrink-0 space-y-1.5">
+            {links.map((link, i) => (
+              <Link
+                key={i}
+                href={link.url}
+                onClick={onClearLinks}
+                className="flex items-center justify-between px-3.5 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-all group"
+              >
+                <span className="font-medium">{link.label}</span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+              </Link>
             ))}
           </div>
         )}
@@ -592,6 +614,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const [showCalendario, setShowCalendario] = useState(false)
   const [calendarioFranjas, setCalendarioFranjas] = useState<FranjaInput[]>([])
   const [inmueblesList, setInmueblesList] = useState<WalterInmuebleOption[] | null>(null)
+  const [links, setLinks] = useState<WalterLink[] | null>(null)
 
   // Drag state
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -612,6 +635,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const setIncidenteCreadoRef = useRef(setIncidenteCreado)
   const setShowCalendarioRef = useRef(setShowCalendario)
   const setInmueblesListRef = useRef(setInmueblesList)
+  const setLinksRef = useRef(setLinks)
   const clearPendingImageRef = useRef(() => setPendingImage(null))
 
   useEffect(() => { pendingImageRef.current = pendingImage }, [pendingImage])
@@ -620,6 +644,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   useEffect(() => { setIncidenteCreadoRef.current = setIncidenteCreado }, [])
   useEffect(() => { setShowCalendarioRef.current = setShowCalendario }, [])
   useEffect(() => { setInmueblesListRef.current = setInmueblesList }, [])
+  useEffect(() => { setLinksRef.current = setLinks }, [])
   useEffect(() => { clearPendingImageRef.current = () => setPendingImage(null) }, [])
 
   useEffect(() => {
@@ -679,6 +704,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           setIncidenteCreadoRef.current(null)
           setShowCalendarioRef.current(false)
           setInmueblesListRef.current(null)
+          setLinksRef.current(null)
           return {
             content: [{ type: 'text', text: result.error ?? 'No pude procesar tu consulta. Intentá de nuevo.' }],
           }
@@ -688,6 +714,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         setChartRef.current(result.chart ?? null)
         setIncidenteCreadoRef.current(result.incidenteCreado ?? null)
         setInmueblesListRef.current(result.inmueblesList ?? null)
+        setLinksRef.current(result.links ?? null)
         if (result.showCalendario) {
           setShowCalendarioRef.current(true)
           setCalendarioFranjas([])
@@ -706,6 +733,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         setIncidenteCreadoRef.current(null)
         setShowCalendarioRef.current(false)
         setInmueblesListRef.current(null)
+        setLinksRef.current(null)
         const msg = err instanceof Error ? err.message : String(err)
         console.error('[Walter adapter]', msg)
         return {
@@ -854,6 +882,8 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           onCalendarioConfirm={() => { setShowCalendario(false); setCalendarioFranjas([]) }}
           inmueblesList={inmueblesList}
           onInmuebleSelect={() => setInmueblesList(null)}
+          links={links}
+          onClearLinks={() => setLinks(null)}
           imagePreviewsRef={imagePreviewsRef}
         />
       </AssistantRuntimeProvider>

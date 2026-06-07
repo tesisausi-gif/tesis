@@ -31,6 +31,11 @@ export interface WalterInmuebleOption {
   direccion: string
 }
 
+export interface WalterLink {
+  label: string
+  url: string
+}
+
 export interface WalterResponse {
   success: boolean
   content?: string
@@ -39,6 +44,7 @@ export interface WalterResponse {
   incidenteCreado?: { id_incidente: number }
   showCalendario?: boolean
   inmueblesList?: WalterInmuebleOption[]
+  links?: WalterLink[]
   error?: string
 }
 
