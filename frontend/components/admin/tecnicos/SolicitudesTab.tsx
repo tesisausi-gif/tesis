@@ -213,7 +213,7 @@ export default function SolicitudesTab() {
                       </div>
 
                       {/* Nombre + email */}
-                      <div className="flex-1 min-w-0">
+                      <div className="w-44 shrink-0 min-w-0">
                         <p className="text-sm font-semibold text-gray-900 truncate">
                           {solicitud.nombre} {solicitud.apellido}
                         </p>
@@ -221,7 +221,7 @@ export default function SolicitudesTab() {
                       </div>
 
                       {/* Especialidades — máx 3 visible + "+N" con tooltip */}
-                      <div className="hidden sm:flex flex-wrap gap-1 max-w-[200px]">
+                      <div className="flex-1 hidden sm:flex flex-wrap gap-1">
                         {esps.length > 0 ? (
                           <>
                             {espsVisibles.map(e => (
