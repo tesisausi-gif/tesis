@@ -279,7 +279,7 @@ function buildAnthropicMessages(messages: WalterMessage[]): Anthropic.MessagePar
       }
     }
 
-    return { role: 'user' as const, content: msg.content }
+    return { role: 'user' as const, content: msg.content || '[imagen adjunta]' }
   })
 }
 

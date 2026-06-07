@@ -179,7 +179,7 @@ function WalterChatPanel({
 
       {/* Messages viewport */}
       <ThreadPrimitive.Root className="flex-1 flex flex-col overflow-hidden bg-white">
-        <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto p-4">
+        <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto overflow-x-hidden p-4">
           {/* Welcome message shown when no messages yet */}
           <ThreadPrimitive.Empty>
             <div className="flex justify-start mb-3">
@@ -211,7 +211,7 @@ function WalterChatPanel({
                       )}
                       {textContent && (
                         <div
-                          className="px-3.5 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed whitespace-pre-wrap text-white"
+                          className="px-3.5 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed whitespace-pre-wrap break-words text-white"
                           style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%)' }}
                         >
                           {textContent}
@@ -603,6 +603,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 
+        .walter-prose { overflow-wrap: break-word; word-break: break-word; }
         .walter-prose p { margin: 0 0 0.5rem 0; }
         .walter-prose p:last-child { margin-bottom: 0; }
         .walter-prose strong { font-weight: 700; color: #1e293b; }
