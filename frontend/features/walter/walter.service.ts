@@ -41,15 +41,11 @@ PASO 2 — DESCRIPCIÓN:
   Si no hay diagnóstico previo, preguntá qué está pasando. Necesitás al menos 20 caracteres.
 
 PASO 3 — DISPONIBILIDAD:
-  Preguntá: "¿Qué días y horarios podés recibir al técnico? Por ejemplo: el lunes, el martes de la semana que viene, etc."
-  REGLAS CRÍTICAS para fechas (obligatorio corroborar antes de llamar al tool):
-  · Derivá la fecha SIEMPRE del nombre del día (lunes, martes…), nunca del número que menciona el usuario.
-  · Si el usuario dice "lunes 10 de junio" pero el 10/06/2026 no es lunes, usá la fecha del lunes correcto y avisale: "El lunes más próximo es el 9 de junio — ¿te va bien esa fecha?".
-  · Verificá que la fecha NO sea en el pasado (hoy es ${hoyISO}). Si lo es, pedí que elija otra.
-  · Verificá que la fecha NO supere 31 días desde hoy. Si lo supera, avisale y pedí una dentro del mes siguiente.
-  · Solo llamás a crear_incidente cuando TODAS las fechas pasaron esta validación.
-  Convertí la respuesta a franjas: fecha YYYY-MM-DD, hora_inicio HH:MM, hora_fin HH:MM.
+  PRIMERO llamá a listar_dias_disponibles para obtener los próximos días con sus fechas exactas.
+  Mostrá esa lista al usuario y pedile que elija qué días le vienen bien y en qué horario.
+  NUNCA calcules fechas vos mismo — solo usá las fechas YYYY-MM-DD que devolvió el tool.
   Pedí al menos una franja. Dos o tres opciones son ideales para mayor flexibilidad.
+  Formato de franja: fecha YYYY-MM-DD del tool, hora_inicio HH:MM, hora_fin HH:MM.
 
 PASO 4 — CREAR:
   Cuando tenés los 3 datos (inmueble, descripción, disponibilidad), llamá a crear_incidente.
@@ -195,6 +191,12 @@ const OBTENER_METRICAS_TOOL: Anthropic.Tool = {
   },
 }
 
+const LISTAR_DIAS_DISPONIBLES_TOOL: Anthropic.Tool = {
+  name: 'listar_dias_disponibles',
+  description: 'Devuelve los próximos 14 días hábiles con sus fechas exactas en formato YYYY-MM-DD. Llamalo antes de pedir disponibilidad al cliente para tener las fechas correctas y mostrárselas.',
+  input_schema: { type: 'object' as const, properties: {}, required: [] },
+}
+
 const LISTAR_INMUEBLES_TOOL: Anthropic.Tool = {
   name: 'listar_inmuebles_cliente',
   description: 'Devuelve los inmuebles activos del cliente para que pueda elegir cuál tiene el problema. Usalo solo durante el flujo de reporte guiado.',
@@ -228,7 +230,7 @@ const CREAR_INCIDENTE_TOOL: Anthropic.Tool = {
 }
 
 const TOOLS_BY_ROL: Record<WalterRol, Anthropic.Tool[]> = {
-  cliente: [CONSULTAR_ESTADO_TOOL, LISTAR_INCIDENTES_TOOL, LISTAR_INMUEBLES_TOOL, CREAR_INCIDENTE_TOOL],
+  cliente: [CONSULTAR_ESTADO_TOOL, LISTAR_INCIDENTES_TOOL, LISTAR_INMUEBLES_TOOL, LISTAR_DIAS_DISPONIBLES_TOOL, CREAR_INCIDENTE_TOOL],
   tecnico: [CONSULTAR_ESTADO_TOOL, LISTAR_INCIDENTES_TOOL],
   admin: [CONSULTAR_ESTADO_TOOL, LISTAR_INCIDENTES_TOOL, OBTENER_METRICAS_TOOL],
 }
@@ -375,6 +377,32 @@ async function executeObtenerMetricas(): Promise<string> {
     const msg = err instanceof Error ? err.message : String(err)
     return `Error al obtener métricas: ${msg}`
   }
+}
+
+function executeListarDiasDisponibles(): string {
+  const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+  const dias: { fecha: string; etiqueta: string }[] = []
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const cursor = new Date(hoy)
+  cursor.setDate(cursor.getDate() + 1) // empezar desde mañana
+
+  while (dias.length < 14) {
+    const dow = cursor.getDay()
+    if (dow !== 0 && dow !== 6) { // excluir sábado y domingo
+      const yyyy = cursor.getFullYear()
+      const mm = String(cursor.getMonth() + 1).padStart(2, '0')
+      const dd = String(cursor.getDate()).padStart(2, '0')
+      dias.push({
+        fecha: `${yyyy}-${mm}-${dd}`,
+        etiqueta: `${DIAS[dow]} ${cursor.getDate()} de ${MESES[cursor.getMonth()]}`,
+      })
+    }
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return JSON.stringify(dias)
 }
 
 async function executeListarInmuebles(idCliente: number): Promise<string> {
@@ -668,6 +696,8 @@ export async function sendMessageToWalter(
         toolResult = await executeListarIncidentes(rol, input.estado)
       } else if (toolUseBlock.name === 'obtener_metricas') {
         toolResult = await executeObtenerMetricas()
+      } else if (toolUseBlock.name === 'listar_dias_disponibles') {
+        toolResult = executeListarDiasDisponibles()
       } else if (toolUseBlock.name === 'listar_inmuebles_cliente') {
         const idCliente = await requireClienteId()
         toolResult = await executeListarInmuebles(idCliente)
