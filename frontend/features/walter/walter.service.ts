@@ -284,7 +284,7 @@ async function executeConsultarEstado(idIncidente: number, rol: WalterRol): Prom
         ),
         presupuestos (
           estado_presupuesto,
-          monto_total
+          costo_total
         ),
         conformidades (
           esta_firmada,
