@@ -275,7 +275,7 @@ function WalterChatPanel({
   return (
     <div
       className="fixed bottom-6 right-4 w-[92vw] sm:w-96 flex flex-col rounded-2xl overflow-hidden shadow-2xl z-[9999]"
-      style={{ height: '520px', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ height: showCalendario ? '90vh' : '520px', border: '1px solid rgba(255,255,255,0.08)', transition: 'height 0.25s ease' }}
     >
       {/* Header */}
       <div
@@ -306,8 +306,8 @@ function WalterChatPanel({
       </div>
 
       {/* Messages viewport */}
-      <ThreadPrimitive.Root className="flex-1 flex flex-col overflow-hidden bg-white">
-        <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto overflow-x-hidden p-4">
+      <ThreadPrimitive.Root className="flex-1 flex flex-col min-h-0 bg-white">
+        <ThreadPrimitive.Viewport className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-4">
           {/* Welcome message shown when no messages yet */}
           <ThreadPrimitive.Empty>
             <div className="flex justify-start mb-3">
@@ -384,8 +384,8 @@ function WalterChatPanel({
 
         {/* Calendario de disponibilidad embebido */}
         {showCalendario && !isRunning && (
-          <div className="bg-white border-t border-slate-100 flex flex-col" style={{ maxHeight: '60vh' }}>
-            <div className="overflow-y-auto flex-1 px-3 pt-3 pb-1">
+          <div className="bg-white border-t border-slate-100 flex flex-col overflow-hidden shrink-0" style={{ maxHeight: '55vh' }}>
+            <div className="overflow-y-auto flex-1 min-h-0 px-3 pt-3 pb-1">
               <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Seleccioná tu disponibilidad</p>
               <CalendarioDisponibilidad
                 modo="editar"
