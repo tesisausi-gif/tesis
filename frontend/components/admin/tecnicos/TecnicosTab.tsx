@@ -596,14 +596,14 @@ export default function TecnicosTab() {
 
             <div className="space-y-2">
               <Label>Especialidades</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+              <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1 py-0.5">
                 {opcionesEspecialidades.map(esp => (
                   <label
                     key={esp.nombre}
-                    className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors text-sm ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-colors text-sm whitespace-nowrap ${
                       especialidades.includes(esp.nombre)
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:bg-gray-50 text-gray-600'
                     } ${submitting ? 'opacity-50 pointer-events-none' : ''}`}
                   >
                     <input
@@ -617,7 +617,7 @@ export default function TecnicosTab() {
                         )
                       }
                       disabled={submitting}
-                      className="h-4 w-4 accent-blue-500"
+                      className="h-3.5 w-3.5 accent-blue-500"
                     />
                     {esp.nombre}
                   </label>

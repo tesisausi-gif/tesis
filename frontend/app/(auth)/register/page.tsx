@@ -322,11 +322,11 @@ function RegisterPageContent() {
             <div>
               <LabelText>Especialidades *</LabelText>
               <p className="text-xs text-slate-400 mb-2" style={{ fontFamily: 'var(--font-outfit)' }}>Podés seleccionar una o más.</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {especialidades.map((esp) => (
                   <label
                     key={esp.id_especialidad}
-                    className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors text-sm ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-colors text-sm whitespace-nowrap ${
                       tecnicoEspecialidades.includes(esp.nombre)
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
                         : 'border-slate-200 hover:bg-slate-50 text-slate-600'
@@ -340,7 +340,7 @@ function RegisterPageContent() {
                         prev.includes(esp.nombre) ? prev.filter((e) => e !== esp.nombre) : [...prev, esp.nombre]
                       )}
                       disabled={loading}
-                      className="h-4 w-4 accent-blue-500"
+                      className="h-3.5 w-3.5 accent-blue-500"
                     />
                     {esp.nombre}
                   </label>
