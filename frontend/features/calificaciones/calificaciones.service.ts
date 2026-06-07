@@ -34,7 +34,7 @@ const CALIFICACION_SELECT = `
   tecnicos (
     nombre,
     apellido,
-    email
+    correo_electronico
   )
 `
 

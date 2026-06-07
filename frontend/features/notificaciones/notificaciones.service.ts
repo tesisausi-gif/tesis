@@ -302,7 +302,7 @@ export async function notificarNuevoAvance(
 
   const [avRes, incRes] = await Promise.all([
     supabase
-      .from('avances')
+      .from('avances_reparacion')
       .select('descripcion_avance, porcentaje_completado')
       .eq('id_avance', idAvance)
       .single(),

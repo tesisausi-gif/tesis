@@ -37,6 +37,6 @@ export interface CalificacionConDetalles extends Calificacion {
   tecnicos?: {
     nombre: string
     apellido: string
-    email: string
+    correo_electronico: string
   }
 }
