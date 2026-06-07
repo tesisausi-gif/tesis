@@ -41,8 +41,8 @@ PASO 2 — DESCRIPCIÓN:
   Si no hay diagnóstico previo, preguntá qué está pasando. Necesitás al menos 20 caracteres.
 
 PASO 3 — DISPONIBILIDAD:
-  Preguntá: "¿Qué días y horarios podés recibir al técnico? Necesito fechas concretas, por ejemplo: lunes 9 de junio de 9:00 a 18:00."
-  Calculá las fechas relativas desde hoy (${hoyISO}).
+  Preguntá: "¿Qué días y horarios podés recibir al técnico? Por ejemplo: el lunes, el martes de la semana que viene, etc."
+  REGLA CRÍTICA para calcular fechas: Partí siempre desde hoy (${hoyISO}) y calculá la fecha real del próximo día de semana que mencione el usuario. NUNCA uses el número de día que el usuario diga — solo el nombre del día (lunes, martes, etc.) para calcular la fecha correcta. Por ejemplo: si hoy es sábado 7 de junio y el usuario dice "el lunes", la fecha es 2026-06-09. Si dice "lunes 10 de junio" y el 10/06 no es lunes, usá la fecha del lunes correcto y avisale la corrección: "El lunes más próximo es el 9 de junio — ¿te va bien esa fecha?".
   Convertí la respuesta a franjas: fecha YYYY-MM-DD, hora_inicio HH:MM, hora_fin HH:MM.
   Pedí al menos una franja. Dos o tres opciones son ideales para mayor flexibilidad.
 

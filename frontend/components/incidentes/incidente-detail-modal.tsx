@@ -514,10 +514,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       if (rol === 'cliente') {
         try {
-          const [presupuestosData, visitaData] = await Promise.all([
+          const [presupuestosData, visitaData, franjasData] = await Promise.all([
             getPresupuestosDelIncidente(incidenteId),
             getVisitaActivaDeIncidente(incidenteId),
+            getFranjasDisponibilidad(incidenteId),
           ])
+          setFranjas(franjasData as FranjaInput[])
           // El cliente solo ve presupuestos que la inmobiliaria ya aprobó y ajustó.
           const visiblesParaCliente = presupuestosData.filter(p =>
             [EstadoPresupuesto.APROBADO_ADMIN, EstadoPresupuesto.APROBADO].includes(p.estado_presupuesto as EstadoPresupuesto)
