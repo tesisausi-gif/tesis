@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { CheckCircle2, XCircle, Star, Eye, Power, Filter, Edit, Search } from 'lucide-react'
 import { Paginacion } from '@/components/ui/paginacion'
@@ -375,7 +376,14 @@ export default function TecnicosTab() {
                           <Badge key={e} variant="secondary" className="text-[11px] px-1.5 py-0.5">{e}</Badge>
                         ))}
                         {espsResto > 0 && (
-                          <Badge variant="outline" className="text-[11px] px-1.5 py-0.5 text-gray-500">+{espsResto}</Badge>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className="text-[11px] px-1.5 py-0.5 text-gray-500 cursor-default">+{espsResto}</Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {esps.slice(3).join(', ')}
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </>
                     )}

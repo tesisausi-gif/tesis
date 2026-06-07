@@ -11,6 +11,7 @@ import type { SolicitudRegistro } from '@/features/usuarios/usuarios.types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { Eye, Filter, Clock, CheckCircle2, XCircle } from 'lucide-react'
 import { Paginacion } from '@/components/ui/paginacion'
@@ -197,6 +198,8 @@ export default function SolicitudesTab() {
               <div className="divide-y divide-gray-100">
                 {solicitudesPaginadas.map((solicitud) => {
                   const esps = resolverEspecialidades(solicitud)
+                  const espsVisibles = esps.slice(0, 3)
+                  const espsResto = esps.length - 3
                   return (
                     <div
                       key={solicitud.id_solicitud}
@@ -217,14 +220,26 @@ export default function SolicitudesTab() {
                         <p className="text-xs text-gray-400 truncate">{solicitud.email}</p>
                       </div>
 
-                      {/* Especialidades — wrap natural */}
+                      {/* Especialidades — máx 3 visible + "+N" con tooltip */}
                       <div className="hidden sm:flex flex-wrap gap-1 max-w-[200px]">
                         {esps.length > 0 ? (
-                          esps.map(e => (
-                            <Badge key={e} variant="secondary" className="text-[11px] px-1.5 py-0.5">
-                              {e}
-                            </Badge>
-                          ))
+                          <>
+                            {espsVisibles.map(e => (
+                              <Badge key={e} variant="secondary" className="text-[11px] px-1.5 py-0.5">
+                                {e}
+                              </Badge>
+                            ))}
+                            {espsResto > 0 && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-[11px] px-1.5 py-0.5 text-gray-500 cursor-default">+{espsResto}</Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {esps.slice(3).join(', ')}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </>
                         ) : (
                           <span className="text-xs text-gray-400">—</span>
                         )}
