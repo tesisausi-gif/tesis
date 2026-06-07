@@ -521,7 +521,8 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   // Refs for adapter closures (always hold current values)
   const pendingImageRef = useRef<PendingImage | null>(null)
   const imagePreviewsRef = useRef(new Map<string, string>())
-  const imageDataRef = useRef(new Map<string, { base64: string; mimeType: string }>())
+  // Última imagen enviada — persiste en memoria para adjuntarla al crear el incidente
+  const lastSentImageRef = useRef<{ base64: string; mimeType: string } | null>(null)
   const setSuggestedActionRef = useRef(setSuggestedAction)
   const setChartRef = useRef(setChart)
   const setIncidenteCreadoRef = useRef(setIncidenteCreado)
@@ -551,10 +552,10 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         // Get last user message for image attachment and preview storage
         const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')
 
-        // Store image preview and data keyed by message ID for display and reuse across turns
+        // Store preview for display and last image for later incident creation
         if (pendingImg && lastUserMsg) {
           imagePreviewsRef.current.set(lastUserMsg.id, pendingImg.preview)
-          imageDataRef.current.set(lastUserMsg.id, { base64: pendingImg.base64, mimeType: pendingImg.mimeType })
+          lastSentImageRef.current = { base64: pendingImg.base64, mimeType: pendingImg.mimeType }
         }
 
         // Convert library ThreadMessage[] → WalterMessage[]
@@ -565,16 +566,12 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
             const text = parts.find((p) => p.type === 'text')?.text ?? ''
 
             if (msg.role === 'user') {
-              const msgId = (msg as unknown as { id: string }).id
               const isLast = msg === lastUserMsg
-              const savedImage = isLast && pendingImg
-                ? { base64: pendingImg.base64, mimeType: pendingImg.mimeType }
-                : imageDataRef.current.get(msgId)
               return {
                 role: 'user' as const,
                 content: text,
-                ...(savedImage
-                  ? { imageBase64: savedImage.base64, imageMimeType: savedImage.mimeType }
+                ...(isLast && pendingImg
+                  ? { imageBase64: pendingImg.base64, imageMimeType: pendingImg.mimeType }
                   : {}),
               }
             }
@@ -582,7 +579,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
             return { role: 'assistant' as const, content: text }
           })
 
-        const result = await sendMessageToWalter(walterMessages, rol)
+        const result = await sendMessageToWalter(walterMessages, rol, lastSentImageRef.current ?? undefined)
 
         // Clear pending image regardless of outcome
         pendingImageRef.current = null

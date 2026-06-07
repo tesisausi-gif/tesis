@@ -587,6 +587,7 @@ function parseAction(content: string): {
 export async function sendMessageToWalter(
   messages: WalterMessage[],
   rol: WalterRol,
+  lastImage?: { base64: string; mimeType: string },
 ): Promise<WalterResponse> {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('[Walter] ANTHROPIC_API_KEY no está configurada en el entorno')
@@ -597,10 +598,10 @@ export async function sendMessageToWalter(
     const promptDef = SYSTEM_PROMPTS[rol]
     const systemPrompt = typeof promptDef === 'function' ? promptDef() : promptDef
 
-    // Extraer la última imagen del historial para adjuntarla al incidente si se crea uno
-    const lastImageMsg = [...messages].reverse().find(m => m.imageBase64 && m.imageMimeType)
-    const imageBase64 = lastImageMsg?.imageBase64
-    const imageMime = lastImageMsg?.imageMimeType
+    // Imagen del diagnóstico — pasada explícitamente desde el cliente, no extraída del historial
+    // (el historial de Anthropic no la incluye en turnos posteriores para no malgastar tokens)
+    const imageBase64 = lastImage?.base64
+    const imageMime = lastImage?.mimeType
 
     let anthropicMessages = buildAnthropicMessages(messages)
 
