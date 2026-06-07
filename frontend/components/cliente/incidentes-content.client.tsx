@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Plus, AlertCircle, Clock, Send, Wrench, CheckCircle,
-  Bell, MapPin, ClipboardList, FileText, CreditCard,
+  Bell, MapPin, ClipboardList, FileText, CreditCard, ChevronRight,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { createClient } from '@/shared/lib/supabase/client'
@@ -36,8 +36,15 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
   )
   const [filtro, setFiltro] = useState<string>('todos')
   const [subFiltro, setSubFiltro] = useState<string>('todos')
+  const [showTabHint, setShowTabHint] = useState(false)
+  const tabsScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setSubFiltro('todos') }, [filtro])
+
+  useEffect(() => {
+    const el = tabsScrollRef.current
+    if (el) setShowTabHint(el.scrollWidth > el.clientWidth + 4)
+  }, [incidentes])
 
   // Realtime: escuchar cambios en presupuestos
   useEffect(() => {
@@ -124,7 +131,14 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
         <>
           {/* ── Filter chips ────────────────────────── */}
           <div className="relative bg-slate-100 border-b border-gray-100">
-            <div className="flex gap-1 px-4 py-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div
+              ref={tabsScrollRef}
+              onScroll={(e) => {
+                const el = e.currentTarget
+                setShowTabHint(el.scrollLeft < el.scrollWidth - el.clientWidth - 4)
+              }}
+              className="flex gap-1 px-4 py-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {filtros.map(({ id, label, count, Icon }) => {
                 const active = filtro === id
                 return (
@@ -148,7 +162,9 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                 )
               })}
             </div>
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 to-transparent" />
+            <div className={`pointer-events-none absolute right-0 top-0 bottom-0 w-12 flex items-center justify-end pr-1.5 bg-gradient-to-l from-slate-100 to-transparent transition-opacity duration-300 ${showTabHint ? 'opacity-100' : 'opacity-0'}`}>
+              <ChevronRight className="w-4 h-4 text-slate-400 animate-pulse" />
+            </div>
           </div>
 
           {/* ── Incident list ────────────────────────── */}
