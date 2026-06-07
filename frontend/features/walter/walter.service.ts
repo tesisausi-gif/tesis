@@ -338,17 +338,48 @@ function parseAction(content: string): {
     suggestedAction = { type: 'reportar_incidente', label: 'Reportar este incidente', url }
   }
 
-  // Parse WALTER_CHART:{JSON} — puede aparecer en cualquier línea de la respuesta
-  const lines = cleanContent.split('\n')
-  const chartLineIdx = lines.findIndex((l) => l.trimStart().startsWith('WALTER_CHART:'))
-  if (chartLineIdx !== -1) {
-    const jsonStr = lines[chartLineIdx].trimStart().slice('WALTER_CHART:'.length).trim()
-    try {
-      chart = JSON.parse(jsonStr) as WalterChart
-      lines.splice(chartLineIdx, 1)
-      cleanContent = lines.join('\n').trim()
-    } catch {
-      // JSON inválido — dejamos el contenido intacto
+  // Parse WALTER_CHART:{JSON} — extracción por llaves balanceadas, maneja JSON
+  // partido en múltiples líneas y múltiples tokens (toma el último válido).
+  {
+    const MARKER = 'WALTER_CHART:'
+    let searchFrom = 0
+    let lastChart: WalterChart | undefined
+    const rangesToRemove: Array<[number, number]> = []
+
+    while (true) {
+      const markerIdx = cleanContent.indexOf(MARKER, searchFrom)
+      if (markerIdx === -1) break
+
+      const braceStart = cleanContent.indexOf('{', markerIdx)
+      if (braceStart === -1) break
+
+      let depth = 0
+      let end = -1
+      for (let i = braceStart; i < cleanContent.length; i++) {
+        if (cleanContent[i] === '{') depth++
+        else if (cleanContent[i] === '}') {
+          if (--depth === 0) { end = i + 1; break }
+        }
+      }
+
+      if (end === -1) break
+
+      try {
+        lastChart = JSON.parse(cleanContent.slice(braceStart, end)) as WalterChart
+        rangesToRemove.push([markerIdx, end])
+      } catch { /* JSON inválido — ignorar este token */ }
+
+      searchFrom = end
+    }
+
+    if (rangesToRemove.length > 0) {
+      // Eliminar todos los tokens del texto (de atrás hacia adelante para no alterar índices)
+      for (let i = rangesToRemove.length - 1; i >= 0; i--) {
+        const [s, e] = rangesToRemove[i]
+        cleanContent = (cleanContent.slice(0, s) + cleanContent.slice(e)).replace(/\n{3,}/g, '\n\n')
+      }
+      cleanContent = cleanContent.trim()
+      chart = lastChart
     }
   }
 
