@@ -47,7 +47,7 @@ const QUICK_ACTIONS: Record<WalterRol, { label: string; message: string }[]> = {
   admin: [
     { label: '📊 Analizar métricas', message: '¿Qué métricas del sistema me podés ayudar a analizar?' },
     { label: '🔧 Gestión operativa', message: '¿En qué me podés asistir para la gestión del día a día?' },
-    { label: '📸 Diagnosticar incidente', message: 'Quiero analizar un problema reportado para categorizarlo.' },
+    { label: '📋 Ver incidentes recientes', message: 'Mostrame los incidentes más recientes del sistema.' },
   ],
 }
 
