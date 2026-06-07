@@ -132,10 +132,6 @@ const LISTAR_INCIDENTES_TOOL: Anthropic.Tool = {
         enum: ['pendiente', 'en_proceso', 'finalizado'],
         description: 'Filtrar por estado. Omitir para mostrar todos.',
       },
-      limite: {
-        type: 'number',
-        description: 'Cantidad máxima a retornar (default 10, máximo 20)',
-      },
     },
     required: [],
   },
@@ -223,25 +219,20 @@ async function executeConsultarEstado(idIncidente: number, rol: WalterRol): Prom
 async function executeListarIncidentes(
   rol: WalterRol,
   estado?: string,
-  limite = 20,
 ): Promise<string> {
-  // Cliente y técnico: cap más alto porque su dataset es inherentemente acotado por usuario.
-  // Admin: cap moderado; para cantidades exactas debe usar obtener_metricas.
-  const cap = rol === 'admin' ? Math.min(limite, 30) : Math.min(limite, 50)
-
   try {
     if (rol === 'cliente') {
       const idCliente = await requireClienteId()
       const supabase = createAdminClient()
+      // Sin límite: el dataset está acotado por id_cliente_reporta — traer todo es seguro y evita conteos falsos.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = supabase
         .from('incidentes')
-        .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, inmuebles:id_propiedad(calle, altura)', { count: 'exact' })
+        .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, inmuebles:id_propiedad(calle, altura)')
         .eq('id_cliente_reporta', idCliente)
         .order('fecha_registro', { ascending: false })
-        .limit(cap)
       if (estado) q = q.eq('estado_actual', estado)
-      const { data, error, count } = await q
+      const { data, error } = await q
       if (error) {
         console.error('[Walter listar_incidentes cliente]', error)
         return 'Ocurrió un error al consultar tus incidentes. Por favor, intentá de nuevo.'
@@ -249,53 +240,45 @@ async function executeListarIncidentes(
       if (!data?.length) return estado
         ? `No tenés incidentes con estado "${estado}".`
         : 'No tenés incidentes registrados en el sistema todavía.'
-      const total = count ?? data.length
-      const aviso = total > data.length ? ` (mostrando ${data.length} de ${total} en total)` : ` (${total} en total)`
-      return `TOTAL${aviso}:\n${JSON.stringify(data, null, 2)}`
+      return `TOTAL (${data.length} en total):\n${JSON.stringify(data, null, 2)}`
     }
 
     if (rol === 'tecnico') {
       const idTecnico = await requireTecnicoId()
       const supabase = createAdminClient()
+      // Sin límite: acotado por id_tecnico.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = supabase
         .from('asignaciones_tecnico')
-        .select('estado_asignacion, incidentes(id_incidente, descripcion_problema, estado_actual, fecha_registro)', { count: 'exact' })
+        .select('estado_asignacion, incidentes(id_incidente, descripcion_problema, estado_actual, fecha_registro)')
         .eq('id_tecnico', idTecnico)
         .order('fecha_asignacion', { ascending: false })
-        .limit(cap)
-      const { data, error, count } = await q
+      const { data, error } = await q
       if (error) {
         console.error('[Walter listar_incidentes tecnico]', error)
         return 'Ocurrió un error al consultar tus trabajos asignados. Por favor, intentá de nuevo.'
       }
       if (!data?.length) return 'No tenés trabajos asignados actualmente.'
-      const total = count ?? data.length
-      const aviso = total > data.length ? ` (mostrando ${data.length} de ${total} en total)` : ` (${total} en total)`
-      return `TOTAL${aviso}:\n${JSON.stringify(data, null, 2)}`
+      return `TOTAL (${data.length} en total):\n${JSON.stringify(data, null, 2)}`
     }
 
     // admin
     await requireAdminOrGestorId()
     const supabase = createAdminClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Sin límite: datos completos para evitar conteos falsos.
     let q: any = supabase
       .from('incidentes')
-      .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, categoria, nivel_prioridad', { count: 'exact' })
+      .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, categoria, nivel_prioridad')
       .order('fecha_registro', { ascending: false })
-      .limit(cap)
     if (estado) q = q.eq('estado_actual', estado)
-    const { data, error, count } = await q
+    const { data, error } = await q
     if (error) {
       console.error('[Walter listar_incidentes admin]', error)
       return 'Ocurrió un error al consultar los incidentes. Por favor, intentá de nuevo.'
     }
     if (!data?.length) return 'No se encontraron incidentes con ese filtro.'
-    const total = count ?? data.length
-    const aviso = total > data.length
-      ? ` ATENCIÓN: hay ${total} incidentes en total con ese filtro, mostrando solo los ${data.length} más recientes. Para cantidades exactas usá obtener_metricas.`
-      : ` (${total} en total)`
-    return `TOTAL${aviso}:\n${JSON.stringify(data, null, 2)}`
+    return `TOTAL (${data.length} en total):\n${JSON.stringify(data, null, 2)}`
   } catch (err) {
     console.error('[Walter listar_incidentes]', err)
     const msg = err instanceof Error ? err.message : String(err)
@@ -456,7 +439,7 @@ export async function sendMessageToWalter(
         toolResult = await executeConsultarEstado(Number(input.id_incidente), rol)
       } else if (toolUseBlock.name === 'listar_incidentes') {
         const input = toolUseBlock.input as { estado?: string; limite?: number }
-        toolResult = await executeListarIncidentes(rol, input.estado, input.limite ?? 10)
+        toolResult = await executeListarIncidentes(rol, input.estado)
       } else if (toolUseBlock.name === 'obtener_metricas') {
         toolResult = await executeObtenerMetricas()
       } else {
