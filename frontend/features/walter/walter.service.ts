@@ -338,16 +338,17 @@ function parseAction(content: string): {
     suggestedAction = { type: 'reportar_incidente', label: 'Reportar este incidente', url }
   }
 
-  // Parse WALTER_CHART:{JSON} — must appear at end of response
-  const chartMarker = '\nWALTER_CHART:'
-  const chartIdx = cleanContent.indexOf(chartMarker)
-  if (chartIdx !== -1) {
-    const jsonStr = cleanContent.slice(chartIdx + chartMarker.length).trim()
+  // Parse WALTER_CHART:{JSON} — puede aparecer en cualquier línea de la respuesta
+  const lines = cleanContent.split('\n')
+  const chartLineIdx = lines.findIndex((l) => l.trimStart().startsWith('WALTER_CHART:'))
+  if (chartLineIdx !== -1) {
+    const jsonStr = lines[chartLineIdx].trimStart().slice('WALTER_CHART:'.length).trim()
     try {
       chart = JSON.parse(jsonStr) as WalterChart
-      cleanContent = cleanContent.slice(0, chartIdx).trim()
+      lines.splice(chartLineIdx, 1)
+      cleanContent = lines.join('\n').trim()
     } catch {
-      // invalid JSON — leave content intact
+      // JSON inválido — dejamos el contenido intacto
     }
   }
 
