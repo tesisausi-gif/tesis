@@ -200,12 +200,13 @@ async function executeListarIncidentes(
 
   try {
     if (rol === 'cliente') {
-      await requireClienteId()
+      const idCliente = await requireClienteId()
       const supabase = await createClient()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = supabase
         .from('incidentes')
         .select('id_incidente, descripcion_problema, estado_actual, fecha_registro, inmuebles(direccion)')
+        .eq('id_cliente_reporta', idCliente)
         .order('fecha_registro', { ascending: false })
         .limit(cap)
       if (estado) q = q.eq('estado_actual', estado)
