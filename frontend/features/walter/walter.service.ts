@@ -41,11 +41,12 @@ PASO 2 — DESCRIPCIÓN:
   Si no hay diagnóstico previo, preguntá qué está pasando. Necesitás al menos 20 caracteres.
 
 PASO 3 — DISPONIBILIDAD:
-  PRIMERO llamá a listar_dias_disponibles para obtener los próximos días con sus fechas exactas.
-  Mostrá esa lista al usuario y pedile que elija qué días le vienen bien y en qué horario.
-  NUNCA calcules fechas vos mismo — solo usá las fechas YYYY-MM-DD que devolvió el tool.
-  Pedí al menos una franja. Dos o tres opciones son ideales para mayor flexibilidad.
-  Formato de franja: fecha YYYY-MM-DD del tool, hora_inicio HH:MM, hora_fin HH:MM.
+  Escribí un mensaje corto pidiendo disponibilidad e incluí al final exactamente la línea:
+  WALTER_CALENDARIO
+  El sistema le mostrará al cliente un calendario interactivo para que elija fechas y horarios.
+  Cuando el cliente confirme, recibirás un mensaje con DISPONIBILIDAD_JSON:[...].
+  Extraé el array JSON de DISPONIBILIDAD_JSON: y usalo directamente en crear_incidente.
+  NUNCA calcules fechas vos mismo. NUNCA preguntes disponibilidad de otra forma.
 
 PASO 4 — CREAR:
   Cuando tenés los 3 datos (inmueble, descripción, disponibilidad), llamá a crear_incidente.
@@ -191,12 +192,6 @@ const OBTENER_METRICAS_TOOL: Anthropic.Tool = {
   },
 }
 
-const LISTAR_DIAS_DISPONIBLES_TOOL: Anthropic.Tool = {
-  name: 'listar_dias_disponibles',
-  description: 'Devuelve los próximos 14 días hábiles con sus fechas exactas en formato YYYY-MM-DD. Llamalo antes de pedir disponibilidad al cliente para tener las fechas correctas y mostrárselas.',
-  input_schema: { type: 'object' as const, properties: {}, required: [] },
-}
-
 const LISTAR_INMUEBLES_TOOL: Anthropic.Tool = {
   name: 'listar_inmuebles_cliente',
   description: 'Devuelve los inmuebles activos del cliente para que pueda elegir cuál tiene el problema. Usalo solo durante el flujo de reporte guiado.',
@@ -230,7 +225,7 @@ const CREAR_INCIDENTE_TOOL: Anthropic.Tool = {
 }
 
 const TOOLS_BY_ROL: Record<WalterRol, Anthropic.Tool[]> = {
-  cliente: [CONSULTAR_ESTADO_TOOL, LISTAR_INCIDENTES_TOOL, LISTAR_INMUEBLES_TOOL, LISTAR_DIAS_DISPONIBLES_TOOL, CREAR_INCIDENTE_TOOL],
+  cliente: [CONSULTAR_ESTADO_TOOL, LISTAR_INCIDENTES_TOOL, LISTAR_INMUEBLES_TOOL, CREAR_INCIDENTE_TOOL],
   tecnico: [CONSULTAR_ESTADO_TOOL, LISTAR_INCIDENTES_TOOL],
   admin: [CONSULTAR_ESTADO_TOOL, LISTAR_INCIDENTES_TOOL, OBTENER_METRICAS_TOOL],
 }
@@ -377,32 +372,6 @@ async function executeObtenerMetricas(): Promise<string> {
     const msg = err instanceof Error ? err.message : String(err)
     return `Error al obtener métricas: ${msg}`
   }
-}
-
-function executeListarDiasDisponibles(): string {
-  const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
-  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-  const dias: { fecha: string; etiqueta: string }[] = []
-  const hoy = new Date()
-  hoy.setHours(0, 0, 0, 0)
-  const cursor = new Date(hoy)
-  cursor.setDate(cursor.getDate() + 1) // empezar desde mañana
-
-  while (dias.length < 14) {
-    const dow = cursor.getDay()
-    if (dow !== 0 && dow !== 6) { // excluir sábado y domingo
-      const yyyy = cursor.getFullYear()
-      const mm = String(cursor.getMonth() + 1).padStart(2, '0')
-      const dd = String(cursor.getDate()).padStart(2, '0')
-      dias.push({
-        fecha: `${yyyy}-${mm}-${dd}`,
-        etiqueta: `${DIAS[dow]} ${cursor.getDate()} de ${MESES[cursor.getMonth()]}`,
-      })
-    }
-    cursor.setDate(cursor.getDate() + 1)
-  }
-
-  return JSON.stringify(dias)
 }
 
 async function executeListarInmuebles(idCliente: number): Promise<string> {
@@ -579,10 +548,18 @@ function parseAction(content: string): {
   cleanContent: string
   suggestedAction?: WalterSuggestedAction
   chart?: WalterChart
+  showCalendario?: boolean
 } {
   let cleanContent = content.trim()
   let suggestedAction: WalterSuggestedAction | undefined
   let chart: WalterChart | undefined
+  let showCalendario: boolean | undefined
+
+  // Parse WALTER_CALENDARIO
+  if (/\bWALTER_CALENDARIO\b/.test(cleanContent)) {
+    cleanContent = cleanContent.replace(/\n?WALTER_CALENDARIO\b/g, '').trim()
+    showCalendario = true
+  }
 
   // Parse WALTER_ACTION:reportar_incidente:DESC
   const actionMatch = cleanContent.match(/\nWALTER_ACTION:reportar_incidente:(.+)$/m)
@@ -638,7 +615,7 @@ function parseAction(content: string): {
     }
   }
 
-  return { cleanContent, suggestedAction, chart }
+  return { cleanContent, suggestedAction, chart, showCalendario }
 }
 
 // ── Server Action principal ───────────────────────────────────────────────────
@@ -696,8 +673,6 @@ export async function sendMessageToWalter(
         toolResult = await executeListarIncidentes(rol, input.estado)
       } else if (toolUseBlock.name === 'obtener_metricas') {
         toolResult = await executeObtenerMetricas()
-      } else if (toolUseBlock.name === 'listar_dias_disponibles') {
-        toolResult = executeListarDiasDisponibles()
       } else if (toolUseBlock.name === 'listar_inmuebles_cliente') {
         const idCliente = await requireClienteId()
         toolResult = await executeListarInmuebles(idCliente)
@@ -739,9 +714,9 @@ export async function sendMessageToWalter(
 
     const rawContent =
       response.content.find((b): b is Anthropic.TextBlock => b.type === 'text')?.text ?? ''
-    const { cleanContent, suggestedAction, chart } = parseAction(rawContent)
+    const { cleanContent, suggestedAction, chart, showCalendario } = parseAction(rawContent)
 
-    return { success: true, content: cleanContent, suggestedAction, chart, incidenteCreado }
+    return { success: true, content: cleanContent, suggestedAction, chart, incidenteCreado, showCalendario }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[Walter] Error llamando a Anthropic:', msg)

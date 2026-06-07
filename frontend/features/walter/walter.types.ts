@@ -32,6 +32,7 @@ export interface WalterResponse {
   suggestedAction?: WalterSuggestedAction
   chart?: WalterChart
   incidenteCreado?: { id_incidente: number }
+  showCalendario?: boolean
   error?: string
 }
 

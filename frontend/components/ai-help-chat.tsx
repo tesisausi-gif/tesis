@@ -16,6 +16,7 @@ import { X, Send, ImagePlus, XCircle, ArrowRight, Camera } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { sendMessageToWalter } from '@/features/walter/walter.service'
 import type { WalterMessage, WalterRol, WalterSuggestedAction, WalterChart } from '@/features/walter/walter.types'
+import { CalendarioDisponibilidad, type FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import Link from 'next/link'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -75,6 +76,10 @@ interface WalterChatPanelProps {
   onClearChart: () => void
   incidenteCreado: { id_incidente: number } | null
   onClearIncidenteCreado: () => void
+  showCalendario: boolean
+  calendarioFranjas: FranjaInput[]
+  onCalendarioChange: (franjas: FranjaInput[]) => void
+  onCalendarioConfirm: () => void
   imagePreviewsRef: React.MutableRefObject<Map<string, string>>
 }
 
@@ -239,6 +244,10 @@ function WalterChatPanel({
   onClearChart,
   incidenteCreado,
   onClearIncidenteCreado,
+  showCalendario,
+  calendarioFranjas,
+  onCalendarioChange,
+  onCalendarioConfirm,
   imagePreviewsRef,
 }: WalterChatPanelProps) {
   const threadRuntime = useThreadRuntime()
@@ -372,6 +381,36 @@ function WalterChatPanel({
 
         {/* Chart */}
         {chart && !isRunning && <WalterChart chart={chart} />}
+
+        {/* Calendario de disponibilidad embebido */}
+        {showCalendario && !isRunning && (
+          <div className="bg-white border-t border-slate-100 shrink-0">
+            <div className="px-3 pt-3 pb-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Seleccioná tu disponibilidad</p>
+              <CalendarioDisponibilidad
+                modo="editar"
+                franjas={calendarioFranjas}
+                onChange={onCalendarioChange}
+                className="text-sm"
+              />
+            </div>
+            <div className="px-3 pb-3">
+              <button
+                onClick={() => {
+                  const validas = calendarioFranjas.filter(f => f.hora_inicio && f.hora_fin)
+                  if (!validas.length) return
+                  onCalendarioConfirm()
+                  sendQuickAction(`Disponibilidad confirmada.\nDISPONIBILIDAD_JSON:${JSON.stringify(validas)}`)
+                }}
+                disabled={calendarioFranjas.filter(f => f.hora_inicio && f.hora_fin).length === 0}
+                className="w-full py-2.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: 'linear-gradient(135deg, #0e1929 0%, #1e3a5f 100%)', color: '#93c5fd' }}
+              >
+                Confirmar disponibilidad
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Incidente creado — card de éxito */}
         {incidenteCreado && !isRunning && (
@@ -522,6 +561,8 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const [suggestedAction, setSuggestedAction] = useState<WalterSuggestedAction | null>(null)
   const [chart, setChart] = useState<WalterChart | null>(null)
   const [incidenteCreado, setIncidenteCreado] = useState<{ id_incidente: number } | null>(null)
+  const [showCalendario, setShowCalendario] = useState(false)
+  const [calendarioFranjas, setCalendarioFranjas] = useState<FranjaInput[]>([])
 
   // Drag state
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -540,12 +581,14 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const setSuggestedActionRef = useRef(setSuggestedAction)
   const setChartRef = useRef(setChart)
   const setIncidenteCreadoRef = useRef(setIncidenteCreado)
+  const setShowCalendarioRef = useRef(setShowCalendario)
   const clearPendingImageRef = useRef(() => setPendingImage(null))
 
   useEffect(() => { pendingImageRef.current = pendingImage }, [pendingImage])
   useEffect(() => { setSuggestedActionRef.current = setSuggestedAction }, [])
   useEffect(() => { setChartRef.current = setChart }, [])
   useEffect(() => { setIncidenteCreadoRef.current = setIncidenteCreado }, [])
+  useEffect(() => { setShowCalendarioRef.current = setShowCalendario }, [])
   useEffect(() => { clearPendingImageRef.current = () => setPendingImage(null) }, [])
 
   useEffect(() => {
@@ -603,6 +646,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           setSuggestedActionRef.current(null)
           setChartRef.current(null)
           setIncidenteCreadoRef.current(null)
+          setShowCalendarioRef.current(false)
           return {
             content: [{ type: 'text', text: result.error ?? 'No pude procesar tu consulta. Intentá de nuevo.' }],
           }
@@ -611,6 +655,12 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         setSuggestedActionRef.current(result.suggestedAction ?? null)
         setChartRef.current(result.chart ?? null)
         setIncidenteCreadoRef.current(result.incidenteCreado ?? null)
+        if (result.showCalendario) {
+          setShowCalendarioRef.current(true)
+          setCalendarioFranjas([])
+        } else if (result.incidenteCreado) {
+          setShowCalendarioRef.current(false)
+        }
 
         return {
           content: [{ type: 'text', text: result.content ?? '' }],
@@ -621,6 +671,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
         setSuggestedActionRef.current(null)
         setChartRef.current(null)
         setIncidenteCreadoRef.current(null)
+        setShowCalendarioRef.current(false)
         const msg = err instanceof Error ? err.message : String(err)
         console.error('[Walter adapter]', msg)
         return {
@@ -763,6 +814,10 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           onClearChart={() => setChart(null)}
           incidenteCreado={incidenteCreado}
           onClearIncidenteCreado={() => setIncidenteCreado(null)}
+          showCalendario={showCalendario}
+          calendarioFranjas={calendarioFranjas}
+          onCalendarioChange={setCalendarioFranjas}
+          onCalendarioConfirm={() => { setShowCalendario(false); setCalendarioFranjas([]) }}
           imagePreviewsRef={imagePreviewsRef}
         />
       </AssistantRuntimeProvider>
