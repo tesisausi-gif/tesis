@@ -22,10 +22,10 @@ export function HeroSection() {
       />
 
       {/* Ambient glows */}
-      <div className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 65%)' }} />
-      <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(14,25,41,0.8) 0%, transparent 70%)' }} />
+      <div className="absolute top-0 right-0 w-[480px] h-[480px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 55%)', transform: 'translate(40%, -40%)' }} />
+      <div className="absolute bottom-0 left-0 w-[360px] h-[360px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 55%)', transform: 'translate(-40%, 40%)' }} />
 
       {/* Decorative vertical lines */}
       <div className="absolute inset-y-0 left-[10%] w-px pointer-events-none"
@@ -70,11 +70,17 @@ export function HeroSection() {
         </motion.div>
 
         {/* Headline — blur-text from 21st.dev */}
-        <h1 className="text-5xl sm:text-6xl md:text-[4.5rem] font-black text-white leading-[1.08] tracking-[-0.03em] mb-6"
+        <h1 className="text-[1.8rem] sm:text-5xl md:text-6xl lg:text-[4.5rem] font-black text-white leading-[1.15] tracking-[-0.03em] mb-6"
           style={{ fontFamily: 'var(--font-syne)' }}>
-          <span className="block"><BlurText text="Gestioná tus" delay={55} direction="bottom" /></span>
-          <span className="block" style={{ color: '#60a5fa' }}><BlurText text="incidentes" delay={55} direction="bottom" /></span>
-          <span className="block"><BlurText text="sin fricciones." delay={55} direction="bottom" /></span>
+          <span className="flex justify-center">
+            <BlurText text="Gestioná tus" delay={55} direction="bottom" className="justify-center" />
+          </span>
+          <span className="flex justify-center" style={{ color: '#60a5fa' }}>
+            <BlurText text="incidentes" delay={55} direction="bottom" className="justify-center" />
+          </span>
+          <span className="flex justify-center">
+            <BlurText text="sin fricciones." delay={55} direction="bottom" className="justify-center" />
+          </span>
         </h1>
 
         {/* Subtitle */}

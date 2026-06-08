@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/shared/lib/supabase/client'
@@ -35,6 +35,7 @@ interface Inmueble {
 
 export default function NuevoIncidentePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const [loading, setLoading] = useState(true)
@@ -43,9 +44,9 @@ export default function NuevoIncidentePage() {
   const [idCliente, setIdCliente] = useState<number | null>(null)
   const [inmuebles, setInmuebles] = useState<Inmueble[]>([])
 
-  // Form state
+  // Form state — descripcion puede venir pre-rellenada desde Walter
   const [inmuebleSeleccionado, setInmuebleSeleccionado] = useState('')
-  const [descripcion, setDescripcion] = useState('')
+  const [descripcion, setDescripcion] = useState(searchParams.get('descripcion') ?? '')
   const [franjas, setFranjas] = useState<FranjaInput[]>([])
   const [fotoArchivo, setFotoArchivo] = useState<File | null>(null)
   const [fotoPreview, setFotoPreview] = useState<string | null>(null)

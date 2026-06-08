@@ -22,10 +22,10 @@ export function CTASection() {
       <div className="max-w-5xl mx-auto px-6">
         {/* Heading */}
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.55 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
           <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-blue-400/60 mb-3"
@@ -46,7 +46,7 @@ export function CTASection() {
             variants={card}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-40px' }}
+            viewport={{ once: true, amount: 0.05 }}
             whileHover={{ y: -4, transition: { duration: 0.2 } }}
             className="rounded-2xl p-8 flex flex-col relative overflow-hidden"
             style={{
@@ -93,7 +93,7 @@ export function CTASection() {
             variants={card}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-40px' }}
+            viewport={{ once: true, amount: 0.05 }}
             transition={{ delay: 0.1 }}
             whileHover={{ y: -4, transition: { duration: 0.2 } }}
             className="rounded-2xl p-8 flex flex-col relative overflow-hidden"

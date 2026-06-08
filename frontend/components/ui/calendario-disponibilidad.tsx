@@ -482,7 +482,13 @@ export function CalendarioDisponibilidad({
               onSelect={handleSelectDates}
               month={currentMonth}
               onMonthChange={setCurrentMonth}
-              disabled={{ before: (() => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(0,0,0,0); return d; })() }}
+              disabled={(day) => {
+                const hoy = new Date()
+                hoy.setHours(0, 0, 0, 0)
+                const limite = new Date(hoy)
+                limite.setDate(limite.getDate() + 32)
+                return day <= hoy || day > limite
+              }}
             />
           </div>
           <p className="text-[11px] text-gray-400 text-center">

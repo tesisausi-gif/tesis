@@ -10,10 +10,10 @@ import {
 import type { SolicitudRegistro } from '@/features/usuarios/usuarios.types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
-import { Eye, Filter } from 'lucide-react'
+import { Eye, Filter, Clock, CheckCircle2, XCircle } from 'lucide-react'
 import { Paginacion } from '@/components/ui/paginacion'
 import {
   Select,
@@ -119,21 +119,57 @@ export default function SolicitudesTab() {
     setPagina(1)
   }
 
+  const pendientes = solicitudes.filter(s => s.estado_solicitud === 'pendiente').length
+  const aprobadas = solicitudes.filter(s => s.estado_solicitud === 'aprobada').length
+  const rechazadas = solicitudes.filter(s => s.estado_solicitud === 'rechazada').length
+
   return (
     <>
+      {/* Stats cards — misma estructura que TecnicosTab */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-amber-500" />
+              Pendientes
+            </CardDescription>
+            <CardTitle className="text-3xl text-amber-600">{pendientes}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              Aprobadas
+            </CardDescription>
+            <CardTitle className="text-3xl text-green-600">{aprobadas}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardDescription className="flex items-center gap-1.5">
+              <XCircle className="h-3.5 w-3.5 text-gray-400" />
+              Rechazadas
+            </CardDescription>
+            <CardTitle className="text-3xl text-gray-500">{rechazadas}</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
+      {/* Tabla principal */}
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <CardTitle>Solicitudes de Registro</CardTitle>
               <CardDescription>
-                Revisa y aprueba las solicitudes de técnicos que desean registrarse
+                Revisá y aprobá las solicitudes de técnicos que desean registrarse
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <Select value={filtroEstado} onValueChange={(value: any) => handleFiltroEstado(value)}>
-                <SelectTrigger className="w-[180px]">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500 hidden sm:block" />
+              <Select value={filtroEstado} onValueChange={(value: typeof filtroEstado) => handleFiltroEstado(value)}>
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -146,6 +182,7 @@ export default function SolicitudesTab() {
             </div>
           </div>
         </CardHeader>
+
         <CardContent>
           {loading ? (
             <p className="text-center text-gray-600 py-4">Cargando solicitudes...</p>
@@ -157,52 +194,82 @@ export default function SolicitudesTab() {
             </p>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Especialidad</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {solicitudesPaginadas.map((solicitud) => (
-                    <TableRow key={solicitud.id_solicitud}>
-                      <TableCell className="font-medium">
-                        {solicitud.nombre} {solicitud.apellido}
-                      </TableCell>
-                      <TableCell>{solicitud.email}</TableCell>
-                      <TableCell>
-                        {(() => {
-                          const esps = resolverEspecialidades(solicitud)
-                          return esps.length > 0 ? esps.join(', ') : '-'
-                        })()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getEstadoSolicitudColor(solicitud.estado_solicitud)}>
-                          {solicitud.estado_solicitud}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
+              {/* Lista de cards — evita scroll horizontal */}
+              <div className="divide-y divide-gray-100">
+                {solicitudesPaginadas.map((solicitud) => {
+                  const esps = resolverEspecialidades(solicitud)
+                  const espsVisibles = esps.slice(0, 3)
+                  const espsResto = esps.length - 3
+                  return (
+                    <div
+                      key={solicitud.id_solicitud}
+                      className="flex items-center gap-3 py-3 hover:bg-gray-50 transition-colors rounded-lg px-2 -mx-2"
+                    >
+                      {/* Avatar inicial */}
+                      <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-slate-500">
+                          {solicitud.nombre?.[0]?.toUpperCase() ?? '?'}
+                        </span>
+                      </div>
+
+                      {/* Nombre + email */}
+                      <div className="w-44 shrink-0 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {solicitud.nombre} {solicitud.apellido}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">{solicitud.email}</p>
+                      </div>
+
+                      {/* Especialidades — máx 3 visible + "+N" con tooltip */}
+                      <div className="flex-1 hidden sm:flex flex-wrap gap-1">
+                        {esps.length > 0 ? (
+                          <>
+                            {espsVisibles.map(e => (
+                              <Badge key={e} variant="secondary" className="text-[11px] px-1.5 py-0.5">
+                                {e}
+                              </Badge>
+                            ))}
+                            {espsResto > 0 && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-[11px] px-1.5 py-0.5 text-gray-500 cursor-default">+{espsResto}</Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {esps.slice(3).join(', ')}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </div>
+
+                      {/* Fecha */}
+                      <span className="hidden md:block text-xs text-gray-400 shrink-0 w-20 text-right">
                         {new Date(solicitud.fecha_solicitud).toLocaleDateString('es-AR')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => abrirDetalle(solicitud)}
-                          title="Ver detalle"
-                        >
-                          <Eye className="h-4 w-4 text-gray-500" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </span>
+
+                      {/* Estado */}
+                      <Badge className={`${getEstadoSolicitudColor(solicitud.estado_solicitud)} shrink-0`}>
+                        {solicitud.estado_solicitud}
+                      </Badge>
+
+                      {/* Acción */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => abrirDetalle(solicitud)}
+                        title="Ver detalle"
+                        className="shrink-0"
+                      >
+                        <Eye className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </div>
+                  )
+                })}
+              </div>
+
               <Paginacion pagina={pagina} total={solicitudesFiltradas.length} onChange={setPagina} />
             </>
           )}

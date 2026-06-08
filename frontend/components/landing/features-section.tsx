@@ -61,10 +61,10 @@ export function FeaturesSection() {
       <div className="max-w-5xl mx-auto px-6">
         {/* Heading */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.5 }}
           className="mb-14"
         >
           <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-blue-400/60 mb-3"
@@ -85,10 +85,10 @@ export function FeaturesSection() {
             return (
               <motion.article
                 key={feature.title}
-                initial={{ opacity: 0, y: 22 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.5, delay: index * 0.07, ease: 'easeOut' }}
+                viewport={{ once: true, amount: 0.05 }}
+                transition={{ duration: 0.5, delay: index * 0.06, ease: 'easeOut' }}
                 whileHover={{ y: -3, transition: { duration: 0.2 } }}
                 className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-6 ${feature.span}`}
                 style={{

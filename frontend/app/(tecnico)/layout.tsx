@@ -29,7 +29,7 @@ export default function TecnicoLayout({
             </PageTransition>
           </main>
         </PullToRefresh>
-        <AIHelpChat />
+        <AIHelpChat rol="tecnico" />
       </div>
     </PageTransitionProvider>
   )

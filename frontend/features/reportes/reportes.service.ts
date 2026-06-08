@@ -235,20 +235,20 @@ export async function getEstadoFinanciero(): Promise<EstadoFinanciero> {
       .eq('estado_presupuesto', 'aprobado'),
     supabase
       .from('pagos')
-      .select('tipo_pago, monto, id_incidente'),
+      .select('tipo_pago, monto_pagado, id_incidente'),
   ])
 
   const presupuestos = presRes.data || []
   const pagos = (pagosRes.data || []) as any[]
 
   const totalPresupuestado = presupuestos.reduce((acc: number, p: any) => acc + (p.costo_total || 0), 0)
-  const totalCobrado = pagos.reduce((acc, p) => acc + (p.monto || 0), 0)
+  const totalCobrado = pagos.reduce((acc, p) => acc + (p.monto_pagado || 0), 0)
 
   const distMap: Record<string, { monto: number; cantidad: number }> = {}
   for (const p of pagos) {
     const tipo = p.tipo_pago || 'otro'
     if (!distMap[tipo]) distMap[tipo] = { monto: 0, cantidad: 0 }
-    distMap[tipo].monto += p.monto || 0
+    distMap[tipo].monto += p.monto_pagado || 0
     distMap[tipo].cantidad++
   }
 

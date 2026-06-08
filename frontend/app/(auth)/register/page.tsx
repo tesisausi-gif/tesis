@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Mail } from 'lucide-react'
+import { ArrowLeft, Mail, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { crearSolicitudRegistro, getEspecialidadesActivas, verificarEmailDisponible } from '@/features/usuarios/usuarios.service'
 import { Input } from '@/components/ui/input'
@@ -79,7 +79,9 @@ function RegisterPageContent() {
   const [tecnicoTelefono, setTecnicoTelefono] = useState('')
   const [tecnicoDNI, setTecnicoDNI] = useState('')
   const [tecnicoEspecialidades, setTecnicoEspecialidades] = useState<string[]>([])
-  const [tecnicoDireccion, setTecnicoDireccion] = useState('')
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     getEspecialidadesActivas()
@@ -165,7 +167,7 @@ function RegisterPageContent() {
       const result = await crearSolicitudRegistro({
         nombre: tecnicoNombre, apellido: tecnicoApellido, email: tecnicoEmail,
         telefono: tecnicoTelefono || null, dni: tecnicoDNI || null,
-        especialidades: tecnicoEspecialidades, direccion: tecnicoDireccion || null,
+        especialidades: tecnicoEspecialidades, direccion: null,
       })
 
       if (!result.success) {
@@ -175,7 +177,7 @@ function RegisterPageContent() {
 
       toast.success('Solicitud enviada', { description: 'Recibirás un email cuando sea aprobada' })
       setTecnicoNombre(''); setTecnicoApellido(''); setTecnicoEmail('')
-      setTecnicoTelefono(''); setTecnicoDNI(''); setTecnicoEspecialidades([]); setTecnicoDireccion('')
+      setTecnicoTelefono(''); setTecnicoDNI(''); setTecnicoEspecialidades([])
       setTimeout(() => router.push('/login'), 3000)
     } catch {
       toast.error('Error inesperado')
@@ -280,11 +282,21 @@ function RegisterPageContent() {
             </div>
             <div>
               <LabelText>Contraseña *</LabelText>
-              <Input id="cliente-password" type="password" value={clientePassword} onChange={(e) => setClientePassword(e.target.value)} required disabled={loading} minLength={6} placeholder="Mínimo 6 caracteres" className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+              <div className="relative">
+                <Input id="cliente-password" type={showPassword ? 'text' : 'password'} value={clientePassword} onChange={(e) => setClientePassword(e.target.value)} required disabled={loading} minLength={6} placeholder="Mínimo 6 caracteres" className="h-10 text-sm border-slate-200 bg-slate-50/70 pr-10" />
+                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" tabIndex={-1}>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div>
               <LabelText>Confirmar Contraseña *</LabelText>
-              <Input id="cliente-confirm" type="password" value={clienteConfirmPassword} onChange={(e) => setClienteConfirmPassword(e.target.value)} required disabled={loading} minLength={6} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
+              <div className="relative">
+                <Input id="cliente-confirm" type={showConfirmPassword ? 'text' : 'password'} value={clienteConfirmPassword} onChange={(e) => setClienteConfirmPassword(e.target.value)} required disabled={loading} minLength={6} className="h-10 text-sm border-slate-200 bg-slate-50/70 pr-10" />
+                <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" tabIndex={-1}>
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <SubmitButton loading={loading} label="Registrarse como Cliente" loadingLabel="Registrando..." />
           </form>
@@ -323,11 +335,11 @@ function RegisterPageContent() {
             <div>
               <LabelText>Especialidades *</LabelText>
               <p className="text-xs text-slate-400 mb-2" style={{ fontFamily: 'var(--font-outfit)' }}>Podés seleccionar una o más.</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {especialidades.map((esp) => (
                   <label
                     key={esp.id_especialidad}
-                    className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors text-sm ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-colors text-sm whitespace-nowrap ${
                       tecnicoEspecialidades.includes(esp.nombre)
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
                         : 'border-slate-200 hover:bg-slate-50 text-slate-600'
@@ -341,7 +353,7 @@ function RegisterPageContent() {
                         prev.includes(esp.nombre) ? prev.filter((e) => e !== esp.nombre) : [...prev, esp.nombre]
                       )}
                       disabled={loading}
-                      className="h-4 w-4 accent-blue-500"
+                      className="h-3.5 w-3.5 accent-blue-500"
                     />
                     {esp.nombre}
                   </label>
@@ -350,10 +362,6 @@ function RegisterPageContent() {
               {tecnicoEspecialidades.length === 0 && (
                 <p className="text-xs text-amber-600 mt-1.5" style={{ fontFamily: 'var(--font-outfit)' }}>Seleccioná al menos una especialidad</p>
               )}
-            </div>
-            <div>
-              <LabelText>Dirección</LabelText>
-              <Input id="tecnico-direccion" value={tecnicoDireccion} onChange={(e) => setTecnicoDireccion(e.target.value)} disabled={loading} className="h-10 text-sm border-slate-200 bg-slate-50/70" />
             </div>
             <SubmitButton loading={loading} label="Enviar Solicitud" loadingLabel="Enviando..." />
           </form>
