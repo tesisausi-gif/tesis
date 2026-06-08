@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -8,7 +8,7 @@ import Link from 'next/link'
 import {
   MapPin, ClipboardList, Clock, Wrench, FileText, CheckCircle, AlertTriangle, XCircle,
   Phone, Mail, ChevronDown, ChevronUp, AlertCircle, CalendarDays, CreditCard, RefreshCw,
-  Banknote, Building2, Wallet, X, Search, ChevronRight,
+  Banknote, Building2, Wallet, X, Search, ChevronRight, ChevronLeft,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -202,6 +202,10 @@ export function TrabajosContent({
   const [cobrosLoading, setCobrosLoading] = useState(false)
   const [cobrosRecibidos, setCobrosRecibidos] = useState<MiPagoRecibido[]>([])
   const [cobrosPendientes, setCobrosPendientes] = useState<MiPagoPendiente[]>([])
+  const filtrosRef      = useRef<HTMLDivElement>(null)
+  const subFiltrosRef   = useRef<HTMLDivElement>(null)
+  const [filtrosScrolled,    setFiltrosScrolled]    = useState(false)
+  const [subFiltrosScrolled, setSubFiltrosScrolled] = useState(false)
 
   const abrirHistorialCobros = async () => {
     setCobrosOpen(true)
@@ -515,7 +519,7 @@ export function TrabajosContent({
         <>
           {/* Filter chips */}
           <div className="relative bg-slate-100 border-b border-gray-100">
-            <div className="flex gap-1 px-4 py-3 pr-10 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div ref={filtrosRef} onScroll={e => setFiltrosScrolled(e.currentTarget.scrollLeft > 0)} className="flex gap-1 px-4 py-3 pr-10 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {filtros.map(({ id, label, count, Icon }) => {
                 const active = filtro === id
                 return (
@@ -539,6 +543,11 @@ export function TrabajosContent({
                 )
               })}
             </div>
+            {filtrosScrolled && (
+              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-slate-100 via-slate-100/80 to-transparent flex items-center justify-start pl-1">
+                <ChevronLeft className="w-4 h-4 text-slate-400 animate-pulse" />
+              </div>
+            )}
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 via-slate-100/80 to-transparent flex items-center justify-end pr-1">
               <ChevronRight className="w-4 h-4 text-slate-400 animate-pulse" />
             </div>
@@ -573,7 +582,7 @@ export function TrabajosContent({
             <div className="px-4 pt-3 space-y-4">
               {/* Sub-filtro */}
               <div className="relative">
-              <div className="flex gap-1 overflow-x-auto pr-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
+              <div ref={subFiltrosRef} onScroll={e => setSubFiltrosScrolled(e.currentTarget.scrollLeft > 0)} className="flex gap-1 overflow-x-auto pr-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-100 p-1 rounded-xl">
                 <button
                   onClick={() => setSubFiltro('todos')}
                   className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
@@ -605,6 +614,11 @@ export function TrabajosContent({
                   )
                 })}
               </div>
+              {subFiltrosScrolled && (
+                <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-slate-100 via-slate-100/80 to-transparent rounded-l-xl flex items-center justify-start pl-1">
+                  <ChevronLeft className="w-4 h-4 text-slate-400 animate-pulse" />
+                </div>
+              )}
               <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 via-slate-100/80 to-transparent rounded-r-xl flex items-center justify-end pr-1">
                 <ChevronRight className="w-4 h-4 text-slate-400 animate-pulse" />
               </div>
