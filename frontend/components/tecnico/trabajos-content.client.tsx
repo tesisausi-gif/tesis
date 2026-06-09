@@ -544,13 +544,13 @@ export function TrabajosContent({
               })}
             </div>
             {filtrosScrolled && (
-              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-slate-100 via-slate-100/80 to-transparent flex items-center justify-start pl-1">
-                <ChevronLeft className="w-4 h-4 text-slate-400 animate-pulse" />
-              </div>
+              <button onClick={() => filtrosRef.current?.scrollBy({ left: -150, behavior: 'smooth' })} className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-slate-100 via-slate-100/80 to-transparent flex items-center justify-start pl-1">
+                <ChevronLeft className="w-4 h-4 text-slate-500" />
+              </button>
             )}
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 via-slate-100/80 to-transparent flex items-center justify-end pr-1">
+            <button onClick={() => filtrosRef.current?.scrollBy({ left: 150, behavior: 'smooth' })} className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 via-slate-100/80 to-transparent flex items-center justify-end pr-1">
               <ChevronRight className="w-4 h-4 text-slate-400 animate-pulse" />
-            </div>
+            </button>
           </div>
 
           {/* Barra de búsqueda */}
@@ -615,13 +615,13 @@ export function TrabajosContent({
                 })}
               </div>
               {subFiltrosScrolled && (
-                <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-slate-100 via-slate-100/80 to-transparent rounded-l-xl flex items-center justify-start pl-1">
-                  <ChevronLeft className="w-4 h-4 text-slate-400 animate-pulse" />
-                </div>
+                <button onClick={() => subFiltrosRef.current?.scrollBy({ left: -150, behavior: 'smooth' })} className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-slate-100 via-slate-100/80 to-transparent rounded-l-xl flex items-center justify-start pl-1">
+                  <ChevronLeft className="w-4 h-4 text-slate-500" />
+                </button>
               )}
-              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 via-slate-100/80 to-transparent rounded-r-xl flex items-center justify-end pr-1">
+              <button onClick={() => subFiltrosRef.current?.scrollBy({ left: 150, behavior: 'smooth' })} className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-slate-100 via-slate-100/80 to-transparent rounded-r-xl flex items-center justify-end pr-1">
                 <ChevronRight className="w-4 h-4 text-slate-400 animate-pulse" />
-              </div>
+              </button>
               </div>
               <div className="space-y-6">
               {((['visita_pendiente', 'visita_propuesta', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
