@@ -292,12 +292,22 @@ export async function crearAsignacion(data: {
     const { createAdminClient } = await import('@/shared/lib/supabase/admin')
     const supabase = createAdminClient()
 
-    // Cancelar asignaciones pendientes anteriores — el admin reasignó, no el técnico rechazó
-    await supabase
+    // Bloquear si ya hay una asignación pendiente de respuesta (Opción A: exclusiva)
+    const { data: pendiente } = await supabase
       .from('asignaciones_tecnico')
-      .update({ estado_asignacion: 'superada' })
+      .select('id_asignacion, tecnicos(nombre, apellido)')
       .eq('id_incidente', data.id_incidente)
       .eq('estado_asignacion', 'pendiente')
+      .maybeSingle()
+
+    if (pendiente) {
+      const tec = (pendiente as any).tecnicos
+      const nombre = tec ? `${tec.nombre} ${tec.apellido}` : 'un técnico'
+      return {
+        success: false,
+        error: `${nombre} ya tiene una asignación pendiente de respuesta. Esperá a que acepte o rechace antes de asignar a otro técnico.`,
+      }
+    }
 
     const { error } = await supabase
       .from('asignaciones_tecnico')
