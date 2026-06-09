@@ -7,6 +7,7 @@
  * NOTA: Para getCurrentUser() usar @/features/auth/auth.service
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import type { Usuario, Cliente, Tecnico, TecnicoActivo } from './usuarios.types'
@@ -339,7 +340,7 @@ export async function toggleActivoTecnico(
       .update({ esta_activo: nuevoEstado })
       .eq('id_tecnico', idTecnico)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Si se da de baja, cerrar sesión activa en todos los dispositivos
     if (!nuevoEstado && tec?.correo_electronico) {
@@ -399,7 +400,7 @@ export async function actualizarTecnico(
       })
       .eq('id_tecnico', idTecnico)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al actualizar técnico' }
@@ -420,7 +421,7 @@ export async function rechazarSolicitud(idSolicitud: number): Promise<ActionResu
       })
       .eq('id_solicitud', idSolicitud)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al rechazar solicitud' }
@@ -552,7 +553,12 @@ export async function crearSolicitudRegistro(data: {
         estado_solicitud: 'pendiente',
       })
 
-    if (error) return { success: false, error: error.message }
+    if (error) {
+      if (error.code === '23505' && error.message.includes('solicitudes_registro_email_key')) {
+        return { success: false, error: 'Ya existe una solicitud registrada con ese correo electrónico. Si ya enviaste una solicitud, aguardá a que sea procesada por el administrador.' }
+      }
+      return { success: false, error: translateDbError(error) }
+    }
 
     // Notificar al admin sobre la nueva solicitud de registro
     try {
@@ -593,7 +599,7 @@ export async function actualizarPerfilTecnico(
       })
       .eq('id_tecnico', idTecnico)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar perfil' }
@@ -617,7 +623,7 @@ export async function crearEspecialidad(data: {
       if (error.code === '23505') {
         return { success: false, error: 'Ya existe una especialidad con ese nombre' }
       }
-      return { success: false, error: error.message }
+      return { success: false, error: translateDbError(error) }
     }
     return { success: true, data: undefined }
   } catch (error) {
@@ -637,7 +643,7 @@ export async function actualizarEspecialidad(
       .update(data)
       .eq('id_especialidad', idEspecialidad)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar especialidad' }
@@ -656,7 +662,7 @@ export async function toggleActivaEspecialidad(
       .update({ esta_activa: nuevoEstado })
       .eq('id_especialidad', idEspecialidad)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado' }
@@ -759,7 +765,7 @@ export async function actualizarEmpleado(
       .update(data)
       .eq('id', id)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar empleado' }
@@ -778,7 +784,7 @@ export async function toggleActivoEmpleado(
       .update({ esta_activo: nuevoEstado })
       .eq('id', id)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // id ya es el auth UUID — cerrar sesión al dar de baja
     if (!nuevoEstado) await cerrarSesionesUsuario(id)
@@ -829,7 +835,7 @@ export async function actualizarCliente(
       .update(data)
       .eq('id_cliente', idCliente)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al actualizar cliente' }
@@ -854,7 +860,7 @@ export async function toggleActivoCliente(
       .update({ esta_activo: nuevoEstado })
       .eq('id_cliente', idCliente)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     if (!nuevoEstado && cli?.correo_electronico) {
       const { data: usr } = await supabase

@@ -5,6 +5,7 @@
  * Lecturas y escrituras para Server Components y Server Actions
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireTecnicoId } from '@/features/auth/auth.service'
@@ -316,7 +317,7 @@ export async function crearAsignacion(data: {
         estado_asignacion: 'pendiente',
       })
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Actualizar estado del incidente a "asignacion_solicitada" para indicar solicitud enviada
     await supabase
@@ -450,7 +451,7 @@ export async function completarAsignacion(idAsignacion: number): Promise<ActionR
       .update({ estado_asignacion: 'completada', fecha_completado: new Date().toISOString() })
       .eq('id_asignacion', idAsignacion)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Notificar al admin que el trabajo fue completado
     if (asig?.id_incidente) {

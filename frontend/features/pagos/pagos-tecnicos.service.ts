@@ -7,6 +7,7 @@
  * Requiere la tabla `pagos_tecnicos` en la DB.
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import type { ActionResult } from '@/shared/types'
@@ -205,7 +206,7 @@ export async function registrarPagoTecnico(
         observaciones: observaciones ?? null,
       })
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al registrar pago' }

@@ -1,5 +1,6 @@
 'use server'
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireTecnicoId, requireClienteId } from '@/features/auth/auth.service'
@@ -132,7 +133,7 @@ export async function marcarNotificacionLeida(idNotificacion: number): Promise<A
       .update({ fecha_leida: new Date().toISOString() })
       .eq('id_notificacion', idNotificacion)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error al marcar notificación' }
@@ -158,7 +159,7 @@ export async function marcarTodasLeidas(rol: 'tecnico' | 'cliente' | 'admin'): P
     }
 
     const { error } = await query
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error al marcar notificaciones' }

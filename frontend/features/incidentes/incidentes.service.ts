@@ -5,6 +5,7 @@
  * Lecturas y escrituras para Server Components y Server Actions
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireClienteId } from '@/features/auth/auth.service'
@@ -338,7 +339,7 @@ export async function actualizarIncidente(
       .update(updates)
       .eq('id_incidente', idIncidente)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar incidente' }
@@ -366,7 +367,7 @@ export async function calificarIncidenteAdmin(
       })
       .eq('id_incidente', idIncidente)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al guardar calificación' }

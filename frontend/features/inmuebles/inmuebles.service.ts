@@ -5,6 +5,7 @@
  * Lecturas y escrituras para Server Components y Server Actions
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireClienteId } from '@/features/auth/auth.service'
 import type { Inmueble, InmuebleConCliente, TipoInmueble } from './inmuebles.types'
@@ -141,7 +142,7 @@ export async function crearInmueble(inmuebleData: {
         esta_activo: true,
       })
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al crear inmueble' }
@@ -170,7 +171,7 @@ export async function actualizarInmueble(
       .update(inmuebleData)
       .eq('id_inmueble', idInmueble)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar inmueble' }
@@ -189,7 +190,7 @@ export async function toggleEstadoInmueble(
       .update({ esta_activo: nuevoEstado })
       .eq('id_inmueble', idInmueble)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al cambiar estado' }

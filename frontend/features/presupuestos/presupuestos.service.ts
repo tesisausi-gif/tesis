@@ -5,6 +5,7 @@
  * Lecturas y escrituras para Server Components y Server Actions
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireAdminOrGestorId, requireTecnicoId } from '@/features/auth/auth.service'
 import type { ActionResult } from '@/shared/types'
@@ -197,7 +198,7 @@ export async function crearPresupuesto(data: {
       .select()
       .single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Notificar al cliente (fire-and-forget)
     const { notificarPresupuestoCreado } = await import('@/features/notificaciones/notificaciones.service')
@@ -240,7 +241,7 @@ export async function actualizarPresupuesto(
       .update(updates)
       .eq('id_presupuesto', idPresupuesto)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar presupuesto' }
@@ -266,7 +267,7 @@ export async function enviarPresupuesto(idPresupuesto: number): Promise<ActionRe
       .update({ estado_presupuesto: EstadoPresupuesto.ENVIADO })
       .eq('id_presupuesto', idPresupuesto)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Notificar al admin que hay un presupuesto para revisar
     if (pres?.id_incidente) {
@@ -319,7 +320,7 @@ export async function aprobarPresupuesto(
       })
       .eq('id_presupuesto', idPresupuesto)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Notificar al cliente para que revise y apruebe (email, fire-and-forget)
     const { notificarPresupuestoAprobadoAdmin } = await import('@/features/notificaciones/notificaciones.service')
@@ -390,10 +391,14 @@ export async function rechazarPresupuesto(
     // Marcar presupuesto como rechazado
     const { error } = await supabase
       .from('presupuestos')
-      .update({ estado_presupuesto: EstadoPresupuesto.RECHAZADO })
+      .update({
+        estado_presupuesto: EstadoPresupuesto.RECHAZADO,
+        fecha_modificacion: new Date().toISOString(),
+        rechazado_por: 'admin',
+      })
       .eq('id_presupuesto', idPresupuesto)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     if (esAdicional) {
       // Presupuesto adicional rechazado: el técnico continúa con lo que tiene
@@ -490,7 +495,7 @@ export async function marcarPresupuestoVencido(idPresupuesto: number): Promise<A
       .update({ estado_presupuesto: EstadoPresupuesto.VENCIDO })
       .eq('id_presupuesto', idPresupuesto)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al marcar presupuesto como vencido' }
@@ -521,7 +526,7 @@ export async function aprobarPresupuestoCliente(idPresupuesto: number): Promise<
       })
       .eq('id_presupuesto', idPresupuesto)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Poner incidente en_proceso
     const supabaseAdmin = (await import('@/shared/lib/supabase/admin')).createAdminClient()
@@ -607,10 +612,14 @@ export async function rechazarPresupuestoCliente(
 
     const { error } = await supabase
       .from('presupuestos')
-      .update({ estado_presupuesto: EstadoPresupuesto.RECHAZADO })
+      .update({
+        estado_presupuesto: EstadoPresupuesto.RECHAZADO,
+        fecha_modificacion: new Date().toISOString(),
+        rechazado_por: 'cliente',
+      })
       .eq('id_presupuesto', idPresupuesto)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     if (esAdicional) {
       // Presupuesto adicional: notificar al técnico y al admin, el trabajo continúa
@@ -715,7 +724,7 @@ export async function rechazarPresupuestoConDecision(
       })
       .eq('id_presupuesto', idPresupuesto)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     const idIncidente = presupuesto.id_incidente
 
@@ -800,7 +809,7 @@ export async function responderOportunidadTecnico(
       .update({ decision_tecnico: aceptar ? 'acepta' : 'rechaza' })
       .eq('id_presupuesto', idPresupuesto)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     if (!aceptar) {
       const idIncidente = pres.id_incidente

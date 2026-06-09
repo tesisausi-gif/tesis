@@ -6,6 +6,7 @@
  * El trigger es: conformidad aprobada → incidente resuelto → aparece como pendiente de cobro.
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import type { ActionResult } from '@/shared/types'
@@ -175,7 +176,7 @@ export async function registrarCobroCliente(params: {
         fecha_cobro: new Date().toISOString(),
       })
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Cobro registrado → incidente pasa a finalizado (verdaderamente cerrado)
     await createAdminClient()

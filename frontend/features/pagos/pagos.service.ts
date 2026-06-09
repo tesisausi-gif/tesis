@@ -5,6 +5,7 @@
  * Lecturas y escrituras para Server Components y Server Actions
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireAdminOrGestorId } from '@/features/auth/auth.service'
 import type { ActionResult } from '@/shared/types'
@@ -150,7 +151,7 @@ export async function crearPago(data: {
       .select()
       .single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Notificar al cliente que se registró un pago (fire-and-forget)
     const { notificarPagoRegistrado } = await import('@/features/notificaciones/notificaciones.service')
@@ -186,7 +187,7 @@ export async function actualizarPago(
       .update(updates)
       .eq('id_pago', idPago)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar pago' }
@@ -206,7 +207,7 @@ export async function eliminarPago(idPago: number): Promise<ActionResult> {
       .delete()
       .eq('id_pago', idPago)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al eliminar pago' }

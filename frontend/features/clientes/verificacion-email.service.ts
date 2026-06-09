@@ -1,5 +1,6 @@
 'use server'
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { enviarCodigoVerificacionEmail } from '@/features/email/email.service'
 import type { ActionResult } from '@/shared/types'
@@ -30,7 +31,7 @@ export async function enviarCodigoVerificacion(
       })
       .eq('id_cliente', idCliente)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     await enviarCodigoVerificacionEmail({ destinatario: email, nombre, codigo })
 

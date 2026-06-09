@@ -1,5 +1,6 @@
 'use server'
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import type { ActionResult } from '@/shared/types'
 import type { Visita, VisitaResumen, TipoVisita } from './visitas.types'
@@ -116,7 +117,7 @@ export async function proponerVisita(params: {
       .select('id_visita')
       .single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Notificar al cliente
     try {
@@ -274,7 +275,7 @@ export async function completarVisita(idVisita: number): Promise<ActionResult> {
       .update({ estado: 'completada' })
       .eq('id_visita', idVisita)
       .in('estado', ['propuesta', 'confirmada'])
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error al completar visita' }

@@ -5,6 +5,7 @@
  * Lecturas y escrituras para Server Components y Server Actions
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireTecnicoId } from '@/features/auth/auth.service'
 import type { ActionResult } from '@/shared/types'
@@ -130,7 +131,7 @@ export async function crearInspeccion(data: {
       .select()
       .single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Notificar al admin que se realizó la inspección
     const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
@@ -171,7 +172,7 @@ export async function actualizarInspeccion(
       .update(updates)
       .eq('id_inspeccion', idInspeccion)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar inspección' }
@@ -203,7 +204,7 @@ export async function eliminarInspeccion(idInspeccion: number): Promise<ActionRe
       .delete()
       .eq('id_inspeccion', idInspeccion)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al eliminar inspección' }

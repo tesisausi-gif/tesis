@@ -1,5 +1,6 @@
 'use server'
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import type { ActionResult } from '@/shared/types'
 import type { FranjaDisponibilidad, FranjaAgenda } from './disponibilidad.types'
@@ -22,7 +23,7 @@ export async function guardarFranjasDisponibilidad(
     const { error } = await supabase.from('franjas_disponibilidad').insert(
       franjas.map(f => ({ id_incidente: idIncidente, fase, ...f }))
     )
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error al guardar disponibilidad' }
@@ -89,7 +90,7 @@ export async function guardarCompromisoTecnico(
       })
       .eq('id_asignacion', idAsignacion)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Notificaciones
     try {

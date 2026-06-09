@@ -5,6 +5,7 @@
  * Lecturas y escrituras para Server Components y Server Actions
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { requireTecnicoId } from '@/features/auth/auth.service'
 import type { ActionResult } from '@/shared/types'
@@ -60,7 +61,7 @@ export async function crearAvance(dto: CreateAvanceDTO): Promise<ActionResult> {
       .select('id_avance')
       .single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
 
     // Notificar al cliente sobre el nuevo avance (fire-and-forget)
     const { notificarNuevoAvance } = await import('@/features/notificaciones/notificaciones.service')
@@ -84,7 +85,7 @@ export async function eliminarAvance(idAvance: number): Promise<ActionResult> {
       .delete()
       .eq('id_avance', idAvance)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al eliminar avance' }

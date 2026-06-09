@@ -11,6 +11,7 @@
  *   - No existe id_cliente en la tabla
  */
 
+import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import type { Calificacion, CalificacionConDetalles } from './calificaciones.types'
 import type { ActionResult } from '@/shared/types'
@@ -164,7 +165,7 @@ export async function crearCalificacion(data: {
       .select()
       .single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: calificacion as Calificacion }
   } catch (error) {
     return { success: false, error: 'Error inesperado al crear calificación' }
@@ -194,7 +195,7 @@ export async function actualizarCalificacion(
       .update(updates)
       .eq('id_calificacion', idCalificacion)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al actualizar calificación' }
@@ -213,7 +214,7 @@ export async function eliminarCalificacion(idCalificacion: number): Promise<Acti
       .delete()
       .eq('id_calificacion', idCalificacion)
 
-    if (error) return { success: false, error: error.message }
+    if (error) return { success: false, error: translateDbError(error) }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al eliminar calificación' }
