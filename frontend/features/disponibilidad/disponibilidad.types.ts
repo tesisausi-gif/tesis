@@ -27,6 +27,8 @@ export interface FranjaAgenda {
   hora_fin: string    // 'HH:MM'
   /** 'visita' = visita propuesta/confirmada · 'disponibilidad' = franja del cliente sin visita aún */
   tipo?: 'visita' | 'disponibilidad'
+  /** Estado de la asignación — útil para mostrar si aún está pendiente de respuesta */
+  estadoAsignacion?: 'pendiente' | 'aceptada' | 'en_curso'
   incidentes: {
     descripcion_problema: string
     categoria: string | null

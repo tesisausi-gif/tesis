@@ -157,15 +157,15 @@ export async function getFranjasAgendaTecnico(idTecnico: number): Promise<Franja
 
   const { data: asignaciones } = await supabase
     .from('asignaciones_tecnico')
-    .select('id_asignacion, id_incidente')
+    .select('id_asignacion, id_incidente, estado_asignacion')
     .eq('id_tecnico', idTecnico)
-    .in('estado_asignacion', ['aceptada', 'en_curso'])
+    .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
 
   if (!asignaciones || asignaciones.length === 0) return []
 
   const idIncidentes = asignaciones.map(a => a.id_incidente)
-  const asigPorIncidente: Record<number, number> = Object.fromEntries(
-    asignaciones.map(a => [a.id_incidente, a.id_asignacion])
+  const asigPorIncidente: Record<number, { id: number; estado: string }> = Object.fromEntries(
+    asignaciones.map(a => [a.id_incidente, { id: a.id_asignacion, estado: a.estado_asignacion }])
   )
 
   // Traer visitas propuestas o confirmadas del técnico para esos incidentes
@@ -182,14 +182,15 @@ export async function getFranjasAgendaTecnico(idTecnico: number): Promise<Franja
     .order('hora_inicio')
 
   const visitasResult: FranjaAgenda[] = (visitas ?? []).map((v: any) => ({
-    id_franja:     v.id_visita,
-    id_incidente:  v.id_incidente,
-    id_asignacion: asigPorIncidente[v.id_incidente],
-    fecha:         v.fecha_visita as string,
-    hora_inicio:   (v.hora_inicio as string).slice(0, 5),
-    hora_fin:      v.hora_fin_estimada ? (v.hora_fin_estimada as string).slice(0, 5) : '',
-    tipo:          'visita' as const,
-    incidentes:    v.incidentes ?? null,
+    id_franja:        v.id_visita,
+    id_incidente:     v.id_incidente,
+    id_asignacion:    asigPorIncidente[v.id_incidente]?.id,
+    estadoAsignacion: asigPorIncidente[v.id_incidente]?.estado as FranjaAgenda['estadoAsignacion'],
+    fecha:            v.fecha_visita as string,
+    hora_inicio:      (v.hora_inicio as string).slice(0, 5),
+    hora_fin:         v.hora_fin_estimada ? (v.hora_fin_estimada as string).slice(0, 5) : '',
+    tipo:             'visita' as const,
+    incidentes:       v.incidentes ?? null,
   }))
 
   // Para incidentes sin visita agendada, mostrar la disponibilidad del cliente
@@ -209,14 +210,15 @@ export async function getFranjasAgendaTecnico(idTecnico: number): Promise<Franja
       .order('hora_inicio')
 
     const franjasResult: FranjaAgenda[] = (franjas ?? []).map((f: any) => ({
-      id_franja:     f.id_franja,
-      id_incidente:  f.id_incidente,
-      id_asignacion: asigPorIncidente[f.id_incidente],
-      fecha:         f.fecha as string,
-      hora_inicio:   (f.hora_inicio as string).slice(0, 5),
-      hora_fin:      (f.hora_fin as string).slice(0, 5),
-      tipo:          'disponibilidad' as const,
-      incidentes:    f.incidentes ?? null,
+      id_franja:        f.id_franja,
+      id_incidente:     f.id_incidente,
+      id_asignacion:    asigPorIncidente[f.id_incidente]?.id,
+      estadoAsignacion: asigPorIncidente[f.id_incidente]?.estado as FranjaAgenda['estadoAsignacion'],
+      fecha:            f.fecha as string,
+      hora_inicio:      (f.hora_inicio as string).slice(0, 5),
+      hora_fin:         (f.hora_fin as string).slice(0, 5),
+      tipo:             'disponibilidad' as const,
+      incidentes:       f.incidentes ?? null,
     }))
 
     return [...visitasResult, ...franjasResult].sort((a, b) =>

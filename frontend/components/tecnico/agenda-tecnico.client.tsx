@@ -67,7 +67,8 @@ function FranjaCard({
 }) {
   const address = getAddress(f)
   const categoria = f.incidentes?.categoria
-  const esDisp = f.tipo === 'disponibilidad'
+  const esDisp    = f.tipo === 'disponibilidad'
+  const esPendiente = f.estadoAsignacion === 'pendiente'
 
   // Colores según tipo: azul = visita agendada, ámbar = disponibilidad del cliente sin visita
   const accentBg    = past ? 'bg-slate-100'  : esDisp ? 'bg-amber-500'  : 'bg-blue-600'
@@ -104,6 +105,11 @@ function FranjaCard({
             {esDisp && !past && (
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                 Disponib. cliente
+              </span>
+            )}
+            {esPendiente && !past && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                Pend. respuesta
               </span>
             )}
             {categoria && (
