@@ -54,6 +54,7 @@ export async function getIncidentesForAdmin(): Promise<IncidenteConClienteAdmin[
       ),
       asignaciones_tecnico (
         estado_asignacion,
+        cancelada_por_admin,
         tecnicos (
           nombre,
           apellido

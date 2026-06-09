@@ -30,6 +30,7 @@ export interface AsignacionBase {
   fecha_cancelacion?: string | null
   fecha_visita_programada?: string | null
   observaciones?: string | null
+  cancelada_por_admin?: boolean
 }
 
 // Asignación con relaciones

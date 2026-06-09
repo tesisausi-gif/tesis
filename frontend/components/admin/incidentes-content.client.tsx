@@ -174,8 +174,11 @@ function IncidenteCard({
 }) {
   const rechazadaRecientemente = inc.estado_actual === 'asignacion_solicitada' &&
     inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'rechazada')
-  const canceladaPorTecnico = inc.estado_actual === 'pendiente' &&
-    inc.asignaciones_tecnico?.some(a => a.estado_asignacion === 'cancelada')
+  const asigCancelada = inc.estado_actual === 'pendiente'
+    ? inc.asignaciones_tecnico?.find(a => a.estado_asignacion === 'cancelada') ?? null
+    : null
+  const canceladaPorTecnico = !!asigCancelada && !asigCancelada.cancelada_por_admin
+  const canceladaPorAdmin   = !!asigCancelada &&  !!asigCancelada.cancelada_por_admin
 
   const subCfg = SUB_ESTADO_EN_PROCESO_CONFIG[accion.tipo as SubEstadoEnProceso]
   const BadgeIcon = subCfg ? (ICON_BY_SUB_ESTADO[accion.tipo as SubEstadoEnProceso] ?? Icon) : Icon
@@ -195,11 +198,13 @@ function IncidenteCard({
         isHighlighted ? 'ring-2 ring-amber-400 ring-offset-1' : ''
       }`}
     >
-      {canceladaPorTecnico && (
+      {(canceladaPorTecnico || canceladaPorAdmin) && (
         <div className="flex items-center gap-2 bg-red-600 px-4 py-2.5">
           <AlertTriangle className="h-4 w-4 text-yellow-300 animate-pulse flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <span className="text-xs font-bold text-white">Técnico canceló el trabajo</span>
+            <span className="text-xs font-bold text-white">
+              {canceladaPorAdmin ? 'Técnico dado de baja por administración' : 'Técnico canceló el trabajo'}
+            </span>
             <span className="text-red-200 text-xs ml-1.5">— Reasignar urgente</span>
           </div>
         </div>

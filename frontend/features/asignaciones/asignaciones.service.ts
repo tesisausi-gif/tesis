@@ -505,12 +505,13 @@ export async function darDeBajaIncidente(
 
     const idCliente = incData?.id_cliente_reporta ?? null
 
-    // 4. Marcar asignación como cancelada
+    // 4. Marcar asignación como cancelada (por admin)
     const { error: errAsig } = await adminClient
       .from('asignaciones_tecnico')
       .update({
         estado_asignacion: 'cancelada',
         fecha_rechazo: new Date().toISOString(),
+        cancelada_por_admin: true,
       })
       .eq('id_asignacion', asigData.id_asignacion)
 
