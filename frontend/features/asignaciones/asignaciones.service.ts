@@ -183,6 +183,15 @@ export async function aceptarAsignacion(
 
     if (errorAsignacion) return { success: false, error: errorAsignacion.message }
 
+    // Marcar otras asignaciones pendientes del mismo incidente como superadas
+    // (otro técnico aceptó primero — no cuenta como rechazo del técnico)
+    await supabase
+      .from('asignaciones_tecnico')
+      .update({ estado_asignacion: 'superada' })
+      .eq('id_incidente', idIncidente)
+      .eq('estado_asignacion', 'pendiente')
+      .neq('id_asignacion', idAsignacion)
+
     const { error: errorIncidente } = await supabase
       .from('incidentes')
       .update({ estado_actual: 'en_proceso' })
@@ -283,10 +292,10 @@ export async function crearAsignacion(data: {
     const { createAdminClient } = await import('@/shared/lib/supabase/admin')
     const supabase = createAdminClient()
 
-    // Cancelar asignaciones pendientes anteriores (re-asignación por parte del admin)
+    // Cancelar asignaciones pendientes anteriores — el admin reasignó, no el técnico rechazó
     await supabase
       .from('asignaciones_tecnico')
-      .update({ estado_asignacion: 'rechazada', fecha_rechazo: new Date().toISOString() })
+      .update({ estado_asignacion: 'superada' })
       .eq('id_incidente', data.id_incidente)
       .eq('estado_asignacion', 'pendiente')
 

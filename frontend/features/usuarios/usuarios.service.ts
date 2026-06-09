@@ -190,6 +190,7 @@ export async function getFiabilidadTecnicos(): Promise<Record<number, Fiabilidad
   const { data } = await supabase
     .from('asignaciones_tecnico')
     .select('id_tecnico, estado_asignacion')
+    // 'superada' se excluye: el admin reasignó o aceptó otro técnico — no es decisión del técnico
     .in('estado_asignacion', ['completada', 'cancelada', 'en_curso', 'aceptada', 'rechazada'])
 
   const stats: Record<number, { total: number; canceladas: number; rechazadas: number }> = {}
