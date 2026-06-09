@@ -67,6 +67,15 @@ function FranjaCard({
 }) {
   const address = getAddress(f)
   const categoria = f.incidentes?.categoria
+  const esDisp = f.tipo === 'disponibilidad'
+
+  // Colores según tipo: azul = visita agendada, ámbar = disponibilidad del cliente sin visita
+  const accentBg    = past ? 'bg-slate-100'  : esDisp ? 'bg-amber-500'  : 'bg-blue-600'
+  const accentText  = past ? 'text-slate-500' : 'text-white'
+  const accentSub   = past ? 'text-slate-400' : esDisp ? 'text-amber-100' : 'text-blue-200'
+  const accentLine  = past ? 'bg-slate-300'   : esDisp ? 'bg-amber-300'   : 'bg-blue-400'
+  const borderCls   = past ? 'border-slate-200' : esDisp ? 'border-amber-200' : 'border-blue-100'
+  const idBadgeCls  = past ? 'bg-slate-200 text-slate-500' : esDisp ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-600'
 
   return (
     <button
@@ -74,22 +83,14 @@ function FranjaCard({
       onClick={() => onClick(f.id_incidente)}
       className="w-full text-left active:scale-[0.98] transition-transform"
     >
-      <div className={`flex rounded-2xl overflow-hidden shadow-sm border ${
-        past ? 'border-slate-200' : 'border-blue-100 active:border-blue-200'
-      }`}>
+      <div className={`flex rounded-2xl overflow-hidden shadow-sm border ${borderCls}`}>
         {/* Franja de tiempo izquierda */}
-        <div className={`flex flex-col items-center justify-center px-3 py-4 shrink-0 w-[62px] ${
-          past ? 'bg-slate-100' : 'bg-blue-600'
-        }`}>
-          <span className={`text-base font-bold tabular-nums leading-none ${
-            past ? 'text-slate-500' : 'text-white'
-          }`}>
+        <div className={`flex flex-col items-center justify-center px-3 py-4 shrink-0 w-[62px] ${accentBg}`}>
+          <span className={`text-base font-bold tabular-nums leading-none ${accentText}`}>
             {formatHora(f.hora_inicio)}
           </span>
-          <div className={`w-px h-3 my-1 ${past ? 'bg-slate-300' : 'bg-blue-400'}`} />
-          <span className={`text-[11px] tabular-nums leading-none ${
-            past ? 'text-slate-400' : 'text-blue-200'
-          }`}>
+          <div className={`w-px h-3 my-1 ${accentLine}`} />
+          <span className={`text-[11px] tabular-nums leading-none ${accentSub}`}>
             {formatHora(f.hora_fin)}
           </span>
         </div>
@@ -97,14 +98,17 @@ function FranjaCard({
         {/* Contenido derecho */}
         <div className={`flex-1 min-w-0 px-3 py-3 ${past ? 'bg-slate-50' : 'bg-white'}`}>
           <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-              past ? 'bg-slate-200 text-slate-500' : 'bg-blue-50 text-blue-600'
-            }`}>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${idBadgeCls}`}>
               #{f.id_incidente}
             </span>
+            {esDisp && !past && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                Disponib. cliente
+              </span>
+            )}
             {categoria && (
               <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                past ? 'bg-slate-200 text-slate-500' : 'bg-amber-50 text-amber-700'
+                past ? 'bg-slate-200 text-slate-500' : 'bg-slate-100 text-slate-600'
               }`}>
                 {categoria}
               </span>
@@ -347,8 +351,8 @@ export function AgendaTecnico({ franjas, embedded = false, rol = 'tecnico' }: Ag
     return isEmpty ? (
       <div className="text-center space-y-2 py-4">
         <CalendarDays className="h-10 w-10 text-slate-200 mx-auto" />
-        <p className="text-sm font-medium text-slate-500">Sin visitas pendientes</p>
-        <p className="text-xs text-slate-400">Los incidentes asignados aparecerán acá con los horarios del cliente</p>
+        <p className="text-sm font-medium text-slate-500">Sin actividad agendada</p>
+        <p className="text-xs text-slate-400">No hay visitas ni incidentes activos con disponibilidad del cliente</p>
       </div>
     ) : (
       <AgendaContent franjas={franjas} rol={rol} />

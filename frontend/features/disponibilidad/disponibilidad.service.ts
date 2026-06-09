@@ -181,15 +181,50 @@ export async function getFranjasAgendaTecnico(idTecnico: number): Promise<Franja
     .order('fecha_visita')
     .order('hora_inicio')
 
-  return (visitas ?? []).map((v: any) => ({
+  const visitasResult: FranjaAgenda[] = (visitas ?? []).map((v: any) => ({
     id_franja:     v.id_visita,
     id_incidente:  v.id_incidente,
     id_asignacion: asigPorIncidente[v.id_incidente],
     fecha:         v.fecha_visita as string,
     hora_inicio:   (v.hora_inicio as string).slice(0, 5),
     hora_fin:      v.hora_fin_estimada ? (v.hora_fin_estimada as string).slice(0, 5) : '',
+    tipo:          'visita' as const,
     incidentes:    v.incidentes ?? null,
   }))
+
+  // Para incidentes sin visita agendada, mostrar la disponibilidad del cliente
+  // así el admin/técnico sabe cuándo puede ir aunque no haya visita propuesta aún
+  const conVisita = new Set(visitasResult.map(v => v.id_incidente))
+  const sinVisita = idIncidentes.filter(id => !conVisita.has(id))
+
+  if (sinVisita.length > 0) {
+    const { data: franjas } = await supabase
+      .from('franjas_disponibilidad')
+      .select(`
+        id_franja, id_incidente, fecha, hora_inicio, hora_fin,
+        incidentes(descripcion_problema, categoria, inmuebles(calle, altura, barrio, localidad))
+      `)
+      .in('id_incidente', sinVisita)
+      .order('fecha')
+      .order('hora_inicio')
+
+    const franjasResult: FranjaAgenda[] = (franjas ?? []).map((f: any) => ({
+      id_franja:     f.id_franja,
+      id_incidente:  f.id_incidente,
+      id_asignacion: asigPorIncidente[f.id_incidente],
+      fecha:         f.fecha as string,
+      hora_inicio:   (f.hora_inicio as string).slice(0, 5),
+      hora_fin:      (f.hora_fin as string).slice(0, 5),
+      tipo:          'disponibilidad' as const,
+      incidentes:    f.incidentes ?? null,
+    }))
+
+    return [...visitasResult, ...franjasResult].sort((a, b) =>
+      a.fecha === b.fecha ? a.hora_inicio.localeCompare(b.hora_inicio) : a.fecha.localeCompare(b.fecha)
+    )
+  }
+
+  return visitasResult
 }
 
 export async function liberarCompromisoDeIncidente(idIncidente: number): Promise<void> {

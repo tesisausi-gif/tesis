@@ -25,6 +25,8 @@ export interface FranjaAgenda {
   fecha: string       // 'YYYY-MM-DD'
   hora_inicio: string // 'HH:MM'
   hora_fin: string    // 'HH:MM'
+  /** 'visita' = visita propuesta/confirmada · 'disponibilidad' = franja del cliente sin visita aún */
+  tipo?: 'visita' | 'disponibilidad'
   incidentes: {
     descripcion_problema: string
     categoria: string | null
