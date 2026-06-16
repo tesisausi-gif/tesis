@@ -339,11 +339,11 @@ function TabCobrosClientes({ pendientes, realizados, highlightId }: { pendientes
                   key={c.id_cobro}
                   ref={el => { if (el) highlightRefs.current.set(c.id_incidente, el); else highlightRefs.current.delete(c.id_incidente) }}
                 >
-                  <Card className={`border-green-200 ${highlightId === c.id_incidente ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}><CardContent className="pt-3 pb-3">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2 flex-wrap">
+                  <Card className={`border-green-200 ${highlightId === c.id_incidente ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}><CardContent className="pt-3 pb-3 overflow-hidden">
+                    <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
                         <User className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                        <span className="font-medium">{c.nombre_cliente} {c.apellido_cliente}</span>
+                        <span className="font-medium truncate">{c.nombre_cliente} {c.apellido_cliente}</span>
                         <MetodoBadge metodo={c.metodo_pago}/>
                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Cobrado</Badge>
                       </div>
@@ -358,13 +358,13 @@ function TabCobrosClientes({ pendientes, realizados, highlightId }: { pendientes
                     <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
                       <span className="font-semibold text-green-700">{fmt$(Number(c.monto_cobro))}</span>
                       <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(c.fecha_cobro),'dd/MM/yyyy HH:mm',{locale:es})}</span>
-                      {c.referencia_pago && <span>Ref: {c.referencia_pago}</span>}
+                      {c.referencia_pago && <span className="truncate max-w-[180px]">Ref: {c.referencia_pago}</span>}
                       {c.banco && <span>{c.banco}</span>}
                       {c.cuotas && c.cuotas > 1 && <span>{c.cuotas} cuotas</span>}
-                      {c.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Cobrado por: {c.marcado_por_nombre}</span>}
-                      {!c.marcado_por_nombre && c.marcado_por_email && <span>{c.marcado_por_email}</span>}
+                      {c.marcado_por_nombre && <span className="flex items-center gap-1 truncate"><User className="h-3 w-3 flex-shrink-0"/>Cobrado por: {c.marcado_por_nombre}</span>}
+                      {!c.marcado_por_nombre && c.marcado_por_email && <span className="truncate max-w-[200px]">{c.marcado_por_email}</span>}
                     </div>
-                    {c.observaciones && <p className="text-xs text-gray-400 italic mt-1">{c.observaciones}</p>}
+                    {c.observaciones && <p className="text-xs text-gray-400 italic mt-1 break-words">{c.observaciones}</p>}
                   </CardContent></Card>
                 </div>
               ))}
@@ -618,11 +618,11 @@ function TabPagosTecnicos({ pendientes, realizados, highlightId, cobrosCliente }
                   key={p.id_pago_tecnico}
                   ref={el => { if (el) highlightRefs.current.set(p.id_incidente, el); else highlightRefs.current.delete(p.id_incidente) }}
                 >
-                  <Card className={`border-green-200 ${highlightId === p.id_incidente ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}><CardContent className="pt-3 pb-3">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2 flex-wrap">
+                  <Card className={`border-green-200 ${highlightId === p.id_incidente ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}><CardContent className="pt-3 pb-3 overflow-hidden">
+                    <div className="flex items-start justify-between gap-2 mb-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
                         <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                        <span className="font-medium">{p.nombre_tecnico} {p.apellido_tecnico}</span>
+                        <span className="font-medium truncate">{p.nombre_tecnico} {p.apellido_tecnico}</span>
                         {p.metodo_pago && <MetodoBadge metodo={p.metodo_pago}/>}
                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Pagado</Badge>
                       </div>
@@ -637,13 +637,13 @@ function TabPagosTecnicos({ pendientes, realizados, highlightId, cobrosCliente }
                     <div className="flex flex-wrap gap-3 text-xs text-gray-500 mt-1">
                       <span className="font-semibold text-green-700">{fmt$(Number(p.monto_pago))}</span>
                       <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(p.fecha_pago),'dd/MM/yyyy HH:mm',{locale:es})}</span>
-                      {p.referencia_pago && <span>Ref: {p.referencia_pago}</span>}
+                      {p.referencia_pago && <span className="truncate max-w-[180px]">Ref: {p.referencia_pago}</span>}
                       {p.banco && <span>{p.banco}</span>}
                       {p.cuotas && p.cuotas > 1 && <span>{p.cuotas} cuotas</span>}
-                      {p.marcado_por_nombre && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Pagado por: {p.marcado_por_nombre}</span>}
-                      {!p.marcado_por_nombre && p.marcado_por_email && <span>{p.marcado_por_email}</span>}
+                      {p.marcado_por_nombre && <span className="flex items-center gap-1 truncate"><User className="h-3 w-3 flex-shrink-0"/>Pagado por: {p.marcado_por_nombre}</span>}
+                      {!p.marcado_por_nombre && p.marcado_por_email && <span className="truncate max-w-[200px]">{p.marcado_por_email}</span>}
                     </div>
-                    {p.observaciones && <p className="text-xs text-gray-400 italic mt-1">{p.observaciones}</p>}
+                    {p.observaciones && <p className="text-xs text-gray-400 italic mt-1 break-words">{p.observaciones}</p>}
                   </CardContent></Card>
                 </div>
               ))}
@@ -814,10 +814,10 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
           const p = entry.item
           return (
             <Card key={`t-${p.id_pago_tecnico ?? i}`} className="border-blue-100">
-              <CardContent className="pt-3 pb-3">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
+              <CardContent className="pt-3 pb-3 overflow-hidden">
+                <div className="flex items-center gap-2 flex-wrap min-w-0 mb-1">
                   <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                  <span className="font-medium text-sm">{p.nombre_tecnico} {p.apellido_tecnico}</span>
+                  <span className="font-medium text-sm truncate">{p.nombre_tecnico} {p.apellido_tecnico}</span>
                   {p.metodo_pago && <MetodoBadge metodo={p.metodo_pago}/>}
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">Pago técnico</Badge>
                 </div>
@@ -825,11 +825,11 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
                 <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                   <span className="font-semibold text-blue-700">{fmt$(Number(p.monto_pago))}</span>
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(p.fecha_pago),'dd/MM/yyyy HH:mm',{locale:es})}</span>
-                  {p.referencia_pago && <span>Ref: {p.referencia_pago}</span>}
+                  {p.referencia_pago && <span className="truncate max-w-[180px]">Ref: {p.referencia_pago}</span>}
                   {p.banco && <span>{p.banco}</span>}
-                  {(p.marcado_por_nombre || p.marcado_por_email) && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Por: {p.marcado_por_nombre ?? p.marcado_por_email}</span>}
+                  {(p.marcado_por_nombre || p.marcado_por_email) && <span className="flex items-center gap-1 truncate"><User className="h-3 w-3 flex-shrink-0"/>Por: {p.marcado_por_nombre ?? p.marcado_por_email}</span>}
                 </div>
-                {p.observaciones && <p className="text-xs text-gray-400 italic mt-1">{p.observaciones}</p>}
+                {p.observaciones && <p className="text-xs text-gray-400 italic mt-1 break-words">{p.observaciones}</p>}
               </CardContent>
             </Card>
           )
@@ -837,10 +837,10 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
           const c = entry.item
           return (
             <Card key={`c-${c.id_cobro ?? i}`} className="border-green-100">
-              <CardContent className="pt-3 pb-3">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
+              <CardContent className="pt-3 pb-3 overflow-hidden">
+                <div className="flex items-center gap-2 flex-wrap min-w-0 mb-1">
                   <User className="h-4 w-4 text-green-600 flex-shrink-0"/>
-                  <span className="font-medium text-sm">{c.nombre_cliente} {c.apellido_cliente}</span>
+                  <span className="font-medium text-sm truncate">{c.nombre_cliente} {c.apellido_cliente}</span>
                   <MetodoBadge metodo={c.metodo_pago}/>
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Cobro cliente</Badge>
                 </div>
@@ -848,11 +848,11 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
                 <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                   <span className="font-semibold text-green-700">{fmt$(Number(c.monto_cobro))}</span>
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3"/>{format(new Date(c.fecha_cobro),'dd/MM/yyyy HH:mm',{locale:es})}</span>
-                  {c.referencia_pago && <span>Ref: {c.referencia_pago}</span>}
+                  {c.referencia_pago && <span className="truncate max-w-[180px]">Ref: {c.referencia_pago}</span>}
                   {c.banco && <span>{c.banco}</span>}
-                  {(c.marcado_por_nombre || c.marcado_por_email) && <span className="flex items-center gap-1"><User className="h-3 w-3"/>Por: {c.marcado_por_nombre ?? c.marcado_por_email}</span>}
+                  {(c.marcado_por_nombre || c.marcado_por_email) && <span className="flex items-center gap-1 truncate"><User className="h-3 w-3 flex-shrink-0"/>Por: {c.marcado_por_nombre ?? c.marcado_por_email}</span>}
                 </div>
-                {c.observaciones && <p className="text-xs text-gray-400 italic mt-1">{c.observaciones}</p>}
+                {c.observaciones && <p className="text-xs text-gray-400 italic mt-1 break-words">{c.observaciones}</p>}
               </CardContent>
             </Card>
           )
@@ -895,7 +895,7 @@ export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendiente
   }, [])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-hidden w-full">
       <AdminPageHeader title="Cobros y Pagos" subtitle="Gestión de cobros a clientes y pagos a técnicos" />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
