@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ArrowRight, User, Wrench } from 'lucide-react'
 import { BlurText } from '@/components/ui/blur-text'
 import { InstallPWAButton } from '@/components/pwa/InstallPWAButton'
+import { MantisIcon3D } from './MantisIcon3D'
 
 export function HeroSection() {
   return (
@@ -50,49 +50,15 @@ export function HeroSection() {
       {/* Content */}
       <div className="relative z-10 w-full max-w-4xl mx-auto px-6 py-16 sm:py-24 flex flex-col items-center text-center">
 
-        {/* Brand mark — ícono Mantis con glow azul, flotación sutil */}
+        {/* Brand mark — ícono Mantis 3D interactivo (parallax con cursor/touch) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, delay: 0, ease: 'easeOut' }}
-          className="relative mb-6"
-          style={{ animation: 'brand-float 6s ease-in-out infinite' }}
+          className="mb-6"
         >
-          {/* Glow halo detrás */}
-          <div
-            className="absolute inset-0 rounded-full pointer-events-none"
-            style={{
-              background: 'radial-gradient(circle, rgba(59,130,246,0.45) 0%, rgba(37,99,235,0.18) 40%, transparent 70%)',
-              transform: 'scale(2.2)',
-              filter: 'blur(18px)',
-            }}
-          />
-          {/* Ícono */}
-          <div
-            className="relative rounded-3xl overflow-hidden"
-            style={{
-              width: 92,
-              height: 92,
-              boxShadow: '0 12px 40px rgba(37,99,235,0.35), 0 2px 8px rgba(0,0,0,0.5)',
-              border: '1px solid rgba(96,165,250,0.25)',
-            }}
-          >
-            <Image
-              src="/icon-192.png"
-              alt="Mantis"
-              width={92}
-              height={92}
-              priority
-              className="h-full w-full object-cover"
-            />
-          </div>
+          <MantisIcon3D />
         </motion.div>
-        <style>{`
-          @keyframes brand-float {
-            0%, 100% { transform: translateY(0) }
-            50%      { transform: translateY(-6px) }
-          }
-        `}</style>
 
         {/* Badge */}
         <motion.div
