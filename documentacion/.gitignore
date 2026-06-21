@@ -1,0 +1,15 @@
+MANUAL_*.md
+*.docx
+
+# Carpetas de documentación académica — no subir a GitHub
+TF/
+U1 - Medición/
+U2 - Fundamentos de la transformación/
+U3 - Gestión del Cambio durante la Ejecución de la Transformación/
+U4 - Práctica Medición y Transformación de Procesos/
+
+# Documento de análisis de métricas — uso interno
+METRICAS_INFORMES_PROPUESTA.md
+
+# Plan de implementación de visitas — uso interno
+VISITAS_PLAN.md

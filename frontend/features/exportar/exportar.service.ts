@@ -556,7 +556,7 @@ export async function getR5RentabilidadPorRefaccion(filtros: {
 }): Promise<R5Resultado> {
   const supabase = createAdminClient()
 
-  // Ingresos: cobros a clientes (incluyen comisión Traki)
+  // Ingresos: cobros a clientes (incluyen comisión Mantis)
   let qCobros = supabase.from('cobros_clientes').select('monto_cobro, fecha_cobro, id_incidente')
   if (filtros.fechaDesde) qCobros = qCobros.gte('fecha_cobro', filtros.fechaDesde)
   if (filtros.fechaHasta) qCobros = qCobros.lte('fecha_cobro', filtros.fechaHasta)
@@ -823,7 +823,7 @@ export async function getR6DesempenoTecnicos(filtros: {
   return { totalTecnicos, promedioProductividad, promedioSatisfaccion, tecnicos: result }
 }
 
-// ─── R7: Satisfacción Traki ─────────────────────────────────────────────────
+// ─── R7: Satisfacción Mantis ─────────────────────────────────────────────────
 
 export async function getR7Satisfaccion(filtros: {
   fechaDesde?: string

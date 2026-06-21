@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Traki — Gestión de Incidentes',
-    short_name: 'Traki',
-    description: 'Sistema de gestión de incidentes Traki',
+    name: 'Mantis — Gestión de Incidentes',
+    short_name: 'Mantis',
+    description: 'Sistema de gestión de incidentes Mantis',
     start_url: '/',
     display: 'standalone',
     background_color: '#f9fafb',

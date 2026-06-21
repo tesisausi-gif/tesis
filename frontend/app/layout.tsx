@@ -28,13 +28,13 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Traki — Gestión de Incidentes",
-  description: "Sistema de gestión de incidentes Traki",
+  title: "Mantis — Gestión de Incidentes",
+  description: "Sistema de gestión de incidentes Mantis",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Traki",
+    title: "Mantis",
   },
 };
 

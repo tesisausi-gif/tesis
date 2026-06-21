@@ -59,7 +59,7 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
     year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  let titulo = 'Reporte Traki'
+  let titulo = 'Reporte Mantis'
   let cabeceras: string[] = []
   let filas: Record<string, unknown>[] = []
   let kpis: { label: string; valor: string }[] = []
@@ -138,15 +138,15 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
       kpis = [
         { label: 'Total cobrado', valor: fmt$(r.ingresoTotal) },
         { label: 'Total pagado a técnicos', valor: fmt$(r.costoTotal) },
-        { label: 'Comisión Traki', valor: fmt$(r.comisionTotal) },
+        { label: 'Comisión Mantis', valor: fmt$(r.comisionTotal) },
         { label: 'Margen global', valor: fmtPct(r.margenGlobal) },
       ]
-      cabeceras = ['Tipo', 'Cobrado a cliente', 'Pagado al técnico', 'Comisión Traki', 'Margen %']
+      cabeceras = ['Tipo', 'Cobrado a cliente', 'Pagado al técnico', 'Comisión Mantis', 'Margen %']
       filas = r.porTipo.map(t => ({
         'Tipo': t.tipo,
         'Cobrado a cliente': fmt$(t.ingresoBruto),
         'Pagado al técnico': fmt$(t.costoPagadoTecnico),
-        'Comisión Traki': fmt$(t.comision),
+        'Comisión Mantis': fmt$(t.comision),
         'Margen %': fmtPct(t.margen),
       }))
 
@@ -170,7 +170,7 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
       }))
 
     } else if (tipo === 7) {
-      titulo = 'Satisfacción Traki'
+      titulo = 'Satisfacción Mantis'
       const r = await getR7Satisfaccion({ fechaDesde, fechaHasta, idTecnico, calificacionMinima })
       kpis = [
         { label: 'Promedio global', valor: `${fmtN(r.promedioGlobal)} ★` },
@@ -318,7 +318,7 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
 
       <h1>{titulo}</h1>
       <p className="meta">
-        Traki · Generado el {fechaGenerado}
+        Mantis · Generado el {fechaGenerado}
         {(fechaDesde || fechaHasta) && ` · Período: ${fechaDesde || '…'} → ${fechaHasta || '…'}`}
         {filas.length > 0 && ` · ${filas.length} registros`}
       </p>
@@ -410,7 +410,7 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
         </div>
       )}
 
-      <p className="footer">Traki · Sistema de Gestión de Incidentes · {fechaGenerado}</p>
+      <p className="footer">Mantis · Sistema de Gestión de Incidentes · {fechaGenerado}</p>
     </div>
   )
 }

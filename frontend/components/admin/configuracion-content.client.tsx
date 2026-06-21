@@ -81,7 +81,7 @@ export function ConfiguracionContent({ especialidades: esp }: ConfiguracionConte
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="Configuración del Sistema" subtitle="Parámetros generales del sistema Traki" />
+      <AdminPageHeader title="Configuración del Sistema" subtitle="Parámetros generales del sistema Mantis" />
 
       {/* Especialidades */}
       <Card>
@@ -192,12 +192,12 @@ export function ConfiguracionContent({ especialidades: esp }: ConfiguracionConte
       <Card>
         <CardHeader>
           <CardTitle>Información del Sistema</CardTitle>
-          <CardDescription>Datos generales del sistema Traki</CardDescription>
+          <CardDescription>Datos generales del sistema Mantis</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-500">Sistema</span>
-            <span className="font-medium">Traki — Gestión de Incidentes</span>
+            <span className="font-medium">Mantis — Gestión de Incidentes</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Versión</span>

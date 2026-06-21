@@ -1,5 +1,5 @@
 /**
- * Mapeos de colores y etiquetas centralizados para el sistema Traki
+ * Mapeos de colores y etiquetas centralizados para el sistema Mantis
  * Evita duplicación de definiciones de colores y asegura consistencia visual.
  */
 

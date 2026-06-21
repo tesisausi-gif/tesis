@@ -52,7 +52,7 @@ export async function enviarCredencialesTecnico({
 <body>
   <div class="container">
     <div class="header">
-      <h1>Traki</h1>
+      <h1>Mantis</h1>
       <p>Gestión de Incidentes</p>
     </div>
     <div class="body">
@@ -76,16 +76,16 @@ export async function enviarCredencialesTecnico({
       <a href="${APP_URL}/login" class="btn">Ingresar al sistema</a>
     </div>
     <div class="footer">
-      Este es un correo automático del Traki. No respondas a este mensaje.
+      Este es un correo automático del Mantis. No respondas a este mensaje.
     </div>
   </div>
 </body>
 </html>`.trim()
 
   await transport.sendMail({
-    from: `Traki <${process.env.GMAIL_USER}>`,
+    from: `Mantis <${process.env.GMAIL_USER}>`,
     to: destinatario,
-    subject: 'Tu cuenta en Traki fue aprobada',
+    subject: 'Tu cuenta en Mantis fue aprobada',
     html,
   })
 }
@@ -126,7 +126,7 @@ export async function enviarPasswordTemporal({
 <body>
   <div class="container">
     <div class="header">
-      <h1>Traki</h1>
+      <h1>Mantis</h1>
       <p>Recuperación de contraseña</p>
     </div>
     <div class="body">
@@ -151,16 +151,16 @@ export async function enviarPasswordTemporal({
       <p style="color:#94a3b8;font-size:12px;text-align:center;">Si no solicitaste esto, ignorá este correo. Tu contraseña no cambiará hasta que uses este enlace.</p>
     </div>
     <div class="footer">
-      Este es un correo automático de Traki. No respondas a este mensaje.
+      Este es un correo automático de Mantis. No respondas a este mensaje.
     </div>
   </div>
 </body>
 </html>`.trim()
 
   await transport.sendMail({
-    from: `Traki <${process.env.GMAIL_USER}>`,
+    from: `Mantis <${process.env.GMAIL_USER}>`,
     to: destinatario,
-    subject: 'Recuperación de contraseña — Traki',
+    subject: 'Recuperación de contraseña — Mantis',
     html,
   })
 }
@@ -198,7 +198,7 @@ export async function enviarCodigoVerificacionEmail({
 <body>
   <div class="container">
     <div class="header">
-      <h1>Traki</h1>
+      <h1>Mantis</h1>
       <p>Verificación de correo electrónico</p>
     </div>
     <div class="body">
@@ -211,20 +211,20 @@ export async function enviarCodigoVerificacionEmail({
         <div class="expiry">Este código expira en 1 hora</div>
       </div>
       <div class="warning">
-        Si no creaste una cuenta en Traki, podés ignorar este correo.
+        Si no creaste una cuenta en Mantis, podés ignorar este correo.
       </div>
     </div>
     <div class="footer">
-      Este es un correo automático de Traki. No respondas a este mensaje.
+      Este es un correo automático de Mantis. No respondas a este mensaje.
     </div>
   </div>
 </body>
 </html>`.trim()
 
   await transport.sendMail({
-    from: `Traki <${process.env.GMAIL_USER}>`,
+    from: `Mantis <${process.env.GMAIL_USER}>`,
     to: destinatario,
-    subject: 'Tu código de verificación — Traki',
+    subject: 'Tu código de verificación — Mantis',
     html,
   })
 }

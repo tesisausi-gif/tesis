@@ -54,7 +54,7 @@ export function BrandPanel() {
         style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.13) 0%, transparent 65%)' }}
       />
 
-      {/* Watermark Traki */}
+      {/* Watermark Mantis */}
       <div
         className="absolute bottom-8 -right-6 pointer-events-none select-none leading-none"
         style={{
@@ -66,7 +66,7 @@ export function BrandPanel() {
           transform: 'rotate(-6deg)',
         }}
       >
-        Traki
+        Mantis
       </div>
 
       {/* Left accent line — animates height */}
@@ -92,7 +92,7 @@ export function BrandPanel() {
             <span className="text-white font-bold text-sm tracking-tight" style={{ fontFamily: 'var(--font-syne)' }}>TK</span>
           </motion.div>
           <span className="text-white/35 text-xs tracking-[0.28em] uppercase" style={{ fontFamily: 'var(--font-outfit)' }}>
-            Traki
+            Mantis
           </span>
         </motion.div>
 
@@ -130,7 +130,7 @@ export function BrandPanel() {
         transition={{ delay: 0.9, duration: 0.5 }}
       >
         <div className="h-px mb-5" style={{ background: 'rgba(255,255,255,0.07)' }} />
-        <p className="text-slate-600 text-xs">© 2025 Traki — Sistema de Gestión de Incidentes</p>
+        <p className="text-slate-600 text-xs">© 2025 Mantis — Sistema de Gestión de Incidentes</p>
       </motion.div>
     </motion.div>
   )

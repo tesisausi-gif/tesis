@@ -301,7 +301,7 @@ function WalterChatPanel({
           <div>
             <p className="text-white font-bold text-sm leading-none" style={{ fontFamily: 'var(--font-syne)' }}>Walter</p>
             <p className="text-blue-300/60 text-[10px] mt-0.5">
-              Asistente Traki · IA
+              Asistente Mantis · IA
               {isRunning && <span className="ml-1 animate-pulse">●</span>}
             </p>
           </div>

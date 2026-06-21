@@ -43,7 +43,7 @@ export function LandingHeader() {
             className="font-bold text-white text-sm tracking-tight"
             style={{ fontFamily: 'var(--font-syne)' }}
           >
-            Traki
+            Mantis
           </span>
         </Link>
 

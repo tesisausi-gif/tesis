@@ -103,7 +103,7 @@ export function AdminSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold px-4 py-4">
-            Traki
+            Mantis
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

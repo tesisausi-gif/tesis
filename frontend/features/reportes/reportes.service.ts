@@ -2,7 +2,7 @@
 
 /**
  * Servicio de Reportes
- * Datos agregados para los 8 informes de valor agregado del sistema Traki
+ * Datos agregados para los 8 informes de valor agregado del sistema Mantis
  */
 
 import { createAdminClient } from '@/shared/lib/supabase/admin'

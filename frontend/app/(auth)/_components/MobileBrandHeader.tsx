@@ -47,7 +47,7 @@ export function MobileBrandHeader() {
           letterSpacing: '-6px',
         }}
       >
-        Traki
+        Mantis
       </div>
 
       {/* Content */}
@@ -73,7 +73,7 @@ export function MobileBrandHeader() {
             <span className="text-white font-bold text-sm" style={{ fontFamily: 'var(--font-syne)' }}>TK</span>
           </motion.div>
           <span className="text-white/35 text-xs tracking-[0.25em] uppercase" style={{ fontFamily: 'var(--font-syne)' }}>
-            Traki
+            Mantis
           </span>
         </motion.div>
 

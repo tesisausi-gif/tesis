@@ -154,7 +154,7 @@ export function DashboardContent({
 
       {/* ── HEADER ───────────────────────────────────────────────────────── */}
       <motion.div variants={cardVariants}>
-        <AdminPageHeader title="Panel de Control" subtitle="Resumen general del sistema Traki" />
+        <AdminPageHeader title="Panel de Control" subtitle="Resumen general del sistema Mantis" />
       </motion.div>
 
       {/* ── STATUS LINE ──────────────────────────────────────────────────── */}
