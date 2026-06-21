@@ -72,7 +72,7 @@ export function FeaturesSection() {
             Capacidades
           </p>
           <h2 className="text-3xl md:text-4xl font-black text-white leading-[1.25]"
-            style={{ fontFamily: 'var(--font-syne)', letterSpacing: '-0.02em', transform: 'scaleY(1.1)', transformOrigin: 'top left' }}>
+            style={{ fontFamily: 'var(--font-syne)', letterSpacing: '-0.02em', transform: 'scaleY(1.2)', transformOrigin: 'top left' }}>
             <span className="block">Todo lo que necesitás,</span>
             <span className="block" style={{ color: '#60a5fa' }}>en un solo lugar.</span>
           </h2>

@@ -33,7 +33,7 @@ export function CTASection() {
             Comenzá ahora
           </p>
           <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight"
-            style={{ fontFamily: 'var(--font-syne)', letterSpacing: '-0.02em', transform: 'scaleY(1.1)', transformOrigin: 'top center' }}>
+            style={{ fontFamily: 'var(--font-syne)', letterSpacing: '-0.02em', transform: 'scaleY(1.2)', transformOrigin: 'top center' }}>
             Elegí cómo usar la plataforma
           </h2>
         </motion.div>

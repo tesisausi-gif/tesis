@@ -71,7 +71,7 @@ export function HeroSection() {
 
         {/* Headline — blur-text from 21st.dev */}
         <h1 className="text-[1.8rem] sm:text-5xl md:text-6xl lg:text-[4.5rem] font-black text-white leading-[1.25] tracking-[-0.03em] mb-6"
-          style={{ fontFamily: 'var(--font-syne)', transform: 'scaleY(1.1)', transformOrigin: 'top center' }}>
+          style={{ fontFamily: 'var(--font-syne)', transform: 'scaleY(1.2)', transformOrigin: 'top center' }}>
           <span className="flex justify-center">
             <BlurText text="Gestioná tus" delay={55} direction="bottom" className="justify-center" />
           </span>
