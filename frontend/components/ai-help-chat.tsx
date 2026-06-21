@@ -90,10 +90,20 @@ interface WalterChatPanelProps {
 // ── Paleta compartida ─────────────────────────────────────────────────────────
 const CHART_COLORS = ['#1d4ed8', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
-function ChartHeader({ title }: { title: string }) {
+function ChartHeader({ title, onClose }: { title: string; onClose?: () => void }) {
   return (
-    <div className="px-3 py-2 border-b border-slate-100">
-      <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">{title}</p>
+    <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between gap-2">
+      <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide truncate">{title}</p>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar gráfico"
+          className="shrink-0 text-slate-400 hover:text-slate-700 transition-colors rounded-md p-0.5 hover:bg-slate-100"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   )
 }
@@ -222,10 +232,10 @@ function LineChart({ chart }: { chart: WalterChart }) {
   )
 }
 
-function WalterChart({ chart }: { chart: WalterChart }) {
+function WalterChart({ chart, onClose }: { chart: WalterChart; onClose?: () => void }) {
   return (
     <div className="mx-3 my-1 rounded-xl overflow-hidden border border-slate-200 bg-white shrink-0">
-      <ChartHeader title={chart.title} />
+      <ChartHeader title={chart.title} onClose={onClose} />
       {chart.type === 'bar' && <BarChart chart={chart} />}
       {(chart.type === 'pie' || chart.type === 'donut') && <PieDonutChart chart={chart} />}
       {chart.type === 'line' && <LineChart chart={chart} />}
@@ -394,7 +404,7 @@ function WalterChatPanel({
         </ThreadPrimitive.Viewport>
 
         {/* Chart */}
-        {chart && !isRunning && <WalterChart chart={chart} />}
+        {chart && !isRunning && <WalterChart chart={chart} onClose={onClearChart} />}
 
         {/* Selección de inmueble — botones uno por propiedad */}
         {inmueblesList && !isRunning && (
