@@ -28,16 +28,8 @@ export function LandingHeader() {
       <div className="max-w-5xl mx-auto flex h-16 items-center justify-between px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: '#2563eb' }}
-          >
-            <span
-              className="text-white font-bold text-xs tracking-tight"
-              style={{ fontFamily: 'var(--font-syne)' }}
-            >
-              MT
-            </span>
+          <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+            <img src="/mantis-icon.png" alt="Mantis" width={32} height={32} className="w-full h-full object-cover" />
           </div>
           <span
             className="font-bold text-white text-sm tracking-tight"

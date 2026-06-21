@@ -83,13 +83,12 @@ export function BrandPanel() {
         {/* Logo badge */}
         <motion.div variants={fadeUp} className="flex items-center gap-3 mb-16">
           <motion.div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: '#2563eb' }}
+            className="w-10 h-10 rounded-xl overflow-hidden"
             whileHover={{ scale: 1.05 }}
             animate={{ boxShadow: ['0 0 0px rgba(37,99,235,0)', '0 0 18px rgba(37,99,235,0.55)', '0 0 0px rgba(37,99,235,0)'] }}
             transition={{ boxShadow: { duration: 2.8, repeat: Infinity, ease: 'easeInOut' as const } }}
           >
-            <span className="text-white font-bold text-sm tracking-tight" style={{ fontFamily: 'var(--font-syne)' }}>MT</span>
+            <img src="/mantis-icon.png" alt="Mantis" width={40} height={40} className="w-full h-full object-cover" />
           </motion.div>
           <span className="text-white/35 text-xs tracking-[0.28em] uppercase" style={{ fontFamily: 'var(--font-outfit)' }}>
             Mantis

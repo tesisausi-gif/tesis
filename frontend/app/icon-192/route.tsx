@@ -1,34 +1,14 @@
-import { ImageResponse } from 'next/og'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 export async function GET() {
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          background: '#2563eb',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '44px',
-        }}
-      >
-        <span
-          style={{
-            fontSize: 86,
-            fontWeight: '700',
-            color: 'white',
-            letterSpacing: '-3px',
-            lineHeight: 1,
-          }}
-        >
-          IS
-        </span>
-      </div>
-    ),
-    { width: 192, height: 192 }
-  )
+  const file = readFileSync(join(process.cwd(), 'public', 'icon-192.png'))
+  return new Response(file, {
+    headers: {
+      'Content-Type': 'image/png',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  })
 }

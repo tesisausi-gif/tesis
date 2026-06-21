@@ -103,7 +103,10 @@ export function AdminSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold px-4 py-4">
-            Mantis
+            <div className="flex items-center gap-2">
+              <img src="/mantis-icon.png" alt="Mantis" width={28} height={28} className="rounded-md" />
+              Mantis
+            </div>
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

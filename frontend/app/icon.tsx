@@ -1,6 +1,7 @@
-import { ImageResponse } from 'next/og'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 export const size = {
   width: 32,
@@ -10,28 +11,6 @@ export const size = {
 export const contentType = 'image/png'
 
 export default function Icon() {
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          fontSize: 13,
-          background: '#2563eb',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          borderRadius: '4px',
-          fontWeight: '700',
-          letterSpacing: '-0.5px',
-        }}
-      >
-        IS
-      </div>
-    ),
-    {
-      ...size,
-    }
-  )
+  const file = readFileSync(join(process.cwd(), 'public', 'icon-32.png'))
+  return new Response(file, { headers: { 'Content-Type': 'image/png' } })
 }
