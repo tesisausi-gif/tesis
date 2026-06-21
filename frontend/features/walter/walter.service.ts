@@ -244,10 +244,12 @@ TIPOS DISPONIBLES — elegí el que mejor comunica el dato:
 
 CONSISTENCIA TEXTO ↔ GRÁFICO (CRÍTICO — incumplir esto es un bug grave):
 - Todo número, nombre, label o ranking que menciones en el texto DEBE aparecer EXACTAMENTE igual en el gráfico (mismo valor, mismo label, mismo orden).
-- Si en el texto decís "Miguel Romero tiene 5 estrellas", el gráfico debe tener {"label":"Miguel Romero","value":5}. Mismo nombre completo, mismo valor.
+- El PRIMER ítem del gráfico (arriba en bar, primero en line, mayor en pie/donut) DEBE ser exactamente el mismo que destaques como "primero/mejor/mayor" en el texto. Si en el gráfico arriba aparece "Julián Vicente", el texto NO puede decir "el mejor es Miguel Romero".
+- MANEJO DE EMPATES: si dos o más ítems comparten el primer lugar (mismo valor máximo), el texto DEBE mencionarlos a todos como empatados. Ejemplos: "Julián Vicente y Miguel Romero comparten el primer puesto con 5 estrellas cada uno." Nunca elijas arbitrariamente uno solo cuando hay empate.
 - Si el texto enumera "los 3 mejores son A, B, C", el gráfico tiene exactamente esos 3 en ese orden.
 - Si el texto dice "el 40% son de plomería", el gráfico debe mostrar 40 para "Plomería".
-- Verificá antes de enviar: ¿cada cifra del texto está en el gráfico con el mismo valor? Si no, corregí.
+- Si vas a dar detalles específicos de UN técnico (especialidad, trabajos, etc.), asegurate de que sea efectivamente el primero del gráfico — no inventes detalles de otro ítem.
+- Verificá antes de enviar: ¿el primer ítem del gráfico coincide con el "primero" del texto? ¿hay empates que estoy ocultando? ¿cada cifra del texto está en el gráfico con el mismo valor?
 
 REGLAS ADICIONALES:
 - Usá "unit" cuando el valor tiene unidad visible (ej: "días", "hs", "estrellas").
@@ -687,13 +689,24 @@ async function executeConsultarTecnicos(input: {
       query = query.gte('calificacion_promedio', input.min_calificacion)
     }
 
+    // Orden con desempate determinístico (id_tecnico ASC al final)
+    // para que dos llamadas con los mismos datos devuelvan el MISMO orden.
     const ordenar = input.ordenar_por ?? 'calificacion'
     if (ordenar === 'calificacion') {
-      query = query.order('calificacion_promedio', { ascending: false, nullsFirst: false })
+      query = query
+        .order('calificacion_promedio', { ascending: false, nullsFirst: false })
+        .order('cantidad_trabajos_realizados', { ascending: false, nullsFirst: false })
+        .order('id_tecnico', { ascending: true })
     } else if (ordenar === 'trabajos') {
-      query = query.order('cantidad_trabajos_realizados', { ascending: false })
+      query = query
+        .order('cantidad_trabajos_realizados', { ascending: false, nullsFirst: false })
+        .order('calificacion_promedio', { ascending: false, nullsFirst: false })
+        .order('id_tecnico', { ascending: true })
     } else {
-      query = query.order('nombre', { ascending: true })
+      query = query
+        .order('nombre', { ascending: true })
+        .order('apellido', { ascending: true })
+        .order('id_tecnico', { ascending: true })
     }
 
     const { data, count, error } = await query.limit(input.especialidad ? 200 : limit)

@@ -491,10 +491,17 @@ export async function getMetricasDashboard(filtros?: FiltrosMetricas): Promise<M
     finalizado: incidentes.filter(i => i.estado_actual === 'finalizado').length,
   }
 
-  // Top técnicos por calificación promedio (mínimo 1 trabajo para evitar técnicos sin datos)
+  // Top técnicos por calificación promedio (mínimo 1 trabajo para evitar técnicos sin datos).
+  // Desempates: 1º calificación DESC, 2º cantidad de trabajos DESC, 3º nombre ASC (orden estable).
   const topTecnicosPorCalificacion = tecnicos
     .filter(t => (t.calificacion_promedio ?? 0) > 0 && (t.cantidad_trabajos_realizados ?? 0) > 0)
-    .sort((a, b) => (b.calificacion_promedio ?? 0) - (a.calificacion_promedio ?? 0))
+    .sort((a, b) => {
+      const calDiff = (b.calificacion_promedio ?? 0) - (a.calificacion_promedio ?? 0)
+      if (calDiff !== 0) return calDiff
+      const trabDiff = (b.cantidad_trabajos_realizados ?? 0) - (a.cantidad_trabajos_realizados ?? 0)
+      if (trabDiff !== 0) return trabDiff
+      return `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`)
+    })
     .slice(0, 5)
     .map(t => ({
       nombre: t.nombre,
