@@ -46,12 +46,13 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
       .select('id_incidente', { count: 'exact', head: true })
       .eq('estado_actual', 'pendiente'),
 
-    // Conformidades con foto subida esperando revisión
+    // Conformidades con foto subida esperando revisión (excluye rechazadas)
     supabase
       .from('conformidades')
       .select('id_conformidad', { count: 'exact', head: true })
       .not('url_documento', 'is', null)
-      .eq('esta_firmada', 0),
+      .eq('esta_firmada', 0)
+      .eq('esta_rechazada', false),
 
     // Presupuestos enviados esperando aprobación admin
     supabase
