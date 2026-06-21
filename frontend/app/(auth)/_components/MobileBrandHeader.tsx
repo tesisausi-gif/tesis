@@ -70,7 +70,7 @@ export function MobileBrandHeader() {
             }}
             transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' as const }}
           >
-            <span className="text-white font-bold text-sm" style={{ fontFamily: 'var(--font-syne)' }}>TK</span>
+            <span className="text-white font-bold text-sm" style={{ fontFamily: 'var(--font-syne)' }}>MT</span>
           </motion.div>
           <span className="text-white/35 text-xs tracking-[0.25em] uppercase" style={{ fontFamily: 'var(--font-syne)' }}>
             Mantis

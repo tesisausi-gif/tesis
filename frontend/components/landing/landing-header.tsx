@@ -36,7 +36,7 @@ export function LandingHeader() {
               className="text-white font-bold text-xs tracking-tight"
               style={{ fontFamily: 'var(--font-syne)' }}
             >
-              TK
+              MT
             </span>
           </div>
           <span

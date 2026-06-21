@@ -89,7 +89,7 @@ export function BrandPanel() {
             animate={{ boxShadow: ['0 0 0px rgba(37,99,235,0)', '0 0 18px rgba(37,99,235,0.55)', '0 0 0px rgba(37,99,235,0)'] }}
             transition={{ boxShadow: { duration: 2.8, repeat: Infinity, ease: 'easeInOut' as const } }}
           >
-            <span className="text-white font-bold text-sm tracking-tight" style={{ fontFamily: 'var(--font-syne)' }}>TK</span>
+            <span className="text-white font-bold text-sm tracking-tight" style={{ fontFamily: 'var(--font-syne)' }}>MT</span>
           </motion.div>
           <span className="text-white/35 text-xs tracking-[0.28em] uppercase" style={{ fontFamily: 'var(--font-outfit)' }}>
             Mantis
