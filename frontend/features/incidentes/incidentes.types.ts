@@ -122,16 +122,27 @@ export interface MetricasTecnico {
   incidentesResueltos: number
 }
 
+export interface MetricasTecnicoCalificacion {
+  nombre: string
+  apellido: string
+  calificacionPromedio: number
+  cantidadTrabajos: number
+}
+
 export interface MetricasDashboard {
   incidentesPorMes: MetricasMes[]
   distribucionCategorias: MetricasCategoria[]
   distribucionPrioridades: MetricasPrioridad[]
   tiempoPromedioResolucion: number
   topTecnicos: MetricasTecnico[]
+  topTecnicosPorCalificacion?: MetricasTecnicoCalificacion[]
   totalIncidentes: number
   conteosPorEstado: {
     pendiente: number
     en_proceso: number
     finalizado: number
   }
+  tecnicosActivos?: number
+  tecnicosInactivos?: number
+  solicitudesRegistroPendientes?: number
 }

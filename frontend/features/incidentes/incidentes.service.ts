@@ -395,16 +395,30 @@ export async function getMetricasDashboard(filtros?: FiltrosMetricas): Promise<M
     incidentesQuery = incidentesQuery.eq('categoria', filtros.categoria)
   }
 
-  const [incidentesRes, asignacionesRes] = await Promise.all([
+  const [incidentesRes, asignacionesRes, tecnicosRes, solicitudesRes] = await Promise.all([
     incidentesQuery,
     supabase
       .from('asignaciones_tecnico')
       .select('id_asignacion, estado_asignacion, tecnicos(nombre, apellido)')
       .eq('estado_asignacion', 'completada'),
+    supabase
+      .from('tecnicos')
+      .select('nombre, apellido, calificacion_promedio, cantidad_trabajos_realizados, esta_activo'),
+    supabase
+      .from('solicitudes_registro')
+      .select('id_solicitud', { count: 'exact', head: true })
+      .eq('estado_solicitud', 'pendiente'),
   ])
 
   const incidentes = incidentesRes.data || []
   const asignaciones = asignacionesRes.data || []
+  const tecnicos = (tecnicosRes.data || []) as Array<{
+    nombre: string
+    apellido: string
+    calificacion_promedio: number | null
+    cantidad_trabajos_realizados: number | null
+    esta_activo: boolean | number
+  }>
 
   // Incidentes por mes (últimos 6 meses)
   const ahora = new Date()
@@ -477,14 +491,34 @@ export async function getMetricasDashboard(filtros?: FiltrosMetricas): Promise<M
     finalizado: incidentes.filter(i => i.estado_actual === 'finalizado').length,
   }
 
+  // Top técnicos por calificación promedio (mínimo 1 trabajo para evitar técnicos sin datos)
+  const topTecnicosPorCalificacion = tecnicos
+    .filter(t => (t.calificacion_promedio ?? 0) > 0 && (t.cantidad_trabajos_realizados ?? 0) > 0)
+    .sort((a, b) => (b.calificacion_promedio ?? 0) - (a.calificacion_promedio ?? 0))
+    .slice(0, 5)
+    .map(t => ({
+      nombre: t.nombre,
+      apellido: t.apellido,
+      calificacionPromedio: Number(t.calificacion_promedio),
+      cantidadTrabajos: t.cantidad_trabajos_realizados ?? 0,
+    }))
+
+  const tecnicosActivos = tecnicos.filter(t => t.esta_activo === true || t.esta_activo === 1).length
+  const tecnicosInactivos = tecnicos.length - tecnicosActivos
+  const solicitudesRegistroPendientes = solicitudesRes.count ?? 0
+
   return {
     incidentesPorMes,
     distribucionCategorias,
     distribucionPrioridades,
     tiempoPromedioResolucion,
     topTecnicos,
+    topTecnicosPorCalificacion,
     totalIncidentes: incidentes.length,
     conteosPorEstado,
+    tecnicosActivos,
+    tecnicosInactivos,
+    solicitudesRegistroPendientes,
   }
 }
 
