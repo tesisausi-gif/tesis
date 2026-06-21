@@ -209,12 +209,30 @@ e) consultar_pagos_cobros — Resumen financiero de pagos. Total cobrado neto, d
 
 f) consultar_conformidades — Conformidades de cliente + satisfacción. Counts (firmadas, pendientes, rechazadas), calificación promedio del cliente (1-5), distribución por estrellas, tasa de resolución del problema (%). Filtro: estado.
 
+g) consultar_clientes — Datos de clientes del sistema. Counts (total, activos, inactivos) y listado con email, fecha de alta y cantidad de incidentes reportados. Filtros: esta_activo, min_incidentes. Orden: 'incidentes' (default), 'fecha_alta' o 'nombre'. Usalo para "clientes que más reclamaron", "cuántos clientes activos hay", "últimos clientes en darse de alta".
+
+h) consultar_inmuebles — Propiedades del sistema con conteo de incidentes (heatmap). Total de inmuebles, distribución por tipo y listado con dirección, tipo, incidentes (total, pendientes, resueltos). Filtros: tipo_inmueble, min_incidentes. Usalo para "qué propiedades tienen más incidentes", "distribución por tipo", "cuántos locales comerciales hay".
+
+i) consultar_asignaciones — Asignaciones de técnicos a incidentes. Counts por estado (pendiente, aceptada, en_curso, completada, rechazada, cancelada) y listado reciente. Filtros: estado, id_tecnico, fecha_desde, fecha_hasta. Usalo para "asignaciones pendientes de aceptar", "asignaciones rechazadas esta semana", "qué tiene asignado el técnico X".
+
+j) consultar_incidentes_aging — Alarma operativa de incidentes "viejos" sin avanzar. Devuelve count de incidentes NO finalizados con fecha_registro de hace ≥ dias_minimos (default 7) días, agrupados por estado y prioridad. Filtros: dias_minimos, estado, nivel_prioridad. Usalo para "incidentes pendientes hace más de N días", "tickets urgentes atrasados", "qué se está demorando".
+
 REGLAS DE USO:
-- Si la pregunta cabe en una sola tool específica (b a f), usá esa directamente, NO llames obtener_metricas además.
+- Si la pregunta cabe en una sola tool específica (b a j), usá esa directamente, NO llames obtener_metricas además.
 - Si la pregunta requiere combinar datos (ej: "técnicos top y presupuestos del mes"), podés llamar varias tools en paralelo en un mismo turno.
 - Cuando la herramienta devuelve datos, citá las cifras EXACTAS que aparecen. No redondees ni inventes.
 - Si la herramienta devuelve count_total = 0 o lista vacía, decí honestamente "no hay registros que coincidan" — no inventes ejemplos.
 - Para preguntas sobre un técnico/incidente puntual cuyo nombre o id está claro, usá la tool más específica disponible.
+
+QUÉ HACER CUANDO NINGUNA TOOL CUBRE LA PREGUNTA (CRÍTICO):
+Si ninguna tool puede responder lo que el usuario pide (ej: PPIs complejos como TCI/FPY/WIP/OEE, embudo de conversión, rentabilidad detallada por técnico, reportes de exportación, configuración del sistema, etc.):
+- NO te limites a decir "no tengo esa información".
+- Decí en una oración corta qué falta y a dónde puede verlo, y AGREGÁ un WALTER_LINKS al lugar correspondiente del sistema. Ejemplos:
+  * Pregunta sobre PPIs avanzados → "Esa métrica avanzada se calcula en el módulo de reportes." + WALTER_LINKS:[{"label":"Ver métricas avanzadas","url":"/dashboard/metricas"}]
+  * Pregunta sobre exportar datos → "Podés exportar el reporte desde el panel de exportación." + WALTER_LINKS:[{"label":"Exportar reportes","url":"/dashboard/exportar"}]
+  * Pregunta sobre configurar categorías/prioridades → "Eso se gestiona desde configuración." + WALTER_LINKS:[{"label":"Configuración","url":"/dashboard/configuracion"}]
+  * Pregunta sobre notificaciones → WALTER_LINKS:[{"label":"Notificaciones","url":"/dashboard/notificaciones"}]
+- Antes de rechazar una pregunta, revisá las tools b-j una vez más. Solo si genuinamente NINGUNA aplica, mandá el link.
 
 NAVEGACIÓN — WALTER_LINKS:
 Cuando mencionás una sección del panel o el usuario pregunta cómo llegar a algo, al final de tu respuesta incluí exactamente:
@@ -436,6 +454,126 @@ const CONSULTAR_PAGOS_TOOL: Anthropic.Tool = {
   },
 }
 
+const CONSULTAR_CLIENTES_TOOL: Anthropic.Tool = {
+  name: 'consultar_clientes',
+  description:
+    'Consulta clientes del sistema con filtros y orden. Devuelve count_total, count_activos, count_inactivos y un listado con nombre, email, estado activo, fecha de alta y cantidad de incidentes reportados (si se ordena por incidentes). Usalo para preguntas tipo "cuántos clientes activos hay", "quiénes reclamaron más incidentes este año", "clientes inactivos", "últimos clientes en darse de alta".',
+  input_schema: {
+    type: 'object',
+    properties: {
+      esta_activo: {
+        type: 'boolean',
+        description: 'true solo activos, false solo inactivos. Omitir incluye ambos.',
+      },
+      min_incidentes: {
+        type: 'number',
+        description: 'Filtrar clientes con al menos N incidentes reportados.',
+      },
+      ordenar_por: {
+        type: 'string',
+        enum: ['incidentes', 'fecha_alta', 'nombre'],
+        description: 'Criterio de orden. Default: "incidentes" (descendente).',
+      },
+      limit: {
+        type: 'number',
+        description: 'Cantidad máxima de filas (1 a 50). Default: 10.',
+      },
+    },
+    required: [],
+  },
+}
+
+const CONSULTAR_INMUEBLES_TOOL: Anthropic.Tool = {
+  name: 'consultar_inmuebles',
+  description:
+    'Consulta inmuebles (propiedades) del sistema con conteo de incidentes asociados. Devuelve total de inmuebles, distribución por tipo (Casa, Departamento, Duplex, Local Comercial, etc.) y un listado con dirección, tipo y cantidad de incidentes (total, pendientes, resueltos). Usalo para "qué propiedades tienen más incidentes" (heatmap), "cuántos locales comerciales hay", "distribución de inmuebles por tipo".',
+  input_schema: {
+    type: 'object',
+    properties: {
+      tipo_inmueble: {
+        type: 'string',
+        description: 'Filtrar por nombre de tipo (ej: "Casa", "Local Comercial").',
+      },
+      min_incidentes: {
+        type: 'number',
+        description: 'Solo inmuebles con al menos N incidentes asociados.',
+      },
+      ordenar_por: {
+        type: 'string',
+        enum: ['incidentes', 'tipo'],
+        description: 'Default: "incidentes" descendente (heatmap).',
+      },
+      limit: {
+        type: 'number',
+        description: 'Cantidad máxima en el listado (1 a 50). Default: 10.',
+      },
+    },
+    required: [],
+  },
+}
+
+const CONSULTAR_ASIGNACIONES_TOOL: Anthropic.Tool = {
+  name: 'consultar_asignaciones',
+  description:
+    'Consulta asignaciones de técnicos con filtros. Devuelve counts por estado (pendiente, aceptada, en_curso, completada, rechazada, cancelada) y un listado reciente con técnico, incidente, estado y fechas. Usalo para "asignaciones pendientes de aceptar", "asignaciones rechazadas esta semana", "qué tiene asignado el técnico X".',
+  input_schema: {
+    type: 'object',
+    properties: {
+      estado: {
+        type: 'string',
+        enum: ['pendiente', 'aceptada', 'en_curso', 'completada', 'rechazada', 'cancelada'],
+        description: 'Filtrar por estado de la asignación.',
+      },
+      id_tecnico: {
+        type: 'number',
+        description: 'Filtrar asignaciones de un técnico específico por id_tecnico.',
+      },
+      fecha_desde: {
+        type: 'string',
+        description: 'Fecha mínima de asignación (YYYY-MM-DD).',
+      },
+      fecha_hasta: {
+        type: 'string',
+        description: 'Fecha máxima de asignación (YYYY-MM-DD).',
+      },
+      limit: {
+        type: 'number',
+        description: 'Cantidad máxima de filas en el listado (1 a 50). Default: 10.',
+      },
+    },
+    required: [],
+  },
+}
+
+const CONSULTAR_AGING_TOOL: Anthropic.Tool = {
+  name: 'consultar_incidentes_aging',
+  description:
+    'Detecta incidentes "viejos" que llevan mucho tiempo sin avanzar (alarma operativa). Devuelve count de incidentes con fecha_registro de hace ≥ dias_minimos días que NO están finalizados, agrupados por estado y prioridad, más un listado con id, categoría, prioridad, días transcurridos y estado. Usalo para "incidentes pendientes hace más de 7 días", "tickets viejos sin asignar", "incidentes urgentes atrasados".',
+  input_schema: {
+    type: 'object',
+    properties: {
+      dias_minimos: {
+        type: 'number',
+        description: 'Mínimo de días desde fecha_registro. Default: 7.',
+      },
+      estado: {
+        type: 'string',
+        enum: ['pendiente', 'en_proceso', 'todos'],
+        description: 'Filtrar por estado actual (excluye finalizados). Default: "todos".',
+      },
+      nivel_prioridad: {
+        type: 'string',
+        description: 'Filtrar por prioridad (ej: "Urgente", "Alta", "Normal").',
+      },
+      limit: {
+        type: 'number',
+        description: 'Cantidad máxima en el listado (1 a 50). Default: 10.',
+      },
+    },
+    required: [],
+  },
+}
+
 const CONSULTAR_CONFORMIDADES_TOOL: Anthropic.Tool = {
   name: 'consultar_conformidades',
   description:
@@ -501,6 +639,10 @@ const TOOLS_BY_ROL: Record<WalterRol, Anthropic.Tool[]> = {
     CONSULTAR_PRESUPUESTOS_TOOL,
     CONSULTAR_PAGOS_TOOL,
     CONSULTAR_CONFORMIDADES_TOOL,
+    CONSULTAR_CLIENTES_TOOL,
+    CONSULTAR_INMUEBLES_TOOL,
+    CONSULTAR_ASIGNACIONES_TOOL,
+    CONSULTAR_AGING_TOOL,
   ],
 }
 
@@ -1043,6 +1185,355 @@ async function executeConsultarConformidades(input: {
   }
 }
 
+async function executeConsultarClientes(input: {
+  esta_activo?: boolean
+  min_incidentes?: number
+  ordenar_por?: 'incidentes' | 'fecha_alta' | 'nombre'
+  limit?: number
+}): Promise<string> {
+  try {
+    await requireAdminOrGestorId()
+    const supabase = createAdminClient()
+    const limit = clampLimit(input.limit, 10, 50)
+    const ordenar = input.ordenar_por ?? 'incidentes'
+
+    let cliQuery = supabase
+      .from('clientes')
+      .select('id_cliente, nombre, apellido, correo_electronico, esta_activo, fecha_creacion')
+    if (typeof input.esta_activo === 'boolean') {
+      cliQuery = cliQuery.eq('esta_activo', input.esta_activo)
+    }
+
+    const [cliRes, incRes] = await Promise.all([
+      cliQuery,
+      supabase.from('incidentes').select('id_cliente_reporta'),
+    ])
+    if (cliRes.error) return `Error al consultar clientes: ${cliRes.error.message}`
+    if (incRes.error) return `Error al consultar clientes: ${incRes.error.message}`
+
+    const clientes = (cliRes.data || []) as Array<{
+      id_cliente: number
+      nombre: string
+      apellido: string
+      correo_electronico: string | null
+      esta_activo: boolean | number
+      fecha_creacion: string
+    }>
+    const incidentesPorCliente = new Map<number, number>()
+    for (const inc of (incRes.data || []) as Array<{ id_cliente_reporta: number | null }>) {
+      if (inc.id_cliente_reporta != null) {
+        incidentesPorCliente.set(inc.id_cliente_reporta, (incidentesPorCliente.get(inc.id_cliente_reporta) || 0) + 1)
+      }
+    }
+
+    let conIncidentes = clientes.map(c => ({
+      ...c,
+      incidentes: incidentesPorCliente.get(c.id_cliente) ?? 0,
+    }))
+
+    if (typeof input.min_incidentes === 'number') {
+      conIncidentes = conIncidentes.filter(c => c.incidentes >= input.min_incidentes!)
+    }
+
+    if (ordenar === 'incidentes') {
+      conIncidentes.sort((a, b) => b.incidentes - a.incidentes || a.id_cliente - b.id_cliente)
+    } else if (ordenar === 'fecha_alta') {
+      conIncidentes.sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime())
+    } else {
+      conIncidentes.sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
+    }
+
+    const totalActivos = clientes.filter(c => c.esta_activo === true || c.esta_activo === 1).length
+    const resultado = {
+      count_total: clientes.length,
+      count_activos: totalActivos,
+      count_inactivos: clientes.length - totalActivos,
+      mostrando: Math.min(conIncidentes.length, limit),
+      filtros_aplicados: {
+        esta_activo: input.esta_activo,
+        min_incidentes: input.min_incidentes,
+        ordenar_por: ordenar,
+      },
+      clientes: conIncidentes.slice(0, limit).map(c => ({
+        id: c.id_cliente,
+        nombre: `${c.nombre} ${c.apellido}`.trim(),
+        email: c.correo_electronico,
+        activo: c.esta_activo === true || c.esta_activo === 1,
+        fecha_alta: c.fecha_creacion,
+        incidentes_reportados: c.incidentes,
+      })),
+    }
+    return JSON.stringify(resultado, null, 2)
+  } catch (err) {
+    console.error('[Walter consultar_clientes]', err)
+    const msg = err instanceof Error ? err.message : String(err)
+    return `Error al consultar clientes: ${msg}`
+  }
+}
+
+async function executeConsultarInmuebles(input: {
+  tipo_inmueble?: string
+  min_incidentes?: number
+  ordenar_por?: 'incidentes' | 'tipo'
+  limit?: number
+}): Promise<string> {
+  try {
+    await requireAdminOrGestorId()
+    const supabase = createAdminClient()
+    const limit = clampLimit(input.limit, 10, 50)
+    const ordenar = input.ordenar_por ?? 'incidentes'
+
+    const [inmRes, incRes] = await Promise.all([
+      supabase
+        .from('inmuebles')
+        .select('id_inmueble, calle, altura, barrio, localidad, esta_activo, tipos_inmuebles(nombre)')
+        .eq('esta_activo', true),
+      supabase.from('incidentes').select('id_propiedad, estado_actual'),
+    ])
+    if (inmRes.error) return `Error al consultar inmuebles: ${inmRes.error.message}`
+    if (incRes.error) return `Error al consultar inmuebles: ${incRes.error.message}`
+
+    const incidentes = (incRes.data || []) as Array<{ id_propiedad: number | null; estado_actual: string | null }>
+    const conteoMap = new Map<number, { total: number; pendientes: number; resueltos: number }>()
+    for (const inc of incidentes) {
+      if (inc.id_propiedad == null) continue
+      if (!conteoMap.has(inc.id_propiedad)) conteoMap.set(inc.id_propiedad, { total: 0, pendientes: 0, resueltos: 0 })
+      const v = conteoMap.get(inc.id_propiedad)!
+      v.total++
+      if (inc.estado_actual === 'finalizado') v.resueltos++
+      else v.pendientes++
+    }
+
+    const inmuebles = (inmRes.data || []) as Array<{
+      id_inmueble: number
+      calle: string | null
+      altura: string | null
+      barrio: string | null
+      localidad: string | null
+      tipos_inmuebles: { nombre: string } | { nombre: string }[] | null
+    }>
+    const tipoDe = (t: typeof inmuebles[number]['tipos_inmuebles']): string => {
+      if (!t) return 'Sin tipo'
+      if (Array.isArray(t)) return t[0]?.nombre ?? 'Sin tipo'
+      return t.nombre ?? 'Sin tipo'
+    }
+
+    let enriquecidos = inmuebles.map(i => ({
+      id: i.id_inmueble,
+      direccion: [`${i.calle ?? ''} ${i.altura ?? ''}`.trim(), i.barrio, i.localidad].filter(Boolean).join(', '),
+      tipo: tipoDe(i.tipos_inmuebles),
+      counts: conteoMap.get(i.id_inmueble) ?? { total: 0, pendientes: 0, resueltos: 0 },
+    }))
+
+    if (input.tipo_inmueble) {
+      const t = input.tipo_inmueble.toLowerCase().trim()
+      enriquecidos = enriquecidos.filter(i => i.tipo.toLowerCase().trim() === t)
+    }
+    if (typeof input.min_incidentes === 'number') {
+      enriquecidos = enriquecidos.filter(i => i.counts.total >= input.min_incidentes!)
+    }
+
+    if (ordenar === 'incidentes') {
+      enriquecidos.sort((a, b) => b.counts.total - a.counts.total || a.id - b.id)
+    } else {
+      enriquecidos.sort((a, b) => a.tipo.localeCompare(b.tipo) || a.id - b.id)
+    }
+
+    const distribucionTipoMap: Record<string, number> = {}
+    for (const i of inmuebles) {
+      const t = tipoDe(i.tipos_inmuebles)
+      distribucionTipoMap[t] = (distribucionTipoMap[t] || 0) + 1
+    }
+    const distribucion_por_tipo = Object.entries(distribucionTipoMap)
+      .map(([tipo, cantidad]) => ({ tipo, cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad)
+
+    const resultado = {
+      total_inmuebles_activos: inmuebles.length,
+      distribucion_por_tipo,
+      filtros_aplicados: {
+        tipo_inmueble: input.tipo_inmueble ?? null,
+        min_incidentes: input.min_incidentes ?? null,
+        ordenar_por: ordenar,
+      },
+      inmuebles: enriquecidos.slice(0, limit).map(i => ({
+        id: i.id,
+        direccion: i.direccion,
+        tipo: i.tipo,
+        incidentes_total: i.counts.total,
+        incidentes_pendientes: i.counts.pendientes,
+        incidentes_resueltos: i.counts.resueltos,
+      })),
+    }
+    return JSON.stringify(resultado, null, 2)
+  } catch (err) {
+    console.error('[Walter consultar_inmuebles]', err)
+    const msg = err instanceof Error ? err.message : String(err)
+    return `Error al consultar inmuebles: ${msg}`
+  }
+}
+
+async function executeConsultarAsignaciones(input: {
+  estado?: string
+  id_tecnico?: number
+  fecha_desde?: string
+  fecha_hasta?: string
+  limit?: number
+}): Promise<string> {
+  try {
+    await requireAdminOrGestorId()
+    const supabase = createAdminClient()
+    const limit = clampLimit(input.limit, 10, 50)
+
+    let listQuery = supabase
+      .from('asignaciones_tecnico')
+      .select('id_asignacion, id_incidente, id_tecnico, estado_asignacion, fecha_asignacion, fecha_aceptacion, tecnicos(nombre, apellido)')
+      .order('fecha_asignacion', { ascending: false })
+      .limit(limit)
+    let aggQuery = supabase.from('asignaciones_tecnico').select('estado_asignacion')
+
+    if (input.estado) {
+      listQuery = listQuery.eq('estado_asignacion', input.estado)
+      aggQuery = aggQuery.eq('estado_asignacion', input.estado)
+    }
+    if (typeof input.id_tecnico === 'number') {
+      listQuery = listQuery.eq('id_tecnico', input.id_tecnico)
+      aggQuery = aggQuery.eq('id_tecnico', input.id_tecnico)
+    }
+    if (input.fecha_desde) {
+      listQuery = listQuery.gte('fecha_asignacion', input.fecha_desde)
+      aggQuery = aggQuery.gte('fecha_asignacion', input.fecha_desde)
+    }
+    if (input.fecha_hasta) {
+      listQuery = listQuery.lte('fecha_asignacion', input.fecha_hasta)
+      aggQuery = aggQuery.lte('fecha_asignacion', input.fecha_hasta)
+    }
+
+    const [listRes, aggRes] = await Promise.all([listQuery, aggQuery])
+    if (listRes.error) return `Error al consultar asignaciones: ${listRes.error.message}`
+    if (aggRes.error) return `Error al consultar asignaciones: ${aggRes.error.message}`
+
+    const todas = (aggRes.data || []) as Array<{ estado_asignacion: string }>
+    const countsMap: Record<string, number> = {}
+    for (const a of todas) {
+      const e = a.estado_asignacion || 'sin_estado'
+      countsMap[e] = (countsMap[e] || 0) + 1
+    }
+
+    const resultado = {
+      total_asignaciones: todas.length,
+      counts_por_estado: countsMap,
+      filtros_aplicados: {
+        estado: input.estado ?? null,
+        id_tecnico: input.id_tecnico ?? null,
+        fecha_desde: input.fecha_desde ?? null,
+        fecha_hasta: input.fecha_hasta ?? null,
+      },
+      asignaciones_recientes: (listRes.data || []).map((a: any) => {
+        const tec = Array.isArray(a.tecnicos) ? a.tecnicos[0] : a.tecnicos
+        return {
+          id: a.id_asignacion,
+          id_incidente: a.id_incidente,
+          id_tecnico: a.id_tecnico,
+          tecnico: tec ? `${tec.nombre ?? ''} ${tec.apellido ?? ''}`.trim() : null,
+          estado: a.estado_asignacion,
+          fecha_asignacion: a.fecha_asignacion,
+          fecha_aceptacion: a.fecha_aceptacion,
+        }
+      }),
+    }
+    return JSON.stringify(resultado, null, 2)
+  } catch (err) {
+    console.error('[Walter consultar_asignaciones]', err)
+    const msg = err instanceof Error ? err.message : String(err)
+    return `Error al consultar asignaciones: ${msg}`
+  }
+}
+
+async function executeConsultarAging(input: {
+  dias_minimos?: number
+  estado?: 'pendiente' | 'en_proceso' | 'todos'
+  nivel_prioridad?: string
+  limit?: number
+}): Promise<string> {
+  try {
+    await requireAdminOrGestorId()
+    const supabase = createAdminClient()
+    const limit = clampLimit(input.limit, 10, 50)
+    const diasMinimos = typeof input.dias_minimos === 'number' && input.dias_minimos > 0 ? Math.floor(input.dias_minimos) : 7
+    const ahora = Date.now()
+    const cutoffMs = ahora - diasMinimos * 24 * 60 * 60 * 1000
+    const cutoffIso = new Date(cutoffMs).toISOString()
+    const estadoFiltro = input.estado ?? 'todos'
+
+    let query = supabase
+      .from('incidentes')
+      .select('id_incidente, descripcion_problema, estado_actual, categoria, nivel_prioridad, fecha_registro')
+      .lte('fecha_registro', cutoffIso)
+      .neq('estado_actual', 'finalizado')
+
+    if (estadoFiltro === 'pendiente') {
+      query = query.in('estado_actual', ['pendiente', 'asignacion_solicitada'])
+    } else if (estadoFiltro === 'en_proceso') {
+      query = query.eq('estado_actual', 'en_proceso')
+    }
+    if (input.nivel_prioridad) {
+      query = query.eq('nivel_prioridad', input.nivel_prioridad)
+    }
+
+    query = query.order('fecha_registro', { ascending: true })
+
+    const { data, error } = await query
+    if (error) return `Error al consultar aging: ${error.message}`
+
+    const todos = (data || []) as Array<{
+      id_incidente: number
+      descripcion_problema: string | null
+      estado_actual: string | null
+      categoria: string | null
+      nivel_prioridad: string | null
+      fecha_registro: string
+    }>
+
+    const countsEstado: Record<string, number> = {}
+    const countsPrioridad: Record<string, number> = {}
+    for (const i of todos) {
+      const e = i.estado_actual || 'sin_estado'
+      const p = i.nivel_prioridad || 'Sin prioridad'
+      countsEstado[e] = (countsEstado[e] || 0) + 1
+      countsPrioridad[p] = (countsPrioridad[p] || 0) + 1
+    }
+
+    const resultado = {
+      total_atrasados: todos.length,
+      dias_minimos: diasMinimos,
+      filtros_aplicados: {
+        estado: estadoFiltro,
+        nivel_prioridad: input.nivel_prioridad ?? null,
+      },
+      counts_por_estado: countsEstado,
+      counts_por_prioridad: countsPrioridad,
+      incidentes_atrasados: todos.slice(0, limit).map(i => {
+        const dias = Math.floor((ahora - new Date(i.fecha_registro).getTime()) / (1000 * 60 * 60 * 24))
+        return {
+          id: i.id_incidente,
+          descripcion_corta: (i.descripcion_problema || '').slice(0, 80),
+          categoria: i.categoria,
+          prioridad: i.nivel_prioridad,
+          estado: i.estado_actual,
+          dias_transcurridos: dias,
+          fecha_registro: i.fecha_registro,
+        }
+      }),
+    }
+    return JSON.stringify(resultado, null, 2)
+  } catch (err) {
+    console.error('[Walter consultar_aging]', err)
+    const msg = err instanceof Error ? err.message : String(err)
+    return `Error al consultar aging: ${msg}`
+  }
+}
+
 async function executeListarInmuebles(idCliente: number): Promise<string> {
   try {
     const supabase = createAdminClient()
@@ -1416,6 +1907,22 @@ export async function sendMessageToWalter(
         if (toolUseBlock.name === 'consultar_conformidades') {
           await requireAdminOrGestorId()
           return executeConsultarConformidades(toolUseBlock.input as Parameters<typeof executeConsultarConformidades>[0])
+        }
+        if (toolUseBlock.name === 'consultar_clientes') {
+          await requireAdminOrGestorId()
+          return executeConsultarClientes(toolUseBlock.input as Parameters<typeof executeConsultarClientes>[0])
+        }
+        if (toolUseBlock.name === 'consultar_inmuebles') {
+          await requireAdminOrGestorId()
+          return executeConsultarInmuebles(toolUseBlock.input as Parameters<typeof executeConsultarInmuebles>[0])
+        }
+        if (toolUseBlock.name === 'consultar_asignaciones') {
+          await requireAdminOrGestorId()
+          return executeConsultarAsignaciones(toolUseBlock.input as Parameters<typeof executeConsultarAsignaciones>[0])
+        }
+        if (toolUseBlock.name === 'consultar_incidentes_aging') {
+          await requireAdminOrGestorId()
+          return executeConsultarAging(toolUseBlock.input as Parameters<typeof executeConsultarAging>[0])
         }
         if (toolUseBlock.name === 'listar_inmuebles_cliente') {
           const idCliente = await requireClienteId()
