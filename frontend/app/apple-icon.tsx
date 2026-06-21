@@ -34,7 +34,7 @@ export default function AppleIcon() {
             lineHeight: 1,
           }}
         >
-          TK
+          MT
         </span>
         <span
           style={{
@@ -44,7 +44,7 @@ export default function AppleIcon() {
             letterSpacing: '1px',
           }}
         >
-          TRAKI
+          Mantis
         </span>
       </div>
     ),
