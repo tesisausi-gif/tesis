@@ -39,7 +39,9 @@ export interface TecnicoBadgeCounts {
 export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
   const supabase = createAdminClient()
 
-  const [incResult, confResult, presResult, cobrosPendResult, pagosTecResult, solResult, reasigResult, notifResult] = await Promise.all([
+  const [incResult, confResult, presResult, solResult, reasigResult, notifResult,
+    cobrosHechosRes, pagosHechosRes, presCobroRes, presPagoRes,
+  ] = await Promise.all([
     // Incidentes en estado pendiente (sin asignar aún)
     supabase
       .from('incidentes')
@@ -60,20 +62,6 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
       .select('id_presupuesto', { count: 'exact', head: true })
       .eq('estado_presupuesto', 'enviado'),
 
-    // Cobros a clientes pendientes: incidentes resueltos con presupuesto aprobado sin cobro
-    supabase
-      .from('presupuestos')
-      .select('id_presupuesto', { count: 'exact', head: true })
-      .eq('estado_presupuesto', 'aprobado')
-      .not('id_presupuesto', 'in', '(select id_presupuesto from cobros_clientes)'),
-
-    // Pagos a técnicos pendientes: presupuestos aprobados sin pago técnico
-    supabase
-      .from('presupuestos')
-      .select('id_presupuesto', { count: 'exact', head: true })
-      .eq('estado_presupuesto', 'aprobado')
-      .not('id_presupuesto', 'in', '(select id_presupuesto from pagos_tecnicos)'),
-
     // Solicitudes de registro de técnicos pendientes de aprobación
     supabase
       .from('solicitudes_registro')
@@ -92,31 +80,37 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
       .select('id_notificacion', { count: 'exact', head: true })
       .eq('para_admin', true)
       .is('fecha_leida', null),
+
+    // Cobros ya registrados
+    supabase.from('cobros_clientes').select('id_presupuesto'),
+
+    // Pagos a técnicos ya registrados
+    supabase.from('pagos_tecnicos').select('id_presupuesto'),
+
+    // Presupuestos candidatos a cobro: aprobados cuyo incidente aún está en_proceso
+    // (igual que getPendientesCobroCliente — el incidente pasa a 'finalizado' DESPUÉS del cobro)
+    supabase
+      .from('presupuestos')
+      .select('id_presupuesto, incidentes!inner(estado_actual)')
+      .eq('estado_presupuesto', 'aprobado')
+      .eq('incidentes.estado_actual', 'en_proceso'),
+
+    // Presupuestos candidatos a pago técnico: aprobados en cualquier estado activo
+    // (igual que getPendientesPagoTecnico)
+    supabase
+      .from('presupuestos')
+      .select('id_presupuesto, incidentes!inner(estado_actual)')
+      .eq('estado_presupuesto', 'aprobado')
+      .in('incidentes.estado_actual', ['en_proceso', 'finalizado', 'resuelto']),
   ])
 
-  // Supabase PostgREST no soporta subqueries nativas, fallback a conteo manual
-  // si los counts de cobros/pagos fallan usamos 0 pero intentamos obtenerlos
-  let pendientesCobros = 0
-  let pendientesPagos = 0
+  const cobradosSet = new Set((cobrosHechosRes.data || []).map((r: any) => r.id_presupuesto))
+  const pagadosSet  = new Set((pagosHechosRes.data  || []).map((r: any) => r.id_presupuesto))
 
-  if (cobrosPendResult.error || pagosTecResult.error) {
-    // Fallback: obtener listas y contar en TS (solo incidentes resueltos)
-    const [cobrosResp, pagosResp, presAprobResp] = await Promise.all([
-      supabase.from('cobros_clientes').select('id_presupuesto'),
-      supabase.from('pagos_tecnicos').select('id_presupuesto'),
-      supabase.from('presupuestos').select('id_presupuesto, incidentes!inner(estado_actual)')
-        .eq('estado_presupuesto', 'aprobado')
-        .in('incidentes.estado_actual', ['finalizado', 'resuelto']),
-    ])
-    const cobradosIds = new Set((cobrosResp.data || []).map((r: any) => r.id_presupuesto))
-    const pagadosIds = new Set((pagosResp.data || []).map((r: any) => r.id_presupuesto))
-    const aprobados = (presAprobResp.data || []).map((r: any) => r.id_presupuesto)
-    pendientesCobros = aprobados.filter(id => !cobradosIds.has(id)).length
-    pendientesPagos = aprobados.filter(id => !pagadosIds.has(id)).length
-  } else {
-    pendientesCobros = cobrosPendResult.count ?? 0
-    pendientesPagos = pagosTecResult.count ?? 0
-  }
+  const pendientesCobros = (presCobroRes.data || [])
+    .filter((r: any) => !cobradosSet.has(r.id_presupuesto)).length
+  const pendientesPagos  = (presPagoRes.data  || [])
+    .filter((r: any) => !pagadosSet.has(r.id_presupuesto)).length
 
   // Calcular reasignaciones: incidentes en asignacion_solicitada con al menos una asignacion rechazada
   let reasignaciones = 0
