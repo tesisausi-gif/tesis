@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { AlertCircle, Clock, UserCheck, LayoutDashboard, Shield, Bell } from 'lucide-react'
+import { AlertCircle, Clock, UserCheck, LayoutDashboard, Shield, Sparkles } from 'lucide-react'
 
 const features = [
   {
@@ -13,15 +13,23 @@ const features = [
   },
   {
     icon: Clock,
-    title: 'Seguimiento en tiempo real',
-    description: 'Monitorea el estado de cada incidente y recibí notificaciones automáticas ante cada cambio.',
+    title: 'Seguimiento del estado',
+    description: 'Mantenete al tanto del avance de cada incidente: inspección, presupuesto, trabajo y cierre.',
     span: 'lg:col-span-1',
     animation: 'pulse-soft 4s ease-in-out infinite',
   },
   {
+    icon: Sparkles,
+    title: 'Walter, tu asistente IA',
+    description: 'Pedile métricas, listados o ayuda en lenguaje natural. Walter razona sobre tus datos del sistema y te responde al instante con gráficos y enlaces a las secciones correspondientes.',
+    span: 'lg:col-span-2',
+    animation: 'pulse-soft 4s ease-in-out infinite',
+    accent: true,
+  },
+  {
     icon: UserCheck,
-    title: 'Técnicos calificados',
-    description: 'Profesionales especializados, asignados automáticamente según la categoría del incidente.',
+    title: 'Sugerencia inteligente',
+    description: 'El sistema te propone los técnicos más afines cruzando sus especialidades con el tipo de incidente. Vos decidís a quién asignar.',
     span: 'lg:col-span-1',
     animation: 'tilt 5s ease-in-out infinite',
   },
@@ -38,13 +46,6 @@ const features = [
     description: 'Flujo completo: inspección → presupuesto → trabajo → conformidad firmada → cobro.',
     span: 'lg:col-span-1',
     animation: 'pulse-soft 5s ease-in-out infinite',
-  },
-  {
-    icon: Bell,
-    title: 'Notificaciones push',
-    description: 'Alertas en tiempo real en la app web. Instalable como PWA en cualquier dispositivo móvil.',
-    span: 'lg:col-span-1',
-    animation: 'tilt 6s ease-in-out infinite',
   },
 ]
 
@@ -92,29 +93,39 @@ export function FeaturesSection() {
                 whileHover={{ y: -3, transition: { duration: 0.2 } }}
                 className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-6 ${feature.span}`}
                 style={{
-                  background: 'rgba(14,25,41,0.7)',
-                  borderColor: 'rgba(255,255,255,0.07)',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                  background: feature.accent
+                    ? 'linear-gradient(135deg, rgba(29,78,216,0.18) 0%, rgba(14,25,41,0.85) 60%)'
+                    : 'rgba(14,25,41,0.7)',
+                  borderColor: feature.accent ? 'rgba(59,130,246,0.35)' : 'rgba(255,255,255,0.07)',
+                  boxShadow: feature.accent
+                    ? '0 0 32px rgba(37,99,235,0.18), 0 1px 3px rgba(0,0,0,0.4)'
+                    : '0 1px 3px rgba(0,0,0,0.4)',
                   backdropFilter: 'blur(8px)',
                 }}
               >
-                {/* Ambient glow on hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
+                {/* Ambient glow on hover (siempre visible si es accent) */}
+                <div className={`absolute inset-0 ${feature.accent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-500 pointer-events-none rounded-2xl`}
                   style={{ background: 'radial-gradient(ellipse 60% 80% at 10% 0%, rgba(37,99,235,0.12), transparent 70%)' }} />
 
                 <div className="relative flex items-start gap-4">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl shrink-0"
-                    style={{ background: '#0e1929', border: '1px solid rgba(59,130,246,0.15)' }}>
+                    style={{
+                      background: feature.accent ? 'rgba(37,99,235,0.25)' : '#0e1929',
+                      border: feature.accent ? '1px solid rgba(96,165,250,0.4)' : '1px solid rgba(59,130,246,0.15)',
+                    }}>
                     <Icon
-                      className="h-5 w-5 text-blue-300"
+                      className={feature.accent ? 'h-5 w-5 text-blue-200' : 'h-5 w-5 text-blue-300'}
                       strokeWidth={1.5}
                       style={{ animation: feature.animation }}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-blue-400/50 mb-1"
-                      style={{ fontFamily: 'var(--font-outfit)' }}>
-                      Feature
+                    <p className="text-[10px] font-bold tracking-[0.25em] uppercase mb-1"
+                      style={{
+                        fontFamily: 'var(--font-outfit)',
+                        color: feature.accent ? '#60a5fa' : 'rgba(96,165,250,0.5)',
+                      }}>
+                      {feature.accent ? 'Novedad · IA' : 'Feature'}
                     </p>
                     <h3 className="text-base font-bold text-white tracking-tight"
                       style={{ fontFamily: 'var(--font-syne)' }}>
