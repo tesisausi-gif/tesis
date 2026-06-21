@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, User, Wrench } from 'lucide-react'
 import { BlurText } from '@/components/ui/blur-text'
 import { InstallPWAButton } from '@/components/pwa/InstallPWAButton'
+import { MantisIcon3D } from './MantisIcon3D'
 
 export function HeroSection() {
   return (
@@ -48,6 +49,16 @@ export function HeroSection() {
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-4xl mx-auto px-6 py-16 sm:py-24 flex flex-col items-center text-center">
+
+        {/* Brand mark — ícono Mantis 3D interactivo (parallax con cursor/touch) */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, delay: 0, ease: 'easeOut' }}
+          className="mb-6"
+        >
+          <MantisIcon3D />
+        </motion.div>
 
         {/* Badge */}
         <motion.div
