@@ -27,6 +27,32 @@ const METODO_LABELS: Record<string, string> = {
   efectivo: 'Efectivo', transferencia: 'Transferencia', debito: 'Débito', credito: 'Crédito',
 }
 
+const MONTO_LABELS: Record<string, string> = {
+  lt5k:    'Menos de $5.000',
+  '5to20k':  '$5.000 – $20.000',
+  '20to50k': '$20.000 – $50.000',
+  gt50k:   'Más de $50.000',
+}
+
+function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 max-w-full bg-blue-50 text-blue-700 border border-blue-200 rounded-full pl-2.5 pr-1 py-1 text-[11px] font-medium"
+      title={label}
+    >
+      <span className="truncate max-w-[200px] sm:max-w-[280px]">{label}</span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="shrink-0 h-5 w-5 rounded-full flex items-center justify-center hover:bg-blue-100 active:bg-blue-200 transition-colors"
+        aria-label={`Quitar filtro ${label}`}
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </span>
+  )
+}
+
 function MetodoIcon({ metodo, className = 'h-3.5 w-3.5' }: { metodo: string; className?: string }) {
   const m = metodo?.toLowerCase()
   if (m === 'efectivo') return <Banknote className={`${className} text-green-600`} />
@@ -137,83 +163,141 @@ export function MisPagosTecnicoContent({ pendientes, recibidos }: Props) {
         </Card>
       </div>
 
-      {/* Filtros */}
-      <Card className="border-gray-200">
-        <CardContent className="pt-4 pb-4 px-4 space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              value={busqueda}
-              onChange={(e) => { setBusqueda(e.target.value); setPaginaPend(1); setPaginaRec(1) }}
-              placeholder="Buscar por incidente, dirección, descripción o monto..."
-              className="pl-9 h-9 text-sm"
-            />
-            {busqueda && (
-              <button
-                onClick={() => { setBusqueda(''); setPaginaPend(1); setPaginaRec(1) }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                aria-label="Limpiar búsqueda"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Select value={filtroEstado} onValueChange={(v: any) => { setFiltroEstado(v); setPaginaPend(1); setPaginaRec(1) }}>
-              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Estado" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos los estados</SelectItem>
-                <SelectItem value="pendiente">Pendientes</SelectItem>
-                <SelectItem value="recibido">Recibidos</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filtroMonto} onValueChange={(v: any) => { setFiltroMonto(v); setPaginaPend(1); setPaginaRec(1) }}>
-              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Monto" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Cualquier monto</SelectItem>
-                <SelectItem value="lt5k">Menos de $5.000</SelectItem>
-                <SelectItem value="5to20k">$5.000 – $20.000</SelectItem>
-                <SelectItem value="20to50k">$20.000 – $50.000</SelectItem>
-                <SelectItem value="gt50k">Más de $50.000</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {inmueblesUnicos.length > 0 && (
-              <Select value={filtroInmueble} onValueChange={(v) => { setFiltroInmueble(v); setPaginaPend(1); setPaginaRec(1) }}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Inmueble" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos los inmuebles</SelectItem>
-                  {inmueblesUnicos.map(i => (
-                    <SelectItem key={i.id} value={String(i.id)} className="truncate">{i.direccion}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {metodosUnicos.length > 0 && (
-              <Select value={filtroMetodo} onValueChange={(v) => { setFiltroMetodo(v); setPaginaPend(1); setPaginaRec(1) }}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Método" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos los métodos</SelectItem>
-                  {metodosUnicos.map(m => (
-                    <SelectItem key={m} value={m}>{METODO_LABELS[m] ?? m}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          {hayFiltrosActivos && (
-            <div className="flex justify-end">
-              <Button variant="ghost" size="sm" onClick={limpiarFiltros} className="text-xs h-7">
-                <X className="h-3 w-3 mr-1" />Limpiar filtros
-              </Button>
-            </div>
+      {/* Filtros — mobile-first */}
+      <div className="space-y-3">
+        {/* Buscador prominente */}
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          <Input
+            value={busqueda}
+            onChange={(e) => { setBusqueda(e.target.value); setPaginaPend(1); setPaginaRec(1) }}
+            placeholder="Buscar incidente, dirección, descripción..."
+            className="pl-10 pr-10 h-11 text-sm rounded-xl border-gray-200 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500/30"
+            inputMode="search"
+          />
+          {busqueda && (
+            <button
+              type="button"
+              onClick={() => { setBusqueda(''); setPaginaPend(1); setPaginaRec(1) }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+              aria-label="Limpiar búsqueda"
+            >
+              <X className="h-4 w-4" />
+            </button>
           )}
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Estado como pills — touch friendly */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {([
+            { id: 'todos',     label: 'Todos',      count: pendientes.length + recibidos.length },
+            { id: 'pendiente', label: 'Pendientes', count: pendientes.length },
+            { id: 'recibido',  label: 'Recibidos',  count: recibidos.length },
+          ] as const).map(opt => {
+            const active = filtroEstado === opt.id
+            return (
+              <button
+                key={opt.id}
+                onClick={() => { setFiltroEstado(opt.id); setPaginaPend(1); setPaginaRec(1) }}
+                className={`shrink-0 inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-xs font-semibold transition-colors active:scale-[0.98] ${
+                  active
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {opt.label}
+                {opt.count > 0 && (
+                  <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center ${
+                    active ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {opt.count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Selects avanzados */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          <Select value={filtroMonto} onValueChange={(v: any) => { setFiltroMonto(v); setPaginaPend(1); setPaginaRec(1) }}>
+            <SelectTrigger className="h-10 w-full text-xs bg-white rounded-xl border-gray-200 [&>span]:truncate [&>span]:block [&>span]:max-w-full">
+              <SelectValue placeholder="Monto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Cualquier monto</SelectItem>
+              <SelectItem value="lt5k">Menos de $5.000</SelectItem>
+              <SelectItem value="5to20k">$5.000 – $20.000</SelectItem>
+              <SelectItem value="20to50k">$20.000 – $50.000</SelectItem>
+              <SelectItem value="gt50k">Más de $50.000</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {inmueblesUnicos.length > 0 && (
+            <Select value={filtroInmueble} onValueChange={(v) => { setFiltroInmueble(v); setPaginaPend(1); setPaginaRec(1) }}>
+              <SelectTrigger className="h-10 w-full min-w-0 text-xs bg-white rounded-xl border-gray-200 [&>span]:truncate [&>span]:block [&>span]:max-w-full">
+                <SelectValue placeholder="Inmueble" />
+              </SelectTrigger>
+              <SelectContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+                <SelectItem value="todos">Todos los inmuebles</SelectItem>
+                {inmueblesUnicos.map(i => (
+                  <SelectItem key={i.id} value={String(i.id)} className="[&>span:last-child]:truncate [&>span:last-child]:max-w-[calc(100vw-5rem)] sm:[&>span:last-child]:max-w-[24rem]">
+                    {i.direccion}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {metodosUnicos.length > 0 && (
+            <Select value={filtroMetodo} onValueChange={(v) => { setFiltroMetodo(v); setPaginaPend(1); setPaginaRec(1) }}>
+              <SelectTrigger className="h-10 w-full text-xs bg-white rounded-xl border-gray-200 [&>span]:truncate [&>span]:block [&>span]:max-w-full">
+                <SelectValue placeholder="Método de pago" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos los métodos</SelectItem>
+                {metodosUnicos.map(m => (
+                  <SelectItem key={m} value={m}>{METODO_LABELS[m] ?? m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        {/* Chips de filtros activos */}
+        {hayFiltrosActivos && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {filtroMonto !== 'todos' && (
+              <FilterTag
+                label={`Monto: ${MONTO_LABELS[filtroMonto]}`}
+                onRemove={() => { setFiltroMonto('todos'); setPaginaPend(1); setPaginaRec(1) }}
+              />
+            )}
+            {filtroInmueble !== 'todos' && (() => {
+              const inm = inmueblesUnicos.find(i => String(i.id) === filtroInmueble)
+              return inm ? (
+                <FilterTag
+                  label={`Inmueble: ${inm.direccion}`}
+                  onRemove={() => { setFiltroInmueble('todos'); setPaginaPend(1); setPaginaRec(1) }}
+                />
+              ) : null
+            })()}
+            {filtroMetodo !== 'todos' && (
+              <FilterTag
+                label={`Método: ${METODO_LABELS[filtroMetodo] ?? filtroMetodo}`}
+                onRemove={() => { setFiltroMetodo('todos'); setPaginaPend(1); setPaginaRec(1) }}
+              />
+            )}
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="text-[11px] font-medium text-gray-500 hover:text-gray-700 underline underline-offset-2 ml-auto active:text-gray-800"
+            >
+              Limpiar todo
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Pendientes */}
       {pendientesFiltrados.length > 0 && (
