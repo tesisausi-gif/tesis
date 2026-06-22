@@ -184,6 +184,18 @@ export async function registrarCobroCliente(params: {
       .update({ estado_actual: 'finalizado' })
       .eq('id_incidente', params.idIncidente)
 
+    // Notificar al cliente que se le registró el cobro
+    try {
+      const { crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacionCliente({
+        id_cliente: params.idCliente,
+        tipo: 'cobro_registrado',
+        titulo: 'Cobro registrado',
+        mensaje: `Se registró el cobro de $${Number(params.montoCobro).toLocaleString('es-AR')} del incidente #${params.idIncidente}. El incidente queda cerrado.`,
+        id_incidente: params.idIncidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
+
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al registrar cobro' }

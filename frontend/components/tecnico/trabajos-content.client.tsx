@@ -156,6 +156,10 @@ function getStatusKey(
 
   if (a.estado_asignacion === 'completada') {
     if (conformidad?.esta_rechazada) return 'conformidad_rechazada'
+    // Asignación marcada como completada pero conformidad todavía NO subida:
+    // mostramos el botón de acción rápida "Subir conform." en lugar de
+    // "Por revisar" (deshabilitado).
+    if (!conformidad?.url_documento) return 'en_curso'
     return 'completada_pendiente'
   }
 

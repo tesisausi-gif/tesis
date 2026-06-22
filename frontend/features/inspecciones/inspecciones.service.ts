@@ -134,13 +134,31 @@ export async function crearInspeccion(data: {
     if (error) return { success: false, error: translateDbError(error) }
 
     // Notificar al admin que se realizó la inspección
-    const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+    const { crearNotificacionAdmin, crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
     await crearNotificacionAdmin({
       tipo: 'inspeccion_realizada',
       titulo: 'Inspección realizada',
       mensaje: `El técnico completó la inspección del incidente #${data.id_incidente}. Ya puede cargar el presupuesto.`,
       id_incidente: data.id_incidente,
     })
+
+    // Notificar al cliente que el técnico ya inspeccionó
+    try {
+      const { data: inc } = await supabaseAdmin
+        .from('incidentes')
+        .select('id_cliente_reporta')
+        .eq('id_incidente', data.id_incidente)
+        .single()
+      if (inc?.id_cliente_reporta) {
+        await crearNotificacionCliente({
+          id_cliente: inc.id_cliente_reporta,
+          tipo: 'inspeccion_realizada',
+          titulo: 'Inspección completada',
+          mensaje: `El técnico completó la inspección del incidente #${data.id_incidente}. Pronto vas a recibir el presupuesto.`,
+          id_incidente: data.id_incidente,
+        })
+      }
+    } catch { /* no bloquear la operación principal */ }
 
     return { success: true, data: inspeccion as Inspeccion }
   } catch (error) {

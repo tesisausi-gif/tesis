@@ -207,6 +207,19 @@ export async function registrarPagoTecnico(
       })
 
     if (error) return { success: false, error: translateDbError(error) }
+
+    // Notificar al técnico que se le registró el pago
+    try {
+      const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacion({
+        id_tecnico: idTecnico,
+        tipo: 'pago_recibido',
+        titulo: 'Pago registrado',
+        mensaje: `La administración registró tu pago de $${Number(montoPago).toLocaleString('es-AR')} por el incidente #${idIncidente}.`,
+        id_incidente: idIncidente,
+      })
+    } catch { /* no bloquear la operación principal */ }
+
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al registrar pago' }

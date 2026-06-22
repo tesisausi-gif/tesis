@@ -359,6 +359,20 @@ export async function aprobarConformidad(
       } catch { /* no bloquear la operación principal */ }
     }
 
+    // 6. Notificar al técnico que su conformidad fue aprobada (cierre del ciclo)
+    if (idTecnico) {
+      try {
+        const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacion({
+          id_tecnico: idTecnico,
+          tipo: 'conformidad_aprobada',
+          titulo: 'Conformidad aprobada',
+          mensaje: `Tu conformidad del incidente #${idIncidente} fue aprobada por la administración. El trabajo queda cerrado y pasa a la etapa de cobro.`,
+          id_incidente: idIncidente,
+        })
+      } catch { /* no bloquear la operación principal */ }
+    }
+
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al aprobar conformidad' }

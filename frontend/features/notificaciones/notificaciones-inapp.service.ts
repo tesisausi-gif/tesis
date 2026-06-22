@@ -1,11 +1,17 @@
 'use server'
 
 import { translateDbError } from '@/shared/lib/db-errors'
-import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import { requireTecnicoId, requireClienteId } from '@/features/auth/auth.service'
 import type { ActionResult } from '@/shared/types'
 import type { Notificacion } from './notificaciones.types'
+
+// NOTA SOBRE EL CLIENTE DE SUPABASE:
+// Usamos createAdminClient (bypass de RLS) en todas las lecturas porque
+// previamente las queries con cliente con sesión devolvían 0 filas aunque
+// la notificación existía (RLS sin política de SELECT por id_tecnico/id_cliente).
+// La autorización está garantizada por requireTecnicoId/requireClienteId
+// antes de filtrar por el id correspondiente.
 
 // ─── TÉCNICO ──────────────────────────────────────────────────────────────────
 
@@ -13,8 +19,8 @@ import type { Notificacion } from './notificaciones.types'
  * Obtener notificaciones no leídas del técnico autenticado
  */
 export async function getNotificacionesTecnico(): Promise<Notificacion[]> {
-  const supabase = await createClient()
   const idTecnico = await requireTecnicoId()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('notificaciones')
@@ -32,8 +38,8 @@ export async function getNotificacionesTecnico(): Promise<Notificacion[]> {
  */
 export async function contarNotificacionesTecnico(): Promise<number> {
   try {
-    const supabase = await createClient()
     const idTecnico = await requireTecnicoId()
+    const supabase = createAdminClient()
     const { count } = await supabase
       .from('notificaciones')
       .select('*', { count: 'exact', head: true })
@@ -51,8 +57,8 @@ export async function contarNotificacionesTecnico(): Promise<number> {
  * Obtener notificaciones no leídas del cliente autenticado
  */
 export async function getNotificacionesCliente(): Promise<Notificacion[]> {
-  const supabase = await createClient()
   const idCliente = await requireClienteId()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('notificaciones')
@@ -70,8 +76,8 @@ export async function getNotificacionesCliente(): Promise<Notificacion[]> {
  */
 export async function contarNotificacionesCliente(): Promise<number> {
   try {
-    const supabase = await createClient()
     const idCliente = await requireClienteId()
+    const supabase = createAdminClient()
     const { count } = await supabase
       .from('notificaciones')
       .select('*', { count: 'exact', head: true })

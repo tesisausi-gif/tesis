@@ -67,6 +67,25 @@ export async function crearAvance(dto: CreateAvanceDTO): Promise<ActionResult> {
     const { notificarNuevoAvance } = await import('@/features/notificaciones/notificaciones.service')
     notificarNuevoAvance(avance.id_avance, dto.id_incidente).catch(console.error)
 
+    // Notificación in-app al cliente: necesitamos id_cliente_reporta del incidente
+    try {
+      const { data: inc } = await supabase
+        .from('incidentes')
+        .select('id_cliente_reporta')
+        .eq('id_incidente', dto.id_incidente)
+        .single()
+      if (inc?.id_cliente_reporta) {
+        const { crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionCliente({
+          id_cliente: inc.id_cliente_reporta,
+          tipo: 'nuevo_avance',
+          titulo: 'Nuevo avance en tu incidente',
+          mensaje: `El técnico cargó un nuevo avance en el incidente #${dto.id_incidente}.`,
+          id_incidente: dto.id_incidente,
+        })
+      }
+    } catch { /* no bloquear la operación principal */ }
+
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al registrar avance' }
