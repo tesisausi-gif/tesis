@@ -211,6 +211,8 @@ export interface MiCobroPendiente {
   categoria: string | null
   monto_a_pagar: number
   fecha_presupuesto: string
+  id_inmueble: number | null
+  direccion_inmueble: string | null
 }
 
 export interface MiCobroRealizado {
@@ -225,6 +227,8 @@ export interface MiCobroRealizado {
   observaciones: string | null
   fecha_cobro: string
   descripcion_problema: string | null
+  id_inmueble: number | null
+  direccion_inmueble: string | null
 }
 
 /**
@@ -248,12 +252,15 @@ export async function getMisCobrosComoCliente(): Promise<{ pendientes: MiCobroPe
   if (!incidentes?.length) return { pendientes: [], realizados: [] }
   const idIncidentes = incidentes.map((i: any) => i.id_incidente)
 
-  // Presupuestos aprobados de mis incidentes
+  // Presupuestos aprobados de mis incidentes (incluye inmueble del incidente)
   const { data: presupuestos } = await supabase
     .from('presupuestos')
     .select(`
       id_presupuesto, id_incidente, costo_total, fecha_creacion,
-      incidentes (descripcion_problema, categoria, estado_actual)
+      incidentes (
+        descripcion_problema, categoria, estado_actual, id_propiedad,
+        inmuebles:id_propiedad (id_inmueble, calle, altura, piso, dpto, barrio, localidad)
+      )
     `)
     .in('id_incidente', idIncidentes)
     .eq('estado_presupuesto', 'aprobado')
@@ -263,18 +270,33 @@ export async function getMisCobrosComoCliente(): Promise<{ pendientes: MiCobroPe
 
   const idPresupuestos = presupuestos.map((p: any) => p.id_presupuesto)
 
-  // Cobros ya registrados para mis presupuestos
+  // Cobros ya registrados para mis presupuestos (con inmueble vía incidente)
   const { data: cobros } = await supabase
     .from('cobros_clientes')
     .select(`
       id_cobro, id_incidente, id_presupuesto,
       monto_cobro, metodo_pago, referencia_pago, banco, cuotas, observaciones, fecha_cobro,
-      incidentes (descripcion_problema)
+      incidentes (
+        descripcion_problema, id_propiedad,
+        inmuebles:id_propiedad (id_inmueble, calle, altura, piso, dpto, barrio, localidad)
+      )
     `)
     .in('id_presupuesto', idPresupuestos)
     .order('fecha_cobro', { ascending: false })
 
   const cobradosIds = new Set((cobros || []).map((c: any) => c.id_presupuesto))
+
+  // Helper para formatear la dirección de un inmueble
+  const formatDireccion = (inm: any): string | null => {
+    if (!inm) return null
+    const partes = [
+      `${inm.calle ?? ''} ${inm.altura ?? ''}`.trim(),
+      inm.piso && `Piso ${inm.piso}`,
+      inm.dpto && `Dpto ${inm.dpto}`,
+      inm.barrio,
+    ].filter(Boolean)
+    return partes.length ? partes.join(', ') : null
+  }
 
   const pendientes: MiCobroPendiente[] = presupuestos
     .filter((p: any) => {
@@ -285,6 +307,7 @@ export async function getMisCobrosComoCliente(): Promise<{ pendientes: MiCobroPe
     })
     .map((p: any) => {
       const inc = p.incidentes as any
+      const inm = Array.isArray(inc?.inmuebles) ? inc.inmuebles[0] : inc?.inmuebles
       return {
         id_presupuesto: p.id_presupuesto,
         id_incidente: p.id_incidente,
@@ -292,22 +315,30 @@ export async function getMisCobrosComoCliente(): Promise<{ pendientes: MiCobroPe
         categoria: inc?.categoria || null,
         monto_a_pagar: Number(p.costo_total) || 0,
         fecha_presupuesto: p.fecha_creacion,
+        id_inmueble: inm?.id_inmueble ?? null,
+        direccion_inmueble: formatDireccion(inm),
       }
     })
 
-  const realizados: MiCobroRealizado[] = (cobros || []).map((c: any) => ({
-    id_cobro: c.id_cobro,
-    id_incidente: c.id_incidente,
-    id_presupuesto: c.id_presupuesto,
-    monto_cobro: Number(c.monto_cobro) || 0,
-    metodo_pago: c.metodo_pago,
-    referencia_pago: c.referencia_pago,
-    banco: c.banco,
-    cuotas: c.cuotas,
-    observaciones: c.observaciones,
-    fecha_cobro: c.fecha_cobro,
-    descripcion_problema: (c.incidentes as any)?.descripcion_problema || null,
-  }))
+  const realizados: MiCobroRealizado[] = (cobros || []).map((c: any) => {
+    const inc = c.incidentes as any
+    const inm = Array.isArray(inc?.inmuebles) ? inc.inmuebles[0] : inc?.inmuebles
+    return {
+      id_cobro: c.id_cobro,
+      id_incidente: c.id_incidente,
+      id_presupuesto: c.id_presupuesto,
+      monto_cobro: Number(c.monto_cobro) || 0,
+      metodo_pago: c.metodo_pago,
+      referencia_pago: c.referencia_pago,
+      banco: c.banco,
+      cuotas: c.cuotas,
+      observaciones: c.observaciones,
+      fecha_cobro: c.fecha_cobro,
+      descripcion_problema: inc?.descripcion_problema || null,
+      id_inmueble: inm?.id_inmueble ?? null,
+      direccion_inmueble: formatDireccion(inm),
+    }
+  })
 
   return { pendientes, realizados }
 }
@@ -361,6 +392,8 @@ export async function getMisPagosDeIncidente(idIncidente: number): Promise<{
     categoria: inc?.categoria || null,
     monto_a_pagar: Number(pres.costo_total) || 0,
     fecha_presupuesto: pres.fecha_creacion,
+    id_inmueble: null,
+    direccion_inmueble: null,
   }
 
   const realizados: MiCobroRealizado[] = (cobros || []).map((c: any) => ({
@@ -375,6 +408,8 @@ export async function getMisPagosDeIncidente(idIncidente: number): Promise<{
     observaciones: c.observaciones,
     fecha_cobro: c.fecha_cobro,
     descripcion_problema: inc?.descripcion_problema || null,
+    id_inmueble: null,
+    direccion_inmueble: null,
   }))
 
   return { pendiente, realizados }
