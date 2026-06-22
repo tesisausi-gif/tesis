@@ -911,18 +911,12 @@ export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendiente
               <span className="ml-0.5 text-[10px] font-bold rounded-full px-1.5 py-px bg-amber-100 text-amber-700">{pendientesTecnicos.length}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="registro" className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-500">
-            <FileText className="h-3.5 w-3.5"/>Registro histórico
-          </TabsTrigger>
         </TabsList>
         <TabsContent value="cobros-clientes" className="mt-4">
           <TabCobrosClientes pendientes={pendientesCobroCliente} realizados={realizadosCobroCliente} highlightId={activeTab === 'cobros-clientes' ? highlightId : null}/>
         </TabsContent>
         <TabsContent value="pagos-tecnicos" className="mt-4">
           <TabPagosTecnicos pendientes={pendientesTecnicos} realizados={realizadosTecnicos} highlightId={activeTab === 'pagos-tecnicos' ? highlightId : null} cobrosCliente={realizadosCobroCliente}/>
-        </TabsContent>
-        <TabsContent value="registro" className="mt-4">
-          <TabRegistroHistorico realizadosTecnicos={realizadosTecnicos} realizadosCobroCliente={realizadosCobroCliente}/>
         </TabsContent>
       </Tabs>
     </div>
