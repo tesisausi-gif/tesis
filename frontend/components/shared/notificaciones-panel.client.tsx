@@ -499,7 +499,7 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
             <Bell className="h-4 w-4 text-gray-500" />
             {items.length > 0 && (
               <span className="absolute -top-1.5 -right-1.5 h-3.5 min-w-3.5 px-0.5 rounded-full bg-gray-900 flex items-center justify-center">
-                <span className="text-[8px] font-black text-white leading-none">{items.length > 9 ? '9+' : items.length}</span>
+                <span className="text-[8px] font-black text-white leading-none">{items.length > POR_PAGINA ? `${POR_PAGINA}+` : items.length}</span>
               </span>
             )}
           </div>
