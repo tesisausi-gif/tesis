@@ -178,12 +178,57 @@ export async function actualizarInmueble(
   }
 }
 
+/**
+ * Devuelve los incidentes NO finalizados asociados a un inmueble.
+ * Se usa para bloquear la baja del inmueble cuando hay trabajo pendiente.
+ */
+export async function getIncidentesEnCursoInmueble(idInmueble: number): Promise<
+  Array<{ id_incidente: number; descripcion_problema: string | null; estado_actual: string }>
+> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('incidentes')
+      .select('id_incidente, descripcion_problema, estado_actual')
+      .eq('id_propiedad', idInmueble)
+      .neq('estado_actual', 'finalizado')
+      .order('fecha_registro', { ascending: false })
+
+    if (error) return []
+    return (data || []) as Array<{
+      id_incidente: number
+      descripcion_problema: string | null
+      estado_actual: string
+    }>
+  } catch {
+    return []
+  }
+}
+
 export async function toggleEstadoInmueble(
   idInmueble: number,
   nuevoEstado: boolean
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient()
+
+    // Validación: no permitir dar de baja un inmueble con incidentes en curso.
+    // Defense in depth — la UI ya hace el check antes, esto es el guardián server-side.
+    if (!nuevoEstado) {
+      const { count, error: countError } = await supabase
+        .from('incidentes')
+        .select('id_incidente', { count: 'exact', head: true })
+        .eq('id_propiedad', idInmueble)
+        .neq('estado_actual', 'finalizado')
+
+      if (countError) return { success: false, error: translateDbError(countError) }
+      if ((count ?? 0) > 0) {
+        return {
+          success: false,
+          error: 'No se puede dar de baja: el inmueble tiene incidentes en curso.',
+        }
+      }
+    }
 
     const { error } = await supabase
       .from('inmuebles')

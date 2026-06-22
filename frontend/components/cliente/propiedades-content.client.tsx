@@ -10,7 +10,16 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Building2, MapPin, Plus, Home, Edit, Power, MoreVertical } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Building2, MapPin, Plus, Home, Edit, Power, MoreVertical, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DropdownMenu,
@@ -18,7 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { crearInmueble, actualizarInmueble, toggleEstadoInmueble } from '@/features/inmuebles/inmuebles.service'
+import { crearInmueble, actualizarInmueble, toggleEstadoInmueble, getIncidentesEnCursoInmueble } from '@/features/inmuebles/inmuebles.service'
 import type { Inmueble, TipoInmueble } from '@/features/inmuebles/inmuebles.types'
 
 interface Provincia {
@@ -43,6 +52,11 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
   const [dialogOpen, setDialogOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [editingInmueble, setEditingInmueble] = useState<Inmueble | null>(null)
+  const [bloqueoBajaOpen, setBloqueoBajaOpen] = useState(false)
+  const [incidentesBloqueantes, setIncidentesBloqueantes] = useState<
+    Array<{ id_incidente: number; descripcion_problema: string | null; estado_actual: string }>
+  >([])
+  const [inmuebleBloqueado, setInmuebleBloqueado] = useState<Inmueble | null>(null)
 
   // Location data
   const [provincias, setProvincias] = useState<Provincia[]>([])
@@ -204,10 +218,23 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
   const handleToggleEstado = async (inmueble: Inmueble) => {
     try {
       const nuevoEstado = !inmueble.esta_activo
+
+      // Si es dar de baja: validar que no haya incidentes en curso.
+      // Si hay → mostrar alerta y abortar. Si no → seguir con el toggle.
+      if (!nuevoEstado) {
+        const incidentes = await getIncidentesEnCursoInmueble(inmueble.id_inmueble)
+        if (incidentes.length > 0) {
+          setIncidentesBloqueantes(incidentes)
+          setInmuebleBloqueado(inmueble)
+          setBloqueoBajaOpen(true)
+          return
+        }
+      }
+
       const result = await toggleEstadoInmueble(inmueble.id_inmueble, nuevoEstado)
 
       if (!result.success) {
-        toast.error('Error al cambiar estado del inmueble')
+        toast.error(result.error || 'Error al cambiar estado del inmueble')
         return
       }
 
@@ -563,6 +590,66 @@ export function PropiedadesContent({ inmuebles: initialInmuebles, tiposInmuebles
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Alerta: bloqueo de baja por incidentes en curso */}
+      <AlertDialog open={bloqueoBajaOpen} onOpenChange={setBloqueoBajaOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 shrink-0">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <AlertDialogTitle className="text-left">No se puede dar de baja</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="pt-2">
+              {inmuebleBloqueado && (
+                <>
+                  Este inmueble tiene{' '}
+                  <span className="font-semibold text-gray-900">
+                    {incidentesBloqueantes.length}{' '}
+                    {incidentesBloqueantes.length === 1 ? 'incidente en curso' : 'incidentes en curso'}
+                  </span>
+                  . Una vez que se finalicen, vas a poder dar de baja el inmueble.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {incidentesBloqueantes.length > 0 && (
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {incidentesBloqueantes.slice(0, 5).map((inc) => (
+                <div
+                  key={inc.id_incidente}
+                  className="flex items-start gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
+                >
+                  <span className="text-xs font-mono text-gray-500 shrink-0 mt-0.5">
+                    #{inc.id_incidente}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-800 truncate">
+                      {inc.descripcion_problema || 'Incidente sin descripción'}
+                    </p>
+                    <p className="text-[11px] text-gray-500 capitalize">
+                      Estado: {inc.estado_actual.replace(/_/g, ' ')}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {incidentesBloqueantes.length > 5 && (
+                <p className="text-xs text-gray-500 text-center pt-1">
+                  + {incidentesBloqueantes.length - 5} más
+                </p>
+              )}
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setBloqueoBajaOpen(false)}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
