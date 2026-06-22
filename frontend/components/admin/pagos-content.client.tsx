@@ -895,7 +895,7 @@ export function PagosContent({ pendientesTecnicos, realizadosTecnicos, pendiente
   }, [])
 
   return (
-    <div className="space-y-4 overflow-x-hidden w-full">
+    <div className="space-y-4">
       <AdminPageHeader title="Cobros y Pagos" subtitle="Gestión de cobros a clientes y pagos a técnicos" />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-100 p-1 rounded-xl">
