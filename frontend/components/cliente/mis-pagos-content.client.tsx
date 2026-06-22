@@ -243,10 +243,10 @@ export function MisPagosContent({ pendientes, realizados }: Props) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Cualquier monto</SelectItem>
-              <SelectItem value="lt5k">Menos de $5.000</SelectItem>
-              <SelectItem value="5to20k">$5.000 – $20.000</SelectItem>
-              <SelectItem value="20to50k">$20.000 – $50.000</SelectItem>
               <SelectItem value="gt50k">Más de $50.000</SelectItem>
+              <SelectItem value="20to50k">$20.000 – $50.000</SelectItem>
+              <SelectItem value="5to20k">$5.000 – $20.000</SelectItem>
+              <SelectItem value="lt5k">Menos de $5.000</SelectItem>
             </SelectContent>
           </Select>
 
