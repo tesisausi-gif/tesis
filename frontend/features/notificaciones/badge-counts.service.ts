@@ -87,13 +87,14 @@ export async function getAdminBadgeCounts(): Promise<AdminBadgeCounts> {
     // Pagos a técnicos ya registrados
     supabase.from('pagos_tecnicos').select('id_presupuesto'),
 
-    // Presupuestos candidatos a cobro: aprobados cuyo incidente aún está en_proceso
-    // (igual que getPendientesCobroCliente — el incidente pasa a 'finalizado' DESPUÉS del cobro)
+    // Presupuestos candidatos a cobro: aprobados + incidente en_proceso + fue_resuelto=true
+    // (igual que getPendientesCobroCliente: solo cuando el trabajo ya terminó y espera el cobro)
     supabase
       .from('presupuestos')
-      .select('id_presupuesto, incidentes!inner(estado_actual)')
+      .select('id_presupuesto, incidentes!inner(estado_actual, fue_resuelto)')
       .eq('estado_presupuesto', 'aprobado')
-      .eq('incidentes.estado_actual', 'en_proceso'),
+      .eq('incidentes.estado_actual', 'en_proceso')
+      .eq('incidentes.fue_resuelto', true),
 
     // Presupuestos candidatos a pago técnico: aprobados en cualquier estado activo
     // (igual que getPendientesPagoTecnico)
