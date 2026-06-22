@@ -67,7 +67,11 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     setIncidenteSeleccionado(id)
     setModalTab(tab)
     setModalOpen(true)
-    setPendientesPresupuesto(s => { const n = new Set(s); n.delete(id); return n })
+    // NO removemos el id de pendientesPresupuesto al abrir el modal:
+    // el botón "Aprobar presup." debe quedar habilitado hasta que el cliente
+    // realmente apruebe el presupuesto en DB. El realtime listener arriba
+    // se encarga de sacarlo del set cuando estado_presupuesto deja de ser
+    // 'aprobado_admin' (porque el cliente aprobó o rechazó).
   }
 
   // Incidente "resuelto" para el cliente = finalizado en DB, O en_proceso con fue_resuelto (pendiente_pago)
