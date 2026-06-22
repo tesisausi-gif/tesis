@@ -225,7 +225,7 @@ function TabCobrosClientes({ pendientes, realizados, highlightId }: { pendientes
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden w-full">
       <div className="grid grid-cols-2 gap-4">
         <Card className="border-l-4 border-l-amber-500 bg-gradient-to-br from-white to-amber-50/40"><CardContent className="pt-4 pb-3 text-center">
           <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Pendiente de cobro</p>
@@ -493,7 +493,7 @@ function TabPagosTecnicos({ pendientes, realizados, highlightId, cobrosCliente }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden w-full">
       <div className="grid grid-cols-2 gap-4">
         <Card className="border-amber-200 bg-amber-50"><CardContent className="pt-4 pb-3 text-center">
           <p className="text-xs text-amber-700 mb-1">Pendiente de pago</p>
