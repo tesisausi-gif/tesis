@@ -125,6 +125,41 @@ export async function contarNotificacionesAdmin(): Promise<number> {
   }
 }
 
+// ─── ELIMINAR (uno o todos los del rol) ──────────────────────────────────────
+
+/**
+ * Eliminar una notificación de forma definitiva (delete real, no marcar como leída).
+ * Disponible para los 3 roles. La autorización se valida con filtro estricto:
+ *   - el técnico solo puede eliminar las suyas (mismo id_tecnico)
+ *   - el cliente solo las suyas (mismo id_cliente)
+ *   - el admin solo las marcadas para admin (para_admin = true)
+ */
+export async function eliminarNotificacion(
+  idNotificacion: number,
+  rol: 'tecnico' | 'cliente' | 'admin',
+): Promise<ActionResult> {
+  try {
+    const supabase = createAdminClient()
+    let query = supabase.from('notificaciones').delete().eq('id_notificacion', idNotificacion)
+
+    if (rol === 'tecnico') {
+      const idTecnico = await requireTecnicoId()
+      query = query.eq('id_tecnico', idTecnico) as any
+    } else if (rol === 'cliente') {
+      const idCliente = await requireClienteId()
+      query = query.eq('id_cliente', idCliente) as any
+    } else {
+      query = query.eq('para_admin', true) as any
+    }
+
+    const { error } = await query
+    if (error) return { success: false, error: translateDbError(error) }
+    return { success: true, data: undefined }
+  } catch {
+    return { success: false, error: 'Error al eliminar notificación' }
+  }
+}
+
 // ─── MARCAR LEÍDA (todos los roles) ──────────────────────────────────────────
 
 /**
