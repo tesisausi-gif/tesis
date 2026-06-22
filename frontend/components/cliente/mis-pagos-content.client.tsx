@@ -27,11 +27,9 @@ const METODO_LABELS: Record<string, string> = {
   efectivo: 'Efectivo', transferencia: 'Transferencia', debito: 'Débito', credito: 'Crédito',
 }
 
-const MONTO_LABELS: Record<string, string> = {
-  lt5k:    'Menos de $5.000',
-  '5to20k':  '$5.000 – $20.000',
-  '20to50k': '$20.000 – $50.000',
-  gt50k:   'Más de $50.000',
+const ORDEN_MONTO_LABELS: Record<string, string> = {
+  desc: 'Mayor a menor',
+  asc:  'Menor a mayor',
 }
 
 function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
@@ -73,7 +71,7 @@ export function MisPagosContent({ pendientes, realizados }: Props) {
   const [busqueda, setBusqueda]       = useState('')
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'pendiente' | 'pagado'>('todos')
   const [filtroInmueble, setFiltroInmueble] = useState<string>('todos')
-  const [filtroMonto, setFiltroMonto] = useState<'todos' | 'lt5k' | '5to20k' | '20to50k' | 'gt50k'>('todos')
+  const [ordenMonto, setOrdenMonto] = useState<'fecha' | 'desc' | 'asc'>('fecha')
   const [filtroMetodo, setFiltroMetodo] = useState<string>('todos')
   const [paginaPend, setPaginaPend] = useState(1)
   const [paginaPag,  setPaginaPag]  = useState(1)
@@ -101,17 +99,6 @@ export function MisPagosContent({ pendientes, realizados }: Props) {
     return Array.from(set)
   }, [realizados])
 
-  // ── Helper: ¿el ítem cumple los filtros activos? ────────────────────────────
-  const cumpleMonto = (monto: number) => {
-    switch (filtroMonto) {
-      case 'lt5k':    return monto < 5000
-      case '5to20k':  return monto >= 5000 && monto < 20000
-      case '20to50k': return monto >= 20000 && monto < 50000
-      case 'gt50k':   return monto >= 50000
-      default:        return true
-    }
-  }
-
   const q = normalizeSearch(busqueda)
   const matchBusqueda = (texto: string, idIncidente: number, monto: number) =>
     !q ||
@@ -119,22 +106,34 @@ export function MisPagosContent({ pendientes, realizados }: Props) {
     String(idIncidente).includes(q) ||
     String(Math.round(monto)).includes(q)
 
+  // Orden por monto (si está activo) — se aplica DESPUÉS del filter
+  const aplicarOrden = <T extends { monto: number }>(items: T[]): T[] => {
+    if (ordenMonto === 'desc') return [...items].sort((a, b) => b.monto - a.monto)
+    if (ordenMonto === 'asc')  return [...items].sort((a, b) => a.monto - b.monto)
+    return items
+  }
+
   // ── Aplicar filtros ─────────────────────────────────────────────────────────
-  const pendientesFiltrados = pendientes.filter(p => {
+  const pendientesFiltradosRaw = pendientes.filter(p => {
     if (filtroEstado === 'pagado') return false
     if (filtroInmueble !== 'todos' && String(p.id_inmueble) !== filtroInmueble) return false
-    if (!cumpleMonto(p.monto_a_pagar)) return false
     if (filtroMetodo !== 'todos') return false // los pendientes no tienen método aún
     return matchBusqueda(`${p.descripcion_problema} ${p.direccion_inmueble ?? ''}`, p.id_incidente, p.monto_a_pagar)
   })
 
-  const realizadosFiltrados = realizados.filter(r => {
+  const realizadosFiltradosRaw = realizados.filter(r => {
     if (filtroEstado === 'pendiente') return false
     if (filtroInmueble !== 'todos' && String(r.id_inmueble) !== filtroInmueble) return false
-    if (!cumpleMonto(r.monto_cobro)) return false
     if (filtroMetodo !== 'todos' && r.metodo_pago !== filtroMetodo) return false
     return matchBusqueda(`${r.descripcion_problema ?? ''} ${r.direccion_inmueble ?? ''}`, r.id_incidente, r.monto_cobro)
   })
+
+  const pendientesFiltrados = aplicarOrden(
+    pendientesFiltradosRaw.map(p => ({ ...p, monto: p.monto_a_pagar })),
+  )
+  const realizadosFiltrados = aplicarOrden(
+    realizadosFiltradosRaw.map(r => ({ ...r, monto: r.monto_cobro })),
+  )
 
   // ── Paginación local ────────────────────────────────────────────────────────
   const pendientesPag = pendientesFiltrados.slice((paginaPend - 1) * POR_PAGINA, paginaPend * POR_PAGINA)
@@ -144,14 +143,14 @@ export function MisPagosContent({ pendientes, realizados }: Props) {
     setBusqueda('')
     setFiltroEstado('todos')
     setFiltroInmueble('todos')
-    setFiltroMonto('todos')
+    setOrdenMonto('fecha')
     setFiltroMetodo('todos')
     setPaginaPend(1)
     setPaginaPag(1)
   }
 
   const hayFiltrosActivos =
-    !!busqueda || filtroEstado !== 'todos' || filtroInmueble !== 'todos' || filtroMonto !== 'todos' || filtroMetodo !== 'todos'
+    !!busqueda || filtroEstado !== 'todos' || filtroInmueble !== 'todos' || ordenMonto !== 'fecha' || filtroMetodo !== 'todos'
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -237,16 +236,14 @@ export function MisPagosContent({ pendientes, realizados }: Props) {
 
         {/* Selects avanzados — grid 2 mobile, 3 desktop */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          <Select value={filtroMonto} onValueChange={(v: any) => { setFiltroMonto(v); setPaginaPend(1); setPaginaPag(1) }}>
+          <Select value={ordenMonto} onValueChange={(v: any) => { setOrdenMonto(v); setPaginaPend(1); setPaginaPag(1) }}>
             <SelectTrigger className="h-10 w-full text-xs bg-white rounded-xl border-gray-200 [&>span]:truncate [&>span]:block [&>span]:max-w-full">
-              <SelectValue placeholder="Monto" />
+              <SelectValue placeholder="Ordenar por monto" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="todos">Cualquier monto</SelectItem>
-              <SelectItem value="gt50k">Más de $50.000</SelectItem>
-              <SelectItem value="20to50k">$20.000 – $50.000</SelectItem>
-              <SelectItem value="5to20k">$5.000 – $20.000</SelectItem>
-              <SelectItem value="lt5k">Menos de $5.000</SelectItem>
+              <SelectItem value="fecha">Por fecha (sin ordenar por monto)</SelectItem>
+              <SelectItem value="desc">Monto: mayor a menor</SelectItem>
+              <SelectItem value="asc">Monto: menor a mayor</SelectItem>
             </SelectContent>
           </Select>
 
@@ -285,10 +282,10 @@ export function MisPagosContent({ pendientes, realizados }: Props) {
             se muestra acá con truncate + tooltip nativo, no en el trigger del Select */}
         {hayFiltrosActivos && (
           <div className="flex flex-wrap items-center gap-1.5">
-            {filtroMonto !== 'todos' && (
+            {ordenMonto !== 'fecha' && (
               <FilterTag
-                label={`Monto: ${MONTO_LABELS[filtroMonto]}`}
-                onRemove={() => { setFiltroMonto('todos'); setPaginaPend(1); setPaginaPag(1) }}
+                label={`Orden: ${ORDEN_MONTO_LABELS[ordenMonto]}`}
+                onRemove={() => { setOrdenMonto('fecha'); setPaginaPend(1); setPaginaPag(1) }}
               />
             )}
             {filtroInmueble !== 'todos' && (() => {
