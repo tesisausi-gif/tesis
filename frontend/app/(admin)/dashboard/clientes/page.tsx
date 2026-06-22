@@ -340,7 +340,7 @@ export default function ClientesPage() {
                     </div>
 
                     {/* Nombre + email */}
-                    <div className="w-44 shrink-0 min-w-0">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 truncate">
                         {cliente.nombre} {cliente.apellido}
                       </p>
