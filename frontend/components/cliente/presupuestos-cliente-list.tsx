@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -42,6 +43,7 @@ export function PresupuestosClienteList({
   incidenteId,
   onPresupuestoActualizado,
 }: PresupuestosClienteProps) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedPresupuesto, setSelectedPresupuesto] = useState<Presupuesto | null>(null)
@@ -57,6 +59,10 @@ export function PresupuestosClienteList({
           description: `Aprobaste el presupuesto por $${presupuesto.costo_total.toFixed(2)}`,
         })
         onPresupuestoActualizado?.()
+        // Forzar re-fetch del Server Component padre para que el listado de
+        // incidentes (cards) refleje el nuevo estado y oculte el botón
+        // "Aprobar presup." sin depender de realtime.
+        router.refresh()
       } else {
         toast.error('Error', { description: result.error })
       }
@@ -100,6 +106,7 @@ export function PresupuestosClienteList({
         }
         cerrarDialog()
         onPresupuestoActualizado?.()
+        router.refresh()
       } else {
         toast.error('Error', { description: result.error })
       }

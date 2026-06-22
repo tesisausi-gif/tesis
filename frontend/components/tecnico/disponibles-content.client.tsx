@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,6 +29,13 @@ export function DisponiblesContent({ asignaciones: asignacionesIniciales, franja
   const [accion, setAccion] = useState<'aceptar' | 'rechazar' | null>(null)
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false)
   const [incidenteDetalleId, setIncidenteDetalleId] = useState<number | null>(null)
+
+  // Sincronizar con la prop del Server Component cuando se ejecuta router.refresh()
+  // (o aparecen asignaciones nuevas desde otra ventana). Sin esto, el state local
+  // se queda con los datos iniciales aunque el server ya tenga datos nuevos.
+  useEffect(() => {
+    setAsignaciones(asignacionesIniciales)
+  }, [asignacionesIniciales])
 
   const handleAceptarClick = (asignacion: Asignacion) => {
     setAsignacionSeleccionada(asignacion)

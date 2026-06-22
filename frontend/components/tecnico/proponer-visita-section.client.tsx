@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { AlertTriangle, CalendarDays, CheckCircle2, Clock, RefreshCw, Wrench, X } from 'lucide-react'
 import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
@@ -48,6 +48,13 @@ export function PropVisitaSection({
   const [loading, setLoading]             = useState(false)
   const [postCompletar, setPostCompletar] = useState(false)
   const [pendiente, setPendiente]         = useState<SeleccionPendiente | null>(null)
+
+  // Sincronizar la visita local con la prop del padre. Cuando el padre llama
+  // a cargarIncidente() después de una mutación, initialVisita cambia pero
+  // el state local no se reinicializa solo.
+  useEffect(() => {
+    setVisita(initialVisita)
+  }, [initialVisita])
 
   const confirmarYProponer = async () => {
     if (!pendiente) return

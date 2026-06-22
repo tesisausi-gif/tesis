@@ -43,6 +43,14 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
 
   useEffect(() => { setSubFiltro('todos') }, [filtro])
 
+  // Sincronizar el set local con la prop del Server Component. Cuando se
+  // ejecuta router.refresh() después de aprobar/rechazar, la prop cambia
+  // pero el state local no se reinicializa solo. Sin este efecto, la card
+  // sigue mostrando "Aprobar presup." aunque el server ya tenga el dato nuevo.
+  useEffect(() => {
+    setPendientesPresupuesto(new Set(incidentesConPresupuestoPendiente))
+  }, [incidentesConPresupuestoPendiente])
+
   // Realtime: escuchar cambios en presupuestos
   useEffect(() => {
     const supabase = createClient()
