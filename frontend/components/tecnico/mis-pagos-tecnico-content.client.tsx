@@ -32,6 +32,11 @@ const ORDEN_MONTO_LABELS: Record<string, string> = {
   asc:  'Menor a mayor',
 }
 
+const ORDEN_FECHA_LABELS: Record<string, string> = {
+  desc: 'Más recientes primero',
+  asc:  'Más antiguas primero',
+}
+
 function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <span
@@ -70,7 +75,8 @@ export function MisPagosTecnicoContent({ pendientes, recibidos }: Props) {
   const [busqueda, setBusqueda]       = useState('')
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'pendiente' | 'recibido'>('todos')
   const [filtroInmueble, setFiltroInmueble] = useState<string>('todos')
-  const [ordenMonto, setOrdenMonto] = useState<'fecha' | 'desc' | 'asc'>('fecha')
+  const [ordenFecha, setOrdenFecha] = useState<'desc' | 'asc'>('desc')
+  const [ordenMonto, setOrdenMonto] = useState<'ninguno' | 'desc' | 'asc'>('ninguno')
   const [filtroMetodo, setFiltroMetodo] = useState<string>('todos')
   const [paginaPend, setPaginaPend] = useState(1)
   const [paginaRec,  setPaginaRec]  = useState(1)
@@ -98,11 +104,15 @@ export function MisPagosTecnicoContent({ pendientes, recibidos }: Props) {
     String(idIncidente).includes(q) ||
     String(Math.round(monto)).includes(q)
 
-  // Orden por monto (si está activo) — se aplica DESPUÉS del filter
-  const aplicarOrden = <T extends { monto: number }>(items: T[]): T[] => {
+  // Orden combinado: si hay orden por monto se aplica ESE; sino se ordena por fecha.
+  const aplicarOrden = <T extends { monto: number; fecha: string }>(items: T[]): T[] => {
     if (ordenMonto === 'desc') return [...items].sort((a, b) => b.monto - a.monto)
     if (ordenMonto === 'asc')  return [...items].sort((a, b) => a.monto - b.monto)
-    return items
+    return [...items].sort((a, b) => {
+      const ta = new Date(a.fecha).getTime()
+      const tb = new Date(b.fecha).getTime()
+      return ordenFecha === 'desc' ? tb - ta : ta - tb
+    })
   }
 
   const pendientesFiltradosRaw = pendientes.filter(p => {
@@ -120,10 +130,10 @@ export function MisPagosTecnicoContent({ pendientes, recibidos }: Props) {
   })
 
   const pendientesFiltrados = aplicarOrden(
-    pendientesFiltradosRaw.map(p => ({ ...p, monto: p.monto_a_recibir })),
+    pendientesFiltradosRaw.map(p => ({ ...p, monto: p.monto_a_recibir, fecha: p.fecha_presupuesto })),
   )
   const recibidosFiltrados = aplicarOrden(
-    recibidosFiltradosRaw.map(r => ({ ...r, monto: r.monto_pago })),
+    recibidosFiltradosRaw.map(r => ({ ...r, monto: r.monto_pago, fecha: r.fecha_pago })),
   )
 
   const pendientesPag = pendientesFiltrados.slice((paginaPend - 1) * POR_PAGINA, paginaPend * POR_PAGINA)
@@ -131,12 +141,13 @@ export function MisPagosTecnicoContent({ pendientes, recibidos }: Props) {
 
   const limpiarFiltros = () => {
     setBusqueda(''); setFiltroEstado('todos'); setFiltroInmueble('todos')
-    setOrdenMonto('fecha'); setFiltroMetodo('todos')
+    setOrdenFecha('desc'); setOrdenMonto('ninguno'); setFiltroMetodo('todos')
     setPaginaPend(1); setPaginaRec(1)
   }
 
   const hayFiltrosActivos =
-    !!busqueda || filtroEstado !== 'todos' || filtroInmueble !== 'todos' || ordenMonto !== 'fecha' || filtroMetodo !== 'todos'
+    !!busqueda || filtroEstado !== 'todos' || filtroInmueble !== 'todos' ||
+    ordenFecha !== 'desc' || ordenMonto !== 'ninguno' || filtroMetodo !== 'todos'
 
   return (
     <div className="space-y-5 px-4 py-6 md:px-6 md:py-8">
@@ -218,16 +229,26 @@ export function MisPagosTecnicoContent({ pendientes, recibidos }: Props) {
           })}
         </div>
 
-        {/* Selects avanzados */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          <Select value={ordenMonto} onValueChange={(v: any) => { setOrdenMonto(v); setPaginaPend(1); setPaginaRec(1) }}>
+        {/* Selects avanzados — grid 2 mobile, 4 desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <Select value={ordenFecha} onValueChange={(v: any) => { setOrdenFecha(v); setPaginaPend(1); setPaginaRec(1) }}>
             <SelectTrigger className="h-10 w-full text-xs bg-white rounded-xl border-gray-200 [&>span]:truncate [&>span]:block [&>span]:max-w-full">
-              <SelectValue placeholder="Ordenar por monto" />
+              <SelectValue placeholder="Fecha" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="fecha">Por fecha (sin ordenar por monto)</SelectItem>
-              <SelectItem value="desc">Monto: mayor a menor</SelectItem>
-              <SelectItem value="asc">Monto: menor a mayor</SelectItem>
+              <SelectItem value="desc">Más recientes primero</SelectItem>
+              <SelectItem value="asc">Más antiguas primero</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={ordenMonto} onValueChange={(v: any) => { setOrdenMonto(v); setPaginaPend(1); setPaginaRec(1) }}>
+            <SelectTrigger className="h-10 w-full text-xs bg-white rounded-xl border-gray-200 [&>span]:truncate [&>span]:block [&>span]:max-w-full">
+              <SelectValue placeholder="Monto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ninguno">Sin ordenar por monto</SelectItem>
+              <SelectItem value="desc">Mayor a menor</SelectItem>
+              <SelectItem value="asc">Menor a mayor</SelectItem>
             </SelectContent>
           </Select>
 
@@ -265,10 +286,16 @@ export function MisPagosTecnicoContent({ pendientes, recibidos }: Props) {
         {/* Chips de filtros activos */}
         {hayFiltrosActivos && (
           <div className="flex flex-wrap items-center gap-1.5">
-            {ordenMonto !== 'fecha' && (
+            {ordenFecha !== 'desc' && (
               <FilterTag
-                label={`Orden: ${ORDEN_MONTO_LABELS[ordenMonto]}`}
-                onRemove={() => { setOrdenMonto('fecha'); setPaginaPend(1); setPaginaRec(1) }}
+                label={`Fecha: ${ORDEN_FECHA_LABELS[ordenFecha]}`}
+                onRemove={() => { setOrdenFecha('desc'); setPaginaPend(1); setPaginaRec(1) }}
+              />
+            )}
+            {ordenMonto !== 'ninguno' && (
+              <FilterTag
+                label={`Monto: ${ORDEN_MONTO_LABELS[ordenMonto]}`}
+                onRemove={() => { setOrdenMonto('ninguno'); setPaginaPend(1); setPaginaRec(1) }}
               />
             )}
             {filtroInmueble !== 'todos' && (() => {

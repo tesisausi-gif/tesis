@@ -11,12 +11,16 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/lib/supabase/client'
-import { marcarNotificacionLeida, marcarTodasLeidas } from '@/features/notificaciones/notificaciones-inapp.service'
+import {
+  marcarNotificacionLeida,
+  marcarTodasLeidas,
+  eliminarNotificacion,
+} from '@/features/notificaciones/notificaciones-inapp.service'
 import { TIPO_CATEGORIA } from '@/features/notificaciones/notificaciones.types'
 import type { Notificacion, TipoNotificacionCategoria } from '@/features/notificaciones/notificaciones.types'
 
 const MAX_GRUPOS = 5
-const MAX_ITEMS = 8
+const POR_PAGINA = 5
 
 // ─── Config visual por categoría ─────────────────────────────────────────────
 
@@ -150,21 +154,22 @@ function NotifItem({
         </div>
 
         <div className="flex-1 min-w-0 space-y-0.5">
-          <p className="text-sm font-semibold text-gray-800 leading-snug pr-5">
+          <p className="text-sm font-semibold text-gray-800 leading-snug pr-10">
             {n.titulo}
           </p>
           <p className="text-xs text-gray-400">{formatFecha(n.fecha_creacion)}</p>
         </div>
 
-        <div className="absolute right-3 top-3 flex items-center gap-1.5">
+        <div className="absolute right-2 top-2 flex items-center gap-1.5">
           <button
             onClick={e => onDescartar(e, n.id_notificacion)}
-            className="p-0.5 rounded hover:bg-gray-200 transition-colors opacity-0 group-hover/item:opacity-100"
-            title="Descartar"
+            className="h-7 w-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+            title="Eliminar notificación"
+            aria-label="Eliminar notificación"
           >
-            <X className="h-3 w-3 text-gray-400" />
+            <X className="h-3.5 w-3.5" />
           </button>
-          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${cfg.dot} group-hover/item:opacity-0 transition-opacity`} />
+          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${cfg.dot}`} />
         </div>
       </div>
     </motion.div>
@@ -298,7 +303,7 @@ function GrupoIncidente({
 export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
   const [items, setItems] = useState<Notificacion[]>(inicial)
   const [, startTransition] = useTransition()
-  const [verTodos, setVerTodos] = useState(false)
+  const [pagina, setPagina] = useState(1)
   const [verTodosGrupos, setVerTodosGrupos] = useState(false)
   const router = useRouter()
 
@@ -320,23 +325,26 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     return () => { supabase.removeChannel(channel) }
   }, [rol])
 
+  // Eliminar 1 notificación (delete real, no marcar como leída)
   const descartar = (e: React.MouseEvent, id: number) => {
     e.stopPropagation()
     setItems(prev => prev.filter(n => n.id_notificacion !== id))
     startTransition(async () => {
-      const res = await marcarNotificacionLeida(id)
-      if (!res.success) toast.error('No se pudo descartar')
+      const res = await eliminarNotificacion(id, rol)
+      if (!res.success) toast.error('No se pudo eliminar la notificación')
     })
   }
 
+  // Eliminar todo el grupo (usado por admin al cerrar un grupo por incidente)
   const descartarGrupo = (ids: number[]) => {
     setItems(prev => prev.filter(n => !ids.includes(n.id_notificacion)))
     startTransition(async () => {
-      await Promise.all(ids.map(id => marcarNotificacionLeida(id)))
+      await Promise.all(ids.map(id => eliminarNotificacion(id, rol)))
     })
   }
 
-  const descartarTodas = () => {
+  // Marcar todas como leídas (mantiene el registro pero las saca del inbox)
+  const marcarTodasComoLeidas = () => {
     setItems([])
     startTransition(async () => {
       const res = await marcarTodasLeidas(rol)
@@ -407,13 +415,22 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
     )
   }
 
-  // ── Técnico/Cliente: Hoy / Anteriores ──
+  // ── Técnico/Cliente: paginado de 5 + secciones Hoy / Anteriores ──
   const renderHoyAnteriores = () => {
-    const hoy = items.filter(n => isToday(new Date(n.fecha_creacion)))
-    const anteriores = items.filter(n => !isToday(new Date(n.fecha_creacion)))
+    // Orden: primero las de hoy, luego anteriores (fecha desc dentro de cada grupo)
+    const hoy = items
+      .filter(n => isToday(new Date(n.fecha_creacion)))
+      .sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime())
+    const anteriores = items
+      .filter(n => !isToday(new Date(n.fecha_creacion)))
+      .sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime())
     const todos = [...hoy, ...anteriores]
-    const visibles = verTodos ? todos : todos.slice(0, MAX_ITEMS)
-    const ocultos = todos.length - MAX_ITEMS
+
+    // Paginación de 5
+    const totalPaginas = Math.max(1, Math.ceil(todos.length / POR_PAGINA))
+    const paginaActual = Math.min(pagina, totalPaginas)
+    const inicio = (paginaActual - 1) * POR_PAGINA
+    const visibles = todos.slice(inicio, inicio + POR_PAGINA)
 
     const hoyVis = visibles.filter(n => isToday(new Date(n.fecha_creacion)))
     const antVis = visibles.filter(n => !isToday(new Date(n.fecha_creacion)))
@@ -445,15 +462,29 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
           </div>
         )}
 
-        {!verTodos && ocultos > 0 && (
-          <button onClick={() => setVerTodos(true)} className="w-full text-xs text-center text-blue-500 hover:text-blue-700 py-1.5 rounded-lg hover:bg-blue-50 transition-colors mt-2">
-            Ver {ocultos} más
-          </button>
-        )}
-        {verTodos && todos.length > MAX_ITEMS && (
-          <button onClick={() => setVerTodos(false)} className="w-full text-xs text-center text-gray-400 hover:text-gray-600 py-1.5 rounded-lg hover:bg-gray-50 transition-colors mt-2">
-            Mostrar menos
-          </button>
+        {/* Paginación */}
+        {totalPaginas > 1 && (
+          <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setPagina(p => Math.max(1, p - 1))}
+              disabled={paginaActual === 1}
+              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Anterior
+            </button>
+            <span className="text-[11px] text-gray-500 font-medium">
+              Página {paginaActual} de {totalPaginas}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+              disabled={paginaActual === totalPaginas}
+              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Siguiente →
+            </button>
+          </div>
         )}
       </>
     )
@@ -479,8 +510,9 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
         </div>
         {items.length > 0 && (
           <button
-            onClick={descartarTodas}
+            onClick={marcarTodasComoLeidas}
             className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-700 transition-colors"
+            title="Marca todas como leídas (no las elimina)"
           >
             <CheckCheck className="h-3.5 w-3.5" />
             Marcar leídas
