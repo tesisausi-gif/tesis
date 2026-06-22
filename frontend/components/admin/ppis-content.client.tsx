@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle2, XCircle, AlertCircle, Info, Clock, TrendingUp, Tag, Layers, Repeat2, Gauge, Zap, User, Wrench, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CheckCircle2, XCircle, AlertCircle, Info, Clock, TrendingUp, Tag, Layers, Repeat2, Gauge, Zap, User, Wrench, RefreshCw, ChevronDown, ChevronUp, Search, Filter } from 'lucide-react'
+import { normalizeSearch } from '@/shared/utils'
+import { Paginacion } from '@/components/ui/paginacion'
 import type { TodosPpisData, TciData, FpyData, FpyEtapa, WipData, WipEtapa, ReasignacionData, ReasignacionPorTecnico, Semaforo, TciPorPrioridad, TciPorCategoria, TcrData, TcrPorTecnico, Sp8Data, Sp8ItemPendiente, IscData, IscPorTecnico, Cb2Data, OeeData, IrtTecnico, Sp9Data, Sp9PorTecnico } from '@/features/reportes/metricas-ppis.service'
 
 // ─── Helpers visuales ─────────────────────────────────────────────────────────
@@ -1700,6 +1703,31 @@ function TarjetaIrt({ t }: { t: IrtTecnico }) {
 
 function OeeMetrica({ data }: { data: OeeData }) {
   const col = SEMAFORO_COLORES[data.semaforoGlobal]
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroSemaforo, setFiltroSemaforo] = useState<'todos' | Semaforo>('todos')
+  const [ordenar, setOrdenar] = useState<'irt_desc' | 'irt_asc' | 'disponibilidad' | 'eficiencia' | 'calidad' | 'nombre'>('irt_desc')
+  const [pagina, setPagina] = useState(1)
+  const POR_PAGINA = 6
+
+  const tecnicosFiltrados = data.porTecnico
+    .filter(t => {
+      const q = normalizeSearch(busqueda)
+      const cumpleBusqueda = !q || normalizeSearch(`${t.nombre} ${t.apellido}`).includes(q)
+      const cumpleSemaforo = filtroSemaforo === 'todos' || t.semaforo === filtroSemaforo
+      return cumpleBusqueda && cumpleSemaforo
+    })
+    .sort((a, b) => {
+      switch (ordenar) {
+        case 'irt_asc': return a.irt - b.irt
+        case 'disponibilidad': return b.disponibilidad - a.disponibilidad
+        case 'eficiencia': return b.eficiencia - a.eficiencia
+        case 'calidad': return b.calidad - a.calidad
+        case 'nombre': return `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`, 'es')
+        default: return b.irt - a.irt
+      }
+    })
+
+  const tecnicosPaginados = tecnicosFiltrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA)
 
   return (
     <div className="space-y-5">
@@ -1774,18 +1802,71 @@ function OeeMetrica({ data }: { data: OeeData }) {
           <p className="text-sm text-slate-400">Sin datos de técnicos suficientes</p>
         </div>
       ) : (
-        <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-            <Wrench className="h-3.5 w-3.5" />
-            Puntaje por técnico — del mejor al que más necesita apoyo
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.porTecnico.map(t => (
-              <TarjetaIrt key={t.id_tecnico} t={t} />
-            ))}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+              <Wrench className="h-3.5 w-3.5" />
+              Puntaje por técnico — del mejor al que más necesita apoyo
+            </p>
+            <span className="text-[10px] text-slate-400">{tecnicosFiltrados.length} técnico{tecnicosFiltrados.length !== 1 ? 's' : ''}</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-3 italic">
-            Los factores marcados con "—" indican que no hay suficientes datos para calcularlos — se usa 100% como valor neutral. A medida que el sistema acumule datos, el IRT se vuelve más preciso.
+
+          {/* Filtros */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar técnico..."
+                value={busqueda}
+                onChange={e => { setBusqueda(e.target.value); setPagina(1) }}
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-300 bg-white"
+              />
+            </div>
+            <Select value={filtroSemaforo} onValueChange={(v: any) => { setFiltroSemaforo(v); setPagina(1) }}>
+              <SelectTrigger className="w-full sm:w-[140px] h-8 text-xs">
+                <Filter className="h-3 w-3 mr-1 text-slate-400" />
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos los estados</SelectItem>
+                <SelectItem value="verde">Verde (IRT &gt;75%)</SelectItem>
+                <SelectItem value="amarillo">Amarillo (55–75%)</SelectItem>
+                <SelectItem value="rojo">Rojo (IRT &lt;55%)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={ordenar} onValueChange={(v: any) => { setOrdenar(v); setPagina(1) }}>
+              <SelectTrigger className="w-full sm:w-[160px] h-8 text-xs">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="irt_desc">IRT: mayor a menor</SelectItem>
+                <SelectItem value="irt_asc">IRT: menor a mayor</SelectItem>
+                <SelectItem value="disponibilidad">Disponibilidad</SelectItem>
+                <SelectItem value="eficiencia">Eficiencia</SelectItem>
+                <SelectItem value="calidad">Calidad (FPY)</SelectItem>
+                <SelectItem value="nombre">Nombre A→Z</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {tecnicosFiltrados.length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
+              <p className="text-sm text-slate-400">Sin resultados para los filtros aplicados</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {tecnicosPaginados.map(t => (
+                  <TarjetaIrt key={t.id_tecnico} t={t} />
+                ))}
+              </div>
+              <Paginacion pagina={pagina} total={tecnicosFiltrados.length} porPagina={POR_PAGINA} onChange={p => { setPagina(p); }} />
+            </>
+          )}
+
+          <p className="text-[10px] text-slate-400 italic">
+            Los factores marcados con "—" indican que no hay suficientes datos — se usa 100% como valor neutral. A medida que el sistema acumule datos, el IRT se vuelve más preciso.
           </p>
         </div>
       )}
