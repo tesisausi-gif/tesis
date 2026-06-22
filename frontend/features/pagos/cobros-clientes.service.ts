@@ -231,8 +231,13 @@ export interface MiCobroRealizado {
  * Cobros pendientes del cliente actual: presupuestos aprobados/resueltos sin cobro registrado.
  */
 export async function getMisCobrosComoCliente(): Promise<{ pendientes: MiCobroPendiente[], realizados: MiCobroRealizado[] }> {
-  const supabase = await createClient()
+  // Autorización primero (sesión válida + obtener id_cliente)
   const idCliente = await requireClienteId()
+  // Lectura con admin client para no depender de políticas RLS de cobros_clientes:
+  // la tabla no tenía SELECT por id_cliente, así que las queries devolvían vacío y
+  // el "Total pagado" siempre marcaba 0. Filtramos por id_cliente_reporta para
+  // mantener el aislamiento de datos.
+  const supabase = createAdminClient()
 
   // Mis incidentes
   const { data: incidentes } = await supabase
@@ -316,8 +321,12 @@ export async function getMisPagosDeIncidente(idIncidente: number): Promise<{
   pendiente: MiCobroPendiente | null
   realizados: MiCobroRealizado[]
 }> {
-  const supabase = await createClient()
+  // Autorización + autorización por id_cliente_reporta del incidente.
   const idCliente = await requireClienteId()
+  // Admin client por la misma razón que getMisCobrosComoCliente: RLS bloquea
+  // la lectura de cobros_clientes al cliente. La query incluye id_cliente_reporta
+  // como filtro estricto para mantener el aislamiento.
+  const supabase = createAdminClient()
 
   // Presupuesto aprobado de este incidente, verificando que sea del cliente
   const { data: pres } = await supabase

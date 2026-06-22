@@ -135,7 +135,7 @@ export default async function PagosClientePage() {
             <div className="rounded-full bg-gray-100 p-4 mb-4">
               <DollarSign className="h-10 w-10 text-gray-400" />
             </div>
-            <h3 className="font-semibold text-gray-700 mb-1">Sin movimientos</h3>
+            <h3 className="font-semibold text-gray-700 mb-1">Sin pagos</h3>
             <p className="text-sm text-gray-500 max-w-xs">
               Cuando se apruebe un presupuesto y se resuelva el incidente, los cobros aparecerán aquí.
             </p>

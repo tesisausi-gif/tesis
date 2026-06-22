@@ -3086,13 +3086,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       </div>
                     )}
 
-                    {/* Sin movimientos */}
+                    {/* Sin pagos */}
                     {!pagosIncidente.pendiente && pagosIncidente.realizados.length === 0 && (
                       <div className="text-center py-10">
                         <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                           <DollarSign className="h-6 w-6 text-gray-400" />
                         </div>
-                        <p className="text-sm font-medium text-gray-600">Sin movimientos aún</p>
+                        <p className="text-sm font-medium text-gray-600">Sin pagos aún</p>
                         <p className="text-xs text-gray-400 mt-1">El cobro se generará una vez confirmado el servicio.</p>
                       </div>
                     )}
@@ -3186,7 +3186,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                         <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                           <DollarSign className="h-6 w-6 text-gray-400" />
                         </div>
-                        <p className="text-sm font-medium text-gray-600">Sin movimientos aún</p>
+                        <p className="text-sm font-medium text-gray-600">Sin pagos aún</p>
                       </div>
                     )}
                   </>

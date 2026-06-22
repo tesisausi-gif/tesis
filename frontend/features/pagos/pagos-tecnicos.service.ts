@@ -362,8 +362,11 @@ export async function getMisPagosTecnicoDeIncidente(idIncidente: number): Promis
   pendiente: MiPagoPendiente | null
   recibidos: MiPagoRecibido[]
 }> {
-  const supabase = await createClient()
+  // Autorización + filtro por id_tecnico. Admin client por la misma razón:
+  // RLS bloquea la lectura de pagos_tecnicos al técnico (no hay política SELECT
+  // por id_tecnico). El filtro estricto por id_tecnico mantiene el aislamiento.
   const idTecnico = await requireTecnicoId()
+  const supabase = createAdminClient()
 
   const { data: pres } = await supabase
     .from('presupuestos')
