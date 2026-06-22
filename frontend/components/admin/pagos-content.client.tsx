@@ -548,12 +548,12 @@ function TabPagosTecnicos({ pendientes, realizados, highlightId, cobrosCliente }
                     ref={el => { if (el) highlightRefs.current.set(p.id_incidente, el); else highlightRefs.current.delete(p.id_incidente) }}
                   >
                     <Card className={`hover:shadow-md transition-shadow ${highlightId === p.id_incidente ? 'ring-2 ring-amber-400 ring-offset-1' : ''} ${clienteCobrado ? 'border-amber-200' : 'border-orange-200 bg-orange-50/30'}`}>
-                      <CardContent className="pt-4 pb-4">
-                        <div className="flex items-start justify-between gap-3">
+                      <CardContent className="pt-4 pb-4 overflow-hidden">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 min-w-0">
                           <div className="flex-1 min-w-0 space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0"/>
-                              <span className="font-semibold">{p.nombre_tecnico} {p.apellido_tecnico}</span>
+                              <span className="font-semibold truncate">{p.nombre_tecnico} {p.apellido_tecnico}</span>
                               <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendiente</Badge>
                               {!clienteCobrado && (
                                 <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs flex items-center gap-1">
@@ -562,21 +562,21 @@ function TabPagosTecnicos({ pendientes, realizados, highlightId, cobrosCliente }
                               )}
                             </div>
                             <p className="text-sm text-gray-600 truncate">Incidente #{p.id_incidente} — {p.descripcion_problema}</p>
-                            <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
                               <span>Materiales: {fmt$(p.costo_materiales)}</span>
                               <span>Mano de obra: {fmt$(p.costo_mano_obra)}</span>
                               <span className="font-semibold text-gray-700">Total: {fmt$(p.monto_a_pagar)}</span>
                             </div>
                           </div>
-                          <div className="flex gap-2 flex-shrink-0">
+                          <div className="flex gap-2 md:flex-shrink-0 w-full md:w-auto">
                             <Link
                               href={`/dashboard/incidentes?tab=finalizado&highlight=${p.id_incidente}`}
-                              className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                              className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                             >
                               <ExternalLink className="h-3.5 w-3.5"/>Ver incidente
                             </Link>
                             <Button size="sm" onClick={() => { setFormPago(METODO_INICIAL); setPagarDialog(p) }}
-                              className="bg-green-600 hover:bg-green-700 gap-1" disabled={isPending}>
+                              className="flex-1 md:flex-initial bg-green-600 hover:bg-green-700 gap-1" disabled={isPending}>
                               <CheckCircle2 className="h-3.5 w-3.5"/>Pagar
                             </Button>
                           </div>
