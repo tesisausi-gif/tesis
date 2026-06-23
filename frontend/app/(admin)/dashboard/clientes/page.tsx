@@ -7,6 +7,7 @@ import {
   crearEmpleado,
   actualizarCliente as actualizarClienteService,
   toggleActivoCliente,
+  verificarIncidentesCliente,
   getInmueblesDeCliente,
 } from '@/features/usuarios/usuarios.service'
 import { normalizeSearch } from '@/shared/utils'
@@ -15,7 +16,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AlertTriangle, XOctagon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Paginacion } from '@/components/ui/paginacion'
 import { toast } from 'sonner'
@@ -48,6 +50,8 @@ export default function ClientesPage() {
   const [inmueblesDialogOpen, setInmueblesDialogOpen] = useState(false)
   const [clienteInmuebles, setClienteInmuebles] = useState<any[]>([])
   const [loadingInmuebles, setLoadingInmuebles] = useState(false)
+  const [verificandoBaja, setVerificandoBaja] = useState(false)
+  const [bajaClienteBloqueadoDialog, setBajaClienteBloqueadoDialog] = useState(false)
 
   // Form state
   const [email, setEmail] = useState('')
@@ -168,22 +172,6 @@ export default function ClientesPage() {
     }
   }
 
-  const handleToggleActivoCliente = async (cliente: Cliente) => {
-    const nuevoEstado = !cliente.esta_activo
-    try {
-      const result = await toggleActivoCliente(cliente.id_cliente, nuevoEstado)
-      if (!result.success) {
-        toast.error('Error al actualizar estado del cliente', { description: result.error })
-        return
-      }
-      toast.success(nuevoEstado ? 'Cliente activado exitosamente' : 'Cliente desactivado exitosamente')
-      cargarClientes()
-    } catch (error) {
-      console.error('Error:', error)
-      toast.error('Error al actualizar estado del cliente')
-    }
-  }
-
   const abrirModalAcciones = (cliente: Cliente) => {
     setClienteActual(cliente)
     setActionsDialogOpen(true)
@@ -196,7 +184,33 @@ export default function ClientesPage() {
 
   const handleToggleActivo = async (cliente: Cliente) => {
     setActionsDialogOpen(false)
-    await handleToggleActivoCliente(cliente)
+
+    // Reactivar: sin validaciones
+    if (!cliente.esta_activo) {
+      const result = await toggleActivoCliente(cliente.id_cliente, true)
+      if (!result.success) toast.error('Error al activar cliente', { description: result.error })
+      else { toast.success('Cliente activado exitosamente'); cargarClientes() }
+      return
+    }
+
+    // Desactivar: verificar incidentes con presupuesto aprobado
+    setVerificandoBaja(true)
+    const verificacion = await verificarIncidentesCliente(cliente.id_cliente)
+    setVerificandoBaja(false)
+
+    if (!verificacion.success) {
+      toast.error('Error al verificar incidentes del cliente')
+      return
+    }
+
+    if (verificacion.data!.bloqueado) {
+      setBajaClienteBloqueadoDialog(true)
+      return
+    }
+
+    const result = await toggleActivoCliente(cliente.id_cliente, false)
+    if (!result.success) toast.error('Error al desactivar cliente', { description: result.error })
+    else { toast.success('Cliente desactivado exitosamente'); cargarClientes() }
   }
 
   const cargarInmueblesCliente = async (idCliente: number) => {
@@ -471,7 +485,8 @@ export default function ClientesPage() {
 
             <button
               onClick={() => clienteActual && handleToggleActivo(clienteActual)}
-              className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all group ${
+              disabled={verificandoBaja}
+              className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all group disabled:opacity-60 disabled:cursor-wait ${
                 clienteActual?.esta_activo
                   ? 'border-gray-200 hover:border-orange-500 hover:bg-orange-50'
                   : 'border-gray-200 hover:border-green-500 hover:bg-green-50'
@@ -484,7 +499,7 @@ export default function ClientesPage() {
               </div>
               <div className="flex-1 text-left">
                 <h3 className="font-semibold text-gray-900">
-                  {clienteActual?.esta_activo ? 'Desactivar' : 'Activar'} Cliente
+                  {verificandoBaja ? 'Verificando...' : clienteActual?.esta_activo ? 'Desactivar' : 'Activar'} Cliente
                 </h3>
                 <p className="text-sm text-gray-600">
                   {clienteActual?.esta_activo
@@ -500,6 +515,32 @@ export default function ClientesPage() {
               </p>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog — Bloqueo por incidente con presupuesto aprobado */}
+      <Dialog open={bajaClienteBloqueadoDialog} onOpenChange={setBajaClienteBloqueadoDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-700">
+              <XOctagon className="h-5 w-5" />
+              No se puede desactivar el cliente
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+              <p className="text-sm text-red-800">
+                El cliente tiene un incidente en curso con presupuesto aprobado. No puede darse de baja hasta que ese trabajo finalice.
+              </p>
+            </div>
+            <p className="text-sm text-gray-600 mt-3">
+              Una vez que el incidente sea resuelto y el cobro esté registrado, el cliente podrá ser dado de baja sin inconvenientes.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setBajaClienteBloqueadoDialog(false)}>Entendido</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -932,6 +932,59 @@ export async function actualizarCliente(
   }
 }
 
+/**
+ * Verifica si un cliente puede ser desactivado.
+ * Bloquea si tiene algún incidente activo con presupuesto aprobado por el cliente
+ * (en_proceso con estado_presupuesto='aprobado', conformidad subida, o fue_resuelto=true).
+ */
+export async function verificarIncidentesCliente(
+  idCliente: number
+): Promise<ActionResult<{ bloqueado: boolean; cantidadBloqueantes: number }>> {
+  try {
+    const supabase = createAdminClient()
+
+    const { data: incidentes, error } = await supabase
+      .from('incidentes')
+      .select('id_incidente, fue_resuelto')
+      .eq('id_cliente_reporta', idCliente)
+      .eq('estado_actual', 'en_proceso')
+
+    if (error) return { success: false, error: error.message }
+    if (!incidentes || incidentes.length === 0) {
+      return { success: true, data: { bloqueado: false, cantidadBloqueantes: 0 } }
+    }
+
+    const ids = incidentes.map(i => i.id_incidente)
+    const idsConFueResuelto = new Set(incidentes.filter(i => i.fue_resuelto).map(i => i.id_incidente))
+
+    const { data: presupuestosAprobados } = await supabase
+      .from('presupuestos')
+      .select('id_incidente')
+      .in('id_incidente', ids)
+      .eq('estado', 'aprobado')
+
+    const { data: conformidades } = await supabase
+      .from('conformidades')
+      .select('id_incidente')
+      .in('id_incidente', ids)
+      .not('url_documento', 'is', null)
+
+    const idsConPresupAprobado = new Set((presupuestosAprobados ?? []).map(p => p.id_incidente))
+    const idsConConformidad = new Set((conformidades ?? []).map(c => c.id_incidente))
+
+    const bloqueantes = ids.filter(
+      id => idsConPresupAprobado.has(id) || idsConConformidad.has(id) || idsConFueResuelto.has(id)
+    )
+
+    return {
+      success: true,
+      data: { bloqueado: bloqueantes.length > 0, cantidadBloqueantes: bloqueantes.length },
+    }
+  } catch {
+    return { success: false, error: 'Error inesperado al verificar incidentes del cliente' }
+  }
+}
+
 export async function toggleActivoCliente(
   idCliente: number,
   nuevoEstado: boolean
