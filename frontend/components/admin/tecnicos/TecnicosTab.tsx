@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { normalizeSearch } from '@/shared/utils'
-import { getTecnicos, toggleActivoTecnico, actualizarTecnico as actualizarTecnicoService, getEspecialidadesActivas } from '@/features/usuarios/usuarios.service'
+import { getTecnicos, toggleActivoTecnico, actualizarTecnico as actualizarTecnicoService, getEspecialidadesActivas, verificarIncidentesTecnico, desactivarTecnicoConBajas } from '@/features/usuarios/usuarios.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,9 +19,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { AlertTriangle, XOctagon } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -62,6 +64,14 @@ export default function TecnicosTab() {
   const [tecnicoActual, setTecnicoActual] = useState<Tecnico | null>(null)
   const [tecnicoEditando, setTecnicoEditando] = useState<Tecnico | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [verificandoBaja, setVerificandoBaja] = useState(false)
+
+  // Estados para flujo de desactivación con incidentes
+  type EstadoBajaDialog =
+    | { tipo: 'cerrado' }
+    | { tipo: 'bloqueado'; tecnico: Tecnico }
+    | { tipo: 'confirmar_con_bajas'; tecnico: Tecnico; cantidadCancelables: number; idsCancelables: number[] }
+  const [bajaDialog, setBajaDialog] = useState<EstadoBajaDialog>({ tipo: 'cerrado' })
 
   // Form state
   const [nombre, setNombre] = useState('')
@@ -105,17 +115,6 @@ export default function TecnicosTab() {
     setLoading(false)
   }
 
-  const toggleActivo = async (tecnico: Tecnico) => {
-    const result = await toggleActivoTecnico(tecnico.id_tecnico, !tecnico.esta_activo)
-
-    if (!result.success) {
-      toast.error('Error al actualizar estado')
-    } else {
-      toast.success(tecnico.esta_activo ? 'Técnico desactivado' : 'Técnico activado')
-      cargarTecnicos()
-    }
-  }
-
   const abrirModalAcciones = (tecnico: Tecnico) => {
     setTecnicoActual(tecnico)
     setActionsDialogOpen(true)
@@ -132,7 +131,61 @@ export default function TecnicosTab() {
 
   const handleToggleActivo = async (tecnico: Tecnico) => {
     setActionsDialogOpen(false)
-    await toggleActivo(tecnico)
+
+    // Reactivar: sin validaciones
+    if (!tecnico.esta_activo) {
+      const result = await toggleActivoTecnico(tecnico.id_tecnico, true)
+      if (!result.success) toast.error('Error al activar técnico')
+      else { toast.success('Técnico activado'); cargarTecnicos() }
+      return
+    }
+
+    // Desactivar: verificar incidentes en curso
+    setVerificandoBaja(true)
+    const verificacion = await verificarIncidentesTecnico(tecnico.id_tecnico)
+    setVerificandoBaja(false)
+
+    if (!verificacion.success) {
+      toast.error('Error al verificar incidentes del técnico')
+      return
+    }
+
+    const { incidentesCancelables, incidentesBloqueantes } = verificacion.data!
+
+    if (incidentesBloqueantes.length > 0) {
+      setBajaDialog({ tipo: 'bloqueado', tecnico })
+      return
+    }
+
+    if (incidentesCancelables.length > 0) {
+      setBajaDialog({
+        tipo: 'confirmar_con_bajas',
+        tecnico,
+        cantidadCancelables: incidentesCancelables.length,
+        idsCancelables: incidentesCancelables,
+      })
+      return
+    }
+
+    // Sin incidentes activos: desactivar directamente
+    const result = await toggleActivoTecnico(tecnico.id_tecnico, false)
+    if (!result.success) toast.error('Error al desactivar técnico')
+    else { toast.success('Técnico desactivado'); cargarTecnicos() }
+  }
+
+  const confirmarDesactivacionConBajas = async () => {
+    if (bajaDialog.tipo !== 'confirmar_con_bajas') return
+    setSubmitting(true)
+    const result = await desactivarTecnicoConBajas(bajaDialog.tecnico.id_tecnico, bajaDialog.idsCancelables)
+    setSubmitting(false)
+    setBajaDialog({ tipo: 'cerrado' })
+    if (!result.success) toast.error('Error al desactivar técnico', { description: result.error })
+    else {
+      toast.success('Técnico desactivado', {
+        description: `Se cancelaron ${bajaDialog.cantidadCancelables} incidente${bajaDialog.cantidadCancelables !== 1 ? 's' : ''} en curso`,
+      })
+      cargarTecnicos()
+    }
   }
 
   const abrirEditar = (tecnico: Tecnico) => {
@@ -493,7 +546,8 @@ export default function TecnicosTab() {
             {/* Activar/Desactivar */}
             <button
               onClick={() => tecnicoActual && handleToggleActivo(tecnicoActual)}
-              className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all group ${
+              disabled={verificandoBaja}
+              className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all group disabled:opacity-60 disabled:cursor-wait ${
                 tecnicoActual?.esta_activo
                   ? 'border-gray-200 hover:border-orange-500 hover:bg-orange-50'
                   : 'border-gray-200 hover:border-green-500 hover:bg-green-50'
@@ -510,7 +564,7 @@ export default function TecnicosTab() {
               </div>
               <div className="flex-1 text-left">
                 <h3 className="font-semibold text-gray-900">
-                  {tecnicoActual?.esta_activo ? 'Desactivar' : 'Activar'} Técnico
+                  {verificandoBaja ? 'Verificando...' : tecnicoActual?.esta_activo ? 'Desactivar' : 'Activar'} Técnico
                 </h3>
                 <p className="text-sm text-gray-600">
                   {tecnicoActual?.esta_activo
@@ -527,6 +581,79 @@ export default function TecnicosTab() {
               </p>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog — Bloqueo por incidente con conformidad */}
+      <Dialog open={bajaDialog.tipo === 'bloqueado'} onOpenChange={open => { if (!open) setBajaDialog({ tipo: 'cerrado' }) }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-700">
+              <XOctagon className="h-5 w-5" />
+              No se puede desactivar el técnico
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+              <p className="text-sm text-red-800">
+                El técnico tiene un trabajo terminado por el cual todavía no se le ha pagado, por lo que no puede darse de baja.
+              </p>
+            </div>
+            <p className="text-sm text-gray-600 mt-3">
+              Una vez que el técnico reciba el pago correspondiente, podrá ser dado de baja sin inconvenientes.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setBajaDialog({ tipo: 'cerrado' })}>Entendido</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog — Confirmación con baja de incidentes */}
+      <Dialog open={bajaDialog.tipo === 'confirmar_con_bajas'} onOpenChange={open => { if (!open && !submitting) setBajaDialog({ tipo: 'cerrado' }) }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-700">
+              <AlertTriangle className="h-5 w-5" />
+              Desactivar técnico con incidentes en curso
+            </DialogTitle>
+            <DialogDescription>
+              {bajaDialog.tipo === 'confirmar_con_bajas' && `${bajaDialog.tecnico.nombre} ${bajaDialog.tecnico.apellido}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <div className="flex gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-sm text-amber-800">
+                Este técnico tiene{' '}
+                <strong>
+                  {bajaDialog.tipo === 'confirmar_con_bajas' ? bajaDialog.cantidadCancelables : ''}{' '}
+                  incidente{bajaDialog.tipo === 'confirmar_con_bajas' && bajaDialog.cantidadCancelables !== 1 ? 's' : ''} en curso
+                </strong>
+                {' '}que serán cancelados automáticamente y vueltos al estado pendiente para ser reasignados.
+              </p>
+            </div>
+            <p className="text-sm text-gray-600">
+              Los clientes recibirán una notificación indicando que su incidente fue cancelado y está pendiente de nueva asignación.
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setBajaDialog({ tipo: 'cerrado' })}
+              disabled={submitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-orange-600 hover:bg-orange-700"
+              onClick={confirmarDesactivacionConBajas}
+              disabled={submitting}
+            >
+              {submitting ? 'Desactivando...' : 'Confirmar y desactivar'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

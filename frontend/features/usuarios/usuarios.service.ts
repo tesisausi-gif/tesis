@@ -358,6 +358,96 @@ export async function toggleActivoTecnico(
   }
 }
 
+export interface VerificacionDesactivacionTecnico {
+  incidentesEnProceso: number
+  incidentesCancelables: number[]
+  incidentesBloqueantes: number[]
+}
+
+/**
+ * Verifica si un técnico puede ser desactivado según el estado de sus incidentes activos.
+ * - Cancelables: sin conformidad subida y sin fue_resuelto → se pueden dar de baja automáticamente.
+ * - Bloqueantes: conformidad subida o fue_resuelto=true → impiden la baja.
+ */
+export async function verificarIncidentesTecnico(
+  idTecnico: number
+): Promise<ActionResult<VerificacionDesactivacionTecnico>> {
+  try {
+    const supabase = createAdminClient()
+
+    const { data: asigs, error } = await supabase
+      .from('asignaciones_tecnico')
+      .select('id_incidente')
+      .eq('id_tecnico', idTecnico)
+      .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso', 'completada'])
+
+    if (error) return { success: false, error: error.message }
+    if (!asigs || asigs.length === 0) {
+      return { success: true, data: { incidentesEnProceso: 0, incidentesCancelables: [], incidentesBloqueantes: [] } }
+    }
+
+    const ids = asigs.map(a => a.id_incidente)
+
+    const { data: incidentes, error: errInc } = await supabase
+      .from('incidentes')
+      .select('id_incidente, fue_resuelto')
+      .in('id_incidente', ids)
+      .eq('estado_actual', 'en_proceso')
+
+    if (errInc) return { success: false, error: errInc.message }
+    if (!incidentes || incidentes.length === 0) {
+      return { success: true, data: { incidentesEnProceso: 0, incidentesCancelables: [], incidentesBloqueantes: [] } }
+    }
+
+    const idsEnProceso = incidentes.map(i => i.id_incidente)
+
+    const { data: conformidades } = await supabase
+      .from('conformidades')
+      .select('id_incidente')
+      .in('id_incidente', idsEnProceso)
+      .not('url_documento', 'is', null)
+
+    const idsConConformidad = new Set((conformidades ?? []).map(c => c.id_incidente))
+    const idsConFueResuelto = new Set(incidentes.filter(i => i.fue_resuelto).map(i => i.id_incidente))
+
+    const bloqueantes = idsEnProceso.filter(id => idsConConformidad.has(id) || idsConFueResuelto.has(id))
+    const cancelables = idsEnProceso.filter(id => !idsConConformidad.has(id) && !idsConFueResuelto.has(id))
+
+    return {
+      success: true,
+      data: {
+        incidentesEnProceso: idsEnProceso.length,
+        incidentesCancelables: cancelables,
+        incidentesBloqueantes: bloqueantes,
+      },
+    }
+  } catch {
+    return { success: false, error: 'Error inesperado al verificar incidentes del técnico' }
+  }
+}
+
+/**
+ * Desactiva un técnico cancelando previamente sus incidentes cancelables.
+ * Requiere haber verificado que no hay incidentes bloqueantes.
+ */
+export async function desactivarTecnicoConBajas(
+  idTecnico: number,
+  incidentesCancelables: number[]
+): Promise<ActionResult> {
+  try {
+    const { darDeBajaIncidente } = await import('@/features/asignaciones/asignaciones.service')
+
+    for (const idIncidente of incidentesCancelables) {
+      const res = await darDeBajaIncidente(idIncidente, 'El técnico asignado fue dado de baja del sistema')
+      if (!res.success) return { success: false, error: `Error al cancelar incidente #${idIncidente}: ${res.error}` }
+    }
+
+    return await toggleActivoTecnico(idTecnico, false)
+  } catch {
+    return { success: false, error: 'Error inesperado al desactivar técnico' }
+  }
+}
+
 export async function actualizarTecnico(
   idTecnico: number,
   data: {

@@ -123,6 +123,10 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
           <Plus className="h-4 w-4" />
           Reportar Incidente
         </Link>
+        <p className="mt-3 text-xs text-gray-400 text-center">
+          Para cancelar un incidente en curso, escribinos a{' '}
+          <a href="mailto:admin@isba.com" className="text-blue-500 underline underline-offset-2">admin@isba.com</a>
+        </p>
       </div>
 
       {incidentes.length === 0 ? (
