@@ -51,6 +51,7 @@ import {
   Check,
   UserX,
   CalendarDays,
+  Ban,
 } from 'lucide-react'
 import { EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
@@ -169,6 +170,7 @@ interface Props {
   onOpenChange: (open: boolean) => void
   onUpdate?: () => void
   onDarBaja?: (incidenteId: number) => void
+  onCancelarIncidente?: (incidenteId: number) => void
   rol?: 'admin' | 'cliente' | 'tecnico'
   initialTab?: string
   hideTabs?: boolean
@@ -435,7 +437,7 @@ function DisponibilidadReparacionPanel({
   )
 }
 
-export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, onDarBaja, rol = 'admin', initialTab, hideTabs = false }: Props) {
+export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, onDarBaja, onCancelarIncidente, rol = 'admin', initialTab, hideTabs = false }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('detalles')
@@ -1361,26 +1363,44 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           <DialogTitle className="flex items-center gap-2 text-xl">
             <AlertCircle className="h-5 w-5 text-blue-600 shrink-0" />
             Incidente #{incidenteId}
-            {rol === 'admin' && onDarBaja && !loading && incidente && (
-              (() => {
-                const tieneAsignacionActiva = asignaciones.some(a =>
-                  ['pendiente', 'aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
-                )
-                const tieneConformidadSubida = !!conformidad?.url_documento
-                if (!tieneAsignacionActiva || tieneConformidadSubida) return null
-                return (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="ml-auto mr-8 gap-1.5 shrink-0"
-                    onClick={() => { onOpenChange(false); onDarBaja(incidenteId!) }}
-                  >
-                    <UserX className="h-4 w-4" />
-                    Dar de baja
-                  </Button>
-                )
-              })()
-            )}
+            {rol === 'admin' && !loading && incidente && (() => {
+              const tieneAsignacionActiva = asignaciones.some(a =>
+                ['pendiente', 'aceptada', 'en_curso', 'completada'].includes(a.estado_asignacion)
+              )
+              const tieneConformidadSubida = !!conformidad?.url_documento
+              const presupuestosActivos = presupuestos.filter((p: any) => p.estado_presupuesto !== 'rechazado')
+              const presupuestoAprobadoPorCliente = presupuestosActivos.some((p: any) => p.estado_presupuesto === 'aprobado')
+              const esCancelado = incidente.estado_actual === 'cancelado'
+              const esFinalizado = incidente.estado_actual === 'finalizado' || incidente.estado_actual === 'resuelto'
+              const puedeCancelarIncidente = !esCancelado && !esFinalizado && !presupuestoAprobadoPorCliente
+
+              return (
+                <div className="ml-auto mr-8 flex items-center gap-2">
+                  {onDarBaja && tieneAsignacionActiva && !tieneConformidadSubida && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="gap-1.5 shrink-0"
+                      onClick={() => { onOpenChange(false); onDarBaja(incidenteId!) }}
+                    >
+                      <UserX className="h-4 w-4" />
+                      Dar de baja
+                    </Button>
+                  )}
+                  {onCancelarIncidente && puedeCancelarIncidente && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 shrink-0 border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                      onClick={() => { onOpenChange(false); onCancelarIncidente(incidenteId!) }}
+                    >
+                      <Ban className="h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  )}
+                </div>
+              )
+            })()}
           </DialogTitle>
           <DialogDescription>
             {rol === 'admin' ? 'Gestión completa del incidente' : 'Detalles del incidente'}

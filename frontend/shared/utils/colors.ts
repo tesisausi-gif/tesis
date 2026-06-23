@@ -52,6 +52,14 @@ export const ESTADO_INCIDENTE_CONFIG: Record<string, {
     labelCliente: 'Finalizado',
     labelTecnico: 'Finalizado',
   },
+  cancelado: {
+    stripe: 'border-l-gray-300',
+    bgGradient: 'from-gray-50/50',
+    badge: 'bg-gray-100 text-gray-500 ring-gray-200',
+    labelAdmin: 'Cancelado',
+    labelCliente: 'Cancelado',
+    labelTecnico: 'Cancelado',
+  },
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

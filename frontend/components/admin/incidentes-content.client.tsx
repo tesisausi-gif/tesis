@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import {
   AlertCircle, Search, Clock, Send, Wrench, CheckCircle,
   MapPin, FileText, ClipboardList, RefreshCw, XCircle, Bell,
-  User, AlertTriangle, CreditCard, CircleCheck, UserX,
+  User, AlertTriangle, CreditCard, CircleCheck, UserX, Ban,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-modal'
@@ -22,7 +22,7 @@ import type { IncidenteConClienteAdmin } from '@/features/incidentes/incidentes.
 import { Paginacion } from '@/components/ui/paginacion'
 import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEnProceso } from '@/shared/utils/colors'
 import { normalizeSearch } from '@/shared/utils'
-import { darDeBajaIncidente } from '@/features/asignaciones/asignaciones.service'
+import { darDeBajaIncidente, cancelarIncidente } from '@/features/asignaciones/asignaciones.service'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 
 interface IncidentesAdminContentProps {
@@ -335,6 +335,9 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
   const [bajaDialogInc, setBajaDialogInc] = useState<IncidenteConClienteAdmin | null>(null)
   const [motivoBaja, setMotivoBaja] = useState('')
   const [procesandoBaja, setProcesandoBaja] = useState(false)
+  const [cancelarDialogInc, setCancelarDialogInc] = useState<IncidenteConClienteAdmin | null>(null)
+  const [motivoCancelacion, setMotivoCancelacion] = useState('')
+  const [procesandoCancelacion, setProcesandoCancelacion] = useState(false)
   const [highlightId, setHighlightId] = useState<number | null>(null)
   const highlightRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const [pagina, setPagina] = useState(1)
@@ -413,6 +416,34 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
     if (inc) setBajaDialogInc(inc)
   }
 
+  const handleModalCancelarIncidente = (incidenteId: number) => {
+    const inc = incidentes.find(i => i.id_incidente === incidenteId)
+    if (inc) setCancelarDialogInc(inc)
+  }
+
+  const handleConfirmarCancelacion = async () => {
+    if (!cancelarDialogInc || !motivoCancelacion.trim()) return
+    setProcesandoCancelacion(true)
+    try {
+      const result = await cancelarIncidente(cancelarDialogInc.id_incidente, motivoCancelacion.trim())
+      if (result.success) {
+        toast.success('Incidente cancelado', {
+          description: `Incidente #${cancelarDialogInc.id_incidente} marcado como cancelado.`,
+        })
+        setCancelarDialogInc(null)
+        setMotivoCancelacion('')
+        router.refresh()
+        window.dispatchEvent(new Event('admin-badges-refresh'))
+      } else {
+        toast.error('Error', { description: result.error })
+      }
+    } catch {
+      toast.error('Error inesperado')
+    } finally {
+      setProcesandoCancelacion(false)
+    }
+  }
+
   const handleConfirmarBaja = async () => {
     if (!bajaDialogInc || !motivoBaja.trim()) return
     setProcesandoBaja(true)
@@ -451,14 +482,18 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
     ),
     en_proceso:            incidentes.filter(i => i.estado_actual === 'en_proceso'),
     finalizado:            incidentes.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto'),
+    cancelado:             incidentes.filter(i => i.estado_actual === 'cancelado'),
   }
 
+  const incidentesActivos = incidentes.filter(i => i.estado_actual !== 'cancelado')
+
   const filtros = [
-    { id: 'todos',                 label: 'Todos',          count: incidentes.length,                          Icon: AlertCircle },
+    { id: 'todos',                 label: 'Todos',          count: incidentesActivos.length,                   Icon: AlertCircle },
     { id: 'pendiente',             label: 'Pendientes',     count: porEstado.pendiente.length,                 Icon: Clock },
     { id: 'asignacion_solicitada', label: 'Asig. Solicitada', count: porEstado.asignacion_solicitada.length,   Icon: Send },
     { id: 'en_proceso',            label: 'En Proceso',     count: porEstado.en_proceso.length,                Icon: Wrench },
     { id: 'finalizado',            label: 'Finalizados',    count: porEstado.finalizado.length,                Icon: CheckCircle },
+    { id: 'cancelado',             label: 'Cancelados',     count: porEstado.cancelado.length,                 Icon: Ban },
   ]
 
   // Reset page + subfiltro when filters change
@@ -467,7 +502,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
   // Filter by estado + search
   const incidentesFiltrados = incidentes.filter(inc => {
     const estadoMatch = filtro === 'todos'
-      ? true
+      ? inc.estado_actual !== 'cancelado'
       : filtro === 'pendiente'
         ? (inc.estado_actual === 'pendiente' ||
            (inc.estado_actual === 'asignacion_solicitada' && necesitaReasignacion(inc)))
@@ -475,7 +510,9 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
           ? (inc.estado_actual === 'asignacion_solicitada' && !necesitaReasignacion(inc))
           : filtro === 'finalizado'
             ? (inc.estado_actual === 'finalizado' || inc.estado_actual === 'resuelto')
-            : inc.estado_actual === filtro
+            : filtro === 'cancelado'
+              ? inc.estado_actual === 'cancelado'
+              : inc.estado_actual === filtro
 
     if (!estadoMatch) return false
 
@@ -680,14 +717,17 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
           )}
           </div>
         </div>
-      ) : filtro === 'finalizado' ? (
-        /* ── Vista Finalizados — lista simple sin sub-filtros ─────────────────── */
+      ) : filtro === 'finalizado' || filtro === 'cancelado' ? (
+        /* ── Vista Finalizados / Cancelados — lista simple sin sub-filtros ──── */
         (() => {
           const paginados = incidentesOrdenados.slice((pagina - 1) * 10, pagina * 10)
+          const esCancelado = filtro === 'cancelado'
           return (
             <div className="space-y-4">
               {incidentesOrdenados.length === 0 ? (
-                <div className="text-center py-12 text-gray-400 text-sm">No hay incidentes finalizados</div>
+                <div className="text-center py-12 text-gray-400 text-sm">
+                  {esCancelado ? 'No hay incidentes cancelados' : 'No hay incidentes finalizados'}
+                </div>
               ) : (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -774,6 +814,7 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
         initialTab={modalTab}
         onUpdate={() => { router.refresh(); window.dispatchEvent(new CustomEvent('admin-badges-refresh')) }}
         onDarBaja={handleModalDarBaja}
+        onCancelarIncidente={handleModalCancelarIncidente}
       />
 
       {/* Modal de Gestión (asignar/reasignar técnico) */}
@@ -785,6 +826,61 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
           onGestionExito={() => { setModalGestionarOpen(false); router.refresh(); window.dispatchEvent(new CustomEvent('admin-badges-refresh')) }}
         />
       )}
+
+      {/* Dialog: Cancelar incidente */}
+      <Dialog
+        open={cancelarDialogInc !== null}
+        onOpenChange={(o) => { if (!o && !procesandoCancelacion) { setCancelarDialogInc(null); setMotivoCancelacion('') } }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-gray-700">
+              <Ban className="h-5 w-5" />
+              Cancelar incidente
+            </DialogTitle>
+            <DialogDescription>
+              Incidente #{cancelarDialogInc?.id_incidente} — El incidente quedará cancelado como registro histórico
+              y no se contará en estadísticas. Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                Motivo de la cancelación <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                value={motivoCancelacion}
+                onChange={(e) => setMotivoCancelacion(e.target.value)}
+                placeholder="Explicá el motivo por el cual se cancela este incidente..."
+                rows={4}
+                disabled={procesandoCancelacion}
+                className="resize-none"
+              />
+              <p className="text-xs text-gray-400 mt-1">Este mensaje será enviado al cliente y al técnico (si está asignado) como notificación.</p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setCancelarDialogInc(null); setMotivoCancelacion('') }}
+              disabled={procesandoCancelacion}
+            >
+              Volver
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmarCancelacion}
+              disabled={procesandoCancelacion || !motivoCancelacion.trim()}
+              className="gap-2"
+            >
+              <Ban className="h-4 w-4" />
+              {procesandoCancelacion ? 'Cancelando...' : 'Confirmar cancelación'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog: Dar de baja técnico */}
       <Dialog
