@@ -53,6 +53,7 @@ import {
   UserX,
   CalendarDays,
   Ban,
+  HardHat,
 } from 'lucide-react'
 import { EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
@@ -597,6 +598,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         }
       }
 
+      let franjasReparClienteData: FranjaInput[] = []
+
       if (rol === 'cliente') {
         try {
           const [presupuestosData, visitaData, franjasData, franjasReparData] = await Promise.all([
@@ -616,7 +619,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
           ) ? visitaData : null
           setVisitaActiva(visitaRelevante)
           setFranjas(franjasData as FranjaInput[])
-          setFranjasReparacion(franjasReparData as FranjaInput[])
+          franjasReparClienteData = franjasReparData as FranjaInput[]
+          setFranjasReparacion(franjasReparClienteData)
         } catch (error) {
           console.error('Error al cargar datos del cliente:', error)
         }
@@ -624,6 +628,22 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
 
       // Construir timeline
       await construirTimeline(incidenteData, asignacionesData, rol)
+
+      // Agregar evento de disponibilidad de reparación si el cliente ya la cargó
+      if (rol === 'cliente' && franjasReparClienteData.length > 0) {
+        setTimeline(prev => {
+          if (prev.some(e => e.id === 'disponibilidad_reparacion')) return prev
+          return [...prev, {
+            id: 'disponibilidad_reparacion',
+            tipo: 'estado' as const,
+            titulo: 'Disponibilidad para la obra indicada',
+            descripcion: `Indicaste ${franjasReparClienteData.length} franja${franjasReparClienteData.length > 1 ? 's' : ''} de horario. El técnico coordinará la fecha de la obra.`,
+            fecha: '',
+            icono: <HardHat className="h-3 w-3" />,
+            color: 'bg-orange-400',
+          }]
+        })
+      }
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -1627,11 +1647,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 />
               )}
 
-              {/* Disponibilidad para visita de obra — cliente ingresa nueva disponibilidad cuando presupuesto aprobado */}
+              {/* Disponibilidad para visita de obra — cliente puede editar hasta que el técnico proponga una fecha */}
               {rol === 'cliente' && (() => {
                 const presAprobado = presupuestos.some(p => p.estado_presupuesto === EstadoPresupuesto.APROBADO)
                 const estaCompletado = asignaciones.some(a => a.estado_asignacion === 'completada')
-                if (!presAprobado || estaCompletado) return null
+                if (!presAprobado || estaCompletado || !!visitaActiva) return null
                 return (
                   <DisponibilidadReparacionPanel
                     idIncidente={incidente.id_incidente}
