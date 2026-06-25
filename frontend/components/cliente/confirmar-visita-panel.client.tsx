@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { CalendarDays, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
 import { confirmarVisita, rechazarVisita } from '@/features/visitas/visitas.service'
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function ConfirmarVisitaPanel({ visita, onCambio }: Props) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [confirmado, setConfirmado] = useState(visita.estado === 'confirmada')
 
@@ -31,6 +33,7 @@ export function ConfirmarVisitaPanel({ visita, onCambio }: Props) {
       toast.success('Visita confirmada. Te notificaremos el día anterior.')
       setConfirmado(true)
       onCambio()
+      router.refresh()
     } finally {
       setLoading(false)
     }
@@ -43,6 +46,7 @@ export function ConfirmarVisitaPanel({ visita, onCambio }: Props) {
       if (!res.success) { toast.error(res.error); return }
       toast.info('Propuesta rechazada. El administrador buscará otro técnico.')
       onCambio()
+      router.refresh()
     } finally {
       setLoading(false)
     }

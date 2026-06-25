@@ -279,15 +279,18 @@ export function IncidentesContent({
               // Alertas de ejecución
               const hoy = new Date().toISOString().slice(0, 10)
               const visitaRaw = visitasPorIncidente[incidente.id_incidente] ?? null
+              const necesitaDisponibilidadReparacion = incidentesNecesitanDisponibilidadReparacion.includes(incidente.id_incidente)
               // Ignorar visita si:
-              // a) la fecha ya pasó (la visita ocurrió aunque quede "confirmada" en DB), O
-              // b) es una visita de inspección pero ya existe un presupuesto (la inspección terminó
-              //    aunque la fecha sea futura porque se cargó antes de la fecha agendada)
+              // a) la fecha ya pasó, O
+              // b) es inspección y ya hay presupuesto esperando aprobación del cliente, O
+              // c) es inspección y ya hay presupuesto aprobado por el cliente (necesita
+              //    disponibilidad de reparación) — el técnico ya inspeccionó aunque la
+              //    fecha programada sea futura
               const visitaIgnorada = !visitaRaw
                 || visitaRaw.fecha_visita < hoy
                 || (visitaRaw.tipo === 'inspeccion' && tienePresupuestoPendiente)
+                || (visitaRaw.tipo === 'inspeccion' && necesitaDisponibilidadReparacion)
               const visitaPropuesta = visitaIgnorada ? null : visitaRaw
-              const necesitaDisponibilidadReparacion = incidentesNecesitanDisponibilidadReparacion.includes(incidente.id_incidente)
 
               const fechaVisitaLeg = visitaPropuesta
                 ? new Date(visitaPropuesta.fecha_visita + 'T00:00:00').toLocaleDateString('es-AR', {
