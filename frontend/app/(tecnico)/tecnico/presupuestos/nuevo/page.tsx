@@ -272,27 +272,29 @@ export default function NuevoPresupuestoTecnicoPage() {
             {/* Costos */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="materiales">Costo Materiales *</Label>
+                <Label htmlFor="materiales">Costo Materiales ($) *</Label>
                 <Input
                   id="materiales"
                   type="number"
                   step="0.01"
                   min="0"
                   value={costoMateriales}
-                  onChange={(e) => setCostoMateriales(e.target.value)}
+                  onChange={(e) => setCostoMateriales(e.target.value.replace(/[^0-9.]/g, ''))}
+                  onKeyDown={(e) => { if (!/[0-9.]/.test(e.key) && e.key.length === 1) e.preventDefault() }}
                   placeholder="0.00"
                   disabled={submitting}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="manoObra">Costo Mano de Obra *</Label>
+                <Label htmlFor="manoObra">Costo Mano de Obra ($) *</Label>
                 <Input
                   id="manoObra"
                   type="number"
                   step="0.01"
                   min="0"
                   value={costoManoObra}
-                  onChange={(e) => setCostoManoObra(e.target.value)}
+                  onChange={(e) => setCostoManoObra(e.target.value.replace(/[^0-9.]/g, ''))}
+                  onKeyDown={(e) => { if (!/[0-9.]/.test(e.key) && e.key.length === 1) e.preventDefault() }}
                   placeholder="0.00"
                   disabled={submitting}
                 />
