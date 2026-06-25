@@ -8,7 +8,7 @@ import { es } from 'date-fns/locale'
 import {
   Plus, AlertCircle, Clock, Send, Wrench, CheckCircle,
   Bell, MapPin, ClipboardList, FileText, CreditCard, ChevronRight, ChevronLeft,
-  Calendar, Ban,
+  Calendar, Ban, CalendarDays, HardHat,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -22,11 +22,14 @@ import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/
 import type { Incidente } from '@/features/incidentes/incidentes.types'
 import { getFranjasDisponibilidad, guardarFranjasDisponibilidad } from '@/features/disponibilidad/disponibilidad.service'
 import { cancelarIncidenteCliente } from '@/features/asignaciones/asignaciones.service'
+import type { VisitaResumen } from '@/features/visitas/visitas.types'
 
 interface IncidentesContentProps {
   incidentes: Incidente[]
   incidentesConPresupuestoPendiente: number[]
   incidentesConConformidadSubida?: number[]
+  incidentesNecesitanDisponibilidadReparacion?: number[]
+  visitasPorIncidente?: Record<number, VisitaResumen | null>
 }
 
 const ICON_BY_ESTADO: Record<string, React.ElementType> = {
@@ -38,7 +41,13 @@ const ICON_BY_ESTADO: Record<string, React.ElementType> = {
   cancelado:             Ban,
 }
 
-export function IncidentesContent({ incidentes, incidentesConPresupuestoPendiente, incidentesConConformidadSubida = [] }: IncidentesContentProps) {
+export function IncidentesContent({
+  incidentes,
+  incidentesConPresupuestoPendiente,
+  incidentesConConformidadSubida = [],
+  incidentesNecesitanDisponibilidadReparacion = [],
+  visitasPorIncidente = {},
+}: IncidentesContentProps) {
   const router = useRouter()
 
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
@@ -267,9 +276,79 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
               const pendienteCobroCfg = pendienteCobro ? SUB_ESTADO_EN_PROCESO_CONFIG['pendiente_pago'] : null
               // Acciones de autogestión: el cliente puede cancelar o editar disponibilidad
               const puedeAutogestionar = incidente.estado_actual === 'pendiente' || incidente.estado_actual === 'asignacion_solicitada'
+              // Alertas de ejecución
+              const visitaPropuesta = visitasPorIncidente[incidente.id_incidente] ?? null
+              const necesitaDisponibilidadReparacion = incidentesNecesitanDisponibilidadReparacion.includes(incidente.id_incidente)
+
+              const fechaVisitaLeg = visitaPropuesta
+                ? new Date(visitaPropuesta.fecha_visita + 'T00:00:00').toLocaleDateString('es-AR', {
+                    weekday: 'long', day: 'numeric', month: 'long',
+                  })
+                : null
+              const tipoVisitaLabel: Record<string, string> = {
+                inspeccion: 'la inspección',
+                reparacion: 'la obra',
+                seguimiento: 'el seguimiento',
+              }
 
               return (
                 <div key={incidente.id_incidente} className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${pendienteCobroCfg?.bgGradient ?? estadoCfg.bgGradient} to-white ${pendienteCobroCfg?.stripe ?? estadoCfg.stripe}`}>
+                  {/* Banner: visita propuesta — máxima prioridad visual */}
+                  {visitaPropuesta && visitaPropuesta.estado === 'propuesta' && (
+                    <button
+                      onClick={() => abrirModal(incidente.id_incidente, 'detalles')}
+                      className="w-full text-left"
+                    >
+                      <div className={`px-4 py-3 ${visitaPropuesta.fuera_de_disponibilidad ? 'bg-orange-500' : 'bg-violet-600'}`}>
+                        <div className="flex items-center gap-2">
+                          <CalendarDays className="h-4 w-4 text-white flex-shrink-0 animate-pulse" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-white leading-snug">
+                              {visitaPropuesta.fuera_de_disponibilidad
+                                ? '⚠️ Visita propuesta fuera de tu horario — revisá'
+                                : `El técnico viene ${tipoVisitaLabel[visitaPropuesta.tipo] ?? 'a visitarte'}`}
+                            </p>
+                            <p className="text-[11px] text-white/90 capitalize mt-0.5">
+                              {fechaVisitaLeg} · {visitaPropuesta.hora_inicio}
+                              {visitaPropuesta.hora_fin_estimada ? ` a ${visitaPropuesta.hora_fin_estimada}` : ''} — tocá para confirmar
+                            </p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-white/70 shrink-0" />
+                        </div>
+                      </div>
+                    </button>
+                  )}
+                  {/* Banner: visita ya confirmada */}
+                  {visitaPropuesta && visitaPropuesta.estado === 'confirmada' && (
+                    <div className="flex items-center gap-2 bg-teal-600 px-4 py-2.5">
+                      <CalendarDays className="h-3.5 w-3.5 text-white flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-white leading-snug capitalize">
+                          Visita confirmada — {tipoVisitaLabel[visitaPropuesta.tipo] ?? 'visita'}
+                        </p>
+                        <p className="text-[11px] text-white/85 capitalize">
+                          {fechaVisitaLeg} · {visitaPropuesta.hora_inicio}
+                          {visitaPropuesta.hora_fin_estimada ? ` a ${visitaPropuesta.hora_fin_estimada}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {/* Banner: necesita disponibilidad para la obra */}
+                  {necesitaDisponibilidadReparacion && !visitaPropuesta && (
+                    <button
+                      onClick={() => abrirModal(incidente.id_incidente, 'detalles')}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center gap-2 bg-orange-500 px-4 py-3">
+                        <HardHat className="h-4 w-4 text-white flex-shrink-0 animate-pulse" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-white">¡Indicá cuándo podemos ir a hacer la obra!</p>
+                          <p className="text-[11px] text-white/85 mt-0.5">El presupuesto fue aprobado — necesitamos tu disponibilidad para coordinar la visita</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-white/70 shrink-0" />
+                      </div>
+                    </button>
+                  )}
                   {tienePresupuestoPendiente && (
                     <div className="flex items-center gap-2 bg-amber-500 px-4 py-2">
                       <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />

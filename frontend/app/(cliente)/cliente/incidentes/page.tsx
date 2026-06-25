@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/features/auth/auth.service'
 import { getIncidentesByCurrentUser } from '@/features/incidentes/incidentes.service'
 import { getIncidentesConPresupuestoPendiente } from '@/features/presupuestos/presupuestos.service'
 import { getIncidentesConConformidadSubida } from '@/features/conformidades/conformidades.service'
+import { getIncidentesQueNecesitanDisponibilidadReparacion } from '@/features/disponibilidad/disponibilidad.service'
+import { getVisitasActivasPorIncidentes } from '@/features/visitas/visitas.service'
 import { IncidentesContent } from '@/components/cliente/incidentes-content.client'
 
 export const dynamic = 'force-dynamic'
@@ -18,9 +20,15 @@ export default async function ClienteIncidentesPage() {
     .filter(i => i.estado_actual === 'en_proceso')
     .map(i => i.id_incidente)
 
-  const [conPresupuestoPendiente, conConformidadSubida] = await Promise.all([
+  const idsActivos = incidentes
+    .filter(i => i.estado_actual !== 'cancelado' && i.estado_actual !== 'finalizado')
+    .map(i => i.id_incidente)
+
+  const [conPresupuestoPendiente, conConformidadSubida, necesitenDisponibilidadReparacion, visitasPorIncidente] = await Promise.all([
     getIncidentesConPresupuestoPendiente().catch(() => []),
     getIncidentesConConformidadSubida(idsEnProceso).catch(() => []),
+    getIncidentesQueNecesitanDisponibilidadReparacion(idsEnProceso).catch(() => []),
+    getVisitasActivasPorIncidentes(idsActivos).catch(() => ({})),
   ])
 
   return (
@@ -28,6 +36,8 @@ export default async function ClienteIncidentesPage() {
       incidentes={incidentes}
       incidentesConPresupuestoPendiente={conPresupuestoPendiente}
       incidentesConConformidadSubida={conConformidadSubida}
+      incidentesNecesitanDisponibilidadReparacion={necesitenDisponibilidadReparacion}
+      visitasPorIncidente={visitasPorIncidente}
     />
   )
 }

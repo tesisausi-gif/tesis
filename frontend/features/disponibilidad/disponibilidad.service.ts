@@ -65,6 +65,39 @@ export async function getFranjasParaIncidentes(
   return resultado
 }
 
+/**
+ * De una lista de IDs de incidentes en_proceso, devuelve cuáles necesitan
+ * que el cliente indique su disponibilidad para la visita de obra (reparación):
+ * tienen presupuesto aprobado pero aún no cargaron franjas de fase='reparacion'.
+ */
+export async function getIncidentesQueNecesitanDisponibilidadReparacion(
+  ids: number[],
+): Promise<number[]> {
+  if (!ids.length) return []
+  const supabase = createAdminClient()
+
+  // Incidentes con presupuesto aprobado
+  const { data: presAprobados } = await supabase
+    .from('presupuestos')
+    .select('id_incidente')
+    .in('id_incidente', ids)
+    .eq('estado_presupuesto', 'aprobado')
+
+  const idsConPresupuesto = new Set((presAprobados ?? []).map((p: any) => p.id_incidente as number))
+  if (!idsConPresupuesto.size) return []
+
+  // De esos, los que YA tienen franjas de reparación
+  const { data: franjasExistentes } = await supabase
+    .from('franjas_disponibilidad')
+    .select('id_incidente')
+    .in('id_incidente', [...idsConPresupuesto])
+    .eq('fase', 'reparacion')
+
+  const idsConFranjas = new Set((franjasExistentes ?? []).map((f: any) => f.id_incidente as number))
+
+  return [...idsConPresupuesto].filter(id => !idsConFranjas.has(id))
+}
+
 // ── Compromisos de visita (técnico) ─────────────────────────────────────────
 // Los datos se guardan directamente en asignaciones_tecnico:
 //   fecha_visita_programada TIMESTAMPTZ  →  fecha + hora_inicio
