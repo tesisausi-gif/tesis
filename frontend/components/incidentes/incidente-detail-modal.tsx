@@ -607,7 +607,11 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
             [EstadoPresupuesto.APROBADO_ADMIN, EstadoPresupuesto.APROBADO].includes(p.estado_presupuesto as EstadoPresupuesto)
           )
           setPresupuestos(visiblesParaCliente)
-          setVisitaActiva(visitaData)
+          // Ignorar visita de inspección si ya hay presupuesto (la inspección terminó)
+          const visitaRelevante = visitaData && !(
+            visitaData.tipo === 'inspeccion' && visiblesParaCliente.length > 0
+          ) ? visitaData : null
+          setVisitaActiva(visitaRelevante)
           setFranjas(franjasData as FranjaInput[])
           setFranjasReparacion(franjasReparData as FranjaInput[])
         } catch (error) {

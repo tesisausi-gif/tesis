@@ -431,6 +431,11 @@ export function IncidentesContent({
                         <Bell className="w-4 h-4 animate-pulse" />
                         <span className="text-[10px] font-semibold">Aprobar presup.</span>
                       </button>
+                    ) : necesitaDisponibilidadReparacion ? (
+                      <button onClick={() => abrirModal(incidente.id_incidente, 'detalles')} className="flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors hover:bg-orange-50/60 text-orange-500">
+                        <HardHat className="w-4 h-4 animate-pulse" />
+                        <span className="text-[10px] font-semibold">Mi disponib.</span>
+                      </button>
                     ) : (
                       <button disabled className="flex-1 flex flex-col items-center gap-0.5 py-3 opacity-30 cursor-not-allowed text-slate-400">
                         <Bell className="w-4 h-4" />
