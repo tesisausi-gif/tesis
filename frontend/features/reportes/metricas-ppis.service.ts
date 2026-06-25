@@ -1720,6 +1720,49 @@ export async function getSp9Data(): Promise<Sp9Data> {
   }
 }
 
+// ─── Cancelaciones por cliente ───────────────────────────────────────────────
+
+export interface CancelacionClienteData {
+  total: number
+  totalIncidentes: number
+  tasa: number
+  semaforo: Semaforo
+  ultimosMeses: { mes: string; cantidad: number }[]
+}
+
+export async function getCancelacionClienteData(): Promise<CancelacionClienteData> {
+  const supabase = createAdminClient()
+
+  const [{ count: totalCancelados }, { count: totalIncidentes }, { data: porMes }] = await Promise.all([
+    supabase.from('incidentes').select('*', { count: 'exact', head: true }).eq('cancelado_por_cliente', true),
+    supabase.from('incidentes').select('*', { count: 'exact', head: true }),
+    supabase.from('incidentes')
+      .select('fecha_registro')
+      .eq('cancelado_por_cliente', true)
+      .order('fecha_registro', { ascending: false })
+      .limit(200),
+  ])
+
+  const total = totalCancelados ?? 0
+  const totalInc = totalIncidentes ?? 0
+  const tasa = totalInc > 0 ? Math.round((total / totalInc) * 100) : 0
+  const semaforo: Semaforo = tasa === 0 ? 'verde' : tasa <= 5 ? 'amarillo' : 'rojo'
+
+  // Agrupar por mes (últimos 6)
+  const conteoPorMes: Record<string, number> = {}
+  for (const row of porMes ?? []) {
+    const mes = (row.fecha_registro as string).slice(0, 7)
+    conteoPorMes[mes] = (conteoPorMes[mes] ?? 0) + 1
+  }
+  const ultimosMeses = Object.entries(conteoPorMes)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 6)
+    .reverse()
+    .map(([mes, cantidad]) => ({ mes, cantidad }))
+
+  return { total, totalIncidentes: totalInc, tasa, semaforo, ultimosMeses }
+}
+
 // ─── Export combinado de todos los PPIs ───────────────────────────────────────
 
 export interface TodosPpisData {
@@ -1733,10 +1776,11 @@ export interface TodosPpisData {
   cb2: Cb2Data
   oee: OeeData
   sp9: Sp9Data
+  cancelacionCliente: CancelacionClienteData
 }
 
 export async function getTodosPpisData(): Promise<TodosPpisData> {
-  const [tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9] = await Promise.all([
+  const [tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9, cancelacionCliente] = await Promise.all([
     getTciData(),
     getFpyData(),
     getWipData(),
@@ -1747,6 +1791,7 @@ export async function getTodosPpisData(): Promise<TodosPpisData> {
     getCb2Data(),
     getOeeData(),
     getSp9Data(),
+    getCancelacionClienteData(),
   ])
-  return { tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9 }
+  return { tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9, cancelacionCliente }
 }

@@ -1,17 +1,27 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Plus, AlertCircle, Clock, Send, Wrench, CheckCircle,
   Bell, MapPin, ClipboardList, FileText, CreditCard, ChevronRight, ChevronLeft,
+  Calendar, Ban,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
+import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
+import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/shared/lib/supabase/client'
 import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
 import type { Incidente } from '@/features/incidentes/incidentes.types'
+import { getFranjasDisponibilidad, guardarFranjasDisponibilidad } from '@/features/disponibilidad/disponibilidad.service'
+import { cancelarIncidenteCliente } from '@/features/asignaciones/asignaciones.service'
 
 interface IncidentesContentProps {
   incidentes: Incidente[]
@@ -25,9 +35,12 @@ const ICON_BY_ESTADO: Record<string, React.ElementType> = {
   en_proceso:            Wrench,
   resuelto:              CheckCircle,
   finalizado:            CheckCircle,
+  cancelado:             Ban,
 }
 
 export function IncidentesContent({ incidentes, incidentesConPresupuestoPendiente, incidentesConConformidadSubida = [] }: IncidentesContentProps) {
+  const router = useRouter()
+
   const [incidenteSeleccionado, setIncidenteSeleccionado] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalTab, setModalTab] = useState<string>('detalles')
@@ -41,12 +54,19 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
   const [filtrosScrolled,    setFiltrosScrolled]    = useState(false)
   const [subFiltrosScrolled, setSubFiltrosScrolled] = useState(false)
 
+  // Editar disponibilidad
+  const [editarDispIncId, setEditarDispIncId] = useState<number | null>(null)
+  const [franjasEdicion, setFranjasEdicion]   = useState<FranjaInput[]>([])
+  const [cargandoFranjas, setCargandoFranjas] = useState(false)
+  const [guardandoFranjas, setGuardandoFranjas] = useState(false)
+
+  // Cancelar incidente (cliente)
+  const [cancelarClienteIncId, setCancelarClienteIncId] = useState<number | null>(null)
+  const [motivoCancelacion, setMotivoCancelacion]       = useState('')
+  const [procesandoCancelacion, setProcesandoCancelacion] = useState(false)
+
   useEffect(() => { setSubFiltro('todos') }, [filtro])
 
-  // Sincronizar el set local con la prop del Server Component. Cuando se
-  // ejecuta router.refresh() después de aprobar/rechazar, la prop cambia
-  // pero el state local no se reinicializa solo. Sin este efecto, la card
-  // sigue mostrando "Aprobar presup." aunque el server ya tenga el dato nuevo.
   useEffect(() => {
     setPendientesPresupuesto(new Set(incidentesConPresupuestoPendiente))
   }, [incidentesConPresupuestoPendiente])
@@ -75,11 +95,58 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     setIncidenteSeleccionado(id)
     setModalTab(tab)
     setModalOpen(true)
-    // NO removemos el id de pendientesPresupuesto al abrir el modal:
-    // el botón "Aprobar presup." debe quedar habilitado hasta que el cliente
-    // realmente apruebe el presupuesto en DB. El realtime listener arriba
-    // se encarga de sacarlo del set cuando estado_presupuesto deja de ser
-    // 'aprobado_admin' (porque el cliente aprobó o rechazó).
+  }
+
+  const abrirEditarDisp = async (idIncidente: number) => {
+    setCargandoFranjas(true)
+    setEditarDispIncId(idIncidente)
+    setFranjasEdicion([])
+    try {
+      const franjas = await getFranjasDisponibilidad(idIncidente, 'inspeccion')
+      setFranjasEdicion(franjas.map(f => ({ fecha: f.fecha, hora_inicio: f.hora_inicio, hora_fin: f.hora_fin })))
+    } finally {
+      setCargandoFranjas(false)
+    }
+  }
+
+  const guardarDisponibilidad = async () => {
+    if (!editarDispIncId) return
+    setGuardandoFranjas(true)
+    try {
+      const result = await guardarFranjasDisponibilidad(editarDispIncId, franjasEdicion, 'inspeccion')
+      if (!result.success) {
+        toast.error(result.error ?? 'Error al guardar disponibilidad')
+        return
+      }
+      toast.success('Disponibilidad actualizada')
+      setEditarDispIncId(null)
+      router.refresh()
+    } finally {
+      setGuardandoFranjas(false)
+    }
+  }
+
+  const abrirCancelarCliente = (idIncidente: number) => {
+    setCancelarClienteIncId(idIncidente)
+    setMotivoCancelacion('')
+  }
+
+  const confirmarCancelacion = async () => {
+    if (!cancelarClienteIncId) return
+    setProcesandoCancelacion(true)
+    try {
+      const result = await cancelarIncidenteCliente(cancelarClienteIncId, motivoCancelacion || 'Cancelado por el cliente')
+      if (!result.success) {
+        toast.error(result.error ?? 'Error al cancelar el incidente')
+        return
+      }
+      toast.success('Incidente cancelado')
+      setCancelarClienteIncId(null)
+      setMotivoCancelacion('')
+      router.refresh()
+    } finally {
+      setProcesandoCancelacion(false)
+    }
   }
 
   // Incidente "resuelto" para el cliente = finalizado en DB, O en_proceso con fue_resuelto (pendiente_pago)
@@ -92,21 +159,27 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
     pendiente: incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada'),
     en_proceso: incidentes.filter(i => i.estado_actual === 'en_proceso' && !i.fue_resuelto),
     resuelto:   incidentes.filter(esResueltoParaCliente),
+    cancelado:  incidentes.filter(i => i.estado_actual === 'cancelado'),
   }
 
+  const incidentesActivos = incidentes.filter(i => i.estado_actual !== 'cancelado')
+
   const incidentesFiltrados = filtro === 'todos'
-    ? incidentes
+    ? incidentesActivos
     : filtro === 'pendiente'
       ? incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada')
       : filtro === 'resuelto'
         ? incidentes.filter(esResueltoParaCliente)
-        : incidentes.filter(i => i.estado_actual === filtro && !i.fue_resuelto)
+        : filtro === 'cancelado'
+          ? incidentes.filter(i => i.estado_actual === 'cancelado')
+          : incidentes.filter(i => i.estado_actual === filtro && !i.fue_resuelto)
 
   const filtros = [
-    { id: 'todos',      label: 'Todos',       count: incidentes.length,            Icon: ClipboardList },
-    { id: 'pendiente',  label: 'Pendiente',   count: porEstado.pendiente.length,   Icon: Clock },
-    { id: 'en_proceso', label: 'En proceso',  count: porEstado.en_proceso.length,  Icon: Wrench },
-    { id: 'resuelto',   label: 'Finalizados', count: porEstado.resuelto.length,    Icon: CheckCircle },
+    { id: 'todos',      label: 'Todos',       count: incidentesActivos.length,         Icon: ClipboardList },
+    { id: 'pendiente',  label: 'Pendiente',   count: porEstado.pendiente.length,       Icon: Clock },
+    { id: 'en_proceso', label: 'En proceso',  count: porEstado.en_proceso.length,      Icon: Wrench },
+    { id: 'resuelto',   label: 'Finalizados', count: porEstado.resuelto.length,        Icon: CheckCircle },
+    ...(porEstado.cancelado.length > 0 ? [{ id: 'cancelado', label: 'Cancelados', count: porEstado.cancelado.length, Icon: Ban }] : []),
   ]
 
   return (
@@ -124,7 +197,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
           Reportar Incidente
         </Link>
         <p className="mt-3 text-xs text-gray-400 text-center">
-          Para cancelar un incidente en curso, escribinos a{' '}
+          Si ya tenés técnico asignado y querés cancelar, escribinos a{' '}
           <a href="mailto:admin@isba.com" className="text-blue-500 underline underline-offset-2">admin@isba.com</a>
         </p>
       </div>
@@ -192,6 +265,8 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
               const tieneConformidadSubida = incidentesConConformidadSubida.includes(incidente.id_incidente)
               const pendienteCobro = !!(incidente.fue_resuelto && incidente.estado_actual === 'en_proceso')
               const pendienteCobroCfg = pendienteCobro ? SUB_ESTADO_EN_PROCESO_CONFIG['pendiente_pago'] : null
+              // Acciones de autogestión: el cliente puede cancelar o editar disponibilidad
+              const puedeAutogestionar = incidente.estado_actual === 'pendiente' || incidente.estado_actual === 'asignacion_solicitada'
 
               return (
                 <div key={incidente.id_incidente} className={`rounded-2xl border-l-4 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-gradient-to-r ${pendienteCobroCfg?.bgGradient ?? estadoCfg.bgGradient} to-white ${pendienteCobroCfg?.stripe ?? estadoCfg.stripe}`}>
@@ -241,6 +316,7 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                       </div>
                     )}
                   </div>
+                  {/* Botones estándar */}
                   <div className="flex border-t border-white/60">
                     <button onClick={() => abrirModal(incidente.id_incidente, 'detalles')} className="flex-1 flex flex-col items-center gap-0.5 py-3 hover:bg-white/40 active:bg-white/60 transition-colors border-r border-white/60">
                       <FileText className="w-4 h-4 text-slate-500" />
@@ -255,6 +331,25 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
                       <span className="text-[10px] font-semibold">{tienePresupuestoPendiente ? 'Aprobar presup.' : 'Sin acción'}</span>
                     </button>
                   </div>
+                  {/* Botones de autogestión (solo cuando no hay técnico asignado) */}
+                  {puedeAutogestionar && (
+                    <div className="flex border-t border-white/60 bg-slate-50/50">
+                      <button
+                        onClick={() => abrirEditarDisp(incidente.id_incidente)}
+                        className="flex-1 flex flex-col items-center gap-0.5 py-2.5 hover:bg-blue-50/60 active:bg-blue-100/40 transition-colors border-r border-white/60"
+                      >
+                        <Calendar className="w-4 h-4 text-blue-500" />
+                        <span className="text-[10px] font-semibold text-blue-500">Disponibilidad</span>
+                      </button>
+                      <button
+                        onClick={() => abrirCancelarCliente(incidente.id_incidente)}
+                        className="flex-1 flex flex-col items-center gap-0.5 py-2.5 hover:bg-red-50/60 active:bg-red-100/40 transition-colors"
+                      >
+                        <Ban className="w-4 h-4 text-red-400" />
+                        <span className="text-[10px] font-semibold text-red-400">Cancelar</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             }
@@ -361,6 +456,73 @@ export function IncidentesContent({ incidentes, incidentesConPresupuestoPendient
         rol="cliente"
         initialTab={modalTab}
       />
+
+      {/* ── Modal editar disponibilidad ──────────── */}
+      <Dialog open={editarDispIncId !== null} onOpenChange={open => { if (!open) setEditarDispIncId(null) }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-blue-500" />
+              Editar disponibilidad
+            </DialogTitle>
+            <DialogDescription>
+              Indicá en qué días y horarios estás disponible para recibir al técnico. Esto reemplazará tu disponibilidad anterior.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            {cargandoFranjas ? (
+              <p className="text-sm text-slate-400 text-center py-8">Cargando disponibilidad...</p>
+            ) : (
+              <CalendarioDisponibilidad
+                modo="editar"
+                franjas={franjasEdicion}
+                onChange={setFranjasEdicion}
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditarDispIncId(null)} disabled={guardandoFranjas}>
+              Cancelar
+            </Button>
+            <Button onClick={guardarDisponibilidad} disabled={guardandoFranjas || cargandoFranjas}>
+              {guardandoFranjas ? 'Guardando...' : 'Guardar disponibilidad'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog cancelar incidente (cliente) ─── */}
+      <Dialog open={cancelarClienteIncId !== null} onOpenChange={open => { if (!open) { setCancelarClienteIncId(null); setMotivoCancelacion('') } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Ban className="h-5 w-5" />
+              Cancelar incidente
+            </DialogTitle>
+            <DialogDescription>
+              Vas a cancelar el incidente #{cancelarClienteIncId}. Esta acción no se puede deshacer. Si en el futuro necesitás asistencia, deberás reportar un nuevo incidente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <label className="text-sm font-medium text-slate-700">Motivo (opcional)</label>
+            <Textarea
+              placeholder="Ej: Ya resolví el problema por mi cuenta, no necesito asistencia..."
+              value={motivoCancelacion}
+              onChange={e => setMotivoCancelacion(e.target.value)}
+              rows={3}
+              className="resize-none"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCancelarClienteIncId(null); setMotivoCancelacion('') }} disabled={procesandoCancelacion}>
+              Volver
+            </Button>
+            <Button variant="destructive" onClick={confirmarCancelacion} disabled={procesandoCancelacion}>
+              {procesandoCancelacion ? 'Cancelando...' : 'Sí, cancelar incidente'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

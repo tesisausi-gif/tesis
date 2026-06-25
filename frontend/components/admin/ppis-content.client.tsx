@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CheckCircle2, XCircle, AlertCircle, Info, Clock, TrendingUp, Tag, Layers, Repeat2, Gauge, Zap, User, Wrench, RefreshCw, ChevronDown, ChevronUp, Search, Filter } from 'lucide-react'
 import { normalizeSearch } from '@/shared/utils'
 import { Paginacion } from '@/components/ui/paginacion'
-import type { TodosPpisData, TciData, FpyData, FpyEtapa, WipData, WipEtapa, ReasignacionData, ReasignacionPorTecnico, Semaforo, TciPorPrioridad, TciPorCategoria, TcrData, TcrPorTecnico, Sp8Data, Sp8ItemPendiente, IscData, IscPorTecnico, Cb2Data, OeeData, IrtTecnico, Sp9Data, Sp9PorTecnico } from '@/features/reportes/metricas-ppis.service'
+import type { TodosPpisData, TciData, FpyData, FpyEtapa, WipData, WipEtapa, ReasignacionData, ReasignacionPorTecnico, Semaforo, TciPorPrioridad, TciPorCategoria, TcrData, TcrPorTecnico, Sp8Data, Sp8ItemPendiente, IscData, IscPorTecnico, Cb2Data, OeeData, IrtTecnico, Sp9Data, Sp9PorTecnico, CancelacionClienteData } from '@/features/reportes/metricas-ppis.service'
 
 // ─── Helpers visuales ─────────────────────────────────────────────────────────
 
@@ -1875,6 +1875,61 @@ function OeeMetrica({ data }: { data: OeeData }) {
   )
 }
 
+// ─── Cancelaciones por cliente ───────────────────────────────────────────────
+
+function CancelacionClienteMetrica({ data }: { data: CancelacionClienteData }) {
+  const col = SEMAFORO_COLORES[data.semaforo]
+  const maxMes = Math.max(...data.ultimosMeses.map(m => m.cantidad), 1)
+  return (
+    <div className="space-y-5">
+      <ExplicacionMetrica
+        numero="CC"
+        titulo="¿Cuántos incidentes cancelaron los clientes antes de que les asignemos un técnico?"
+        resumen="Cuenta los incidentes que el cliente decide cancelar por cuenta propia, antes de que la administración haya asignado o enviado solicitud a un técnico. Una tasa alta puede indicar demoras en la asignación o insatisfacción temprana."
+        proceso="El cliente puede cancelar su propio incidente desde el portal mientras el incidente está en estado pendiente o en proceso de solicitud de técnico. Cada cancelación de este tipo queda registrada con el flag 'cancelado_por_cliente'."
+        porque="Distinguir las cancelaciones del cliente de las del administrador ayuda a detectar si hay problemas en la etapa de espera: si muchos clientes cancelan antes de que llegue un técnico, puede ser señal de que el proceso de asignación es demasiado lento."
+        accion="🔴 Tasa alta (>5%): revisar si hay demoras en la asignación inicial. Hablar con clientes que cancelaron. Verificar si hay incidentes pendientes que llevan mucho tiempo sin técnico. 🟡 Amarillo (1–5%): monitorear. 🟢 Verde (0%): excelente — los clientes esperan su asignación con confianza."
+        formula="Tasa = cancelaciones_cliente / total_incidentes_reportados × 100 · Verde 0% | Amarillo 1–5% | Rojo >5%"
+      />
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className={`rounded-2xl border-2 p-5 ${col.bg} ${col.border}`}>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Cancelaciones por cliente</p>
+          <div className={`text-5xl font-bold tabular-nums ${col.text}`}>{data.total}</div>
+          <p className="text-xs text-slate-400 mt-1">de {data.totalIncidentes} incidentes reportados</p>
+          <div className="mt-3">
+            <SemaforoBadge s={data.semaforo} texto={`Tasa: ${data.tasa}% ${data.semaforo === 'verde' ? '— Sin cancelaciones' : data.semaforo === 'amarillo' ? '— Monitorear' : '— Requiere atención'}`} />
+          </div>
+        </div>
+        <Card className="border-slate-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Evolución mensual</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.ultimosMeses.length === 0 ? (
+              <p className="text-xs text-slate-400">Sin datos aún</p>
+            ) : (
+              <div className="space-y-2">
+                {data.ultimosMeses.map(m => (
+                  <div key={m.mes} className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-400 w-14 shrink-0">{m.mes.slice(5, 7)}/{m.mes.slice(0, 4)}</span>
+                    <div className="flex-1 bg-slate-100 rounded-full h-2">
+                      <div
+                        className="bg-red-400 h-2 rounded-full transition-all"
+                        style={{ width: `${(m.cantidad / maxMes) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-slate-600 w-4 text-right">{m.cantidad}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 type SubTab = 'tiempo' | 'calidad' | 'proceso' | 'finanzas' | 'tecnicos'
@@ -1893,7 +1948,7 @@ export function PpisContent({ ppis }: { ppis: TodosPpisData }) {
   const estadosPorTab: Record<SubTab, { label: string; semaforo: Semaforo }[]> = {
     tiempo:   [{ label: 'Tiempo promedio', semaforo: ppis.tci.semaforoGlobal }, { label: 'Carga del sistema', semaforo: ppis.cb2.semaforoRatio }],
     calidad:  [{ label: 'Sin correcciones', semaforo: ppis.fpy.semaforoGlobal }, { label: 'Rechazos', semaforo: ppis.tcr.semaforoGlobal }, { label: 'Satisfacción', semaforo: ppis.isc.semaforoGlobal }],
-    proceso:  [{ label: 'Reasignaciones', semaforo: ppis.reasignacion.semaforoGlobal }, { label: 'Horarios rechazados', semaforo: ppis.sp9.semaforoGlobal }],
+    proceso:  [{ label: 'Reasignaciones', semaforo: ppis.reasignacion.semaforoGlobal }, { label: 'Horarios rechazados', semaforo: ppis.sp9.semaforoGlobal }, { label: 'Cancel. clientes', semaforo: ppis.cancelacionCliente.semaforo }],
     finanzas: [{ label: 'Por cobrar', semaforo: ppis.sp8.dpcSemaforo }, { label: 'Por pagar', semaforo: ppis.sp8.dptSemaforo }],
     tecnicos: [{ label: 'Rendimiento', semaforo: ppis.oee.semaforoGlobal }],
   }
@@ -1959,6 +2014,8 @@ export function PpisContent({ ppis }: { ppis: TodosPpisData }) {
           <ReasignacionMetrica data={ppis.reasignacion} />
           <div className="border-t border-slate-100 pt-2" />
           <Sp9Metrica data={ppis.sp9} />
+          <div className="border-t border-slate-100 pt-2" />
+          <CancelacionClienteMetrica data={ppis.cancelacionCliente} />
         </div>
       )}
 

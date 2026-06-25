@@ -482,6 +482,79 @@ export async function completarAsignacion(idAsignacion: number): Promise<ActionR
  * - Envía notificación al técnico y al cliente con el motivo.
  */
 /**
+ * El cliente cancela su propio incidente antes de que sea aceptado por un técnico.
+ * Solo disponible cuando estado_actual es 'pendiente' o 'asignacion_solicitada'
+ * y no hay asignaciones aceptadas/en curso/completadas.
+ */
+export async function cancelarIncidenteCliente(
+  idIncidente: number,
+  motivo: string,
+): Promise<ActionResult> {
+  try {
+    const { requireClienteId } = await import('@/features/auth/auth.service')
+    const idCliente = await requireClienteId()
+    const adminClient = createAdminClient()
+
+    // Verificar que el incidente pertenece al cliente
+    const { data: inc } = await adminClient
+      .from('incidentes')
+      .select('id_incidente, estado_actual, id_cliente_reporta')
+      .eq('id_incidente', idIncidente)
+      .eq('id_cliente_reporta', idCliente)
+      .maybeSingle()
+
+    if (!inc) return { success: false, error: 'No se encontró el incidente' }
+
+    if (!['pendiente', 'asignacion_solicitada'].includes(inc.estado_actual)) {
+      return { success: false, error: 'Solo podés cancelar incidentes que todavía no tienen técnico asignado' }
+    }
+
+    // Bloquear si hay asignación ya aceptada
+    const { data: asigAceptada } = await adminClient
+      .from('asignaciones_tecnico')
+      .select('id_asignacion')
+      .eq('id_incidente', idIncidente)
+      .in('estado_asignacion', ['aceptada', 'en_curso', 'completada'])
+      .limit(1)
+      .maybeSingle()
+
+    if (asigAceptada) {
+      return { success: false, error: 'No podés cancelar el incidente porque ya tiene un técnico asignado' }
+    }
+
+    // Cancelar asignación pendiente si existe
+    await adminClient
+      .from('asignaciones_tecnico')
+      .update({ estado_asignacion: 'cancelada', fecha_rechazo: new Date().toISOString(), cancelada_por_admin: false })
+      .eq('id_incidente', idIncidente)
+      .eq('estado_asignacion', 'pendiente')
+
+    // Marcar incidente como cancelado por el cliente
+    const { error } = await adminClient
+      .from('incidentes')
+      .update({ estado_actual: 'cancelado', cancelado_por_cliente: true })
+      .eq('id_incidente', idIncidente)
+
+    if (error) return { success: false, error: error.message }
+
+    // Notificar al admin
+    try {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacionAdmin({
+        tipo: 'baja_admin',
+        titulo: 'Incidente cancelado por el cliente',
+        mensaje: `El cliente canceló el incidente #${idIncidente}. Motivo: ${motivo}`,
+        id_incidente: idIncidente,
+      })
+    } catch { /* no bloquear */ }
+
+    return { success: true, data: undefined }
+  } catch {
+    return { success: false, error: 'Error inesperado al cancelar el incidente' }
+  }
+}
+
+/**
  * Cancela un incidente definitivamente (estado 'cancelado').
  * Solo permitido antes de que el cliente apruebe el presupuesto.
  * El registro queda en DB para historial pero se excluye de estadísticas.
