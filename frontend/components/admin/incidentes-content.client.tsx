@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import {
   AlertCircle, Search, Clock, Send, Wrench, CheckCircle,
   MapPin, FileText, ClipboardList, RefreshCw, XCircle, Bell,
-  User, AlertTriangle, CreditCard, CircleCheck, UserX, Ban,
+  User, AlertTriangle, CreditCard, CircleCheck, UserX, Ban, CalendarDays,
 } from 'lucide-react'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
 import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-modal'
@@ -39,18 +39,21 @@ const ICON_BY_ESTADO: Record<string, React.ElementType> = {
 }
 
 const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
-  visita_pendiente:      Clock,
-  visita_propuesta:      Bell,
-  visita_programada:     CheckCircle,
-  pendiente_inspeccion:  ClipboardList,
-  aceptada:              FileText,
-  presupuesto_enviado:   FileText,
-  presupuesto_cliente:   Clock,
-  en_curso:              Wrench,
-  completada_pendiente:  Clock,
-  conformidad_rechazada: XCircle,
-  pendiente_pago:        CreditCard,
-  finalizado:            CheckCircle,
+  visita_pendiente:             Clock,
+  visita_propuesta:             Bell,
+  visita_programada:            CheckCircle,
+  pendiente_inspeccion:         ClipboardList,
+  aceptada:                     FileText,
+  presupuesto_enviado:          FileText,
+  presupuesto_cliente:          Clock,
+  en_curso:                     Wrench,
+  necesita_visita_reparacion:   CalendarDays,
+  visita_reparacion_propuesta:  Clock,
+  visita_reparacion_confirmada: CheckCircle,
+  completada_pendiente:         Clock,
+  conformidad_rechazada:        XCircle,
+  pendiente_pago:               CreditCard,
+  finalizado:                   CheckCircle,
 }
 
 // ── Acción pendiente — qué debe hacer el admin ahora mismo ───────────────────

@@ -96,10 +96,14 @@ function getProximoPaso(
     return { mensaje: 'Presupuesto rechazado — revisalo y volvé a enviar', urgente: true }
   }
   if (estadoPresupuesto === 'aprobado') {
-    if (!conformidad?.url_documento) {
-      return { mensaje: 'Subí la conformidad para finalizar el trabajo', urgente: true }
+    if (estadoAsig === 'completada') {
+      if (!conformidad?.url_documento) return { mensaje: 'Subí la conformidad para finalizar el trabajo', urgente: true }
+      return { mensaje: 'Conformidad subida — esperando revisión del administrador', urgente: false }
     }
-    return { mensaje: 'Conformidad subida — esperando revisión del administrador', urgente: false }
+    const visitaRep = asig.visita_activa?.tipo === 'reparacion' ? asig.visita_activa : null
+    if (visitaRep?.estado === 'propuesta')  return { mensaje: 'Esperando que el cliente confirme la fecha de la obra', urgente: false }
+    if (visitaRep?.estado === 'confirmada') return { mensaje: 'Visita de obra confirmada — realizá el trabajo y completá la asignación', urgente: false }
+    return { mensaje: 'Proponé una fecha para realizar la obra', urgente: true }
   }
   return null
 }
@@ -107,18 +111,21 @@ function getProximoPaso(
 // ── Iconos por sub-estado (los colores/labels vienen de SUB_ESTADO_EN_PROCESO_CONFIG) ──
 
 const ICON_BY_SUB_ESTADO: Record<SubEstadoEnProceso, React.ElementType> = {
-  visita_pendiente:      Clock,
-  visita_propuesta:      Clock,
-  visita_programada:     CheckCircle,
-  pendiente_inspeccion:  ClipboardList,
-  aceptada:              FileText,
-  presupuesto_enviado:   FileText,
-  presupuesto_cliente:   Clock,
-  en_curso:              Wrench,
-  completada_pendiente:  Clock,
-  conformidad_rechazada: XCircle,
-  pendiente_pago:        CreditCard,
-  finalizado:            CheckCircle,
+  visita_pendiente:             Clock,
+  visita_propuesta:             Clock,
+  visita_programada:            CheckCircle,
+  pendiente_inspeccion:         ClipboardList,
+  aceptada:                     FileText,
+  presupuesto_enviado:          FileText,
+  presupuesto_cliente:          Clock,
+  en_curso:                     Wrench,
+  necesita_visita_reparacion:   CalendarDays,
+  visita_reparacion_propuesta:  Clock,
+  visita_reparacion_confirmada: CheckCircle,
+  completada_pendiente:         Clock,
+  conformidad_rechazada:        XCircle,
+  pendiente_pago:               CreditCard,
+  finalizado:                   CheckCircle,
 }
 
 const QUICK_ACTION_TECNICO: Record<SubEstadoEnProceso, {
@@ -135,8 +142,11 @@ const QUICK_ACTION_TECNICO: Record<SubEstadoEnProceso, {
   aceptada:              { label: 'Cargar presup.',   Icon: FileText,      color: 'text-blue-600',   disabled: false, tab: 'presupuesto'  },
   presupuesto_enviado:   { label: 'Pend. admin',      Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'presupuesto'  },
   presupuesto_cliente:   { label: 'Pend. cliente',    Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'presupuesto'  },
-  en_curso:              { label: 'Subir conform.',   Icon: ClipboardList, color: 'text-purple-600', disabled: false, tab: 'conformidad'  },
-  completada_pendiente:  { label: 'Por revisar',      Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'conformidad'  },
+  en_curso:                     { label: 'Subir conform.',  Icon: ClipboardList, color: 'text-purple-600', disabled: false, tab: 'conformidad' },
+  necesita_visita_reparacion:   { label: 'Proponer fecha',  Icon: CalendarDays,  color: 'text-cyan-600',   disabled: false, tab: 'ejecucion'   },
+  visita_reparacion_propuesta:  { label: 'Esp. cliente',    Icon: Clock,         color: 'text-violet-400', disabled: true,  tab: 'ejecucion'   },
+  visita_reparacion_confirmada: { label: 'Obra agendada',   Icon: CheckCircle,   color: 'text-teal-600',   disabled: true,  tab: 'ejecucion'   },
+  completada_pendiente:         { label: 'Por revisar',     Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'conformidad' },
   conformidad_rechazada: { label: 'Resubir',          Icon: RefreshCw,     color: 'text-orange-600', disabled: false, tab: 'conformidad'  },
   pendiente_pago:        { label: 'Cobro pend.',      Icon: Clock,         color: 'text-gray-300',   disabled: true,  tab: 'inspecciones' },
   finalizado:            { label: 'Finalizado',       Icon: CheckCircle,   color: 'text-gray-300',   disabled: true,  tab: 'inspecciones' },
@@ -166,7 +176,13 @@ function getStatusKey(
   if (['aceptada', 'en_curso'].includes(a.estado_asignacion)) {
     if (estadoPresupuesto === 'enviado') return 'presupuesto_enviado'
     if (estadoPresupuesto === 'aprobado_admin') return 'presupuesto_cliente'
-    if (estadoPresupuesto === 'aprobado') return 'en_curso'
+    if (estadoPresupuesto === 'aprobado') {
+      // Verificar si hay visita de reparación activa
+      const visitaRep = a.visita_activa?.tipo === 'reparacion' ? a.visita_activa : null
+      if (visitaRep?.estado === 'propuesta')  return 'visita_reparacion_propuesta'
+      if (visitaRep?.estado === 'confirmada') return 'visita_reparacion_confirmada'
+      return 'necesita_visita_reparacion'
+    }
     if (a.estado_asignacion === 'aceptada' && !tieneInspeccion) {
       if (a.tiene_disponibilidad) {
         const ev = a.visita_activa?.estado
@@ -598,7 +614,7 @@ export function TrabajosContent({
                     {listaFiltrada.length}
                   </span>
                 </button>
-                {(['visita_pendiente', 'visita_propuesta', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
+                {(['visita_pendiente', 'visita_propuesta', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'necesita_visita_reparacion', 'visita_reparacion_propuesta', 'visita_reparacion_confirmada', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const).map(tipo => {
                   const count = listaFiltrada.filter(a => sk(a) === tipo).length
                   const gcfg = SUB_ESTADO_EN_PROCESO_CONFIG[tipo]
                   const active = subFiltro === tipo

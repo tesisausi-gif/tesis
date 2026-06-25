@@ -84,6 +84,9 @@ export type SubEstadoEnProceso =
   | 'presupuesto_enviado'
   | 'presupuesto_cliente'
   | 'en_curso'
+  | 'necesita_visita_reparacion'
+  | 'visita_reparacion_propuesta'
+  | 'visita_reparacion_confirmada'
   | 'completada_pendiente'
   | 'conformidad_rechazada'
   | 'pendiente_pago'
@@ -196,6 +199,42 @@ export const SUB_ESTADO_EN_PROCESO_CONFIG: Record<SubEstadoEnProceso, {
     bannerBg:      null,
     bannerText:    null,
     timelineColor: 'bg-orange-400',
+  },
+  necesita_visita_reparacion: {
+    labelGrupo:    'Coordinar visita de obra',
+    labelBadge:    'Coord. obra',
+    stripe:        'border-l-cyan-400',
+    bgGradient:    'from-cyan-50/50',
+    badge:         'bg-cyan-100 text-cyan-800 ring-cyan-200',
+    groupHeaderCls:'text-cyan-700 bg-cyan-50 border-cyan-200',
+    groupDotCls:   'bg-cyan-400 animate-pulse',
+    bannerBg:      null,
+    bannerText:    null,
+    timelineColor: 'bg-cyan-400',
+  },
+  visita_reparacion_propuesta: {
+    labelGrupo:    'Visita de obra propuesta',
+    labelBadge:    'Visita obra prop.',
+    stripe:        'border-l-violet-400',
+    bgGradient:    'from-violet-50/50',
+    badge:         'bg-violet-100 text-violet-800 ring-violet-200',
+    groupHeaderCls:'text-violet-700 bg-violet-50 border-violet-200',
+    groupDotCls:   'bg-violet-400',
+    bannerBg:      null,
+    bannerText:    null,
+    timelineColor: 'bg-violet-400',
+  },
+  visita_reparacion_confirmada: {
+    labelGrupo:    'Obra agendada',
+    labelBadge:    'Obra agendada',
+    stripe:        'border-l-teal-400',
+    bgGradient:    'from-teal-50/50',
+    badge:         'bg-teal-100 text-teal-800 ring-teal-200',
+    groupHeaderCls:'text-teal-700 bg-teal-50 border-teal-200',
+    groupDotCls:   'bg-teal-400',
+    bannerBg:      null,
+    bannerText:    null,
+    timelineColor: 'bg-teal-400',
   },
   completada_pendiente: {
     labelGrupo:    'Conformidad para revisar',

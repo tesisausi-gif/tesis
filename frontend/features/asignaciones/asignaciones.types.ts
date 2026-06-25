@@ -57,7 +57,7 @@ export interface AsignacionTecnico extends AsignacionBase {
     } | null
   } | null
   // Datos de visitas — inyectados en la page antes de pasar al componente
-  visita_activa?: { estado: string; fuera_de_disponibilidad: boolean } | null
+  visita_activa?: { estado: string; fuera_de_disponibilidad: boolean; tipo?: string } | null
   tiene_disponibilidad?: boolean
 }
 
