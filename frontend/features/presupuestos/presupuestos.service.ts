@@ -117,6 +117,20 @@ export async function getIncidentesConPresupuestoPendiente(): Promise<number[]> 
 }
 
 /**
+ * IDs de incidentes que tienen al menos un presupuesto en cualquier estado.
+ * Se usa para saber si la fase de inspección ya terminó (el técnico subió el presupuesto).
+ */
+export async function getIncidentesConAlgunPresupuesto(ids: number[]): Promise<number[]> {
+  if (!ids.length) return []
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('presupuestos')
+    .select('id_incidente')
+    .in('id_incidente', ids)
+  return [...new Set((data ?? []).map((p: any) => p.id_incidente as number))]
+}
+
+/**
  * Obtener presupuestos de los incidentes de un cliente
  */
 export async function getPresupuestosDelCliente(idCliente: number): Promise<PresupuestoConDetalle[]> {

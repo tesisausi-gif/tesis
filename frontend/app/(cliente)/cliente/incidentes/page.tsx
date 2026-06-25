@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/features/auth/auth.service'
 import { getIncidentesByCurrentUser } from '@/features/incidentes/incidentes.service'
-import { getIncidentesConPresupuestoPendiente } from '@/features/presupuestos/presupuestos.service'
+import { getIncidentesConPresupuestoPendiente, getIncidentesConAlgunPresupuesto } from '@/features/presupuestos/presupuestos.service'
 import { getIncidentesConConformidadSubida } from '@/features/conformidades/conformidades.service'
 import { getIncidentesQueNecesitanDisponibilidadReparacion } from '@/features/disponibilidad/disponibilidad.service'
 import { getVisitasActivasPorIncidentes, processarVisitasVencidas } from '@/features/visitas/visitas.service'
@@ -27,11 +27,12 @@ export default async function ClienteIncidentesPage() {
     .filter(i => i.estado_actual !== 'cancelado' && i.estado_actual !== 'finalizado')
     .map(i => i.id_incidente)
 
-  const [conPresupuestoPendiente, conConformidadSubida, necesitenDisponibilidadReparacion, visitasPorIncidente] = await Promise.all([
+  const [conPresupuestoPendiente, conConformidadSubida, necesitenDisponibilidadReparacion, visitasPorIncidente, conAlgunPresupuesto] = await Promise.all([
     getIncidentesConPresupuestoPendiente().catch(() => []),
     getIncidentesConConformidadSubida(idsEnProceso).catch(() => []),
     getIncidentesQueNecesitanDisponibilidadReparacion(idsEnProceso).catch(() => []),
     getVisitasActivasPorIncidentes(idsActivos).catch(() => ({})),
+    getIncidentesConAlgunPresupuesto(idsEnProceso).catch(() => []),
   ])
 
   return (
@@ -41,6 +42,7 @@ export default async function ClienteIncidentesPage() {
       incidentesConConformidadSubida={conConformidadSubida}
       incidentesNecesitanDisponibilidadReparacion={necesitenDisponibilidadReparacion}
       visitasPorIncidente={visitasPorIncidente}
+      incidentesConAlgunPresupuesto={conAlgunPresupuesto}
     />
   )
 }

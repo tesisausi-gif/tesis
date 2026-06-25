@@ -30,6 +30,7 @@ interface IncidentesContentProps {
   incidentesConConformidadSubida?: number[]
   incidentesNecesitanDisponibilidadReparacion?: number[]
   visitasPorIncidente?: Record<number, VisitaResumen | null>
+  incidentesConAlgunPresupuesto?: number[]
 }
 
 const ICON_BY_ESTADO: Record<string, React.ElementType> = {
@@ -47,6 +48,7 @@ export function IncidentesContent({
   incidentesConConformidadSubida = [],
   incidentesNecesitanDisponibilidadReparacion = [],
   visitasPorIncidente = {},
+  incidentesConAlgunPresupuesto = [],
 }: IncidentesContentProps) {
   const router = useRouter()
 
@@ -282,14 +284,12 @@ export function IncidentesContent({
               const necesitaDisponibilidadReparacion = incidentesNecesitanDisponibilidadReparacion.includes(incidente.id_incidente)
               // Ignorar visita si:
               // a) la fecha ya pasó, O
-              // b) es inspección y ya hay presupuesto esperando aprobación del cliente, O
-              // c) es inspección y ya hay presupuesto aprobado por el cliente (necesita
-              //    disponibilidad de reparación) — el técnico ya inspeccionó aunque la
-              //    fecha programada sea futura
+              // b) es inspección y ya existe cualquier presupuesto — significa que el técnico
+              //    ya inspeccionó y subió el presupuesto, aunque la fecha sea futura
+              const inspeccionTerminada = incidentesConAlgunPresupuesto.includes(incidente.id_incidente)
               const visitaIgnorada = !visitaRaw
                 || visitaRaw.fecha_visita < hoy
-                || (visitaRaw.tipo === 'inspeccion' && tienePresupuestoPendiente)
-                || (visitaRaw.tipo === 'inspeccion' && necesitaDisponibilidadReparacion)
+                || (visitaRaw.tipo === 'inspeccion' && inspeccionTerminada)
               const visitaPropuesta = visitaIgnorada ? null : visitaRaw
 
               const fechaVisitaLeg = visitaPropuesta
