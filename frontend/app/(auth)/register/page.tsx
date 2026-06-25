@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Mail, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/shared/lib/supabase/client'
-import { crearSolicitudRegistro, getEspecialidadesActivas, verificarEmailDisponible } from '@/features/usuarios/usuarios.service'
+import { crearSolicitudRegistro, getEspecialidadesActivas, verificarEstadoEmail } from '@/features/usuarios/usuarios.service'
 import { Input } from '@/components/ui/input'
 import { AnimatedTabs, AnimatedTabContent } from '@/components/ui/animated-tabs'
 import { toast } from 'sonner'
@@ -103,9 +103,16 @@ function RegisterPageContent() {
 
     setLoading(true)
     try {
-      const disponible = await verificarEmailDisponible(clienteEmail)
-      if (!disponible) {
-        toast.error('Email ya registrado', { description: 'Este correo ya está en uso. Iniciá sesión.' })
+      const estadoEmail = await verificarEstadoEmail(clienteEmail)
+      if (estadoEmail === 'ya_registrado') {
+        toast.error('Email ya registrado', { description: 'Este correo ya tiene una cuenta activa. Iniciá sesión.' })
+        setLoading(false)
+        return
+      }
+      if (estadoEmail === 'pendiente_confirmacion') {
+        toast.info('Confirmación pendiente', { description: 'Ya enviamos un correo de verificación a esa dirección. Revisá tu bandeja de entrada (y la carpeta de spam).' })
+        setEmailPendiente(clienteEmail)
+        setConfirmacionEnviada(true)
         setLoading(false)
         return
       }

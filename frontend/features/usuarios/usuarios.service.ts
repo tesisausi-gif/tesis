@@ -61,18 +61,20 @@ export async function getClientesAdmin(): Promise<Cliente[]> {
   return data as Cliente[]
 }
 
+export type EstadoEmail = 'disponible' | 'pendiente_confirmacion' | 'ya_registrado'
+
 /**
- * Verificar si un email ya está registrado como cliente.
- * Usa adminClient para evitar restricciones de RLS en el registro público.
+ * Verifica el estado de un email contra auth.users vía RPC.
+ * Retorna 'disponible', 'pendiente_confirmacion' o 'ya_registrado'.
+ * Usa la función SQL check_email_registered que tiene SECURITY DEFINER sobre auth.users.
  */
-export async function verificarEmailDisponible(email: string): Promise<boolean> {
+export async function verificarEstadoEmail(email: string): Promise<EstadoEmail> {
   const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('clientes')
-    .select('id_cliente')
-    .eq('correo_electronico', email)
-    .limit(1)
-  return !data || data.length === 0
+  const { data } = await supabase.rpc('check_email_registered', { p_email: email })
+  if (!data || data.length === 0) return 'disponible'
+  const row = data[0] as { existe: boolean; confirmado: boolean }
+  if (!row.existe) return 'disponible'
+  return row.confirmado ? 'ya_registrado' : 'pendiente_confirmacion'
 }
 
 /**
