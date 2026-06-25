@@ -350,10 +350,11 @@ export function IncidentesContent({
                     </button>
                   )}
                   {tienePresupuestoPendiente && (
-                    <div className="flex items-center gap-2 bg-amber-500 px-4 py-2">
+                    <button onClick={() => abrirModal(incidente.id_incidente, 'presupuesto')} className="w-full text-left flex items-center gap-2 bg-amber-500 px-4 py-2">
                       <Bell className="h-3.5 w-3.5 text-white animate-pulse flex-shrink-0" />
-                      <span className="text-xs font-bold text-white">Presupuesto listo — tocá para revisar</span>
-                    </div>
+                      <span className="text-xs font-bold text-white flex-1">Presupuesto listo — tocá para revisar</span>
+                      <ChevronRight className="h-3.5 w-3.5 text-white/70 shrink-0" />
+                    </button>
                   )}
                   {pendienteCobro && (
                     <div className="flex items-center gap-2 bg-teal-500 px-4 py-2">
@@ -405,10 +406,25 @@ export function IncidentesContent({
                       <Clock className="w-4 h-4 text-blue-500" />
                       <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
                     </button>
-                    <button onClick={() => tienePresupuestoPendiente && abrirModal(incidente.id_incidente, 'presupuesto')} disabled={!tienePresupuestoPendiente} className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${tienePresupuestoPendiente ? 'hover:bg-amber-50/60 active:bg-amber-100/60 text-amber-600' : 'opacity-30 cursor-not-allowed text-slate-400'}`}>
-                      <Bell className={`w-4 h-4 ${tienePresupuestoPendiente ? 'animate-pulse' : ''}`} />
-                      <span className="text-[10px] font-semibold">{tienePresupuestoPendiente ? 'Aprobar presup.' : 'Sin acción'}</span>
-                    </button>
+                    {visitaPropuesta && visitaPropuesta.estado === 'propuesta' ? (
+                      <button
+                        onClick={() => abrirModal(incidente.id_incidente, 'detalles')}
+                        className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${visitaPropuesta.fuera_de_disponibilidad ? 'hover:bg-orange-50/60 text-orange-500' : 'hover:bg-violet-50/60 text-violet-600'}`}
+                      >
+                        <CalendarDays className="w-4 h-4 animate-pulse" />
+                        <span className="text-[10px] font-semibold">Ver visita</span>
+                      </button>
+                    ) : tienePresupuestoPendiente ? (
+                      <button onClick={() => abrirModal(incidente.id_incidente, 'presupuesto')} className="flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors hover:bg-amber-50/60 active:bg-amber-100/60 text-amber-600">
+                        <Bell className="w-4 h-4 animate-pulse" />
+                        <span className="text-[10px] font-semibold">Aprobar presup.</span>
+                      </button>
+                    ) : (
+                      <button disabled className="flex-1 flex flex-col items-center gap-0.5 py-3 opacity-30 cursor-not-allowed text-slate-400">
+                        <Bell className="w-4 h-4" />
+                        <span className="text-[10px] font-semibold">Sin acción</span>
+                      </button>
+                    )}
                   </div>
                   {/* Botones de autogestión (solo cuando no hay técnico asignado) */}
                   {puedeAutogestionar && (

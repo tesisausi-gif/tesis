@@ -113,7 +113,7 @@ export function ConfirmarVisitaPanel({ visita, onCambio }: Props) {
     )
   }
 
-  // ── Propuesta dentro de disponibilidad — solo confirmar ──────────────────────
+  // ── Propuesta dentro de disponibilidad — confirmar o rechazar ───────────────
   return (
     <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 space-y-3">
       <div className="flex items-start gap-2">
@@ -133,14 +133,24 @@ export function ConfirmarVisitaPanel({ visita, onCambio }: Props) {
           Nota: {visita.notas_tecnico}
         </p>
       )}
-      <button
-        disabled={loading}
-        onClick={handleConfirmar}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
-      >
-        <CheckCircle2 className="h-3.5 w-3.5" />
-        {loading ? 'Guardando...' : 'Confirmar visita'}
-      </button>
+      <div className="flex gap-2 flex-wrap">
+        <button
+          disabled={loading}
+          onClick={handleConfirmar}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          {loading ? 'Guardando...' : 'Confirmar visita'}
+        </button>
+        <button
+          disabled={loading}
+          onClick={handleRechazar}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-violet-300 bg-white text-violet-800 text-xs font-semibold hover:bg-violet-50 disabled:opacity-50 transition-colors"
+        >
+          <XCircle className="h-3.5 w-3.5" />
+          {loading ? 'Guardando...' : 'No puedo ese día'}
+        </button>
+      </div>
     </div>
   )
 }
