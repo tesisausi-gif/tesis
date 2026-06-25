@@ -276,11 +276,17 @@ export function IncidentesContent({
               const pendienteCobroCfg = pendienteCobro ? SUB_ESTADO_EN_PROCESO_CONFIG['pendiente_pago'] : null
               // Acciones de autogestión: el cliente puede cancelar o editar disponibilidad
               const puedeAutogestionar = incidente.estado_actual === 'pendiente' || incidente.estado_actual === 'asignacion_solicitada'
-              // Alertas de ejecución — solo visitas cuya fecha es hoy o futura
+              // Alertas de ejecución
               const hoy = new Date().toISOString().slice(0, 10)
               const visitaRaw = visitasPorIncidente[incidente.id_incidente] ?? null
-              // Ignorar visitas cuya fecha ya pasó (la inspección ya ocurrió aunque quede "confirmada" en DB)
-              const visitaPropuesta = visitaRaw && visitaRaw.fecha_visita >= hoy ? visitaRaw : null
+              // Ignorar visita si:
+              // a) la fecha ya pasó (la visita ocurrió aunque quede "confirmada" en DB), O
+              // b) es una visita de inspección pero ya existe un presupuesto (la inspección terminó
+              //    aunque la fecha sea futura porque se cargó antes de la fecha agendada)
+              const visitaIgnorada = !visitaRaw
+                || visitaRaw.fecha_visita < hoy
+                || (visitaRaw.tipo === 'inspeccion' && tienePresupuestoPendiente)
+              const visitaPropuesta = visitaIgnorada ? null : visitaRaw
               const necesitaDisponibilidadReparacion = incidentesNecesitanDisponibilidadReparacion.includes(incidente.id_incidente)
 
               const fechaVisitaLeg = visitaPropuesta
