@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
@@ -373,6 +374,7 @@ function DisponibilidadReparacionPanel({
   franjasActuales: FranjaInput[]
   onGuardar: () => void
 }) {
+  const router = useRouter()
   const [franjas, setFranjas] = useState<FranjaInput[]>(franjasActuales)
   const [guardando, setGuardando] = useState(false)
 
@@ -385,8 +387,9 @@ function DisponibilidadReparacionPanel({
         'reparacion',
       )
       if (res.success) {
-        toast.success('Disponibilidad para la obra guardada')
+        toast.success('Disponibilidad guardada — el técnico coordinará la fecha de la obra')
         onGuardar()
+        router.refresh()
       } else {
         toast.error(res.error ?? 'Error al guardar')
       }
