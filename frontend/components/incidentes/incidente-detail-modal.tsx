@@ -1769,14 +1769,14 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                                           <p className="text-xs text-amber-900 leading-relaxed">{m.descripcion_detallada}</p>
                                         )}
                                         {(m.costo_materiales != null || m.costo_mano_obra != null || m.costo_total != null) && (
-                                          <div className="grid grid-cols-3 gap-2">
-                                            {m.costo_materiales != null && (
+                                          <div className={`grid gap-2 ${rol === 'cliente' ? 'grid-cols-1' : 'grid-cols-3'}`}>
+                                            {rol !== 'cliente' && m.costo_materiales != null && (
                                               <div className="bg-white/70 rounded-lg p-2 text-center">
                                                 <p className="text-[10px] text-amber-600 font-semibold">Materiales</p>
                                                 <p className="text-xs font-bold text-amber-800">${m.costo_materiales.toLocaleString()}</p>
                                               </div>
                                             )}
-                                            {m.costo_mano_obra != null && (
+                                            {rol !== 'cliente' && m.costo_mano_obra != null && (
                                               <div className="bg-white/70 rounded-lg p-2 text-center">
                                                 <p className="text-[10px] text-amber-600 font-semibold">Mano de obra</p>
                                                 <p className="text-xs font-bold text-amber-800">${m.costo_mano_obra.toLocaleString()}</p>
