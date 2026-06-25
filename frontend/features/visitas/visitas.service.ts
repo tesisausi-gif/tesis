@@ -265,6 +265,89 @@ export async function rechazarVisita(idVisita: number, motivo?: string): Promise
 }
 
 /**
+ * Procesa las visitas propuestas cuya fecha ya pasó sin que el cliente
+ * las confirmara ni rechazara. Las cancela, borra las franjas de reparación
+ * para que el cliente deba volver a indicar disponibilidad, y notifica a
+ * ambas partes con severidad.
+ *
+ * Idempotente: solo actúa sobre visitas en estado 'propuesta' cuya
+ * fecha_visita < hoy. Las canceladas ya no se vuelven a procesar.
+ */
+export async function processarVisitasVencidas(): Promise<void> {
+  try {
+    const supabase = createAdminClient()
+    const hoy = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD'
+
+    // Buscar visitas propuestas cuya fecha ya pasó
+    const { data: vencidas } = await supabase
+      .from('visitas')
+      .select('id_visita, id_incidente, id_tecnico, tipo, fecha_visita, hora_inicio, hora_fin_estimada')
+      .eq('estado', 'propuesta')
+      .lt('fecha_visita', hoy)
+
+    if (!vencidas?.length) return
+
+    for (const v of vencidas) {
+      // 1. Cancelar la visita
+      await supabase
+        .from('visitas')
+        .update({ estado: 'cancelada', motivo_rechazo: 'Sin confirmación del cliente — vencida automáticamente' })
+        .eq('id_visita', v.id_visita)
+
+      // 2. Borrar franjas de reparación para que el cliente vuelva a indicar disponibilidad
+      await supabase
+        .from('franjas_disponibilidad')
+        .delete()
+        .eq('id_incidente', v.id_incidente)
+        .eq('fase', 'reparacion')
+
+      const fechaLeg = new Date(v.fecha_visita + 'T00:00:00').toLocaleDateString('es-AR', {
+        weekday: 'long', day: 'numeric', month: 'long',
+      })
+
+      // 3. Obtener datos del técnico y del cliente
+      const [{ data: inc }, { data: tec }] = await Promise.all([
+        supabase
+          .from('incidentes')
+          .select('id_cliente_reporta, clientes:id_cliente_reporta(id_cliente)')
+          .eq('id_incidente', v.id_incidente)
+          .single(),
+        supabase
+          .from('tecnicos')
+          .select('nombre, apellido')
+          .eq('id_tecnico', v.id_tecnico)
+          .maybeSingle(),
+      ])
+
+      const tecNombre = tec ? `${(tec as any).nombre} ${(tec as any).apellido}` : 'El técnico'
+      const idCliente = ((inc?.clientes as any))?.id_cliente
+
+      const { crearNotificacionCliente, crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+
+      // 4. Notificación al cliente — gravedad alta
+      if (idCliente) {
+        await crearNotificacionCliente({
+          id_cliente: idCliente,
+          tipo: 'visita_vencida',
+          titulo: '⚠️ No confirmaste la visita — necesitamos nueva disponibilidad',
+          mensaje: `${tecNombre} tenía programada una visita para el ${fechaLeg} y no recibimos tu confirmación a tiempo. La visita fue cancelada automáticamente. Ingresá a tu incidente #${v.id_incidente} e indicá nuevos horarios para reprogramar.`,
+          id_incidente: v.id_incidente,
+        })
+      }
+
+      // 5. Notificación al técnico — disculpa
+      await crearNotificacion({
+        id_tecnico: v.id_tecnico,
+        tipo: 'visita_vencida',
+        titulo: 'Visita cancelada — el cliente no confirmó a tiempo',
+        mensaje: `Lamentamos el inconveniente. La visita del incidente #${v.id_incidente} programada para el ${fechaLeg} fue cancelada automáticamente porque el cliente no la confirmó ni rechazó a tiempo. Serás notificado cuando el cliente indique nueva disponibilidad para reprogramar.`,
+        id_incidente: v.id_incidente,
+      })
+    }
+  } catch { /* no bloquear la carga de página */ }
+}
+
+/**
  * El técnico marca una visita como completada.
  */
 export async function completarVisita(idVisita: number): Promise<ActionResult> {

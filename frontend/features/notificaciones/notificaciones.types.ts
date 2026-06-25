@@ -49,6 +49,7 @@ export const TIPO_CATEGORIA: Record<string, TipoNotificacionCategoria> = {
   visita_propuesta:  'pendiente',
   visita_confirmada: 'positivo',
   visita_rechazada:  'urgente',
+  visita_vencida:    'urgente',
 }
 
 // ─── Email ─────────────────────────────────────────────────────────────────
