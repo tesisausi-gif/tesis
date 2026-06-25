@@ -26,6 +26,8 @@ const INCIDENTE_SELECT = `
   url_foto_diagnostico,
   id_propiedad,
   id_cliente_reporta,
+  cancelado_por_cliente,
+  sin_visita_por_disponibilidad,
   inmuebles (
     calle,
     altura,

@@ -263,6 +263,149 @@ export async function getFranjasAgendaTecnico(idTecnico: number): Promise<Franja
   return visitasResult
 }
 
+/**
+ * Detecta incidentes donde el cliente indicó disponibilidad de inspección,
+ * todas las fechas ya pasaron y nunca se realizó la inspección.
+ * Para cada uno: elimina las franjas, marca la bandera y notifica a ambas partes.
+ * Idempotente: solo procesa incidentes con sin_visita_por_disponibilidad=FALSE.
+ */
+export async function procesarDisponibilidadVencida(): Promise<void> {
+  try {
+    const supabase = createAdminClient()
+    const hoy = new Date().toISOString().slice(0, 10)
+
+    // Traer todas las franjas de inspección
+    const { data: todasFranjas } = await supabase
+      .from('franjas_disponibilidad')
+      .select('id_franja, id_incidente, fecha')
+      .eq('fase', 'inspeccion')
+
+    if (!todasFranjas?.length) return
+
+    // Agrupar por incidente y calcular fecha máxima
+    const maxFechaPorIncidente: Record<number, string> = {}
+    for (const f of todasFranjas) {
+      const id = f.id_incidente as number
+      if (!maxFechaPorIncidente[id] || (f.fecha as string) > maxFechaPorIncidente[id]) {
+        maxFechaPorIncidente[id] = f.fecha as string
+      }
+    }
+
+    // Incidentes cuya franja más reciente ya pasó
+    const idsVencidos = Object.entries(maxFechaPorIncidente)
+      .filter(([, max]) => max < hoy)
+      .map(([id]) => parseInt(id))
+
+    if (!idsVencidos.length) return
+
+    // Filtrar: activos + no ya procesados
+    const { data: incidentes } = await supabase
+      .from('incidentes')
+      .select('id_incidente, id_cliente_reporta, clientes:id_cliente_reporta(id_cliente)')
+      .in('id_incidente', idsVencidos)
+      .not('estado_actual', 'in', '("cancelado","finalizado","resuelto")')
+      .eq('sin_visita_por_disponibilidad', false)
+
+    if (!incidentes?.length) return
+
+    // Excluir los que ya tienen inspección cargada
+    const ids = incidentes.map(i => i.id_incidente as number)
+    const { data: inspecciones } = await supabase
+      .from('inspecciones')
+      .select('id_incidente')
+      .in('id_incidente', ids)
+
+    const idsConInspeccion = new Set((inspecciones ?? []).map(i => i.id_incidente as number))
+    const aVencer = incidentes.filter(i => !idsConInspeccion.has(i.id_incidente as number))
+
+    if (!aVencer.length) return
+
+    const { crearNotificacionCliente, crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+
+    for (const inc of aVencer) {
+      const idInc = inc.id_incidente as number
+      const idCliente = ((inc as any).clientes as any)?.id_cliente
+
+      await supabase.from('franjas_disponibilidad').delete()
+        .eq('id_incidente', idInc).eq('fase', 'inspeccion')
+
+      await supabase.from('incidentes')
+        .update({ sin_visita_por_disponibilidad: true })
+        .eq('id_incidente', idInc)
+
+      if (idCliente) {
+        await crearNotificacionCliente({
+          id_cliente: idCliente,
+          tipo: 'disponibilidad_vencida_inspeccion',
+          titulo: '⚠️ Ningún técnico pudo visitarte — agregá nuevos horarios',
+          mensaje: `Lamentamos que ningún técnico haya podido visitarte en los horarios indicados para el incidente #${idInc}. Por favor, ingresá al incidente e indicá nuevas fechas de disponibilidad.`,
+          id_incidente: idInc,
+        })
+      }
+
+      await crearNotificacionAdmin({
+        tipo: 'disponibilidad_vencida_inspeccion',
+        titulo: '⚠️ Disponibilidad vencida sin visita',
+        mensaje: `El incidente #${idInc} tuvo disponibilidad de inspección que venció sin que ningún técnico visitara al cliente.`,
+        id_incidente: idInc,
+      })
+    }
+  } catch { /* no bloquear la carga de página */ }
+}
+
+/**
+ * De una lista de IDs, devuelve cuáles tienen sin_visita_por_disponibilidad=TRUE
+ * Y aún no cargaron nuevas franjas de inspección con fecha futura.
+ * Se usa en la vista de cliente para mostrar el banner de "agregá nuevos horarios".
+ */
+export async function getIncidentesNecesitanNuevaDisponibilidadInspeccion(
+  ids: number[],
+): Promise<number[]> {
+  if (!ids.length) return []
+  const supabase = createAdminClient()
+  const hoy = new Date().toISOString().slice(0, 10)
+
+  const { data: marcados } = await supabase
+    .from('incidentes')
+    .select('id_incidente')
+    .in('id_incidente', ids)
+    .eq('sin_visita_por_disponibilidad', true)
+
+  if (!marcados?.length) return []
+
+  const candidatos = (marcados ?? []).map(i => i.id_incidente as number)
+
+  // Excluir los que ya cargaron franjas futuras (nueva disponibilidad)
+  const { data: franjasNuevas } = await supabase
+    .from('franjas_disponibilidad')
+    .select('id_incidente')
+    .in('id_incidente', candidatos)
+    .eq('fase', 'inspeccion')
+    .gte('fecha', hoy)
+
+  const conFranjasNuevas = new Set((franjasNuevas ?? []).map(f => f.id_incidente as number))
+  return candidatos.filter(id => !conFranjasNuevas.has(id))
+}
+
+/**
+ * Todos los incidentes con sin_visita_por_disponibilidad=TRUE (activos).
+ * Para el panel de admin y las estadísticas PPI.
+ */
+export async function getIncidentesConDisponibilidadVencida(): Promise<{
+  id_incidente: number
+  descripcion_problema: string
+  fecha_registro: string
+}[]> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('incidentes')
+    .select('id_incidente, descripcion_problema, fecha_registro')
+    .eq('sin_visita_por_disponibilidad', true)
+    .not('estado_actual', 'in', '("cancelado","finalizado","resuelto")')
+    .order('fecha_registro', { ascending: false })
+  return (data ?? []) as any[]
+}
+
 export async function liberarCompromisoDeIncidente(idIncidente: number): Promise<void> {
   const supabase = createAdminClient()
   await supabase

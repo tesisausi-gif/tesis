@@ -366,6 +366,75 @@ function StepperTecnico({
   )
 }
 
+function DisponibilidadInspeccionPanel({
+  idIncidente,
+  franjasActuales,
+  onGuardar,
+}: {
+  idIncidente: number
+  franjasActuales: FranjaInput[]
+  onGuardar: () => void
+}) {
+  const router = useRouter()
+  const [franjas, setFranjas] = useState<FranjaInput[]>(franjasActuales)
+  const [guardando, setGuardando] = useState(false)
+
+  const handleGuardar = async () => {
+    setGuardando(true)
+    try {
+      const res = await guardarFranjasDisponibilidad(
+        idIncidente,
+        franjas.map(f => ({ fecha: f.fecha, hora_inicio: f.hora_inicio, hora_fin: f.hora_fin })),
+        'inspeccion',
+      )
+      if (res.success) {
+        toast.success('Nuevos horarios guardados — coordinaremos una visita a la brevedad')
+        onGuardar()
+        router.refresh()
+      } else {
+        toast.error(res.error ?? 'Error al guardar')
+      }
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-red-200 bg-red-50/60 p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-red-800">Ningún técnico pudo visitarte</p>
+          <p className="text-xs text-red-700 mt-0.5 leading-relaxed">
+            Las fechas de disponibilidad que indicaste vencieron sin que ningún técnico pudiera asistir.
+            Por favor, indicá nuevas fechas para que podamos coordinar la visita.
+          </p>
+        </div>
+      </div>
+
+      <CalendarioDisponibilidad
+        modo="editar"
+        franjas={franjas}
+        onChange={setFranjas}
+      />
+
+      <button
+        onClick={handleGuardar}
+        disabled={guardando || franjas.length === 0}
+        className="w-full py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold disabled:opacity-50 hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+      >
+        {guardando ? (
+          <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Guardando...</>
+        ) : (
+          <><CalendarDays className="w-4 h-4" />Guardar nuevas fechas</>
+        )}
+      </button>
+    </div>
+  )
+}
+
 function DisponibilidadReparacionPanel({
   idIncidente,
   franjasActuales,
@@ -1646,6 +1715,20 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   onCambio={() => cargarIncidente()}
                 />
               )}
+
+              {/* Disponibilidad de inspección vencida — el cliente carga nuevas fechas */}
+              {rol === 'cliente' && (() => {
+                const sinVisita = (incidente as any).sin_visita_por_disponibilidad === true
+                const inspeccionHecha = presupuestos.length > 0
+                if (!sinVisita || inspeccionHecha || !!visitaActiva) return null
+                return (
+                  <DisponibilidadInspeccionPanel
+                    idIncidente={incidente.id_incidente}
+                    franjasActuales={franjas}
+                    onGuardar={() => cargarIncidente()}
+                  />
+                )
+              })()}
 
               {/* Disponibilidad para visita de obra — cliente puede editar hasta que el técnico proponga una fecha */}
               {rol === 'cliente' && (() => {

@@ -28,6 +28,7 @@ import { AdminPageHeader } from '@/components/admin/admin-page-header'
 interface IncidentesAdminContentProps {
   incidentes: IncidenteConClienteAdmin[]
   incidentesPagadosIds: number[]
+  incidentesDisponibilidadVencida?: { id_incidente: number; descripcion_problema: string; fecha_registro: string }[]
 }
 
 const ICON_BY_ESTADO: Record<string, React.ElementType> = {
@@ -323,7 +324,7 @@ function IncidenteCard({
   )
 }
 
-export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: IncidentesAdminContentProps) {
+export function IncidentesAdminContent({ incidentes, incidentesPagadosIds, incidentesDisponibilidadVencida = [] }: IncidentesAdminContentProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
@@ -558,6 +559,40 @@ export function IncidentesAdminContent({ incidentes, incidentesPagadosIds }: Inc
   return (
     <div className="space-y-4">
       <AdminPageHeader title="Gestión de Incidentes" subtitle="Administrá y gestioná todos los incidentes reportados" />
+
+      {/* ── Advertencia: clientes sin visita por disponibilidad vencida ─── */}
+      {incidentesDisponibilidadVencida.length > 0 && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5 animate-pulse" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-red-800">
+                {incidentesDisponibilidadVencida.length === 1
+                  ? '1 incidente sin atender — disponibilidad vencida'
+                  : `${incidentesDisponibilidadVencida.length} incidentes sin atender — disponibilidad vencida`}
+              </p>
+              <p className="text-xs text-red-700 mt-0.5">
+                Los siguientes clientes indicaron sus franjas de disponibilidad para inspección pero ningún técnico pudo asistir. Se les notificó para que carguen nuevas fechas.
+              </p>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            {incidentesDisponibilidadVencida.map(inc => (
+              <button
+                key={inc.id_incidente}
+                onClick={() => abrirModal(inc.id_incidente)}
+                className="w-full flex items-center justify-between gap-2 bg-white border border-red-200 rounded-lg px-3 py-2 text-left hover:bg-red-50/60 transition-colors"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-bold text-red-600 shrink-0">#{inc.id_incidente}</span>
+                  <span className="text-xs text-slate-700 truncate">{inc.descripcion_problema}</span>
+                </div>
+                <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Search + Filter chips */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 space-y-3">

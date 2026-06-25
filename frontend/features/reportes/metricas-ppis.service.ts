@@ -1627,20 +1627,6 @@ export async function getOeeData(): Promise<OeeData> {
   return { promedioIrt, semaforoGlobal, porTecnico }
 }
 
-// ─── Export combinado de todos los PPIs ───────────────────────────────────────
-
-export interface TodosPpisData {
-  tci: TciData
-  fpy: FpyData
-  wip: WipData
-  reasignacion: ReasignacionData
-  tcr: TcrData
-  sp8: Sp8Data
-  isc: IscData
-  cb2: Cb2Data
-  oee: OeeData
-}
-
 // ─── SP9 · Tasa de Rechazo por Incompatibilidad de Horario ───────────────────
 
 export interface Sp9PorTecnico {
@@ -1763,6 +1749,79 @@ export async function getCancelacionClienteData(): Promise<CancelacionClienteDat
   return { total, totalIncidentes: totalInc, tasa, semaforo, ultimosMeses }
 }
 
+// ─── PPI: Disponibilidad de inspección vencida sin visita ─────────────────────
+
+export interface DisponibilidadVencidaItem {
+  id_incidente: number
+  descripcion_problema: string
+  fecha_registro: string
+}
+
+export interface DisponibilidadVencidaData {
+  totalActivos: number
+  totalHistorico: number
+  tasaHistorica: number
+  semaforo: Semaforo
+  incidentesActivos: DisponibilidadVencidaItem[]
+  ultimosMeses: { mes: string; cantidad: number }[]
+}
+
+export async function getDisponibilidadVencidaData(): Promise<DisponibilidadVencidaData> {
+  const supabase = createAdminClient()
+
+  const [
+    { data: activos },
+    { count: totalHistorico },
+    { count: totalIncidentes },
+    { data: porMes },
+  ] = await Promise.all([
+    supabase
+      .from('incidentes')
+      .select('id_incidente, descripcion_problema, fecha_registro')
+      .eq('sin_visita_por_disponibilidad', true)
+      .not('estado_actual', 'in', '("cancelado","finalizado","resuelto")')
+      .order('fecha_registro', { ascending: false }),
+    supabase
+      .from('incidentes')
+      .select('*', { count: 'exact', head: true })
+      .eq('sin_visita_por_disponibilidad', true),
+    supabase
+      .from('incidentes')
+      .select('*', { count: 'exact', head: true }),
+    supabase
+      .from('incidentes')
+      .select('fecha_registro')
+      .eq('sin_visita_por_disponibilidad', true)
+      .order('fecha_registro', { ascending: false })
+      .limit(200),
+  ])
+
+  const totalHist = totalHistorico ?? 0
+  const totalInc = totalIncidentes ?? 0
+  const tasaHistorica = totalInc > 0 ? Math.round((totalHist / totalInc) * 100) : 0
+  const semaforo: Semaforo = totalHist === 0 ? 'verde' : tasaHistorica <= 5 ? 'amarillo' : 'rojo'
+
+  const conteoPorMes: Record<string, number> = {}
+  for (const row of porMes ?? []) {
+    const mes = (row.fecha_registro as string).slice(0, 7)
+    conteoPorMes[mes] = (conteoPorMes[mes] ?? 0) + 1
+  }
+  const ultimosMeses = Object.entries(conteoPorMes)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 6)
+    .reverse()
+    .map(([mes, cantidad]) => ({ mes, cantidad }))
+
+  return {
+    totalActivos: (activos ?? []).length,
+    totalHistorico: totalHist,
+    tasaHistorica,
+    semaforo,
+    incidentesActivos: (activos ?? []) as DisponibilidadVencidaItem[],
+    ultimosMeses,
+  }
+}
+
 // ─── Export combinado de todos los PPIs ───────────────────────────────────────
 
 export interface TodosPpisData {
@@ -1777,10 +1836,11 @@ export interface TodosPpisData {
   oee: OeeData
   sp9: Sp9Data
   cancelacionCliente: CancelacionClienteData
+  disponibilidadVencida: DisponibilidadVencidaData
 }
 
 export async function getTodosPpisData(): Promise<TodosPpisData> {
-  const [tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9, cancelacionCliente] = await Promise.all([
+  const [tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9, cancelacionCliente, disponibilidadVencida] = await Promise.all([
     getTciData(),
     getFpyData(),
     getWipData(),
@@ -1792,6 +1852,7 @@ export async function getTodosPpisData(): Promise<TodosPpisData> {
     getOeeData(),
     getSp9Data(),
     getCancelacionClienteData(),
+    getDisponibilidadVencidaData(),
   ])
-  return { tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9, cancelacionCliente }
+  return { tci, fpy, wip, reasignacion, tcr, sp8, isc, cb2, oee, sp9, cancelacionCliente, disponibilidadVencida }
 }

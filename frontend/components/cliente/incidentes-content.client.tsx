@@ -8,7 +8,7 @@ import { es } from 'date-fns/locale'
 import {
   Plus, AlertCircle, Clock, Send, Wrench, CheckCircle,
   Bell, MapPin, ClipboardList, FileText, CreditCard, ChevronRight, ChevronLeft,
-  Calendar, Ban, CalendarDays, HardHat,
+  Calendar, Ban, CalendarDays, HardHat, AlertTriangle, Search, X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IncidenteDetailModal } from '@/components/incidentes/incidente-detail-modal'
@@ -24,6 +24,8 @@ import { getFranjasDisponibilidad, guardarFranjasDisponibilidad } from '@/featur
 import { cancelarIncidenteCliente } from '@/features/asignaciones/asignaciones.service'
 import type { VisitaResumen } from '@/features/visitas/visitas.types'
 
+const PAGE_SIZE = 8
+
 interface IncidentesContentProps {
   incidentes: Incidente[]
   incidentesConPresupuestoPendiente: number[]
@@ -31,6 +33,7 @@ interface IncidentesContentProps {
   incidentesNecesitanDisponibilidadReparacion?: number[]
   visitasPorIncidente?: Record<number, VisitaResumen | null>
   incidentesConAlgunPresupuesto?: number[]
+  incidentesNecesitanNuevaDisponibilidadInspeccion?: number[]
 }
 
 const ICON_BY_ESTADO: Record<string, React.ElementType> = {
@@ -49,6 +52,7 @@ export function IncidentesContent({
   incidentesNecesitanDisponibilidadReparacion = [],
   visitasPorIncidente = {},
   incidentesConAlgunPresupuesto = [],
+  incidentesNecesitanNuevaDisponibilidadInspeccion = [],
 }: IncidentesContentProps) {
   const router = useRouter()
 
@@ -60,6 +64,8 @@ export function IncidentesContent({
   )
   const [filtro, setFiltro] = useState<string>('todos')
   const [subFiltro, setSubFiltro] = useState<string>('todos')
+  const [busqueda, setBusqueda] = useState('')
+  const [pagina, setPagina] = useState(1)
   const filtrosRef      = useRef<HTMLDivElement>(null)
   const subFiltrosRef   = useRef<HTMLDivElement>(null)
   const [filtrosScrolled,    setFiltrosScrolled]    = useState(false)
@@ -76,7 +82,8 @@ export function IncidentesContent({
   const [motivoCancelacion, setMotivoCancelacion]       = useState('')
   const [procesandoCancelacion, setProcesandoCancelacion] = useState(false)
 
-  useEffect(() => { setSubFiltro('todos') }, [filtro])
+  useEffect(() => { setSubFiltro('todos'); setPagina(1) }, [filtro])
+  useEffect(() => { setPagina(1) }, [busqueda])
 
   useEffect(() => {
     setPendientesPresupuesto(new Set(incidentesConPresupuestoPendiente))
@@ -175,7 +182,7 @@ export function IncidentesContent({
 
   const incidentesActivos = incidentes.filter(i => i.estado_actual !== 'cancelado')
 
-  const incidentesFiltrados = filtro === 'todos'
+  const porFiltro = filtro === 'todos'
     ? incidentesActivos
     : filtro === 'pendiente'
       ? incidentes.filter(i => i.estado_actual === 'pendiente' || i.estado_actual === 'asignacion_solicitada')
@@ -184,6 +191,25 @@ export function IncidentesContent({
         : filtro === 'cancelado'
           ? incidentes.filter(i => i.estado_actual === 'cancelado')
           : incidentes.filter(i => i.estado_actual === filtro && !i.fue_resuelto)
+
+  const q = busqueda.toLowerCase().trim()
+  const incidentesFiltrados = q
+    ? porFiltro.filter(i => {
+        const inm = i.inmuebles
+        const dir = [inm?.calle, inm?.altura, inm?.barrio, inm?.localidad].filter(Boolean).join(' ').toLowerCase()
+        return (
+          String(i.id_incidente).includes(q) ||
+          i.descripcion_problema.toLowerCase().includes(q) ||
+          (i.categoria ?? '').toLowerCase().includes(q) ||
+          dir.includes(q)
+        )
+      })
+    : porFiltro
+
+  const totalPaginas = filtro !== 'en_proceso' ? Math.max(1, Math.ceil(incidentesFiltrados.length / PAGE_SIZE)) : 1
+  const incidentesPaginados = filtro !== 'en_proceso'
+    ? incidentesFiltrados.slice((pagina - 1) * PAGE_SIZE, pagina * PAGE_SIZE)
+    : incidentesFiltrados
 
   const filtros = [
     { id: 'todos',      label: 'Todos',       count: incidentesActivos.length,         Icon: ClipboardList },
@@ -262,6 +288,25 @@ export function IncidentesContent({
             </button>
           </div>
 
+          {/* ── Buscador ────────────────────────────── */}
+          <div className="bg-white border-b border-gray-100 px-4 py-2.5">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <input
+                type="text"
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                placeholder="Buscar por ID, descripción, dirección, categoría..."
+                className="w-full pl-8 pr-8 py-2 text-xs rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white transition-colors"
+              />
+              {busqueda && (
+                <button onClick={() => setBusqueda('')} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                  <X className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* ── Incident list ────────────────────────── */}
           {(() => {
             const renderCard = (incidente: (typeof incidentesFiltrados)[0]) => {
@@ -287,6 +332,7 @@ export function IncidentesContent({
               // b) es inspección y ya existe cualquier presupuesto — significa que el técnico
               //    ya inspeccionó y subió el presupuesto, aunque la fecha sea futura
               const inspeccionTerminada = incidentesConAlgunPresupuesto.includes(incidente.id_incidente)
+              const necesitaNuevaDisponibilidadInspeccion = incidentesNecesitanNuevaDisponibilidadInspeccion.includes(incidente.id_incidente)
               const visitaIgnorada = !visitaRaw
                 || visitaRaw.fecha_visita < hoy
                 || (visitaRaw.tipo === 'inspeccion' && inspeccionTerminada)
@@ -344,6 +390,22 @@ export function IncidentesContent({
                         </p>
                       </div>
                     </div>
+                  )}
+                  {/* Banner: disponibilidad de inspección vencida sin visita */}
+                  {necesitaNuevaDisponibilidadInspeccion && (
+                    <button
+                      onClick={() => abrirEditarDisp(incidente.id_incidente)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center gap-2 bg-red-600 px-4 py-3">
+                        <AlertTriangle className="h-4 w-4 text-white flex-shrink-0 animate-pulse" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-white">Lo sentimos — ningún técnico pudo visitarte</p>
+                          <p className="text-[11px] text-white/85 mt-0.5">Tocá para agregar nuevas fechas de disponibilidad</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-white/70 shrink-0" />
+                      </div>
+                    </button>
                   )}
                   {/* Banner: necesita disponibilidad para la obra */}
                   {necesitaDisponibilidadReparacion && !visitaPropuesta && (
@@ -418,7 +480,12 @@ export function IncidentesContent({
                       <Clock className="w-4 h-4 text-blue-500" />
                       <span className="text-[10px] font-semibold text-blue-500">Timeline</span>
                     </button>
-                    {visitaPropuesta && visitaPropuesta.estado === 'propuesta' ? (
+                    {necesitaNuevaDisponibilidadInspeccion ? (
+                      <button onClick={() => abrirEditarDisp(incidente.id_incidente)} className="flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors hover:bg-red-50/60 text-red-500">
+                        <CalendarDays className="w-4 h-4 animate-pulse" />
+                        <span className="text-[10px] font-semibold">Nueva disponib.</span>
+                      </button>
+                    ) : visitaPropuesta && visitaPropuesta.estado === 'propuesta' ? (
                       <button
                         onClick={() => abrirModal(incidente.id_incidente, 'detalles')}
                         className={`flex-1 flex flex-col items-center gap-0.5 py-3 transition-colors ${visitaPropuesta.fuera_de_disponibilidad ? 'hover:bg-orange-50/60 text-orange-500' : 'hover:bg-violet-50/60 text-violet-600'}`}
@@ -467,7 +534,11 @@ export function IncidentesContent({
             }
 
             if (incidentesFiltrados.length === 0) {
-              return <div className="px-4 pt-3 text-center py-12 text-gray-400 text-sm">No hay incidentes en este estado</div>
+              return (
+                <div className="px-4 pt-3 text-center py-12 text-gray-400 text-sm">
+                  {q ? `Sin resultados para "${busqueda}"` : 'No hay incidentes en este estado'}
+                </div>
+              )
             }
 
             if (filtro === 'en_proceso') {
@@ -544,7 +615,11 @@ export function IncidentesContent({
                             <span className="text-xs font-bold">{gcfg.labelGrupo}</span>
                             <span className="text-xs font-semibold opacity-50">({grupo.items.length})</span>
                           </div>
-                          <div className="space-y-3">{grupo.items.map(renderCard)}</div>
+                          <div className="space-y-3">{grupo.items.filter(i => !q || (() => {
+                              const inm = i.inmuebles
+                              const dir = [inm?.calle, inm?.altura, inm?.barrio, inm?.localidad].filter(Boolean).join(' ').toLowerCase()
+                              return String(i.id_incidente).includes(q) || i.descripcion_problema.toLowerCase().includes(q) || (i.categoria ?? '').toLowerCase().includes(q) || dir.includes(q)
+                            })()).map(renderCard)}</div>
                         </div>
                       )
                     })}
@@ -556,7 +631,34 @@ export function IncidentesContent({
               )
             }
 
-            return <div className="px-4 pt-3 space-y-3">{incidentesFiltrados.map(renderCard)}</div>
+            return (
+              <div className="px-4 pt-3 pb-4 space-y-3">
+                {incidentesPaginados.map(renderCard)}
+                {totalPaginas > 1 && (
+                  <div className="flex items-center justify-between pt-2">
+                    <button
+                      onClick={() => setPagina(p => Math.max(1, p - 1))}
+                      disabled={pagina === 1}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-gray-200 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      Anterior
+                    </button>
+                    <span className="text-xs text-slate-400 font-medium">
+                      {pagina} de {totalPaginas}
+                    </span>
+                    <button
+                      onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+                      disabled={pagina === totalPaginas}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-gray-200 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                    >
+                      Siguiente
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
           })()}
         </>
       )}

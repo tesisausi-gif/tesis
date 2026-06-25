@@ -2,13 +2,14 @@ import { Suspense } from 'react'
 import { getIncidentesForAdmin } from '@/features/incidentes/incidentes.service'
 import { getIncidentesPagados } from '@/features/pagos/pagos-tecnicos.service'
 import { getVisitasActivasPorIncidentes } from '@/features/visitas/visitas.service'
-import { getFranjasParaIncidentes } from '@/features/disponibilidad/disponibilidad.service'
+import { getFranjasParaIncidentes, getIncidentesConDisponibilidadVencida } from '@/features/disponibilidad/disponibilidad.service'
 import { IncidentesAdminContent } from '@/components/admin/incidentes-content.client'
 
 export default async function IncidentesAdminPage() {
-  const [incidentes, incidentesPagadosIds] = await Promise.all([
+  const [incidentes, incidentesPagadosIds, incidentesDisponibilidadVencida] = await Promise.all([
     getIncidentesForAdmin(),
     getIncidentesPagados(),
+    getIncidentesConDisponibilidadVencida().catch(() => []),
   ])
 
   const ids = incidentes.map(i => i.id_incidente)
@@ -25,7 +26,11 @@ export default async function IncidentesAdminPage() {
 
   return (
     <Suspense>
-      <IncidentesAdminContent incidentes={incidentesConVisitas} incidentesPagadosIds={incidentesPagadosIds} />
+      <IncidentesAdminContent
+        incidentes={incidentesConVisitas}
+        incidentesPagadosIds={incidentesPagadosIds}
+        incidentesDisponibilidadVencida={incidentesDisponibilidadVencida}
+      />
     </Suspense>
   )
 }

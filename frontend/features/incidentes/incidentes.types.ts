@@ -21,6 +21,8 @@ export interface IncidenteBase {
   calificacion_admin: number | null
   comentario_admin: string | null
   url_foto_diagnostico: string | null
+  cancelado_por_cliente?: boolean
+  sin_visita_por_disponibilidad?: boolean
 }
 
 // Incidente con datos de inmueble
