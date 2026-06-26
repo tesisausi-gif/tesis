@@ -203,49 +203,70 @@ Cada carpeta es una **URL**. Next.js usa el nombre de las carpetas para armar la
 
 ```
 app/
-├── (auth)/                          # Páginas públicas (sin login)
-│   ├── login/page.tsx               # → /login
-│   └── register/page.tsx            # → /register
+├── (auth)/                              # Páginas públicas (sin login)
+│   ├── login/page.tsx                   # → /login
+│   ├── register/page.tsx                # → /register
+│   ├── cambiar-password/page.tsx        # → /cambiar-password (técnicos nuevos)
+│   ├── forgot-password/page.tsx         # → /forgot-password
+│   └── reset-password/page.tsx          # → /reset-password
 │
-├── (cliente)/                       # Todo lo del cliente
-│   ├── layout.tsx                   # Navegación del cliente
+├── (cliente)/                           # Todo lo del cliente
+│   ├── layout.tsx                       # Navegación del cliente
 │   └── cliente/
-│       ├── page.tsx                 # → /cliente
+│       ├── page.tsx                     # → /cliente
 │       ├── incidentes/
-│       │   ├── page.tsx             # → /cliente/incidentes
-│       │   ├── nuevo/page.tsx       # → /cliente/incidentes/nuevo
-│       │   └── loading.tsx          # Skeleton mientras carga
-│       ├── propiedades/page.tsx     # → /cliente/propiedades
-│       ├── presupuestos/page.tsx    # → /cliente/presupuestos
-│       ├── pagos/page.tsx           # → /cliente/pagos
-│       └── perfil/page.tsx          # → /cliente/perfil
+│       │   ├── page.tsx                 # → /cliente/incidentes
+│       │   └── nuevo/page.tsx           # → /cliente/incidentes/nuevo
+│       ├── propiedades/page.tsx         # → /cliente/propiedades
+│       ├── presupuestos/page.tsx        # → /cliente/presupuestos
+│       ├── pagos/page.tsx               # → /cliente/pagos
+│       ├── perfil/page.tsx              # → /cliente/perfil
+│       └── notificaciones/page.tsx      # → /cliente/notificaciones
 │
-├── (tecnico)/                       # Todo lo del técnico
-│   ├── layout.tsx                   # Navegación del técnico
+├── (tecnico)/                           # Todo lo del técnico
+│   ├── layout.tsx                       # Navegación del técnico
 │   └── tecnico/
-│       ├── page.tsx                 # → /tecnico
-│       ├── trabajos/page.tsx        # → /tecnico/trabajos
-│       ├── disponibles/page.tsx     # → /tecnico/disponibles
+│       ├── page.tsx                     # → /tecnico
+│       ├── trabajos/page.tsx            # → /tecnico/trabajos
+│       ├── disponibles/page.tsx         # → /tecnico/disponibles
 │       ├── presupuestos/
-│       │   ├── page.tsx             # → /tecnico/presupuestos
-│       │   └── nuevo/page.tsx       # → /tecnico/presupuestos/nuevo
-│       └── perfil/page.tsx          # → /tecnico/perfil
+│       │   ├── page.tsx                 # → /tecnico/presupuestos
+│       │   └── nuevo/page.tsx           # → /tecnico/presupuestos/nuevo
+│       ├── pagos/page.tsx               # → /tecnico/pagos
+│       ├── perfil/page.tsx              # → /tecnico/perfil
+│       └── notificaciones/page.tsx      # → /tecnico/notificaciones
 │
-├── (admin)/                         # Todo lo del admin
-│   ├── layout.tsx                   # Sidebar del admin
+├── (admin)/                             # Todo lo del admin
+│   ├── layout.tsx                       # Sidebar del admin
 │   └── dashboard/
-│       ├── page.tsx                 # → /dashboard
-│       ├── incidentes/page.tsx      # → /dashboard/incidentes
-│       ├── asignaciones/page.tsx    # → /dashboard/asignaciones
-│       ├── clientes/page.tsx        # → /dashboard/clientes
-│       ├── tecnicos/page.tsx        # → /dashboard/tecnicos
-│       ├── propiedades/page.tsx     # → /dashboard/propiedades
-│       ├── usuarios/page.tsx        # → /dashboard/usuarios
-│       ├── presupuestos/page.tsx    # → /dashboard/presupuestos
-│       └── pagos/page.tsx           # → /dashboard/pagos
+│       ├── page.tsx                     # → /dashboard
+│       ├── incidentes/page.tsx          # → /dashboard/incidentes
+│       ├── clientes/page.tsx            # → /dashboard/clientes
+│       ├── tecnicos/page.tsx            # → /dashboard/tecnicos
+│       ├── usuarios/page.tsx            # → /dashboard/usuarios
+│       ├── conformidades/page.tsx       # → /dashboard/conformidades
+│       ├── metricas/page.tsx            # → /dashboard/metricas (PPIs)
+│       ├── notificaciones/page.tsx      # → /dashboard/notificaciones
+│       ├── configuracion/page.tsx       # → /dashboard/configuracion
+│       ├── presupuestos/
+│       │   ├── page.tsx                 # → /dashboard/presupuestos
+│       │   └── nuevo/page.tsx           # → /dashboard/presupuestos/nuevo
+│       ├── pagos/
+│       │   ├── page.tsx                 # → /dashboard/pagos
+│       │   └── nuevo/page.tsx           # → /dashboard/pagos/nuevo
+│       └── exportar/
+│           ├── page.tsx                 # → /dashboard/exportar
+│           └── imprimir/page.tsx        # → /dashboard/exportar/imprimir
 │
-├── layout.tsx                       # Layout raíz (aplica a TODO el sitio)
-└── page.tsx                         # → / (landing page)
+├── (imprimir)/                          # Layout sin navegación (para impresión)
+│   ├── layout.tsx
+│   └── exportar/imprimir/page.tsx       # → /exportar/imprimir
+│
+├── inmueble/
+│   └── [id]/page.tsx                    # → /inmueble/123 (detalle de inmueble)
+│
+├── layout.tsx                           # Layout raíz (aplica a TODO el sitio)
+└── page.tsx                             # → / (landing page)
 ```
 
 **Archivos especiales de Next.js:**
