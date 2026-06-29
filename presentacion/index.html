@@ -823,6 +823,149 @@
     from { opacity: 0; transform: translateY(20px) scale(0.97); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
+
+  /* ─────────── Trace modal · pipeline visual de 5 estaciones ─────────── */
+  .trace-modal-shell {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: 14px 14px 0 var(--ink);
+    max-width: 1380px;
+    width: 96%;
+    padding: 28px 36px 32px;
+    position: relative;
+    animation: modalIn 0.3s cubic-bezier(0.16,1,0.3,1);
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+  .trace-modal-header {
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .trace-modal-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--mantis);
+    margin-bottom: 6px;
+  }
+  .trace-modal-title {
+    font-family: var(--display);
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  /* Pipeline de 5 estaciones (Problema → Mandato → Modelación → Sistema → Valor) */
+  .trace-pipe {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .trace-station {
+    padding: 16px 18px 18px;
+    border: 1px solid var(--ink);
+    background: white;
+    position: relative;
+    display: flex; flex-direction: column;
+    min-height: 230px;
+  }
+  /* conector entre estaciones (flecha lateral) */
+  .trace-station:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 50%; right: -1px;
+    transform: translate(50%, -50%);
+    width: 22px; height: 22px;
+    background: var(--paper);
+    border-top: 2px solid var(--ink);
+    border-right: 2px solid var(--ink);
+    transform-origin: center;
+    transform: translate(50%, -50%) rotate(45deg);
+    z-index: 2;
+  }
+  .trace-station-icon {
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+    background: var(--paper-2);
+    color: var(--ink);
+  }
+  .trace-station-icon svg { width: 22px; height: 22px; }
+  .trace-station-step {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-faded);
+    margin-bottom: 4px;
+  }
+  .trace-station-label {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.1;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .trace-station-body {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--ink);
+    flex: 1;
+  }
+  .trace-station-body .chip {
+    display: inline-block;
+    padding: 2px 7px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background: var(--paper-2);
+    border: 1px solid var(--ink);
+    margin: 2px 4px 2px 0;
+    color: var(--ink);
+  }
+  .trace-station-body .chip-blue { background: var(--mantis-soft); color: var(--mantis-deep); border-color: var(--mantis); }
+  .trace-station-body .chip-warm { background: var(--warm-soft); color: #9A3412; border-color: var(--warm); }
+  .trace-station-body .chip-success { background: var(--success-soft); color: #14532D; border-color: var(--success); }
+  /* Variantes por estación */
+  .trace-station.st-problema { background: #FFF7ED; border-color: var(--warm); }
+  .trace-station.st-problema .trace-station-icon { background: var(--warm-soft); color: #9A3412; }
+  .trace-station.st-problema .trace-station-step,
+  .trace-station.st-problema .trace-station-label { color: #9A3412; border-color: var(--warm); }
+  .trace-station.st-mandato { background: white; border-color: var(--ink); }
+  .trace-station.st-modelacion { background: var(--mantis-soft); border-color: var(--mantis); }
+  .trace-station.st-modelacion .trace-station-icon { background: white; color: var(--mantis-deep); }
+  .trace-station.st-modelacion .trace-station-step,
+  .trace-station.st-modelacion .trace-station-label { color: var(--mantis-deep); border-color: var(--mantis); }
+  .trace-station.st-sistema { background: white; border-color: var(--ink); }
+  .trace-station.st-valor { background: #ECFDF5; border-color: var(--success); box-shadow: 4px 4px 0 var(--success); }
+  .trace-station.st-valor .trace-station-icon { background: var(--success-soft); color: #14532D; }
+  .trace-station.st-valor .trace-station-step,
+  .trace-station.st-valor .trace-station-label { color: #14532D; border-color: var(--success); }
+
+  .trace-modal-footer {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--ink-faded);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    text-align: center;
+  }
+
   .tech-modal-close {
     position: absolute;
     top: 14px; right: 14px;
@@ -1914,8 +2057,8 @@
       <div>
         <div class="eyebrow">Modelación · UML / ISO 29148</div>
         <h2 class="display-lg">Diagrama de casos de uso<span class="mark-blue dot-end"></span></h2>
-        <p class="text-body" style="margin-top: 4px; max-width: 760px;">
-          Lo que el sistema permite hacer. <strong style="color: var(--ink);">Cliqueá cada elipse</strong> para ver actor, HU, RF y descripción.
+        <p class="text-body" style="margin-top: 4px; max-width: 820px;">
+          <strong style="color: var(--ink);">Cliqueá un actor</strong> (stick figure) para resaltar sus casos de uso · <strong style="color: var(--ink);">cliqueá una elipse</strong> para ver actor, HU, RF y descripción.
         </p>
       </div>
       <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
@@ -1943,18 +2086,48 @@
             .uc-system-label { font-family: var(--mono); font-size: 11px; fill: var(--mantis-deep); letter-spacing: 0.3em; font-weight: 700; text-transform: uppercase; }
             .uc-phase-label { font-family: var(--mono); font-size: 9px; fill: var(--ink-faded); letter-spacing: 0.2em; font-weight: 700; text-transform: uppercase; }
             .uc-phase-divider { stroke: var(--ink-faded); stroke-width: 0.5; stroke-dasharray: 3 3; opacity: 0.4; }
-            .uc-actor { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
-            .uc-actor-fill { fill: var(--paper); }
-            .uc-actor-label { font-family: var(--display); font-size: 14px; fill: var(--ink); font-weight: 700; text-anchor: middle; letter-spacing: -0.01em; }
-            .uc-actor-role { font-family: var(--mono); font-size: 9px; fill: var(--ink-faded); text-anchor: middle; letter-spacing: 0.2em; text-transform: uppercase; }
-            .uc-assoc-cli { stroke: var(--mantis); stroke-width: 1.2; opacity: 0.45; fill: none; }
-            .uc-assoc-tec { stroke: var(--warm); stroke-width: 1.2; opacity: 0.45; fill: none; }
-            .uc-assoc-adm { stroke: var(--ink); stroke-width: 1.2; opacity: 0.4; fill: none; }
+            .uc-actor { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; transition: stroke 0.2s, stroke-width 0.2s; }
+            .uc-actor-fill { fill: var(--paper); transition: fill 0.2s; }
+            .uc-actor-label { font-family: var(--display); font-size: 14px; fill: var(--ink); font-weight: 700; text-anchor: middle; letter-spacing: -0.01em; transition: fill 0.2s; }
+            .uc-actor-role { font-family: var(--mono); font-size: 9px; fill: var(--ink-faded); text-anchor: middle; letter-spacing: 0.2em; text-transform: uppercase; transition: fill 0.2s; }
+            .uc-actor-grp { cursor: pointer; }
+            .uc-actor-grp .uc-hit { fill: transparent; }
+            .uc-assoc { fill: none; stroke-width: 1.2; opacity: 0.4; transition: opacity 0.25s, stroke-width 0.25s; }
+            .uc-assoc-cli { stroke: var(--mantis); }
+            .uc-assoc-tec { stroke: var(--warm); }
+            .uc-assoc-adm { stroke: var(--ink); }
             .uc-node { cursor: pointer; }
-            .uc-node ellipse { fill: white; stroke: var(--ink); stroke-width: 1.4; transition: fill 0.15s, stroke 0.15s, stroke-width 0.15s; }
-            .uc-node text { fill: var(--ink); font-size: 11px; font-weight: 500; text-anchor: middle; pointer-events: none; }
+            .uc-node ellipse { fill: white; stroke: var(--ink); stroke-width: 1.4; transition: fill 0.2s, stroke 0.2s, stroke-width 0.2s, opacity 0.25s; }
+            .uc-node text { fill: var(--ink); font-size: 11px; font-weight: 500; text-anchor: middle; pointer-events: none; transition: opacity 0.25s, fill 0.2s; }
             .uc-node:hover ellipse { fill: var(--mantis-soft); stroke: var(--mantis-deep); stroke-width: 2; }
             .uc-node:hover text { fill: var(--mantis-deep); font-weight: 600; }
+
+            /* ── Modo filtrado (cuando se selecciona un actor) ── */
+            .uc-diagram.filter-cli .uc-assoc:not(.uc-assoc-cli),
+            .uc-diagram.filter-tec .uc-assoc:not(.uc-assoc-tec),
+            .uc-diagram.filter-adm .uc-assoc:not(.uc-assoc-adm) { opacity: 0.05; }
+            .uc-diagram.filter-cli .uc-assoc-cli,
+            .uc-diagram.filter-tec .uc-assoc-tec,
+            .uc-diagram.filter-adm .uc-assoc-adm { opacity: 0.85; stroke-width: 2; }
+            .uc-diagram[class*="filter-"] .uc-node:not(.is-related) ellipse { opacity: 0.18; }
+            .uc-diagram[class*="filter-"] .uc-node:not(.is-related) text { opacity: 0.2; }
+            .uc-diagram[class*="filter-"] .uc-node.is-related ellipse { stroke-width: 2.5; }
+            .uc-diagram[class*="filter-"] .uc-node.is-related.related-cli ellipse { stroke: var(--mantis); fill: var(--mantis-soft); }
+            .uc-diagram[class*="filter-"] .uc-node.is-related.related-tec ellipse { stroke: var(--warm); fill: var(--warm-soft); }
+            .uc-diagram[class*="filter-"] .uc-node.is-related.related-adm ellipse { stroke: var(--ink); fill: var(--paper-2); }
+            /* Actor activo destacado */
+            .uc-actor-grp.is-active .uc-actor { stroke-width: 3.5; }
+            .uc-actor-grp.is-active.actor-cli .uc-actor { stroke: var(--mantis); }
+            .uc-actor-grp.is-active.actor-tec .uc-actor { stroke: var(--warm); }
+            .uc-actor-grp.is-active.actor-adm .uc-actor { stroke: var(--ink); }
+            .uc-actor-grp.is-active .uc-actor-fill { fill: var(--paper); }
+            .uc-actor-grp.is-active .uc-actor-label { font-size: 16px; }
+            .uc-actor-grp.is-active.actor-cli .uc-actor-label { fill: var(--mantis-deep); }
+            .uc-actor-grp.is-active.actor-tec .uc-actor-label { fill: #9A3412; }
+            /* Atenuar actores no seleccionados */
+            .uc-diagram[class*="filter-"] .uc-actor-grp:not(.is-active) .uc-actor { opacity: 0.35; }
+            .uc-diagram[class*="filter-"] .uc-actor-grp:not(.is-active) .uc-actor-label,
+            .uc-diagram[class*="filter-"] .uc-actor-grp:not(.is-active) .uc-actor-role { opacity: 0.4; }
           </style>
         </defs>
 
@@ -1977,31 +2150,30 @@
 
         <!-- ════ ASOCIACIONES (líneas actor → UC) ════ -->
         <!-- Cliente (origen ~95,360) → sus UCs -->
-        <line class="uc-assoc-cli" x1="120" y1="360" x2="308" y2="150"/>            <!-- Registrar Incidente -->
-        <line class="uc-assoc-cli" x1="120" y1="360" x2="740" y2="450"/>            <!-- Aprobar Presup Cliente -->
-        <line class="uc-assoc-cli" x1="120" y1="360" x2="1172" y2="260"/>           <!-- Calificar Técnico -->
-        <line class="uc-assoc-cli" x1="120" y1="360" x2="740" y2="600"/>            <!-- Ver Timeline -->
-
+        <line class="uc-assoc uc-assoc-cli" x1="120" y1="360" x2="308" y2="150"/>
+        <line class="uc-assoc uc-assoc-cli" x1="120" y1="360" x2="740" y2="450"/>
+        <line class="uc-assoc uc-assoc-cli" x1="120" y1="360" x2="1172" y2="260"/>
+        <line class="uc-assoc uc-assoc-cli" x1="120" y1="360" x2="740" y2="600"/>
         <!-- Técnico (origen ~1390,210) → sus UCs -->
-        <line class="uc-assoc-tec" x1="1360" y1="210" x2="524" y2="260"/>           <!-- Aceptar Asignación -->
-        <line class="uc-assoc-tec" x1="1360" y1="210" x2="524" y2="370"/>           <!-- Rechazar Asignación -->
-        <line class="uc-assoc-tec" x1="1360" y1="210" x2="740" y2="150"/>           <!-- Realizar Inspección -->
-        <line class="uc-assoc-tec" x1="1360" y1="210" x2="740" y2="260"/>           <!-- Registrar Presupuesto -->
-        <line class="uc-assoc-tec" x1="1360" y1="210" x2="956" y2="150"/>           <!-- Registrar Avance -->
-        <line class="uc-assoc-tec" x1="1360" y1="210" x2="956" y2="260"/>           <!-- Subir Conformidad -->
-        <line class="uc-assoc-tec" x1="1360" y1="210" x2="740" y2="600"/>           <!-- Ver Timeline -->
-
+        <line class="uc-assoc uc-assoc-tec" x1="1360" y1="210" x2="524" y2="260"/>
+        <line class="uc-assoc uc-assoc-tec" x1="1360" y1="210" x2="524" y2="370"/>
+        <line class="uc-assoc uc-assoc-tec" x1="1360" y1="210" x2="740" y2="150"/>
+        <line class="uc-assoc uc-assoc-tec" x1="1360" y1="210" x2="740" y2="260"/>
+        <line class="uc-assoc uc-assoc-tec" x1="1360" y1="210" x2="956" y2="150"/>
+        <line class="uc-assoc uc-assoc-tec" x1="1360" y1="210" x2="956" y2="260"/>
+        <line class="uc-assoc uc-assoc-tec" x1="1360" y1="210" x2="740" y2="600"/>
         <!-- Administrador (origen ~1390,560) → sus UCs -->
-        <line class="uc-assoc-adm" x1="1360" y1="560" x2="524" y2="150"/>           <!-- Asignar Técnico -->
-        <line class="uc-assoc-adm" x1="1360" y1="560" x2="740" y2="370"/>           <!-- Aprobar Presup Admin -->
-        <line class="uc-assoc-adm" x1="1360" y1="560" x2="1172" y2="150"/>          <!-- Aprobar Conformidad -->
-        <line class="uc-assoc-adm" x1="1360" y1="560" x2="1172" y2="370"/>          <!-- Registrar Cobro -->
-        <line class="uc-assoc-adm" x1="1360" y1="560" x2="1172" y2="480"/>          <!-- Registrar Pago -->
-        <line class="uc-assoc-adm" x1="1360" y1="560" x2="740" y2="600"/>           <!-- Ver Timeline -->
+        <line class="uc-assoc uc-assoc-adm" x1="1360" y1="560" x2="524" y2="150"/>
+        <line class="uc-assoc uc-assoc-adm" x1="1360" y1="560" x2="740" y2="370"/>
+        <line class="uc-assoc uc-assoc-adm" x1="1360" y1="560" x2="1172" y2="150"/>
+        <line class="uc-assoc uc-assoc-adm" x1="1360" y1="560" x2="1172" y2="370"/>
+        <line class="uc-assoc uc-assoc-adm" x1="1360" y1="560" x2="1172" y2="480"/>
+        <line class="uc-assoc uc-assoc-adm" x1="1360" y1="560" x2="740" y2="600"/>
 
-        <!-- ════ ACTORES (stick figures) ════ -->
+        <!-- ════ ACTORES (stick figures CLICKEABLES) ════ -->
         <!-- CLIENTE (izquierda) -->
-        <g transform="translate(95,290)">
+        <g class="uc-actor-grp actor-cli" data-actor="cli" transform="translate(95,290)">
+          <rect class="uc-hit" x="-40" y="-25" width="80" height="170"/>
           <circle class="uc-actor-fill" cx="0" cy="0" r="14"/>
           <circle class="uc-actor" cx="0" cy="0" r="14"/>
           <line class="uc-actor" x1="0" y1="14" x2="0" y2="60"/>
@@ -2013,7 +2185,8 @@
         </g>
 
         <!-- TÉCNICO (derecha arriba) -->
-        <g transform="translate(1385,140)">
+        <g class="uc-actor-grp actor-tec" data-actor="tec" transform="translate(1385,140)">
+          <rect class="uc-hit" x="-40" y="-25" width="80" height="170"/>
           <circle class="uc-actor-fill" cx="0" cy="0" r="14"/>
           <circle class="uc-actor" cx="0" cy="0" r="14"/>
           <line class="uc-actor" x1="0" y1="14" x2="0" y2="60"/>
@@ -2025,7 +2198,8 @@
         </g>
 
         <!-- ADMINISTRADOR (derecha abajo) -->
-        <g transform="translate(1385,490)">
+        <g class="uc-actor-grp actor-adm" data-actor="adm" transform="translate(1385,490)">
+          <rect class="uc-hit" x="-40" y="-25" width="80" height="170"/>
           <circle class="uc-actor-fill" cx="0" cy="0" r="14"/>
           <circle class="uc-actor" cx="0" cy="0" r="14"/>
           <line class="uc-actor" x1="0" y1="14" x2="0" y2="60"/>
@@ -2037,77 +2211,78 @@
         </g>
 
         <!-- ════ CASOS DE USO (elipses clickeables) ════ -->
+        <!-- data-actors: lista de actores asociados (cli, tec, adm) -->
         <!-- FASE ALTA -->
-        <g class="uc-node" data-uc="registrar-incidente">
+        <g class="uc-node" data-uc="registrar-incidente" data-actors="cli">
           <ellipse cx="308" cy="150" rx="92" ry="28"/>
           <text x="308" y="154">Registrar incidente</text>
         </g>
 
         <!-- FASE ASIGNACIÓN -->
-        <g class="uc-node" data-uc="asignar-tecnico">
+        <g class="uc-node" data-uc="asignar-tecnico" data-actors="adm">
           <ellipse cx="524" cy="150" rx="92" ry="28"/>
           <text x="524" y="154">Asignar técnico</text>
         </g>
-        <g class="uc-node" data-uc="aceptar-asignacion">
+        <g class="uc-node" data-uc="aceptar-asignacion" data-actors="tec">
           <ellipse cx="524" cy="260" rx="92" ry="28"/>
           <text x="524" y="264">Aceptar asignación</text>
         </g>
-        <g class="uc-node" data-uc="rechazar-asignacion">
+        <g class="uc-node" data-uc="rechazar-asignacion" data-actors="tec">
           <ellipse cx="524" cy="370" rx="92" ry="28"/>
           <text x="524" y="374">Rechazar asignación</text>
         </g>
 
         <!-- FASE PRESUPUESTO -->
-        <g class="uc-node" data-uc="realizar-inspeccion">
+        <g class="uc-node" data-uc="realizar-inspeccion" data-actors="tec">
           <ellipse cx="740" cy="150" rx="92" ry="28"/>
           <text x="740" y="154">Realizar inspección</text>
         </g>
-        <g class="uc-node" data-uc="registrar-presupuesto">
+        <g class="uc-node" data-uc="registrar-presupuesto" data-actors="tec">
           <ellipse cx="740" cy="260" rx="92" ry="28"/>
           <text x="740" y="264">Registrar presupuesto</text>
         </g>
-        <g class="uc-node" data-uc="aprobar-presup-admin">
+        <g class="uc-node" data-uc="aprobar-presup-admin" data-actors="adm">
           <ellipse cx="740" cy="370" rx="98" ry="28"/>
           <text x="740" y="366">Aprobar presupuesto</text>
           <text x="740" y="380" style="font-size: 9.5px; fill: var(--ink-faded);">(admin)</text>
         </g>
-        <g class="uc-node" data-uc="aprobar-presup-cliente">
+        <g class="uc-node" data-uc="aprobar-presup-cliente" data-actors="cli">
           <ellipse cx="740" cy="450" rx="98" ry="28"/>
           <text x="740" y="446">Aprobar presupuesto</text>
           <text x="740" y="460" style="font-size: 9.5px; fill: var(--ink-faded);">(cliente)</text>
         </g>
 
         <!-- FASE EJECUCIÓN -->
-        <g class="uc-node" data-uc="registrar-avance">
+        <g class="uc-node" data-uc="registrar-avance" data-actors="tec">
           <ellipse cx="956" cy="150" rx="92" ry="28"/>
           <text x="956" y="154">Registrar avance</text>
         </g>
-        <g class="uc-node" data-uc="subir-conformidad">
+        <g class="uc-node" data-uc="subir-conformidad" data-actors="tec">
           <ellipse cx="956" cy="260" rx="92" ry="28"/>
           <text x="956" y="264">Subir conformidad</text>
         </g>
 
         <!-- FASE CIERRE Y COBRO -->
-        <g class="uc-node" data-uc="aprobar-conformidad">
+        <g class="uc-node" data-uc="aprobar-conformidad" data-actors="adm">
           <ellipse cx="1172" cy="150" rx="92" ry="28"/>
           <text x="1172" y="154">Aprobar conformidad</text>
         </g>
-        <g class="uc-node" data-uc="calificar-tecnico">
+        <g class="uc-node" data-uc="calificar-tecnico" data-actors="cli">
           <ellipse cx="1172" cy="260" rx="92" ry="28"/>
           <text x="1172" y="264">Calificar técnico</text>
         </g>
-        <g class="uc-node" data-uc="registrar-cobro">
+        <g class="uc-node" data-uc="registrar-cobro" data-actors="adm">
           <ellipse cx="1172" cy="370" rx="92" ry="28"/>
           <text x="1172" y="374">Registrar cobro</text>
         </g>
-        <g class="uc-node" data-uc="registrar-pago-tecnico">
+        <g class="uc-node" data-uc="registrar-pago-tecnico" data-actors="adm">
           <ellipse cx="1172" cy="480" rx="92" ry="28"/>
           <text x="1172" y="478">Registrar pago</text>
           <text x="1172" y="491" style="font-size: 9.5px; fill: var(--ink-faded);">(técnico)</text>
         </g>
 
         <!-- TRANSVERSAL: Ver Timeline (abajo, conectado a los 3) -->
-        <g class="uc-node" data-uc="ver-timeline">
+        <g class="uc-node" data-uc="ver-timeline" data-actors="cli,tec,adm">
           <ellipse cx="740" cy="600" rx="115" ry="30" style="stroke-dasharray: 5 3;"/>
           <text x="740" y="596" style="font-size: 11.5px; font-weight: 600;">Ver timeline del incidente</text>
           <text x="740" y="612" style="font-size: 9.5px; fill: var(--ink-faded); font-style: italic;">transversal · los 3 actores</text>
@@ -2916,8 +3091,8 @@
 
     <div style="padding-top: 80px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: end;">
       <div>
-        <div class="eyebrow">Flujo 1 de 4 · Cliente</div>
-        <h2 class="display-lg">Alta de incidente<span class="mark-blue dot-end"></span></h2>
+        <div class="eyebrow">Demo 1 de 4 · Cliente</div>
+        <h2 class="display-lg">Alta de Incidentes<span class="mark-blue dot-end"></span></h2>
       </div>
       <div class="pill pill-blue" data-bpmn-ref="alta">Flujo 5 · RF-01</div>
     </div>
@@ -2960,7 +3135,7 @@
       </div>
     </div>
 
-    <div class="slide-footer"><span>08 · DEMO GUIADA · 1/4</span><span>ALTA DE INCIDENTE</span></div>
+    <div class="slide-footer"><span>08 · DEMO GUIADA · 1/4</span><span>FLUJO 5 · ALTA DE INCIDENTES</span></div>
   </div>
 </section>
 
@@ -2977,8 +3152,8 @@
 
     <div style="padding-top: 80px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: end;">
       <div>
-        <div class="eyebrow">Flujo 2 de 4 · Admin + Técnico</div>
-        <h2 class="display-lg">Asignación al técnico<span class="mark-blue dot-end"></span></h2>
+        <div class="eyebrow">Demo 2 de 4 · Admin + Técnico</div>
+        <h2 class="display-lg">Asignación del Técnico al Incidente<span class="mark-blue dot-end"></span></h2>
       </div>
       <div class="pill pill-blue" data-bpmn-ref="asignacion">Flujo 6 · RF-03, RF-04</div>
     </div>
@@ -3029,7 +3204,7 @@
       </div>
     </div>
 
-    <div class="slide-footer"><span>08 · DEMO GUIADA · 2/4</span><span>ASIGNACIÓN</span></div>
+    <div class="slide-footer"><span>08 · DEMO GUIADA · 2/4</span><span>FLUJO 6 · ASIGNACIÓN DEL TÉCNICO</span></div>
   </div>
 </section>
 
@@ -3046,10 +3221,10 @@
 
     <div style="padding-top: 80px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: end;">
       <div>
-        <div class="eyebrow">Flujo 3 de 4 · Técnico + doble aprobación</div>
-        <h2 class="display-lg">Ejecución y presupuesto<span class="mark-blue dot-end"></span></h2>
+        <div class="eyebrow">Demo 3 de 4 · Técnico + doble aprobación</div>
+        <h2 class="display-lg">Inspección y Gestión de Presupuestos<span class="mark-blue dot-end"></span></h2>
       </div>
-      <div class="pill pill-blue" data-bpmn-ref="ejecucion">Flujos 7 y 8 · RF-05, RF-06</div>
+      <div class="pill pill-blue" data-bpmn-ref="ejecucion">Flujos 7 + 8 · RF-05, RF-06</div>
     </div>
 
     <div class="bpmn-slide-grid">
@@ -3100,7 +3275,7 @@
       </div>
     </div>
 
-    <div class="slide-footer"><span>08 · DEMO GUIADA · 3/4</span><span>EJECUCIÓN Y PRESUPUESTO</span></div>
+    <div class="slide-footer"><span>08 · DEMO GUIADA · 3/4</span><span>FLUJOS 7+8 · INSPECCIÓN Y GESTIÓN DE PRESUPUESTOS</span></div>
   </div>
 </section>
 
@@ -3117,8 +3292,8 @@
 
     <div style="padding-top: 80px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: end;">
       <div>
-        <div class="eyebrow">Flujo 4 de 4 · Admin cierra</div>
-        <h2 class="display-lg">Cierre financiero<span class="mark-success dot-end"></span></h2>
+        <div class="eyebrow">Demo 4 de 4 · Técnico + Admin</div>
+        <h2 class="display-lg">Ejecución y Cierre<span class="mark-success dot-end"></span></h2>
       </div>
       <div class="pill pill-blue" data-bpmn-ref="cierre">Flujo 9 · RF-07, RF-08</div>
     </div>
@@ -3167,7 +3342,7 @@
       </div>
     </div>
 
-    <div class="slide-footer"><span>08 · DEMO GUIADA · 4/4</span><span>CIERRE FINANCIERO</span></div>
+    <div class="slide-footer"><span>08 · DEMO GUIADA · 4/4</span><span>FLUJO 9 · EJECUCIÓN Y CIERRE</span></div>
   </div>
 </section>
 
@@ -3354,7 +3529,7 @@
 </div>
 </div>
 
-<!-- ───────── Modal stack tech ───────── -->
+<!-- ───────── Modal stack tech (genérico) ───────── -->
 <div class="tech-modal" id="techModal" role="dialog" aria-modal="true">
   <div class="tech-modal-inner">
     <button class="tech-modal-close" id="techModalClose" aria-label="Cerrar">×</button>
@@ -3363,6 +3538,21 @@
     <div class="tech-modal-name" id="techModalName"></div>
     <div class="tech-modal-role" id="techModalRole">PARA QUÉ SE USA EN MANTIS</div>
     <p class="tech-modal-desc" id="techModalDesc"></p>
+  </div>
+</div>
+
+<!-- ───────── Modal Seguimiento (timeline visual) ───────── -->
+<div class="tech-modal" id="traceModal" role="dialog" aria-modal="true">
+  <div class="trace-modal-shell">
+    <button class="tech-modal-close" id="traceModalClose" aria-label="Cerrar">×</button>
+    <div class="trace-modal-header">
+      <div class="trace-modal-eyebrow" id="traceModalEyebrow"></div>
+      <h2 class="trace-modal-title" id="traceModalTitle"></h2>
+    </div>
+    <!-- Pipeline horizontal de 5 estaciones -->
+    <div class="trace-pipe" id="tracePipe"></div>
+    <!-- Cita de fuente abajo -->
+    <div class="trace-modal-footer" id="traceModalFooter"></div>
   </div>
 </div>
 
@@ -3588,7 +3778,8 @@
   };
 
   document.querySelectorAll('.uc-node').forEach(node => {
-    node.addEventListener('click', () => {
+    node.addEventListener('click', (e) => {
+      e.stopPropagation();
       const key = node.dataset.uc;
       const info = UC_INFO[key];
       if (!info) return;
@@ -3599,6 +3790,62 @@
       modal.classList.add('open');
     });
   });
+
+  // ─── Filtrado del diagrama UML por actor ───
+  const ucDiagram = document.querySelector('.uc-diagram');
+  const ucActors = document.querySelectorAll('.uc-actor-grp');
+  const ucNodesAll = document.querySelectorAll('.uc-node');
+
+  function clearUcFilter() {
+    if (!ucDiagram) return;
+    ucDiagram.classList.remove('filter-cli', 'filter-tec', 'filter-adm');
+    ucActors.forEach(a => a.classList.remove('is-active'));
+    ucNodesAll.forEach(n => n.classList.remove('is-related', 'related-cli', 'related-tec', 'related-adm'));
+  }
+
+  function applyUcFilter(actorKey) {
+    if (!ucDiagram) return;
+    ucDiagram.classList.remove('filter-cli', 'filter-tec', 'filter-adm');
+    ucActors.forEach(a => a.classList.remove('is-active'));
+    ucNodesAll.forEach(n => n.classList.remove('is-related', 'related-cli', 'related-tec', 'related-adm'));
+    ucDiagram.classList.add('filter-' + actorKey);
+    ucActors.forEach(a => {
+      if (a.dataset.actor === actorKey) a.classList.add('is-active');
+    });
+    ucNodesAll.forEach(n => {
+      const actors = (n.dataset.actors || '').split(',').map(s => s.trim());
+      if (actors.includes(actorKey)) {
+        n.classList.add('is-related', 'related-' + actorKey);
+      }
+    });
+  }
+
+  ucActors.forEach(actor => {
+    actor.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = actor.dataset.actor;
+      // Toggle: si ya está activo, limpia filtro
+      if (actor.classList.contains('is-active')) {
+        clearUcFilter();
+      } else {
+        applyUcFilter(key);
+      }
+    });
+  });
+
+  // Click en zona vacía del SVG resetea filtro
+  if (ucDiagram) {
+    ucDiagram.addEventListener('click', (e) => {
+      // sólo si se cliqueó el fondo (no un nodo ni actor)
+      if (e.target === ucDiagram || e.target.classList.contains('uc-system')) {
+        clearUcFilter();
+      }
+    });
+  }
+  // Reset al cambiar de slide
+  if (typeof deck !== 'undefined') {
+    deck.on('slidechanged', () => clearUcFilter());
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // FLUJOS BPMN · cada card abre modal con su mini-diagrama
@@ -3634,54 +3881,130 @@
   // ═══════════════════════════════════════════════════════════════
   // SEGUIMIENTO · cada fila abre modal con vínculos (UC + flujo + valor)
   // ═══════════════════════════════════════════════════════════════
+  // Cada fila tiene 5 estaciones del pipeline (problema, mandato, modelacion, sistema, valor)
+  // Cada estación es texto corto + chips opcionales para resaltar RFs/UCs/BPMNs
   const TRACE_INFO = {
     '01': {
-      layer: 'FILA 01 · ALTA DE INCIDENTE',
-      name: 'Registro no estructurado de incidentes',
-      desc: 'PROBLEMA · Antes en ISBA: reclamos por WhatsApp, papel o Excel sin formato común.\n\nMANDATO (Tesis §4.7.3) · Módulo de Gestión de Incidentes con registro inicial vinculado a propiedades.\n\nMODELACIÓN · BPMN-5 Alta de Incidentes (Tesis §6.7) + UC Registrar incidente (HU-01, RF-01).\n\nSISTEMA · Portal cliente /cliente/incidentes/nuevo con descripción, foto y franjas de disponibilidad. Se ve en la DEMO 1/4.\n\nVALOR · Legajo digital único, accesible y centralizado.'
+      eyebrow: 'Fila 01 · Alta del incidente',
+      title: 'Registro no estructurado de incidentes',
+      footer: 'Tesis §4.7.3 · §6.7 punto 5 · §6.8 · RF-01',
+      problema: 'En ISBA, los reclamos llegaban por WhatsApp, papel o Excel — sin formato común ni un único lugar.',
+      mandato: 'Módulo de Gestión de Incidentes con registro inicial vinculado a propiedades + generación automática de historial.',
+      modelacion: { chips: [['UC Registrar incidente','blue'],['HU-01','blue'],['RF-01','blue'],['Flujo BPMN 5','warm']], text: 'El cliente registra desde su portal, sin intermediación.' },
+      sistema: { chips: [['Portal cliente','blue']], text: 'Form en /cliente/incidentes/nuevo con descripción, foto y franjas de disponibilidad. Se ve en la Demo 1/4.' },
+      valor: 'Legajo digital único, accesible y centralizado.'
     },
     '02': {
-      layer: 'FILA 02 · SEGUIMIENTO DEL CASO',
-      name: 'Documentación manual y pérdida de información',
-      desc: 'PROBLEMA · El que atendía era el único que sabía el estado. Si se ausentaba, se perdía contexto.\n\nMANDATO · Generación automática de historial por incidente y comunicación entre áreas internas.\n\nMODELACIÓN · BPMN-9 Ejecución y Seguimiento + UC Ver timeline del incidente (HU-07B/C, RF-07A).\n\nSISTEMA · Timeline cronológico en el modal del incidente, visible a los 3 roles (vista por rol).\n\nVALOR · Cero pérdida de información — trazabilidad completa del ciclo.'
+      eyebrow: 'Fila 02 · Seguimiento del caso',
+      title: 'Documentación manual y pérdida de información',
+      footer: 'Tesis §6.6 · §6.7 punto 9 · RF-07A',
+      problema: 'El que atendía era el único que sabía el estado. Si se ausentaba, se perdía contexto.',
+      mandato: 'Generación automática de historial por incidente + comunicación entre áreas internas.',
+      modelacion: { chips: [['UC Ver Timeline','blue'],['HU-07A/B/C','blue'],['RF-07A','blue'],['Flujo BPMN 9','warm']], text: 'Timeline con todos los eventos del caso, accesible a los 3 roles.' },
+      sistema: { chips: [['Modal del incidente','blue']], text: 'Timeline cronológico con vista adaptada al rol (cliente ve menos, admin ve todo).' },
+      valor: 'Cero pérdida de información — seguimiento completo del ciclo.'
     },
     '03': {
-      layer: 'FILA 03 · GESTIÓN DE TÉCNICOS',
-      name: 'Sin base de técnicos ni medición de desempeño',
-      desc: 'PROBLEMA · Sin base estructurada de técnicos. Asignación improvisada por "confianza".\n\nMANDATO · Módulo de Gestión de Técnicos con información de contacto, especialidad e historial de trabajos y calificaciones.\n\nMODELACIÓN · BPMN-3 Alta de Técnicos + UCs Asignar técnico (HU-03A/B, RF-03, RF-04) y Calificar técnico (HU-11, RF-09).\n\nSISTEMA · ABM de técnicos + solicitudes de registro auto-aprobables + calificación 1-5★ con promedio.\n\nVALOR · Selección informada del técnico por desempeño y especialidad.'
+      eyebrow: 'Fila 03 · Gestión de técnicos',
+      title: 'Sin base de técnicos ni medición de desempeño',
+      footer: 'Tesis §4.7.3 · §6.7 punto 3 · RF-03, RF-09, RF-11',
+      problema: 'Sin base estructurada de técnicos. Asignación improvisada por "confianza".',
+      mandato: 'Módulo de Gestión de Técnicos con contacto, especialidad e historial de trabajos y calificaciones.',
+      modelacion: { chips: [['UC Asignar técnico','blue'],['UC Calificar técnico','blue'],['HU-03A/B','blue'],['HU-11','blue'],['RF-03, RF-09, RF-11','blue'],['Flujo BPMN 3','warm']], text: 'Alta de técnicos por solicitud + asignación filtrada por especialidad y ranking.' },
+      sistema: { chips: [['ABM Técnicos','blue']], text: 'Panel admin con solicitudes auto-aprobables + calificación 1–5★ con promedio.' },
+      valor: 'Selección informada por desempeño y especialidad.'
     },
     '04': {
-      layer: 'FILA 04 · COMUNICACIÓN',
-      name: 'Comunicación descentralizada entre áreas',
-      desc: 'PROBLEMA · WhatsApp, llamadas y mails dispersos. Sin auditoría de quién avisó a quién y cuándo.\n\nMANDATO · Notificación automática al asignar técnico y al confirmar aceptación.\n\nMODELACIÓN · BPMN-6 Asignación + UCs Asignar y Aceptar asignación (HU-04, RF-04).\n\nSISTEMA · Notificaciones in-app con badges en el sidebar de cada rol. Demo 2/4.\n\nVALOR · Un solo canal auditable, sin pérdida ni duplicación de mensajes.'
+      eyebrow: 'Fila 04 · Comunicación',
+      title: 'Comunicación descentralizada entre áreas',
+      footer: 'Tesis §6.7 punto 6 · RF-04',
+      problema: 'WhatsApp, llamadas y mails dispersos. Sin auditoría de quién avisó a quién y cuándo.',
+      mandato: 'Notificación automática al asignar técnico y al confirmar aceptación.',
+      modelacion: { chips: [['UC Asignar','blue'],['UC Aceptar Asignación','blue'],['HU-04','blue'],['RF-04','blue'],['Flujo BPMN 6','warm']], text: 'Notificación in-app + badges al asignar y aceptar.' },
+      sistema: { chips: [['Notificaciones in-app','blue']], text: 'Badges en sidebar de cada rol. Se ve en la Demo 2/4.' },
+      valor: 'Un solo canal auditable, sin pérdida ni duplicación de mensajes.'
     },
     '05': {
-      layer: 'FILA 05 · TOMA DE DECISIONES',
-      name: 'Sin reportes ni métricas para decidir',
-      desc: 'PROBLEMA · No había reportes estadísticos ni históricos. Decisiones basadas en intuición.\n\nMANDATO · Módulo de Reportes operativos y estratégicos con filtros por propiedad, técnico, tipo e intervalo.\n\nMODELACIÓN · UC Consultar reportes y dashboards. Indicadores derivados del timeline.\n\nSISTEMA · Dashboard admin con semáforos, tendencias y filtros por período. Walter responde consultas en lenguaje natural.\n\nVALOR · Decisiones con datos reales, en vivo.'
+      eyebrow: 'Fila 05 · Toma de decisiones',
+      title: 'Sin reportes ni métricas para decidir',
+      footer: 'Tesis §4.7.3 Módulo de Reportes · RF-12',
+      problema: 'No había reportes estadísticos ni históricos. Decisiones basadas en intuición.',
+      mandato: 'Módulo de Reportes operativos y estratégicos con filtros por propiedad, técnico, tipo y período.',
+      modelacion: { chips: [['UC Consultar reportes','blue'],['RF-12','blue']], text: 'Indicadores calculados sobre el timeline en vivo.' },
+      sistema: { chips: [['Dashboard admin','blue'],['Walter IA','success']], text: 'Dashboard con semáforos, tendencias y filtros. Walter responde consultas en lenguaje natural.' },
+      valor: 'Decisiones con datos reales, en vivo.'
     },
     '06': {
-      layer: 'FILA 06 · CIERRE FINANCIERO',
-      name: 'Subtrabajos pagos sin haberse hecho',
-      desc: 'PROBLEMA · Riesgo concreto del modelo papel: trabajos cobrados sin estar realmente hechos.\n\nMANDATO · Cierre formal del caso con conformidad firmada antes del cobro.\n\nMODELACIÓN · BPMN-9 Cierre + UCs Aprobar conformidad (HU-10, RF-08), Registrar cobro al cliente (HU-08A, RF-07B), Registrar pago al técnico (HU-08B, RF-07C).\n\nSISTEMA · Foto firmada del cliente + cobro y pago separados por destinatario. Demo 4/4.\n\nVALOR · Nada se cobra sin estar hecho. Conformidad firmada digital como evidencia.'
+      eyebrow: 'Fila 06 · Cierre financiero',
+      title: 'Subtrabajos pagos sin haberse hecho',
+      footer: 'Tesis §6.7 puntos 9 y 9.1 · RF-07B, RF-07C, RF-07D, RF-08',
+      problema: 'Riesgo concreto del modelo papel: trabajos cobrados sin estar realmente hechos.',
+      mandato: 'Cierre formal del caso con conformidad firmada antes del cobro.',
+      modelacion: { chips: [['UC Aprobar Conformidad','blue'],['UC Registrar Cobro','blue'],['UC Registrar Pago','blue'],['HU-08A/B','blue'],['HU-09','blue'],['HU-10','blue'],['RF-07B/C/D','blue'],['RF-08','blue'],['Flujo BPMN 9','warm']], text: 'Conformidad firmada digital + cobro y pago separados.' },
+      sistema: { chips: [['Módulo Pagos','blue']], text: 'Foto de conformidad firmada por el cliente + cobro y pago como operaciones independientes. Se ve en la Demo 4/4.' },
+      valor: 'Nada se cobra sin estar hecho. Conformidad firmada digital como evidencia auditable.'
     },
   };
 
+  // Iconos SVG por estación
+  const TRACE_ICONS = {
+    problema: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    mandato:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>',
+    modelacion:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><line x1="10" y1="6.5" x2="14" y2="6.5"/><line x1="6.5" y1="10" x2="6.5" y2="14"/></svg>',
+    sistema:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+    valor:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  };
+
+  const traceModal = document.getElementById('traceModal');
+  const traceClose = document.getElementById('traceModalClose');
+  const traceEyebrow = document.getElementById('traceModalEyebrow');
+  const traceTitle = document.getElementById('traceModalTitle');
+  const tracePipe = document.getElementById('tracePipe');
+  const traceFooter = document.getElementById('traceModalFooter');
+
+  function renderChips(chips) {
+    if (!chips) return '';
+    return '<div style="margin-bottom: 8px;">' + chips.map(([txt, kind]) => `<span class="chip chip-${kind}">${txt}</span>`).join('') + '</div>';
+  }
+
+  function openTraceModal(key) {
+    const info = TRACE_INFO[key];
+    if (!info) return;
+    traceEyebrow.textContent = info.eyebrow;
+    traceTitle.textContent = info.title;
+    traceFooter.textContent = info.footer;
+    const stations = [
+      { id: 'problema',  step: 'Antes',    label: 'Problema',    cls: 'st-problema',   body: info.problema },
+      { id: 'mandato',   step: 'Lo que prometimos', label: 'Mandato', cls: 'st-mandato',    body: info.mandato },
+      { id: 'modelacion',step: 'Cómo lo modelamos', label: 'Modelación', cls: 'st-modelacion', body: info.modelacion },
+      { id: 'sistema',   step: 'Lo que construimos', label: 'Sistema', cls: 'st-sistema',    body: info.sistema },
+      { id: 'valor',     step: 'Para ISBA', label: 'Valor',       cls: 'st-valor',      body: info.valor },
+    ];
+    tracePipe.innerHTML = stations.map(s => {
+      let bodyHTML = '';
+      if (typeof s.body === 'string') {
+        bodyHTML = s.body;
+      } else if (s.body && typeof s.body === 'object') {
+        bodyHTML = renderChips(s.body.chips) + (s.body.text || '');
+      }
+      return `
+        <div class="trace-station ${s.cls}">
+          <div class="trace-station-icon">${TRACE_ICONS[s.id]}</div>
+          <div class="trace-station-step">${s.step}</div>
+          <div class="trace-station-label">${s.label}</div>
+          <div class="trace-station-body">${bodyHTML}</div>
+        </div>
+      `;
+    }).join('');
+    traceModal.classList.add('open');
+  }
+
   document.querySelectorAll('.traza-clickable').forEach(row => {
-    row.addEventListener('click', () => {
-      const key = row.dataset.trace;
-      const info = TRACE_INFO[key];
-      if (!info) return;
-      modalIcon.innerHTML = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h24M4 16h24M4 24h24"/><circle cx="8" cy="8" r="2" fill="currentColor"/><circle cx="8" cy="16" r="2" fill="currentColor"/><circle cx="8" cy="24" r="2" fill="currentColor"/></svg>';
-      modalLayer.textContent = info.layer;
-      modalName.textContent = info.name;
-      modalDesc.innerHTML = info.desc.split('\n').map(l => l || '<br>').map(l => {
-        // Negrita en los labels (PROBLEMA, MANDATO, ...)
-        return l.replace(/^(PROBLEMA|MANDATO|MODELACIÓN|SISTEMA|VALOR)( ·)/, '<strong style="color: var(--ink); letter-spacing: 0.05em;">$1</strong>$2');
-      }).join('<br>');
-      modal.classList.add('open');
-    });
+    row.addEventListener('click', () => openTraceModal(row.dataset.trace));
   });
+  traceClose.addEventListener('click', () => traceModal.classList.remove('open'));
+  traceModal.addEventListener('click', (e) => { if (e.target === traceModal) traceModal.classList.remove('open'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') traceModal.classList.remove('open'); });
 
   function closeModal() { modal.classList.remove('open'); }
   modalClose.addEventListener('click', closeModal);
