@@ -1539,17 +1539,18 @@
 
       <div class="stagger" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 32px;">
         <div class="process-step"><div class="ps-num">01</div><div><div class="ps-title">El caso · ISBA</div><div class="ps-desc">Quién es y por qué la elegimos</div></div></div>
-        <div class="process-step"><div class="ps-num">07</div><div><div class="ps-title">Mantis · la solución</div><div class="ps-desc">Stack, arquitectura y portales</div></div></div>
-        <div class="process-step"><div class="ps-num">02</div><div><div class="ps-title">Diagnóstico</div><div class="ps-desc">El proceso real antes</div></div></div>
-        <div class="process-step"><div class="ps-num">08</div><div><div class="ps-title">Walter · IA</div><div class="ps-desc">Asistente diferencial</div></div></div>
-        <div class="process-step"><div class="ps-num">03</div><div><div class="ps-title">FODA + Mandato</div><div class="ps-desc">Diagnóstico y compromiso</div></div></div>
-        <div class="process-step"><div class="ps-num">09</div><div><div class="ps-title">Demo · flujos 1 a 4</div><div class="ps-desc">Alta · Asignación · Ejecución · Cierre</div></div></div>
-        <div class="process-step"><div class="ps-num">04</div><div><div class="ps-title">Seguimiento</div><div class="ps-desc">La columna vertebral</div></div></div>
-        <div class="process-step"><div class="ps-num">10</div><div><div class="ps-title">Indicadores</div><div class="ps-desc">Métricas operativas en vivo</div></div></div>
-        <div class="process-step"><div class="ps-num">05</div><div><div class="ps-title">Modelación</div><div class="ps-desc">BPMN principales</div></div></div>
-        <div class="process-step"><div class="ps-num">11</div><div><div class="ps-title">Valor aportado</div><div class="ps-desc">Resultado de negocio</div></div></div>
-        <div class="process-step"><div class="ps-num">06</div><div><div class="ps-title">Metodología</div><div class="ps-desc">Cascada + Scrum</div></div></div>
-        <div class="process-step"><div class="ps-num">12</div><div><div class="ps-title">Cierre</div><div class="ps-desc">Preguntas</div></div></div>
+        <div class="process-step"><div class="ps-num">01</div><div><div class="ps-title">El caso · ISBA</div><div class="ps-desc">Quién es y por qué la elegimos</div></div></div>
+        <div class="process-step"><div class="ps-num">08</div><div><div class="ps-title">Seguimiento</div><div class="ps-desc">Problema → mandato → modelación → sistema → valor</div></div></div>
+        <div class="process-step"><div class="ps-num">02</div><div><div class="ps-title">Diagnóstico</div><div class="ps-desc">El proceso real antes de Mantis</div></div></div>
+        <div class="process-step"><div class="ps-num">09</div><div><div class="ps-title">Metodología</div><div class="ps-desc">Cascada para definir, Scrum para construir</div></div></div>
+        <div class="process-step"><div class="ps-num">03</div><div><div class="ps-title">FODA</div><div class="ps-desc">Análisis interno del equipo</div></div></div>
+        <div class="process-step"><div class="ps-num">10</div><div><div class="ps-title">Conocé a Mantis</div><div class="ps-desc">Estructura + demo guiada (4 flujos en vivo)</div></div></div>
+        <div class="process-step"><div class="ps-num">04</div><div><div class="ps-title">Mandato</div><div class="ps-desc">Objetivo, alcance, límites y actores</div></div></div>
+        <div class="process-step"><div class="ps-num">11</div><div><div class="ps-title">Indicadores</div><div class="ps-desc">Métricas operativas en vivo</div></div></div>
+        <div class="process-step"><div class="ps-num">05</div><div><div class="ps-title">Casos de uso</div><div class="ps-desc">19 UC agrupados por dominio</div></div></div>
+        <div class="process-step"><div class="ps-num">12</div><div><div class="ps-title">Valor agregado</div><div class="ps-desc">Aporte concreto a ISBA</div></div></div>
+        <div class="process-step"><div class="ps-num">06</div><div><div class="ps-title">Flujos BPMN</div><div class="ps-desc">9 flujos modelados · 5 en demo</div></div></div>
+        <div class="process-step"><div class="ps-num">13</div><div><div class="ps-title">Cierre</div><div class="ps-desc">Preguntas</div></div></div>
       </div>
     </div>
 
@@ -1900,13 +1901,257 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════
+     07B — CASOS DE USO (UC) · listado completo
+     ═══════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="slide-pad">
+    <div class="slide-corner">
+      <span class="dot"></span>
+      <span>06 · Casos de uso</span>
+      <span class="line"></span>
+    </div>
+
+    <div style="padding-top: 80px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: end;">
+      <div>
+        <div class="eyebrow">Modelación · UML / ISO 29148</div>
+        <h2 class="display-lg">Casos de uso<span class="mark-blue dot-end"></span></h2>
+        <p class="text-body" style="margin-top: 6px; max-width: 700px;">
+          Lo que el sistema permite hacer. Cada caso de uso (UC) está vinculado a una historia de usuario (HU) y a uno o más requerimientos funcionales (RF).
+        </p>
+      </div>
+      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
+        Tesis §6.6<br>19 casos de uso
+      </p>
+    </div>
+
+    <!-- Grid agrupado por dominio -->
+    <div class="stagger" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: 1; min-height: 0;">
+
+      <!-- Grupo 1: Onboarding -->
+      <div style="border: 1px solid var(--ink); padding: 12px 14px; background: white;">
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.25em; color: var(--mantis); font-weight: 700; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between;">
+          <span>Onboarding</span><span>2</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div><strong style="color: var(--ink);">UC Solicitar registro como técnico</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-12 · RF-11</span></div>
+          <div><strong style="color: var(--ink);">UC Aprobar / Rechazar solicitud</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-12 · RF-11</span></div>
+        </div>
+      </div>
+
+      <!-- Grupo 2: Alta y clasificación del incidente -->
+      <div style="border: 1px solid var(--ink); padding: 12px 14px; background: white;">
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.25em; color: var(--mantis); font-weight: 700; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between;">
+          <span>Alta + clasificación</span><span>2</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div><strong style="color: var(--ink);">UC Registrar incidente</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-01 · RF-01</span></div>
+          <div><strong style="color: var(--ink);">UC Clasificar incidente</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-02 · RF-02</span></div>
+        </div>
+      </div>
+
+      <!-- Grupo 3: Asignación -->
+      <div style="border: 1px solid var(--ink); padding: 12px 14px; background: white;">
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.25em; color: var(--mantis); font-weight: 700; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between;">
+          <span>Asignación</span><span>3</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div><strong style="color: var(--ink);">UC Asignar técnico</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-03A/B · RF-03, RF-04</span></div>
+          <div><strong style="color: var(--ink);">UC Aceptar asignación</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-04 · RF-04</span></div>
+          <div><strong style="color: var(--ink);">UC Rechazar asignación</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-04 · RF-04</span></div>
+        </div>
+      </div>
+
+      <!-- Grupo 4: Inspección + Presupuesto -->
+      <div style="border: 1px solid var(--ink); padding: 12px 14px; background: white;">
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.25em; color: var(--mantis); font-weight: 700; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between;">
+          <span>Inspección + presup.</span><span>4</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div><strong style="color: var(--ink);">UC Realizar inspección</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-05 · RF-05</span></div>
+          <div><strong style="color: var(--ink);">UC Registrar presupuesto</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-05 · RF-05</span></div>
+          <div><strong style="color: var(--ink);">UC Aprobar presup. (Admin)</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-06A · RF-06</span></div>
+          <div><strong style="color: var(--ink);">UC Aprobar presup. (Cliente)</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-06B · RF-06</span></div>
+        </div>
+      </div>
+
+      <!-- Grupo 5: Ejecución -->
+      <div style="border: 1px solid var(--ink); padding: 12px 14px; background: white;">
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.25em; color: var(--mantis); font-weight: 700; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between;">
+          <span>Ejecución</span><span>2</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div><strong style="color: var(--ink);">UC Registrar avance</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-07A · RF-07A</span></div>
+          <div><strong style="color: var(--ink);">UC Subir conformidad</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-09 · RF-07D</span></div>
+        </div>
+      </div>
+
+      <!-- Grupo 6: Cierre -->
+      <div style="border: 1px solid var(--ink); padding: 12px 14px; background: white;">
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.25em; color: var(--mantis); font-weight: 700; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between;">
+          <span>Cierre</span><span>2</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div><strong style="color: var(--ink);">UC Aprobar conformidad</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-10 · RF-08</span></div>
+          <div><strong style="color: var(--ink);">UC Calificar técnico</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-11 · RF-09</span></div>
+        </div>
+      </div>
+
+      <!-- Grupo 7: Financiero -->
+      <div style="border: 1px solid var(--ink); padding: 12px 14px; background: white;">
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.25em; color: var(--mantis); font-weight: 700; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between;">
+          <span>Financiero</span><span>2</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div><strong style="color: var(--ink);">UC Registrar cobro al cliente</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-08A · RF-07B</span></div>
+          <div><strong style="color: var(--ink);">UC Registrar pago al técnico</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-08B · RF-07C</span></div>
+        </div>
+      </div>
+
+      <!-- Grupo 8: Seguimiento -->
+      <div style="border: 1px solid var(--ink); padding: 12px 14px; background: white;">
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.25em; color: var(--mantis); font-weight: 700; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between;">
+          <span>Seguimiento</span><span>1</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+          <div><strong style="color: var(--ink);">UC Ver timeline del incidente</strong><br><span style="font-family: var(--mono); font-size: 9.5px; color: var(--ink-faded);">HU-07B/C · RF-07A</span><br><span style="font-size: 10px; color: var(--ink-faded); font-style: italic;">Transversal — los 3 roles</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase;">
+      Fuente · Tesis §6.6 Casos de Uso · pp. 79-86 · UC = Caso de Uso · HU = Historia de Usuario · RF = Requerimiento Funcional
+    </p>
+
+    <div class="slide-footer"><span>06 · CASOS DE USO</span><span>19 UC AGRUPADOS POR DOMINIO</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     07C — FLUJOS BPMN · los 9 flujos del PDF
+     ═══════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="slide-pad">
+    <div class="slide-corner">
+      <span class="dot"></span>
+      <span>07 · Flujos BPMN</span>
+      <span class="line"></span>
+    </div>
+
+    <div style="padding-top: 80px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: end;">
+      <div>
+        <div class="eyebrow">Modelación · BPMN 2.0</div>
+        <h2 class="display-lg">Flujos del proceso<span class="mark-blue dot-end"></span></h2>
+        <p class="text-body" style="margin-top: 6px; max-width: 700px;">
+          Cómo se ejecuta el negocio paso a paso. Los 4 flujos del corazón del sistema los recorremos en vivo en la demo guiada (parte 2 de "Conocé a Mantis").
+        </p>
+      </div>
+      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
+        Tesis §6.7 — §6.8<br>9 flujos modelados
+      </p>
+    </div>
+
+    <!-- 9 flujos numerados, los del corazón marcados -->
+    <div class="stagger" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex: 1; min-height: 0;">
+
+      <!-- Flujo 1 -->
+      <div style="border: 1px solid var(--ink); background: var(--paper-2); padding: 14px 16px; display: flex; gap: 12px; align-items: start;">
+        <div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--ink-faded); letter-spacing: -0.04em; min-width: 36px;">01</div>
+        <div>
+          <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.2; margin: 0 0 4px;">ABM de Inmuebles</p>
+          <p style="font-size: 11px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Base maestra de propiedades vinculadas a clientes.</p>
+        </div>
+      </div>
+
+      <!-- Flujo 2 -->
+      <div style="border: 1px solid var(--ink); background: var(--paper-2); padding: 14px 16px; display: flex; gap: 12px; align-items: start;">
+        <div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--ink-faded); letter-spacing: -0.04em; min-width: 36px;">02</div>
+        <div>
+          <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.2; margin: 0 0 4px;">Alta de Clientes</p>
+          <p style="font-size: 11px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Auto-registro vía formulario + trigger en BD.</p>
+        </div>
+      </div>
+
+      <!-- Flujo 3 -->
+      <div style="border: 1px solid var(--ink); background: var(--paper-2); padding: 14px 16px; display: flex; gap: 12px; align-items: start;">
+        <div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--ink-faded); letter-spacing: -0.04em; min-width: 36px;">03</div>
+        <div>
+          <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.2; margin: 0 0 4px;">Alta de Técnicos</p>
+          <p style="font-size: 11px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Solicitud + aprobación admin + credenciales por email.</p>
+        </div>
+      </div>
+
+      <!-- Flujo 4 -->
+      <div style="border: 1px solid var(--ink); background: var(--paper-2); padding: 14px 16px; display: flex; gap: 12px; align-items: start;">
+        <div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--ink-faded); letter-spacing: -0.04em; min-width: 36px;">04</div>
+        <div>
+          <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.2; margin: 0 0 4px;">Gestión de Especialidades</p>
+          <p style="font-size: 11px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Catálogo de especialidades técnicas para filtrar.</p>
+        </div>
+      </div>
+
+      <!-- Flujo 5 — CORE -->
+      <div style="border: 2px solid var(--mantis); background: var(--mantis-soft); padding: 14px 16px; display: flex; gap: 12px; align-items: start; box-shadow: 4px 4px 0 var(--mantis);">
+        <div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--mantis-deep); letter-spacing: -0.04em; min-width: 36px;">05</div>
+        <div>
+          <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--mantis-deep); line-height: 1.2; margin: 0 0 4px;">Alta de Incidentes <span style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; background: var(--mantis-deep); color: white; padding: 2px 5px; vertical-align: middle; margin-left: 4px;">DEMO</span></p>
+          <p style="font-size: 11px; color: var(--mantis-deep); line-height: 1.35; margin: 0;">Cliente registra el incidente desde su portal.</p>
+        </div>
+      </div>
+
+      <!-- Flujo 6 — CORE -->
+      <div style="border: 2px solid var(--mantis); background: var(--mantis-soft); padding: 14px 16px; display: flex; gap: 12px; align-items: start; box-shadow: 4px 4px 0 var(--mantis);">
+        <div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--mantis-deep); letter-spacing: -0.04em; min-width: 36px;">06</div>
+        <div>
+          <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--mantis-deep); line-height: 1.2; margin: 0 0 4px;">Asignación del Técnico <span style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; background: var(--mantis-deep); color: white; padding: 2px 5px; vertical-align: middle; margin-left: 4px;">DEMO</span></p>
+          <p style="font-size: 11px; color: var(--mantis-deep); line-height: 1.35; margin: 0;">Admin elige técnico y técnico acepta o rechaza.</p>
+        </div>
+      </div>
+
+      <!-- Flujo 7 — CORE -->
+      <div style="border: 2px solid var(--mantis); background: var(--mantis-soft); padding: 14px 16px; display: flex; gap: 12px; align-items: start; box-shadow: 4px 4px 0 var(--mantis);">
+        <div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--mantis-deep); letter-spacing: -0.04em; min-width: 36px;">07</div>
+        <div>
+          <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--mantis-deep); line-height: 1.2; margin: 0 0 4px;">Inspección y Presupuesto <span style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; background: var(--mantis-deep); color: white; padding: 2px 5px; vertical-align: middle; margin-left: 4px;">DEMO</span></p>
+          <p style="font-size: 11px; color: var(--mantis-deep); line-height: 1.35; margin: 0;">Diagnóstico técnico + presupuesto enviado.</p>
+        </div>
+      </div>
+
+      <!-- Flujo 8 — CORE -->
+      <div style="border: 2px solid var(--mantis); background: var(--mantis-soft); padding: 14px 16px; display: flex; gap: 12px; align-items: start; box-shadow: 4px 4px 0 var(--mantis);">
+        <div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--mantis-deep); letter-spacing: -0.04em; min-width: 36px;">08</div>
+        <div>
+          <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--mantis-deep); line-height: 1.2; margin: 0 0 4px;">Gestión de Presupuestos <span style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; background: var(--mantis-deep); color: white; padding: 2px 5px; vertical-align: middle; margin-left: 4px;">DEMO</span></p>
+          <p style="font-size: 11px; color: var(--mantis-deep); line-height: 1.35; margin: 0;">Doble aprobación: admin + cliente.</p>
+        </div>
+      </div>
+
+      <!-- Flujo 9 — CORE -->
+      <div style="border: 2px solid var(--mantis); background: var(--mantis-soft); padding: 14px 16px; display: flex; gap: 12px; align-items: start; box-shadow: 4px 4px 0 var(--mantis);">
+        <div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--mantis-deep); letter-spacing: -0.04em; min-width: 36px;">09</div>
+        <div>
+          <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--mantis-deep); line-height: 1.2; margin: 0 0 4px;">Ejecución y Cierre <span style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; background: var(--mantis-deep); color: white; padding: 2px 5px; vertical-align: middle; margin-left: 4px;">DEMO</span></p>
+          <p style="font-size: 11px; color: var(--mantis-deep); line-height: 1.35; margin: 0;">Avances, conformidad firmada, cobro y pago.</p>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase; display: flex; justify-content: space-between;">
+      <span>Fuente · Tesis §6.7 documentación + §6.8 diagramas · pp. 86-92</span>
+      <span><span style="display: inline-block; width: 10px; height: 10px; background: var(--mantis-soft); border: 1.5px solid var(--mantis); vertical-align: middle; margin-right: 4px;"></span> 5 flujos del corazón → demo en vivo</span>
+    </p>
+
+    <div class="slide-footer"><span>07 · FLUJOS BPMN</span><span>9 FLUJOS · 5 EN DEMO GUIADA</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
      08 — SEGUIMIENTO (la slide marquesina)
      ═══════════════════════════════════════════════════════════════ -->
 <section>
   <div class="slide-pad">
     <div class="slide-corner">
       <span class="dot"></span>
-      <span>06 · La columna vertebral</span>
+      <span>08 · La columna vertebral</span>
       <span class="line"></span>
     </div>
 
@@ -1988,7 +2233,7 @@
       </div>
     </div>
 
-    <div class="slide-footer"><span>06 · SEGUIMIENTO</span><span>PROBLEMA → VALOR</span></div>
+    <div class="slide-footer"><span>08 · SEGUIMIENTO</span><span>PROBLEMA → VALOR</span></div>
   </div>
 </section>
 
@@ -1999,7 +2244,7 @@
   <div class="slide-pad">
     <div class="slide-corner">
       <span class="dot"></span>
-      <span>07 · Metodología</span>
+      <span>09 · Metodología</span>
       <span class="line"></span>
     </div>
 
@@ -2040,7 +2285,7 @@
       </div>
     </div>
 
-    <div class="slide-footer"><span>07 · METODOLOGÍA</span><span>CASCADA + SCRUM</span></div>
+    <div class="slide-footer"><span>09 · METODOLOGÍA</span><span>CASCADA + SCRUM</span></div>
   </div>
 </section>
 
