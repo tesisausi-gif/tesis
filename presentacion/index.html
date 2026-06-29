@@ -875,6 +875,82 @@
     color: var(--ink-soft);
   }
 
+  /* ─────────── Tabla seguimiento · filas clickeables ─────────── */
+  .traza-clickable {
+    cursor: pointer;
+    transition: background 0.18s;
+    position: relative;
+  }
+  .traza-clickable:hover .cell:not(.cell-num):not(.cell-valor) {
+    background: var(--mantis-soft);
+  }
+  .traza-clickable::after {
+    content: '+';
+    position: absolute;
+    top: 50%; right: 8px;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--mantis);
+    opacity: 0;
+    transition: opacity 0.18s;
+    pointer-events: none;
+  }
+  .traza-clickable:hover::after { opacity: 1; }
+
+  /* Modal de detalle por fila (reusa tech-modal pero más ancho) */
+  .trace-modal-inner {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: 12px 12px 0 var(--ink);
+    max-width: 880px;
+    width: 92%;
+    padding: 36px 44px 32px;
+    position: relative;
+    max-height: 86vh;
+    overflow-y: auto;
+    animation: modalIn 0.25s cubic-bezier(0.16,1,0.3,1);
+  }
+  .trace-section {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,0,0,0.12);
+  }
+  .trace-section h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--mantis);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .trace-section p {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .trace-section .src {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faded);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .trace-quote {
+    background: var(--paper-2);
+    border-left: 3px solid var(--mantis);
+    padding: 10px 14px;
+    font-style: italic;
+    color: var(--ink);
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin: 6px 0 4px;
+  }
+
   /* ─────────── Seguimiento ─────────── */
   .traza {
     display: grid;
@@ -1779,12 +1855,21 @@
       <span class="line"></span>
     </div>
 
-    <div style="padding-top: 90px; margin-bottom: 24px;">
+    <div style="padding-top: 90px; margin-bottom: 16px;">
       <div class="eyebrow">Seguimiento punta a punta</div>
       <h2 class="display-lg">Cada problema<br>tiene su solución<span class="mark-blue dot-end"></span></h2>
       <p class="text-lead" style="margin-top: 12px; max-width: 740px;">
-        El hilo conductor de la tesis. Verificable fila por fila.
+        El hilo conductor de la tesis. <strong style="color: var(--ink);">Cliqueá cualquier fila</strong> para ver el detalle del mandato y los casos de uso.
       </p>
+    </div>
+
+    <!-- Leyenda de siglas -->
+    <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 12px; background: var(--paper-2); border: 1px dashed var(--ink-faded); font-family: var(--mono); font-size: 11px; color: var(--ink-soft);">
+      <span><strong style="color: var(--ink);">RF</strong> = Requerimiento Funcional</span>
+      <span style="color: var(--ink-faded);">·</span>
+      <span><strong style="color: var(--ink);">UC</strong> = Caso de Uso (UML / ISO 29148)</span>
+      <span style="color: var(--ink-faded);">·</span>
+      <span><strong style="color: var(--ink);">HU</strong> = Historia de Usuario</span>
     </div>
 
     <!-- Header -->
@@ -1798,51 +1883,51 @@
     </div>
 
     <div class="stagger">
-      <div class="traza">
+      <div class="traza traza-clickable" data-trace="01">
         <div class="cell cell-num">01</div>
         <div class="cell"><strong>Registro no estructurado</strong> de incidentes</div>
-        <div class="cell">RF-01 · Módulo de Gestión de Incidentes</div>
-        <div class="cell">UC: Registrar Incidente · BPMN Alta de Incidente</div>
+        <div class="cell">RF-01 · Gestión de Incidentes</div>
+        <div class="cell">UC Registrar Incidente · HU-01</div>
         <div class="cell">Portal cliente <code style="font-family: var(--mono); font-size: 11px; background: var(--paper-2); padding: 1px 6px;">/cliente/incidentes/nuevo</code></div>
         <div class="cell cell-valor">Legajo digital único</div>
       </div>
-      <div class="traza">
+      <div class="traza traza-clickable" data-trace="02">
         <div class="cell cell-num">02</div>
         <div class="cell"><strong>Documentación manual</strong> y pérdida de info</div>
-        <div class="cell">Historial automático</div>
-        <div class="cell">15 sub-estados calculados automáticamente</div>
+        <div class="cell">RF-07A · Timeline + sub-estados</div>
+        <div class="cell">UC Ver Timeline del Incidente · HU-07A/B/C</div>
         <div class="cell">Timeline en el modal del incidente</div>
         <div class="cell cell-valor">Cero pérdida de información</div>
       </div>
-      <div class="traza">
+      <div class="traza traza-clickable" data-trace="03">
         <div class="cell cell-num">03</div>
         <div class="cell"><strong>Sin base de técnicos</strong> ni desempeño</div>
-        <div class="cell">RF-03 · RF-09 · Módulo Técnicos</div>
-        <div class="cell">UC: Asignar Técnico · UC: Calificar Técnico</div>
+        <div class="cell">RF-03 · RF-09 · RF-11 · Técnicos</div>
+        <div class="cell">UC Asignar Técnico · UC Calificar · HU-03A/B</div>
         <div class="cell">ABM Técnicos · solicitudes · 1–5★</div>
         <div class="cell cell-valor">Selección informada</div>
       </div>
-      <div class="traza">
+      <div class="traza traza-clickable" data-trace="04">
         <div class="cell cell-num">04</div>
         <div class="cell"><strong>Comunicación descentralizada</strong></div>
-        <div class="cell">Coordinación de visitas + notif. in-app</div>
-        <div class="cell">UC: Proponer / Confirmar Visita</div>
-        <div class="cell">Propuesta del técnico + confirmación cliente</div>
+        <div class="cell">RF-04 · Notificaciones in-app</div>
+        <div class="cell">UC Asignar / Aceptar Asignación · HU-04</div>
+        <div class="cell">Notificaciones in-app + badges por rol</div>
         <div class="cell cell-valor">Un solo canal auditable</div>
       </div>
-      <div class="traza">
+      <div class="traza traza-clickable" data-trace="05">
         <div class="cell cell-num">05</div>
         <div class="cell"><strong>Sin reportes ni métricas</strong></div>
-        <div class="cell">Módulo de Reportes operativos y estratégicos</div>
-        <div class="cell">Indicadores calculados sobre la operación</div>
-        <div class="cell">Dashboard con semáforos, tendencias y filtros</div>
+        <div class="cell">RF-12 · Reportes (épica criterio 5)</div>
+        <div class="cell">UC Consultar reportes y dashboards</div>
+        <div class="cell">Dashboard con semáforos y tendencias</div>
         <div class="cell cell-valor">Decisiones con datos</div>
       </div>
-      <div class="traza">
+      <div class="traza traza-clickable" data-trace="06">
         <div class="cell cell-num">06</div>
         <div class="cell"><strong>Subtrabajos pagos sin hacer</strong></div>
-        <div class="cell">Cierre formal: conformidad + cobro + pago</div>
-        <div class="cell">UC: Aprobar Conformidad → resuelto → finalizado</div>
+        <div class="cell">RF-07B · RF-07C · RF-07D · RF-08</div>
+        <div class="cell">UC Subir / Aprobar Conformidad + Cobro + Pago</div>
         <div class="cell">Foto firmada + cobro y pago separados</div>
         <div class="cell cell-valor">Nada se cobra sin estar hecho</div>
       </div>
@@ -2439,7 +2524,7 @@
         <div class="eyebrow">Flujo 1 de 4 · Cliente</div>
         <h2 class="display-lg">Alta de incidente<span class="mark-blue dot-end"></span></h2>
       </div>
-      <div class="pill pill-blue">RF-01 · BPMN-5</div>
+      <div class="pill pill-blue" data-bpmn-ref="alta">Flujo 5 · RF-01</div>
     </div>
 
     <div class="bpmn-slide-grid">
@@ -2500,7 +2585,7 @@
         <div class="eyebrow">Flujo 2 de 4 · Admin + Técnico</div>
         <h2 class="display-lg">Asignación al técnico<span class="mark-blue dot-end"></span></h2>
       </div>
-      <div class="pill pill-blue">RF-03 · BPMN-6</div>
+      <div class="pill pill-blue" data-bpmn-ref="asignacion">Flujo 6 · RF-03, RF-04</div>
     </div>
 
     <div class="bpmn-slide-grid">
@@ -2569,7 +2654,7 @@
         <div class="eyebrow">Flujo 3 de 4 · Técnico + doble aprobación</div>
         <h2 class="display-lg">Ejecución y presupuesto<span class="mark-blue dot-end"></span></h2>
       </div>
-      <div class="pill pill-blue">RF-05 · RF-06 · BPMN-7/8</div>
+      <div class="pill pill-blue" data-bpmn-ref="ejecucion">Flujos 7 y 8 · RF-05, RF-06</div>
     </div>
 
     <div class="bpmn-slide-grid">
@@ -2640,7 +2725,7 @@
         <div class="eyebrow">Flujo 4 de 4 · Admin cierra</div>
         <h2 class="display-lg">Cierre financiero<span class="mark-success dot-end"></span></h2>
       </div>
-      <div class="pill pill-blue">RF-07 · BPMN-9</div>
+      <div class="pill pill-blue" data-bpmn-ref="cierre">Flujo 9 · RF-07, RF-08</div>
     </div>
 
     <div class="bpmn-slide-grid">
