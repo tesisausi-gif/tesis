@@ -808,6 +808,7 @@
     z-index: 10000;
     backdrop-filter: blur(4px);
   }
+  #techModal, #flowModal { z-index: 10002; }
   .tech-modal.open { display: flex; }
   .tech-modal-inner {
     background: var(--paper);
@@ -1855,7 +1856,7 @@
         <div class="eyebrow">Índice</div>
         <h2 class="display-lg" style="margin-bottom: 20px;">Cómo lo vamos a contar<span class="dot-end"></span></h2>
         <p class="text-lead">
-          Tres actos: <span class="mark-warm underline-warm">el problema</span>, lo que <span class="mark-blue">prometimos y modelamos</span>, y la <span class="mark-success">demo en vivo</span> recorriendo los 5 flujos del corazón del sistema.
+          Tres actos: <span class="mark-warm underline-warm">el problema</span>, lo que <span class="mark-blue">prometimos y modelamos</span>, y la <span class="mark-success">demo en vivo</span> recorriendo los 5 flujos core del sistema.
         </p>
       </div>
 
@@ -1864,7 +1865,7 @@
         <div class="process-step"><div class="ps-num">07</div><div><div class="ps-title">Flujos BPMN</div><div class="ps-desc">9 flujos modelados · 5 en demo</div></div></div>
         <div class="process-step"><div class="ps-num">02</div><div><div class="ps-title">Diagnóstico</div><div class="ps-desc">El proceso real antes de Mantis</div></div></div>
         <div class="process-step"><div class="ps-num">08</div><div><div class="ps-title">Seguimiento</div><div class="ps-desc">Problema → mandato → modelación → sistema → valor</div></div></div>
-        <div class="process-step"><div class="ps-num">03</div><div><div class="ps-title">FODA + Mandato</div><div class="ps-desc">Análisis interno + objetivo + alcance</div></div></div>
+        <div class="process-step"><div class="ps-num">03</div><div><div class="ps-title">FODA</div><div class="ps-desc">Análisis interno · fortalezas, debilidades, oportunidades y amenazas</div></div></div>
         <div class="process-step"><div class="ps-num">09</div><div><div class="ps-title">Metodología</div><div class="ps-desc">Cascada para definir, Scrum para construir</div></div></div>
         <div class="process-step"><div class="ps-num">04</div><div><div class="ps-title">Mandato</div><div class="ps-desc">Objetivo, alcance, límites y actores</div></div></div>
         <div class="process-step"><div class="ps-num">10</div><div><div class="ps-title">Conocé a Mantis</div><div class="ps-desc">Estructura + demo guiada (5 flujos · 4 slides)</div></div></div>
@@ -2037,10 +2038,6 @@
         <p>Decisiones basadas en percepciones, no en datos.</p>
       </div>
     </div>
-
-    <p style="margin-top: 24px; font-family: var(--mono); font-size: 11px; color: var(--ink-faded); letter-spacing: 0.1em;">
-      FUENTE · Propuesta de una idea · "Problemas detectados en las entrevistas"
-    </p>
 
     <div class="slide-footer"><span>03 · DIAGNÓSTICO</span><span>6 PROBLEMAS DETECTADOS</span></div>
   </div>
@@ -2565,7 +2562,7 @@
         <div class="eyebrow">Modelación · BPMN 2.0</div>
         <h2 class="display-lg">Flujos del proceso<span class="mark-blue dot-end"></span></h2>
         <p class="text-body" style="margin-top: 6px; max-width: 700px;">
-          Cómo se ejecuta el negocio paso a paso. Los <strong style="color: var(--ink);">5 flujos del corazón</strong> los recorremos en vivo en la demo guiada (en <strong style="color: var(--ink);">4 slides</strong> — Inspección y Gestión de Presupuestos se ven juntos). <strong style="color: var(--ink);">Cliqueá cada flujo</strong> para ver su detalle.
+          Cómo se ejecuta el negocio paso a paso. Los <strong style="color: var(--ink);">5 flujos core</strong> los recorremos en vivo en la demo guiada (en <strong style="color: var(--ink);">4 slides</strong> — Inspección y Gestión de Presupuestos se ven juntos). <strong style="color: var(--ink);">Cliqueá cada flujo</strong> para ver su detalle.
         </p>
       </div>
       <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
@@ -2651,7 +2648,7 @@
 
     <p style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase; display: flex; justify-content: space-between;">
       <span>Fuente · Tesis sec. 6.7 documentación + sec. 6.8 diagramas · pp. 86-92</span>
-      <span><span style="display: inline-block; width: 10px; height: 10px; background: var(--mantis-soft); border: 1.5px solid var(--mantis); vertical-align: middle; margin-right: 4px;"></span> 5 flujos del corazón → demo en vivo</span>
+      <span><span style="display: inline-block; width: 10px; height: 10px; background: var(--mantis-soft); border: 1.5px solid var(--mantis); vertical-align: middle; margin-right: 4px;"></span> 5 flujos core → demo en vivo</span>
     </p>
 
     <div class="slide-footer"><span>07 · FLUJOS BPMN</span><span>9 FLUJOS · 5 EN DEMO GUIADA</span></div>
@@ -2768,34 +2765,36 @@
     </div>
 
     <div class="stagger" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 36px;">
-      <div class="ed-card with-shadow" style="border-left: 6px solid var(--mantis); padding: 28px;">
+      <div class="ed-card with-shadow" data-metod="cascada" style="border-left: 6px solid var(--mantis); padding: 28px; cursor: pointer;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 14px;">
           <div style="width: 48px; height: 48px; background: var(--mantis-soft); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 28px; font-weight: 800; color: var(--mantis-deep);">↓</div>
           <h3 style="font-size: 26px;">Cascada</h3>
         </div>
         <p>Etapas iniciales. Recolección sistemática, documentación detallada y definición clara de requerimientos antes de programar.</p>
+        <p style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--mantis-deep); letter-spacing: 0.15em;">VER CRONOGRAMA →</p>
       </div>
 
-      <div class="ed-card with-shadow" style="border-left: 6px solid var(--warm); padding: 28px;">
+      <div class="ed-card with-shadow" data-metod="scrum" style="border-left: 6px solid var(--warm); padding: 28px; cursor: pointer;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 14px;">
           <div style="width: 48px; height: 48px; background: var(--warm-soft); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 28px; font-weight: 800; color: var(--warm);">↻</div>
           <h3 style="font-size: 26px;">Scrum</h3>
         </div>
-        <p>Fase de construcción. Gestión flexible en sprints sobre Azure DevOps, con metas semanales y seguimiento continuo.</p>
+        <p>Fase de construcción. 8 sprints sobre Azure DevOps, con metas semanales y seguimiento continuo. Dic 2025 – Abr 2026.</p>
+        <p style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--warm); letter-spacing: 0.15em;">VER 8 SPRINTS →</p>
       </div>
     </div>
 
     <div>
       <p style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; color: var(--ink-faded); text-transform: uppercase; margin-bottom: 16px;">8 etapas del proyecto</p>
       <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-        <span class="pill"><span class="pill-dot"></span>01 Planeamiento</span>
-        <span class="pill"><span class="pill-dot"></span>02 Negociación</span>
-        <span class="pill"><span class="pill-dot"></span>03 Relevamiento</span>
-        <span class="pill"><span class="pill-dot"></span>04 Análisis</span>
-        <span class="pill"><span class="pill-dot"></span>05 Diseño</span>
-        <span class="pill pill-warm"><span class="pill-dot"></span>06 Desarrollo · Scrum</span>
-        <span class="pill pill-success"><span class="pill-dot"></span>07 Pruebas</span>
-        <span class="pill pill-ink"><span class="pill-dot"></span>08 Entrega</span>
+        <span class="pill" data-metod="01" style="cursor:pointer;" onmouseenter="this.style.background='#e8e8e8'" onmouseleave="this.style.background=''"><span class="pill-dot"></span>01 Planeamiento</span>
+        <span class="pill" data-metod="02" style="cursor:pointer;" onmouseenter="this.style.background='#e8e8e8'" onmouseleave="this.style.background=''"><span class="pill-dot"></span>02 Negociación</span>
+        <span class="pill" data-metod="03" style="cursor:pointer;" onmouseenter="this.style.background='#e8e8e8'" onmouseleave="this.style.background=''"><span class="pill-dot"></span>03 Relevamiento</span>
+        <span class="pill" data-metod="04" style="cursor:pointer;" onmouseenter="this.style.background='#e8e8e8'" onmouseleave="this.style.background=''"><span class="pill-dot"></span>04 Análisis</span>
+        <span class="pill" data-metod="05" style="cursor:pointer;" onmouseenter="this.style.background='#e8e8e8'" onmouseleave="this.style.background=''"><span class="pill-dot"></span>05 Diseño</span>
+        <span class="pill pill-warm" data-metod="06" style="cursor:pointer;"><span class="pill-dot"></span>06 Desarrollo · Scrum</span>
+        <span class="pill pill-success" data-metod="07" style="cursor:pointer;"><span class="pill-dot"></span>07 Pruebas</span>
+        <span class="pill pill-ink" data-metod="08" style="cursor:pointer;"><span class="pill-dot"></span>08 Entrega</span>
       </div>
     </div>
 
@@ -2834,7 +2833,7 @@
           <div style="border: 1px solid rgba(96,165,250,0.5); padding: 18px 20px; background: rgba(255,255,255,0.04);">
             <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; color: #60A5FA; margin-bottom: 8px; font-weight: 700;">PARTE 2</p>
             <h3 style="font-family: var(--display); font-size: 22px; color: white; line-height: 1.1; margin-bottom: 6px;">Demo guiada</h3>
-            <p style="font-size: 12.5px; color: rgba(255,255,255,0.65); line-height: 1.4;">5 flujos del corazón recorridos en vivo (en 4 slides).</p>
+            <p style="font-size: 12.5px; color: rgba(255,255,255,0.65); line-height: 1.4;">5 flujos core recorridos en vivo (en 4 slides).</p>
           </div>
         </div>
       </div>
@@ -3284,7 +3283,7 @@
     <div style="padding-top: 80px; flex: 1; display: flex; flex-direction: column; justify-content: center;">
       <div class="eyebrow" style="color: #60A5FA;">Parte 2 de Conocé a Mantis · Demo guiada</div>
       <h2 class="display-xl" style="margin-top: 6px; margin-bottom: 26px; line-height: 0.95;">
-        Vamos a recorrer<br>los <span style="color: #60A5FA;">5 flujos del corazón</span><br>en vivo<span style="color: white;">.</span>
+        Vamos a recorrer<br>los <span style="color: #60A5FA;">5 flujos core</span><br>en vivo<span style="color: white;">.</span>
       </h2>
       <p class="text-lead" style="color: rgba(255,255,255,0.78); max-width: 820px; margin-bottom: 32px;">
         Cada slide muestra el BPMN del flujo a la izquierda y una guía paso a paso a la derecha. Mientras explicamos, navegamos el sistema para que vean cómo se ejecuta. <span style="color: #60A5FA;">5 flujos en 4 slides</span> — los flujos 7 (Inspección) y 8 (Presupuesto) los recorremos juntos.
@@ -4449,7 +4448,15 @@
 
   function renderChips(chips) {
     if (!chips) return '';
-    return '<div style="margin-bottom: 8px;">' + chips.map(([txt, kind]) => `<span class="chip chip-${kind}">${txt}</span>`).join('') + '</div>';
+    return '<div style="margin-bottom: 8px;">' + chips.map(([txt, kind]) => {
+      let dataAttr = '';
+      if (txt.startsWith('UC '))          dataAttr = `data-chip-uc="${txt}"`;
+      else if (txt.startsWith('Flujo BPMN ')) dataAttr = `data-chip-bpmn="${txt}"`;
+      else if (/^HU-/.test(txt))          dataAttr = `data-chip-hu="${txt}"`;
+      else if (/^RF-/.test(txt))          dataAttr = `data-chip-rf="${txt}"`;
+      const style = dataAttr ? 'cursor:pointer;text-decoration:underline dotted;' : '';
+      return `<span class="chip chip-${kind}" ${dataAttr} style="${style}">${txt}</span>`;
+    }).join('') + '</div>';
   }
 
   function openTraceModal(key) {
@@ -4490,6 +4497,89 @@
   traceClose.addEventListener('click', () => traceModal.classList.remove('open'));
   traceModal.addEventListener('click', (e) => { if (e.target === traceModal) traceModal.classList.remove('open'); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') traceModal.classList.remove('open'); });
+
+  // ── Chips clickeables dentro del traceModal ────────────────────────────────
+  const UC_CHIP_MAP = {
+    'UC Registrar incidente':  'registrar-incidente',
+    'UC Ver Timeline':         'ver-timeline',
+    'UC Asignar técnico':      'asignar-tecnico',
+    'UC Calificar técnico':    'calificar-tecnico',
+    'UC Asignar':              'asignar-tecnico',
+    'UC Aceptar Asignación':   'aceptar-asignacion',
+    'UC Aprobar Conformidad':  'aprobar-conformidad',
+    'UC Registrar Cobro':      'registrar-cobro',
+    'UC Registrar Pago':       'registrar-pago-tecnico',
+    'UC Consultar reportes':   null,
+  };
+  const BPMN_NUM_MAP = { '3':'flow-03','5':'flow-05','6':'flow-06','7':'flow-07','8':'flow-08','9':'flow-09' };
+  const HU_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>';
+  const RF_ICON_SVG  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>';
+
+  const HU_INFO_TRACE = {
+    'HU-01':    { name:'HU-01 — Registrar incidente',          desc:'Como cliente quiero registrar un incidente desde mi portal: selecciono el inmueble, describo el problema, adjunto fotos opcionales e indico mi disponibilidad horaria. El sistema genera un legajo digital y notifica al administrador en tiempo real.' },
+    'HU-03A/B': { name:'HU-03A/B — Alta de técnicos',          desc:'HU-03A: Como técnico quiero solicitar mi registro completando datos y especialidades. HU-03B: Como admin quiero aprobar o rechazar solicitudes de técnicos; el sistema genera y envía las credenciales temporales automáticamente.' },
+    'HU-04':    { name:'HU-04 — Asignar / Aceptar asignación', desc:'Como admin quiero asignar al técnico más adecuado filtrando por especialidad y ranking. Como técnico quiero recibir la notificación in-app y confirmar o rechazar la asignación. El incidente pasa a en_proceso solo si acepta.' },
+    'HU-07A/B/C':{ name:'HU-07A/B/C — Avances y Timeline',     desc:'HU-07A: Como técnico registro avances con descripción y porcentaje. HU-07B: Como técnico veo el timeline completo del incidente. HU-07C: Como cliente veo el historial de eventos de mi incidente adaptado a mi rol.' },
+    'HU-08A/B': { name:'HU-08A/B — Cobro y pago',              desc:'HU-08A: Como admin registro el cobro al cliente (monto, método, comprobante). HU-08B: Como admin registro el pago al técnico como operación independiente. Ambas son necesarias para cerrar el incidente.' },
+    'HU-09':    { name:'HU-09 — Subir conformidad',             desc:'Como técnico, al finalizar el trabajo subo la foto de la conformidad firmada por el cliente junto al comprobante de compra de materiales. Esto activa la revisión del administrador.' },
+    'HU-10':    { name:'HU-10 — Aprobar conformidad',           desc:'Como admin reviso la foto de conformidad subida por el técnico. Si apruebo, registro la calificación del técnico (1-5★) y el incidente queda marcado como resuelto. Si rechazo, el técnico debe subir una nueva foto.' },
+    'HU-11':    { name:'HU-11 — Calificar técnico',             desc:'Como cliente puedo calificar al técnico con 1 a 5 estrellas más un comentario opcional. La calificación actualiza el promedio del técnico que se usa para ordenar la lista de asignación.' },
+  };
+
+  const RF_INFO_TRACE = {
+    'RF-01':         { name:'RF-01 — Registro de incidentes',      desc:'El sistema debe permitir registrar incidentes vinculados a un inmueble con descripción, fotos, categoría, prioridad y franjas de disponibilidad horaria para la visita técnica.' },
+    'RF-03':         { name:'RF-03 — Gestión de técnicos',         desc:'El sistema debe mantener un padrón de técnicos con datos de contacto, especialidades habilitadas, historial de trabajos y calificaciones promedio.' },
+    'RF-04':         { name:'RF-04 — Asignación de técnicos',      desc:'El sistema debe permitir asignar técnicos filtrados por especialidad y ranking, notificarlos in-app y por email, y registrar su respuesta (aceptación o rechazo).' },
+    'RF-07A':        { name:'RF-07A — Timeline de eventos',        desc:'El sistema debe generar automáticamente una línea de tiempo con todos los eventos del ciclo de vida del incidente. Cada rol ve los eventos que le corresponden.' },
+    'RF-07B':        { name:'RF-07B — Cobro al cliente',           desc:'El sistema debe registrar el cobro al cliente con monto, método de pago, comprobante y observaciones. Al registrarse, el incidente pasa a estado finalizado.' },
+    'RF-07C':        { name:'RF-07C — Pago al técnico',            desc:'El sistema debe registrar el pago al técnico como operación independiente del cobro al cliente, con monto, método y comprobante.' },
+    'RF-07D':        { name:'RF-07D — Conformidad digital',        desc:'El sistema debe permitir subir y almacenar la foto de la conformidad firmada por el cliente como evidencia auditable de que el trabajo fue realizado.' },
+    'RF-07B/C/D':    { name:'RF-07B/C/D — Cierre financiero',      desc:'Conjunto de requerimientos de cierre: conformidad digital firmada (RF-07D), cobro al cliente (RF-07B) y pago al técnico (RF-07C).' },
+    'RF-08':         { name:'RF-08 — Aprobación de conformidad',   desc:'El sistema debe permitir al admin revisar la foto de conformidad y aprobarla o rechazarla, registrando calificación del técnico y observaciones.' },
+    'RF-09':         { name:'RF-09 — Calificación de técnicos',    desc:'El sistema debe permitir calificar a los técnicos con 1 a 5 estrellas. La calificación actualiza el ranking que ordena la lista de asignación.' },
+    'RF-11':         { name:'RF-11 — Historial de trabajos',       desc:'El sistema debe mantener el historial completo de trabajos de cada técnico, con estado, calificación y observaciones para cada incidente.' },
+    'RF-12':         { name:'RF-12 — Métricas y reportes',         desc:'El sistema debe exponer indicadores de proceso calculados en tiempo real: tiempo de ciclo, tasa de primera vez, WIP, satisfacción del cliente y más.' },
+    'RF-03, RF-09, RF-11': { name:'RF-03, RF-09, RF-11 — Gestión de técnicos', desc:'Conjunto: padrón de técnicos con especialidades (RF-03), sistema de calificación y ranking (RF-09) e historial completo de trabajos por técnico (RF-11).' },
+  };
+
+  tracePipe.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-chip-uc],[data-chip-bpmn],[data-chip-hu],[data-chip-rf]');
+    if (!chip) return;
+    e.stopPropagation();
+    const ds = chip.dataset;
+    if (ds.chipUc !== undefined) {
+      const key = UC_CHIP_MAP[ds.chipUc];
+      if (!key) return;
+      const info = UC_INFO[key];
+      if (!info) return;
+      modalIcon.innerHTML = UC_ICON;
+      modalLayer.textContent = info.layer;
+      modalName.textContent = info.name;
+      modalDesc.textContent = info.desc;
+      modal.classList.add('open');
+    } else if (ds.chipBpmn !== undefined) {
+      const num = ds.chipBpmn.replace('Flujo BPMN ', '').trim();
+      const key = BPMN_NUM_MAP[num];
+      if (key) openFlowModal(key);
+    } else if (ds.chipHu !== undefined) {
+      const info = HU_INFO_TRACE[ds.chipHu];
+      if (!info) return;
+      modalIcon.innerHTML = HU_ICON_SVG;
+      modalLayer.textContent = 'HISTORIA DE USUARIO';
+      modalName.textContent = info.name;
+      modalDesc.textContent = info.desc;
+      modal.classList.add('open');
+    } else if (ds.chipRf !== undefined) {
+      const info = RF_INFO_TRACE[ds.chipRf];
+      if (!info) return;
+      modalIcon.innerHTML = RF_ICON_SVG;
+      modalLayer.textContent = 'REQUERIMIENTO FUNCIONAL';
+      modalName.textContent = info.name;
+      modalDesc.textContent = info.desc;
+      modal.classList.add('open');
+    }
+  });
+  // ─────────────────────────────────────────────────────────────────────────
 
   function closeModal() { modal.classList.remove('open'); }
   modalClose.addEventListener('click', closeModal);
@@ -4726,6 +4816,153 @@
   }
   deck.on('slidechanged', (e) => animateCounters(e.currentSlide));
   deck.on('ready', (e) => animateCounters(e.currentSlide));
+
+  // ═══════════════════════════════════════════════════════════════
+  // METODOLOGÍA · Cards y pills clickeables → cronograma por etapa
+  // ═══════════════════════════════════════════════════════════════
+  function renderCronograma(filas) {
+    return filas.map(f => `
+      <div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr;gap:0;border-bottom:1px solid #e5e7eb;padding:14px 0;align-items:start;">
+        <div style="font-family:var(--display);font-size:22px;font-weight:800;color:var(--ink-faded);padding-top:2px;">${f.num}</div>
+        <div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:2px;">${f.name}</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--ink-faded);letter-spacing:0.1em;">${f.dur}</div>
+        </div>
+        <div style="font-size:13px;color:#374151;padding-right:12px;">${f.actividades.map(a=>`<div style="margin-bottom:3px;">· ${a}</div>`).join('')}</div>
+        <div style="font-size:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:6px 10px;color:#15803d;font-weight:500;">${f.entregable}</div>
+      </div>
+    `).join('');
+  }
+
+  const METOD_INFO = {
+    'cascada': {
+      eyebrow: 'Metodología · Etapas 1 a 5 · Cascada',
+      title: 'Fases de definición del proyecto',
+      sub: 'Las primeras 5 etapas siguen el modelo en cascada. Cada fase produce un entregable concreto antes de avanzar a la siguiente.',
+      header: ['#', 'Etapa', 'Actividades principales', 'Entregable'],
+      filas: [
+        { num:'01', name:'Planeamiento',   dur:'Ago – Sept 2025',
+          actividades:['Organización del proceso de desarrollo','Establecer contacto formal con ISBA','Definir cronograma general del proyecto','Diseñar guión del preguntero inicial','Estudiar actualidad del entorno'],
+          entregable:'Cronograma · Acta de inicio · Guión de entrevista' },
+        { num:'02', name:'Negociación',    dur:'Sept 2025',
+          actividades:['Realizar entrevista presencial con ISBA','Identificar y analizar problemáticas','Redactar soluciones posibles','Validar soluciones propuestas','Redactar y validar el mandato','Realizar estimaciones de tiempo y esfuerzo'],
+          entregable:'Mandato firmado · Estimaciones de esfuerzo' },
+        { num:'03', name:'Relevamiento',   dur:'Sept – Oct 2025',
+          actividades:['Relevar información con el cliente (presencial)','Definir roles y flujos del proceso','Definir actividades e indicadores clave','Definir RF y RNF','Definir épicas e historias de usuario','Validar historias de usuario con ISBA'],
+          entregable:'RF · RNF · Historias de usuario validadas' },
+        { num:'04', name:'Análisis',       dur:'Oct – Nov 2025',
+          actividades:['Definir diagrama de casos de uso (UML)','Definir y validar diagrama BPMN','Diseñar modelo de clases','Crear matriz de trazabilidad','Diseñar base de datos (DER)'],
+          entregable:'14 UC (UML) · 9 BPMN · Modelo de clases · DER' },
+        { num:'05', name:'Diseño',         dur:'Oct – Nov 2025',
+          actividades:['Diseñar arquitectura del sistema (Next.js + Supabase)','Diseñar esquema de reportes e indicadores clave','Diseñar vistas de usuario (wireframes por rol)','Diseñar flujo de documentación y destinatarios'],
+          entregable:'Arquitectura · Wireframes · Esquema de indicadores' },
+      ],
+    },
+    'scrum': {
+      eyebrow: 'Metodología · Etapa 6 · Scrum · 8 Sprints',
+      title: '8 Sprints de desarrollo iterativo',
+      sub: 'Dic 2025 – Abr 2026. Gestión en Azure DevOps con backlog priorizado, daily semanal y review al cierre de cada sprint.',
+      header: ['Sprint', 'Nombre', 'Actividades principales', 'Demo / Entregable'],
+      filas: [
+        { num:'S1', name:'Infraestructura, Seguridad y Triggers Core',       dur:'01/12 – 15/12/2025',
+          actividades:['Setup repo, .gitignore y Next.js','Crear tablas usuarios y clientes con RLS','Implementar trigger handle_new_user()','Scripts CLI de Supabase','Maquetación de /register con metadatos'],
+          entregable:'Registro funcional y creación automática de perfiles' },
+        { num:'S2', name:'Gestión de Inmuebles y Geo-Localización',          dur:'16/12/2025 – 02/01/2026',
+          actividades:['Integrar API de Provincias y Localidades (oficial Argentina)','Dashboard de Gestión de Clientes','Migración de tabla propiedades → inmuebles','Formulario dinámico de Inmuebles (Piso/Dpto condicional)','Validación de direcciones y normalización'],
+          entregable:'Carga de inmuebles con datos geográficos reales' },
+        { num:'S3', name:'Gestión de Técnicos y Especialidades',             dur:'03/01 – 20/01/2026',
+          actividades:['Lógica de estados de técnicos (Activo/Inactivo/Suspendido)','Tabla especialidades con relación many-to-many','Vista de Gestión de Técnicos con pestañas y filtros','Modal de edición de perfil técnico','Pruebas de RLS sobre datos sensibles'],
+          entregable:'Altas y bajas de técnicos con gestión de habilidades' },
+        { num:'S4', name:'Motor de Incidentes y Timeline',                   dur:'21/01 – 07/02/2026',
+          actividades:['Definir máquina de estados de incidentes','Normalización de estados (Pendiente, En Proceso, Resuelto)','Formulario de reporte de incidente (Mobile-First)','Componente Timeline de seguimiento de incidente','Pruebas: Cliente reporta → Admin visualiza'],
+          entregable:'Reporte de incidente y actualización de timeline' },
+        { num:'S5', name:'Asignación, Presupuestos y Server Actions',        dur:'08/02 – 25/02/2026',
+          actividades:['Migración a features/ con Server Actions para seguridad','Lógica de validación de presupuestos','Vista de asignación con bypass de RLS para Admin','Implementación de estados de presupuesto','Pruebas de integración del flujo económico'],
+          entregable:'Asignación de técnico y generación de presupuesto' },
+        { num:'S6', name:'UI Avanzada, Notificaciones e IA',                 dur:'26/02 – 15/03/2026',
+          actividades:['Integración de Walter (Chatbot con Claude Haiku 4.5)','Framer Motion para transiciones suaves','Badge de notificaciones en nav por rol','Test de usabilidad mobile y tiempos de respuesta','Revisión final de aceptación con ISBA (90% avance)'],
+          entregable:'Sistema pulido con asistente IA funcional' },
+        { num:'S7', name:'Estabilización y Corrección Masiva (Bugs #211–#229)', dur:'16/03 – 01/04/2026',
+          actividades:['Clasificación y triage de 19 bugs (#211 al #229)','Corrección de errores de concurrencia en dashboard','Eliminar campos redundantes en BD','Corregir visualización de tabs por estado de asignación','Re-testing completo (Regression Test)','Optimización de queries Supabase y caché Next.js'],
+          entregable:'Sistema sin bugs críticos conocidos' },
+        { num:'S8', name:'Cierre de Proyecto y Documentación Final',         dur:'02/04 – 15/04/2026',
+          actividades:['Actualizar guías de mantenimiento técnico','Configuración final de Vercel y monitoreo de producción','Pruebas de humo (Smoke Tests) en ambiente real','Entrega formal al Lic. Villagra'],
+          entregable:'Sistema en producción · Documentación técnica completa' },
+      ],
+    },
+    '01': { eyebrow:'Etapa 01 · Cascada', title:'Planeamiento', dur:'Agosto – Septiembre 2025',
+      actividades:['Organización del proceso de desarrollo (virtual, 45 min)','Establecer contacto formal con ISBA (virtual, 10 min)','Definir cronograma general del proyecto (virtual, 90 min)','Diseñar guión del preguntero inicial para entrevistas (virtual, 30 min)','Estudiar la actualidad del entorno — mercado inmobiliario Córdoba (virtual, 60 min)'],
+      entregable:'Cronograma del proyecto · Acta de inicio · Guión de entrevista' },
+    '02': { eyebrow:'Etapa 02 · Cascada', title:'Negociación del Proyecto', dur:'Septiembre 2025',
+      actividades:['Realizar entrevista presencial con ISBA (presencial, 90 min)','Identificar y analizar problemáticas detectadas (virtual, 90 min)','Redactar soluciones posibles (virtual, 120 min)','Validar soluciones propuestas con ISBA (presencial, 45 min)','Redactar el mandato formal (virtual, 60 min)','Validar el mandato con ISBA (presencial, 30 min)','Realizar estimaciones de tiempo y esfuerzo (virtual, 60 min)'],
+      entregable:'Mandato firmado · Alcance · Objetivos · Estimaciones de esfuerzo' },
+    '03': { eyebrow:'Etapa 03 · Cascada', title:'Relevamiento de Requerimientos', dur:'Septiembre – Octubre 2025',
+      actividades:['Relevar información con el cliente — presencial (60 min)','Definir roles del sistema (virtual, 30 min)','Definir flujos principal y alternativos (virtual, 90 min)','Definir actividades del proceso (virtual, 90 min)','Definir indicadores clave (virtual, 60 min)','Definir requerimientos funcionales y no funcionales — presencial (90 min)','Definir épicas e historias de usuario (virtual, 60 min)','Validar historias de usuario con ISBA — presencial (45 min)'],
+      entregable:'RF · RNF · Épicas · Historias de usuario validadas con ISBA' },
+    '04': { eyebrow:'Etapa 04 · Cascada', title:'Análisis', dur:'Octubre – Noviembre 2025',
+      actividades:['Definir diagrama de casos de uso UML (virtual, 360 min)','Definir diagrama BPMN TO-BE (virtual, 240 min)','Validar diagrama BPMN con ISBA — presencial (240 min)','Diseñar modelo de clases (virtual, 180 min)','Crear matriz de trazabilidad (virtual, 180 min)','Diseñar base de datos — DER (virtual, 300 min)'],
+      entregable:'14 UC (UML) · 9 BPMN validados · Modelo de clases · DER' },
+    '05': { eyebrow:'Etapa 05 · Cascada', title:'Diseño del Sistema', dur:'Octubre – Noviembre 2025',
+      actividades:['Diseñar arquitectura del sistema — Next.js App Router + Supabase (virtual, 120 min)','Diseñar esquema de reportes e indicadores clave (virtual, 360 min)','Diseñar vistas de usuario por rol — wireframes (virtual, 360 min)','Diseñar flujo de documentación y destinatarios'],
+      entregable:'Arquitectura técnica · Wireframes por rol · Esquema de indicadores' },
+    '06': { eyebrow:'Etapa 06 · Scrum · 8 Sprints', title:'Desarrollo — Dic 2025 a Abr 2026',  dur:'Diciembre 2025 – Abril 2026',
+      actividades:['S1 (01–15 Dic): Infraestructura, RLS, Triggers Core','S2 (16 Dic–02 Ene): Inmuebles + API Geográfica Argentina','S3 (03–20 Ene): Técnicos, especialidades, estados','S4 (21 Ene–07 Feb): Motor de incidentes + Timeline','S5 (08–25 Feb): Asignaciones + Presupuestos + Server Actions','S6 (26 Feb–15 Mar): UI avanzada + Notificaciones + Walter IA','S7 (16 Mar–01 Abr): Estabilización · 19 bugs corregidos (#211–#229)','S8 (02–15 Abr): Cierre + Documentación + Deploy final'],
+      entregable:'Sistema completo en producción (Vercel) · 8 sprints completados' },
+    '07': { eyebrow:'Etapa 07 · Pruebas (integradas en sprints)', title:'Pruebas', dur:'Dic 2025 – Abr 2026 (integradas en cada sprint)',
+      actividades:['Diseño de casos de prueba unitarios e integrados (S1–S4, 240 min)','Pruebas unitarias de triggers y Server Actions (desde S1)','Generación de seed de datos (31/01/2026, 240 min) — stress test y UAT','Pruebas de integración end-to-end del flujo completo','Sprint 7 completo dedicado a regression test y corrección de 19 bugs','Smoke Tests en ambiente real de producción (Sprint 8)'],
+      entregable:'Sistema estable · 19 bugs resueltos · Seed de 50 casos reales' },
+    '08': { eyebrow:'Etapa 08 · Cierre', title:'Entrega', dur:'Abril 2026',
+      actividades:['Actualizar CLAUDE.md y guías de mantenimiento técnico','Configuración final de Vercel y monitoreo de producción','Pruebas de humo (Smoke Tests) en ambiente real','Envío de mail de cierre y entrega formal al Lic. Villagra','Preparación y defensa ante el tribunal académico'],
+      entregable:'Sistema entregado · Documentación técnica · Defensa aprobada' },
+  };
+
+  function openMetodModal(key) {
+    const info = METOD_INFO[key];
+    if (!info) return;
+    flowEyebrow.textContent = info.eyebrow;
+    flowTitle.textContent = info.title;
+    flowSub.textContent = info.sub || info.dur || '';
+
+    if (info.filas) {
+      // Vista de cronograma completo (cascada o scrum)
+      const headerHTML = `
+        <div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr;gap:0;padding:10px 0 10px;border-bottom:2px solid var(--ink);margin-bottom:4px;">
+          ${info.header.map(h=>`<div style="font-family:var(--mono);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-faded);">${h}</div>`).join('')}
+        </div>`;
+      flowBpmn.innerHTML = headerHTML + renderCronograma(info.filas);
+    } else {
+      // Vista de etapa individual
+      const actHTML = info.actividades.map(a=>`
+        <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;align-items:flex-start;">
+          <span style="color:var(--mantis-deep);font-weight:700;margin-top:1px;">·</span>
+          <span style="font-size:14px;">${a}</span>
+        </div>`).join('');
+      flowBpmn.innerHTML = `
+        <div style="margin-bottom:20px;">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;color:var(--ink-faded);text-transform:uppercase;margin-bottom:6px;">DURACIÓN</div>
+          <div style="font-size:18px;font-weight:700;">${info.dur}</div>
+        </div>
+        <div style="margin-bottom:20px;">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;color:var(--ink-faded);text-transform:uppercase;margin-bottom:10px;">ACTIVIDADES</div>
+          ${actHTML}
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:14px 18px;">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;color:#15803d;text-transform:uppercase;margin-bottom:6px;">ENTREGABLE</div>
+          <div style="font-size:14px;font-weight:600;color:#15803d;">${info.entregable}</div>
+        </div>`;
+    }
+
+    flowMeta.innerHTML = '';
+    flowFooter.textContent = info.eyebrow;
+    flowModal.classList.add('open');
+  }
+
+  document.querySelectorAll('[data-metod]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openMetodModal(el.dataset.metod);
+    });
+  });
 
 </script>
 
