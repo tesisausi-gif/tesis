@@ -824,6 +824,185 @@
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
+  /* ─────────── Flow modal · mini BPMN gráfico ─────────── */
+  .flow-modal-shell {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: 14px 14px 0 var(--ink);
+    max-width: 1200px;
+    width: 94%;
+    padding: 28px 36px 30px;
+    position: relative;
+    animation: modalIn 0.3s cubic-bezier(0.16,1,0.3,1);
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+  .flow-modal-header {
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .flow-modal-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--mantis);
+    margin-bottom: 6px;
+  }
+  .flow-modal-title {
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+  .flow-modal-sub {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 900px;
+  }
+  .flow-modal-body {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  .flow-bpmn {
+    background: var(--paper-2);
+    border: 1px solid var(--ink);
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  /* Nodos BPMN dentro del modal (reusamos look de .bn) */
+  .flow-bpmn .bn {
+    background: white;
+    border: 1.5px solid var(--ink);
+    padding: 10px 16px;
+    font-size: 12.5px;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.25;
+    color: var(--ink);
+    min-width: 220px;
+    max-width: 320px;
+    font-family: var(--body);
+  }
+  .flow-bpmn .bn-start { background: var(--ink); color: var(--paper); border-radius: 24px; padding: 10px 22px; }
+  .flow-bpmn .bn-end { background: var(--success); color: white; border-color: var(--success); border-radius: 24px; padding: 10px 22px; }
+  .flow-bpmn .bn-sys { background: var(--mantis-soft); border-color: var(--mantis); color: var(--mantis-deep); }
+  .flow-bpmn .bn-ko { background: #FEE2E2; border-color: var(--danger); color: #7F1D1D; }
+  .flow-bpmn .bn-dec {
+    background: var(--warm-soft);
+    border-color: var(--warm);
+    color: #9A3412;
+    font-weight: 600;
+    padding: 10px 20px;
+  }
+  .flow-bpmn .bn-dec::before { content: '◆ '; opacity: 0.5; }
+  .flow-bpmn .bn-vbar {
+    width: 2px; height: 18px;
+    background: var(--ink);
+    position: relative;
+  }
+  .flow-bpmn .bn-vbar::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid var(--ink);
+  }
+  .flow-bpmn .bn-fork {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    width: 100%;
+    max-width: 540px;
+  }
+  .flow-bpmn .bn-fork-leg {
+    display: flex; flex-direction: column;
+    align-items: center;
+  }
+  .flow-bpmn .fork-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    margin: 2px 0;
+  }
+  .flow-bpmn .fork-label.yes { color: var(--success); }
+  .flow-bpmn .fork-label.no { color: var(--danger); }
+
+  /* Panel meta a la derecha */
+  .flow-meta {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .flow-meta-block {
+    background: white;
+    border: 1px solid var(--ink);
+    padding: 12px 14px;
+  }
+  .flow-meta-block-title {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--mantis);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--mantis);
+  }
+  .flow-meta-block ul {
+    list-style: none;
+    padding: 0; margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .flow-meta-block li {
+    padding: 3px 0;
+    display: flex; gap: 8px;
+  }
+  .flow-meta-block li::before {
+    content: '·';
+    color: var(--mantis);
+    font-weight: 700;
+  }
+  .flow-meta-block .chip {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--mantis-soft);
+    color: var(--mantis-deep);
+    border: 1px solid var(--mantis);
+    padding: 2px 7px;
+    margin: 2px 4px 2px 0;
+  }
+  .flow-modal-footer {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--ink-faded);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    text-align: center;
+  }
+
   /* ─────────── Trace modal · pipeline visual de 5 estaciones ─────────── */
   .trace-modal-shell {
     background: var(--paper);
@@ -1723,7 +1902,7 @@
         </p>
 
         <p style="margin-top: 24px; font-family: var(--mono); font-size: 11px; color: var(--ink-faded); letter-spacing: 0.1em;">
-          FUENTE · Tesis §4.7 · p. 47
+          FUENTE · Tesis sec. 4.7 · p. 47
         </p>
       </div>
 
@@ -1947,87 +2126,159 @@
       <span class="line"></span>
     </div>
 
-    <div style="padding-top: 80px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: end;">
+    <div style="padding-top: 80px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: end;">
       <div>
-        <div class="eyebrow">A qué nos comprometimos</div>
-        <h2 class="display-lg">Mandato<span class="mark-blue dot-end"></span></h2>
+        <div class="eyebrow">A qué nos comprometimos · parte 1 de 2</div>
+        <h2 class="display-lg">Mandato · justificación y objetivo<span class="mark-blue dot-end"></span></h2>
       </div>
       <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
-        Tesis §4.6 — §4.7<br>Mandato Ampliado
+        Tesis · pp. 47-49<br>secciones 4.6 y 4.7
       </p>
     </div>
 
-    <!-- Objetivo (cita literal abreviada del PDF §4.7.2) -->
-    <div style="background: var(--ink); color: var(--paper); padding: 22px 28px; margin-bottom: 14px; border-left: 6px solid var(--mantis);">
-      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; color: #60A5FA; text-transform: uppercase; margin-bottom: 10px;">Objetivo</p>
-      <p style="font-family: var(--display); font-size: clamp(18px, 1.6vw, 24px); line-height: 1.3; color: white; font-weight: 500;">
-        Desarrollar un sistema de gestión de incidentes que <em style="color: #60A5FA; font-style: normal; font-weight: 700;">registre y haga seguimiento de los reclamos</em> de las propiedades de ISBA, mejorando la <em style="color: #60A5FA; font-style: normal; font-weight: 700;">eficiencia en el seguimiento</em>, la <em style="color: #60A5FA; font-style: normal; font-weight: 700;">calidad del servicio</em> y la <em style="color: #60A5FA; font-style: normal; font-weight: 700;">toma de decisiones</em>.
+    <!-- Planteamiento del problema (de sec. 4.7.1) -->
+    <div style="background: #FFF7ED; border: 1px solid var(--warm); border-left: 6px solid var(--warm); padding: 16px 22px; margin-bottom: 14px;">
+      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; color: #9A3412; text-transform: uppercase; margin-bottom: 8px; font-weight: 700;">Planteamiento del problema · sec. 4.7.1</p>
+      <p style="font-size: 13.5px; line-height: 1.5; color: var(--ink); margin: 0 0 10px;">
+        ISBA Propiedades enfrenta dificultades en la <strong>organización, registro y seguimiento de incidentes</strong> de los inmuebles que administra, y en la <strong>comunicación entre las áreas internas y los técnicos externos</strong>.
       </p>
-    </div>
-
-    <!-- Grid 4 columnas: Alcance · Fuera de alcance · Límites · Actores -->
-    <div class="stagger" style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 12px; flex: 1; min-height: 0;">
-
-      <!-- ALCANCE -->
-      <div class="ed-card" style="border-left: 4px solid var(--success); padding: 14px 16px;">
-        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--success); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--success);">Alcance · módulos</p>
-        <ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; line-height: 1.45; color: var(--ink);">
-          <li style="padding: 4px 0; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Gestión de Usuarios</strong><br><span style="color: var(--ink-faded); font-size: 11px;">ABM técnicos y administradores</span></li>
-          <li style="padding: 4px 0; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Gestión de Propiedades</strong><br><span style="color: var(--ink-faded); font-size: 11px;">ABM inmuebles + vinculación a incidentes</span></li>
-          <li style="padding: 4px 0; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Gestión de Incidentes</strong><br><span style="color: var(--ink-faded); font-size: 11px;">Registro, presupuesto, ejecución y cierre</span></li>
-          <li style="padding: 4px 0; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Gestión de Técnicos</strong><br><span style="color: var(--ink-faded); font-size: 11px;">Base de datos + historial + calificaciones</span></li>
-          <li style="padding: 4px 0;"><strong>Reportes</strong><br><span style="color: var(--ink-faded); font-size: 11px;">Operativos + estratégicos con filtros</span></li>
-        </ul>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px;">
+        <div style="background: white; border: 1px solid var(--warm); padding: 8px 10px;">
+          <p style="font-family: var(--mono); font-size: 9px; color: var(--warm); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 3px;">FALENCIA 1</p>
+          <p style="font-size: 11px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Falta de registro estructurado</strong> de incidentes</p>
+        </div>
+        <div style="background: white; border: 1px solid var(--warm); padding: 8px 10px;">
+          <p style="font-family: var(--mono); font-size: 9px; color: var(--warm); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 3px;">FALENCIA 2</p>
+          <p style="font-size: 11px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Documentación manual</strong> con pérdida de información</p>
+        </div>
+        <div style="background: white; border: 1px solid var(--warm); padding: 8px 10px;">
+          <p style="font-family: var(--mono); font-size: 9px; color: var(--warm); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 3px;">FALENCIA 3</p>
+          <p style="font-size: 11px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Asignación de técnicos improvisada</strong> · sin medir desempeño</p>
+        </div>
+        <div style="background: white; border: 1px solid var(--warm); padding: 8px 10px;">
+          <p style="font-family: var(--mono); font-size: 9px; color: var(--warm); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 3px;">FALENCIA 4</p>
+          <p style="font-size: 11px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Ausencia de reportes y métricas</strong> para decidir</p>
+        </div>
       </div>
+    </div>
+
+    <!-- Objetivo del Sistema de Información (sec. 4.7.2) -->
+    <div style="background: var(--ink); color: var(--paper); padding: 22px 28px; margin-bottom: 14px; border-left: 6px solid var(--mantis); flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;">
+      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; color: #60A5FA; text-transform: uppercase; margin-bottom: 10px;">Objetivo del sistema · sec. 4.7.2</p>
+      <p style="font-family: var(--display); font-size: clamp(18px, 1.5vw, 22px); line-height: 1.35; color: white; font-weight: 500; margin: 0;">
+        Desarrollar un sistema de gestión de incidentes que permita <em style="color: #60A5FA; font-style: normal; font-weight: 700;">registrar y hacer seguimiento</em> de los reclamos solicitados en las propiedades gestionadas por ISBA, mejorando la <em style="color: #60A5FA; font-style: normal; font-weight: 700;">eficiencia en el seguimiento</em>, la <em style="color: #60A5FA; font-style: normal; font-weight: 700;">calidad del servicio</em> y permitiendo gestionar los técnicos para una <em style="color: #60A5FA; font-style: normal; font-weight: 700;">toma de decisiones basada en información confiable</em>.
+      </p>
+    </div>
+
+    <p style="margin-top: auto; font-family: var(--mono); font-size: 10px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase;">
+      Fuente · Tesis · sec. 4.7.1 Planteamiento del problema + sec. 4.7.2 Objetivo · pp. 47-49
+    </p>
+
+    <div class="slide-footer"><span>05 · MANDATO 1/2</span><span>PROBLEMA + OBJETIVO</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     07-BIS — MANDATO 2/2 · Alcance + Límites + Actores
+     ═══════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="slide-pad">
+    <div class="slide-corner">
+      <span class="dot"></span>
+      <span>05 · Mandato · parte 2 de 2</span>
+      <span class="line"></span>
+    </div>
+
+    <div style="padding-top: 80px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: end;">
+      <div>
+        <div class="eyebrow">A qué nos comprometimos · parte 2 de 2</div>
+        <h2 class="display-lg">Mandato · alcance y delimitación<span class="mark-blue dot-end"></span></h2>
+      </div>
+      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
+        Tesis · pp. 48-50<br>secciones 4.7.3 a 4.7.6
+      </p>
+    </div>
+
+    <!-- 5 módulos del alcance con sub-items reales del PDF -->
+    <div style="margin-bottom: 12px;">
+      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; color: var(--success); text-transform: uppercase; margin-bottom: 8px; font-weight: 700;">✓ Alcance · 5 módulos del sistema · sec. 4.7.3</p>
+      <div class="stagger" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+        <div style="border: 1px solid var(--success); background: #ECFDF5; padding: 10px 12px;">
+          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Gestión de Usuarios</p>
+          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">ABM de técnicos y administradores.</p>
+        </div>
+        <div style="border: 1px solid var(--success); background: #ECFDF5; padding: 10px 12px;">
+          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Gestión de Propiedades</p>
+          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">ABM de inmuebles + asociación con incidentes y técnicos.</p>
+        </div>
+        <div style="border: 1.5px solid var(--success); background: #ECFDF5; padding: 10px 12px; box-shadow: 3px 3px 0 var(--success);">
+          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Gestión de Incidentes <span style="font-family: var(--mono); font-size: 8px; background: #14532D; color: white; padding: 1px 4px; vertical-align: middle;">CORE</span></p>
+          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Registro inicial · historial automático · presupuesto · aprobación · estados · cierre.</p>
+        </div>
+        <div style="border: 1px solid var(--success); background: #ECFDF5; padding: 10px 12px;">
+          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Gestión de Técnicos</p>
+          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Base con contacto + especialidad. Historial y calificaciones.</p>
+        </div>
+        <div style="border: 1px solid var(--success); background: #ECFDF5; padding: 10px 12px;">
+          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Reportes</p>
+          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Operativos + estratégicos. Filtros por propiedad, técnico, tipo y período.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 columnas: Fuera de alcance · Límites · Actores -->
+    <div class="stagger" style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 12px; flex: 1; min-height: 0;">
 
       <!-- FUERA DE ALCANCE -->
-      <div class="ed-card" style="border-left: 4px solid var(--warm); padding: 14px 16px;">
-        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--warm); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--warm);">Fuera de alcance</p>
-        <ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; line-height: 1.45; color: var(--ink-soft);">
-          <li style="padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.08);">Denuncias, infracciones o multas</li>
-          <li style="padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.08);">Gestión financiera/contable, emisión de facturas</li>
-          <li style="padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.08);">Integración con sistemas externos (CRM, facturación)</li>
-          <li style="padding: 5px 0;">Tratamiento legal de datos personales</li>
+      <div style="border: 1px solid var(--warm); border-left: 4px solid var(--warm); padding: 12px 16px; background: white; display: flex; flex-direction: column;">
+        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--warm); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--warm);">✕ Fuera de alcance · sec. 4.7.4</p>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 11.5px; line-height: 1.4; color: var(--ink-soft); flex: 1;">
+          <li style="padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.08); display: flex; gap: 8px;"><span style="color: var(--warm); font-weight: 700;">·</span>Denuncias, infracciones o multas (exceden el ámbito de mantenimiento)</li>
+          <li style="padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.08); display: flex; gap: 8px;"><span style="color: var(--warm); font-weight: 700;">·</span>Módulos de gestión financiera o contable (emisión/cobranza de facturas)</li>
+          <li style="padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.08); display: flex; gap: 8px;"><span style="color: var(--warm); font-weight: 700;">·</span>Integración con CRM o sistemas externos de facturación</li>
+          <li style="padding: 5px 0; display: flex; gap: 8px;"><span style="color: var(--warm); font-weight: 700;">·</span>Consideraciones legales sobre datos personales o términos de uso</li>
         </ul>
       </div>
 
       <!-- LÍMITES -->
-      <div class="ed-card" style="border-left: 4px solid var(--mantis); padding: 14px 16px;">
-        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--mantis); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--mantis);">Límites</p>
-        <p style="font-size: 12px; line-height: 1.45; color: var(--ink); margin: 0 0 8px;">
-          <strong>Desde:</strong> registro inicial del incidente por cliente o admin.
-        </p>
-        <p style="font-size: 12px; line-height: 1.45; color: var(--ink); margin: 0 0 8px;">
-          <strong>Hasta:</strong> cierre definitivo con conformidad y reporte, o rechazo del flujo.
-        </p>
-        <p style="font-size: 11px; line-height: 1.4; color: var(--ink-faded); margin: 0;">
-          Sólo operaciones internas de ISBA. No integra con terceros ni con sistemas contables.
-        </p>
+      <div style="border: 1px solid var(--mantis); border-left: 4px solid var(--mantis); padding: 12px 16px; background: white; display: flex; flex-direction: column;">
+        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--mantis); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--mantis);">Límites del proyecto · sec. 4.7.5</p>
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 11.5px; line-height: 1.35; color: var(--ink); margin-bottom: 8px;">
+          <span style="font-family: var(--mono); font-weight: 700; color: var(--mantis); font-size: 9px; letter-spacing: 0.2em; align-self: start; padding-top: 2px;">DESDE</span>
+          <span>Registro inicial del incidente por un cliente o por el área administrativa.</span>
+          <span style="font-family: var(--mono); font-weight: 700; color: var(--mantis); font-size: 9px; letter-spacing: 0.2em; align-self: start; padding-top: 2px;">HASTA</span>
+          <span>Cierre definitivo con documentación del trabajo, aprobación del cliente y generación del reporte (o cierre por rechazo).</span>
+        </div>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 1.4; color: var(--ink-soft); border-top: 1px dashed var(--ink-faded); padding-top: 8px;">
+          <li style="padding: 3px 0;">+ Incluye asignación, ejecución y control de técnicos.</li>
+          <li style="padding: 3px 0;">– Excluye cobranzas y sanciones.</li>
+          <li style="padding: 3px 0;">– Sólo operaciones internas de ISBA, sin interacción con terceros.</li>
+        </ul>
       </div>
 
       <!-- ACTORES -->
-      <div class="ed-card" style="border-left: 4px solid var(--ink); padding: 14px 16px;">
-        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--ink); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--ink);">Actores</p>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="border: 1px solid var(--ink); border-left: 4px solid var(--ink); padding: 12px 16px; background: white; display: flex; flex-direction: column;">
+        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--ink); text-transform: uppercase; font-weight: 700; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--ink);">Actores involucrados · sec. 4.7.6</p>
+        <div style="display: flex; flex-direction: column; gap: 9px; flex: 1;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: white; font-family: var(--display); font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center;">A</div>
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: white; font-family: var(--display); font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">A</div>
             <div>
-              <p style="font-size: 12px; font-weight: 600; color: var(--ink); margin: 0; line-height: 1.2;">Administrador</p>
-              <p style="font-size: 10.5px; color: var(--ink-faded); margin: 0;">Personal de ISBA</p>
+              <p style="font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.15;">Administrador</p>
+              <p style="font-size: 10.5px; color: var(--ink-faded); margin: 0; line-height: 1.3;">Personal de ISBA Propiedades</p>
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--mantis); color: white; font-family: var(--display); font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center;">C</div>
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--mantis); color: white; font-family: var(--display); font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">C</div>
             <div>
-              <p style="font-size: 12px; font-weight: 600; color: var(--ink); margin: 0; line-height: 1.2;">Cliente</p>
-              <p style="font-size: 10.5px; color: var(--ink-faded); margin: 0;">Propietarios e inquilinos</p>
+              <p style="font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.15;">Cliente</p>
+              <p style="font-size: 10.5px; color: var(--ink-faded); margin: 0; line-height: 1.3;">Propietarios o inquilinos que reportan incidentes</p>
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--warm); color: white; font-family: var(--display); font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center;">T</div>
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--warm); color: white; font-family: var(--display); font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">T</div>
             <div>
-              <p style="font-size: 12px; font-weight: 600; color: var(--ink); margin: 0; line-height: 1.2;">Técnico</p>
-              <p style="font-size: 10.5px; color: var(--ink-faded); margin: 0;">Internos o externos</p>
+              <p style="font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.15;">Técnico</p>
+              <p style="font-size: 10.5px; color: var(--ink-faded); margin: 0; line-height: 1.3;">Internos o externos</p>
             </div>
           </div>
         </div>
@@ -2035,10 +2286,10 @@
     </div>
 
     <p style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase;">
-      Fuente · Tesis §4.6 Mandato + §4.7 Mandato Ampliado · pp. 47-50
+      Fuente · Tesis · sec. 4.7.3 Alcance + 4.7.4 Fuera de alcance + 4.7.5 Límites + 4.7.6 Actores · pp. 48-50
     </p>
 
-    <div class="slide-footer"><span>05 · MANDATO</span><span>OBJETIVO · ALCANCE · LÍMITES · ACTORES</span></div>
+    <div class="slide-footer"><span>05 · MANDATO 2/2</span><span>ALCANCE · FUERA DE ALCANCE · LÍMITES · ACTORES</span></div>
   </div>
 </section>
 
@@ -2062,7 +2313,7 @@
         </p>
       </div>
       <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
-        Tesis §6.6<br>14 casos de uso principales
+        Tesis sec. 6.6<br>14 casos de uso principales
       </p>
     </div>
 
@@ -2291,7 +2542,7 @@
     </div>
 
     <p style="margin-top: 8px; font-family: var(--mono); font-size: 10px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase; text-align: center;">
-      Fuente · Tesis §6.6 Casos de Uso · pp. 79-86
+      Fuente · Tesis sec. 6.6 Casos de Uso · pp. 79-86
     </p>
 
     <div class="slide-footer"><span>06 · CASOS DE USO</span><span>UML · 3 ACTORES · 14 UC PRINCIPALES</span></div>
@@ -2318,7 +2569,7 @@
         </p>
       </div>
       <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
-        Tesis §6.7 — §6.8<br>9 flujos modelados
+        Tesis sec. 6.7 — sec. 6.8<br>9 flujos modelados
       </p>
     </div>
 
@@ -2399,7 +2650,7 @@
     </div>
 
     <p style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase; display: flex; justify-content: space-between;">
-      <span>Fuente · Tesis §6.7 documentación + §6.8 diagramas · pp. 86-92</span>
+      <span>Fuente · Tesis sec. 6.7 documentación + sec. 6.8 diagramas · pp. 86-92</span>
       <span><span style="display: inline-block; width: 10px; height: 10px; background: var(--mantis-soft); border: 1.5px solid var(--mantis); vertical-align: middle; margin-right: 4px;"></span> 5 flujos del corazón → demo en vivo</span>
     </p>
 
@@ -3541,6 +3792,23 @@
   </div>
 </div>
 
+<!-- ───────── Modal Flujo · mini BPMN gráfico ───────── -->
+<div class="tech-modal" id="flowModal" role="dialog" aria-modal="true">
+  <div class="flow-modal-shell">
+    <button class="tech-modal-close" id="flowModalClose" aria-label="Cerrar">×</button>
+    <div class="flow-modal-header">
+      <div class="flow-modal-eyebrow" id="flowModalEyebrow"></div>
+      <h2 class="flow-modal-title" id="flowModalTitle"></h2>
+      <p class="flow-modal-sub" id="flowModalSub"></p>
+    </div>
+    <div class="flow-modal-body">
+      <div class="flow-bpmn" id="flowBpmn"></div>
+      <div class="flow-meta" id="flowMeta"></div>
+    </div>
+    <div class="flow-modal-footer" id="flowModalFooter"></div>
+  </div>
+</div>
+
 <!-- ───────── Modal Seguimiento (timeline visual) ───────── -->
 <div class="tech-modal" id="traceModal" role="dialog" aria-modal="true">
   <div class="trace-modal-shell">
@@ -3850,33 +4118,250 @@
   // ═══════════════════════════════════════════════════════════════
   // FLUJOS BPMN · cada card abre modal con su mini-diagrama
   // ═══════════════════════════════════════════════════════════════
-  const FLOW_ICON = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="16" r="3"/><circle cx="16" cy="8" r="3"/><circle cx="26" cy="16" r="3"/><circle cx="16" cy="24" r="3"/><line x1="9" y1="14" x2="13" y2="10"/><line x1="19" y1="10" x2="23" y2="14"/><line x1="9" y1="18" x2="13" y2="22"/><line x1="19" y1="22" x2="23" y2="18"/></svg>';
+  // Cada flujo tiene:
+  //  eyebrow / title / sub (descripción corta)
+  //  bpmn: lista de nodos (linear) o forks. Cada nodo: {type, text, [yesText, yesNodes, noText, noNodes]}
+  //  actores: lista de actores que participan
+  //  estados: lista de cambios de estado clave
+  //  footer: cita de fuente
   const FLOW_INFO = {
-    'flow-01': { layer: 'FLUJO 1 · SOPORTE', name: 'ABM de Inmuebles', desc: 'Admin registra inmuebles administrados, los asocia a clientes y los activa/desactiva. Es la base maestra para vincular incidentes a propiedades.\n\nPasos:\n1. Admin ingresa datos del inmueble (dirección, localidad, tipo)\n2. Asocia al cliente propietario\n3. Activa/desactiva según corresponda\n\nFuente: Tesis §6.7 punto 1' },
-    'flow-02': { layer: 'FLUJO 2 · SOPORTE', name: 'Alta de Clientes (auto-registro)', desc: 'El cliente se auto-registra desde /register. Un trigger de base de datos crea automáticamente el perfil en clientes + usuarios (rol=cliente).\n\nPasos:\n1. Cliente completa formulario\n2. Supabase Auth crea la cuenta\n3. Trigger inserta el registro en clientes/usuarios\n4. El cliente queda habilitado para acceder al portal\n\nFuente: Tesis §6.7 punto 2' },
-    'flow-03': { layer: 'FLUJO 3 · SOPORTE', name: 'Alta de Técnicos', desc: 'El técnico solicita registro. El admin revisa y aprueba. El sistema genera contraseña temporal y la envía por email. En el primer login obliga a cambiarla.\n\nPasos:\n1. Técnico completa solicitud (datos + especialidades)\n2. Solicitud queda pendiente\n3. Admin aprueba o rechaza\n4. Si aprueba: sistema genera credenciales y manda email\n5. Técnico debe cambiar contraseña al primer login\n\nFuente: Tesis §6.7 punto 3' },
-    'flow-04': { layer: 'FLUJO 4 · SOPORTE', name: 'Gestión de Especialidades', desc: 'Catálogo de especialidades técnicas (plomería, electricidad, gas, etc.). El admin lo mantiene desde el panel de configuración. Es la entrada clave para clasificar incidentes y filtrar técnicos al asignar.\n\nFuente: Tesis §6.7 punto 4' },
-    'flow-05': { layer: 'FLUJO 5 · CORE · DEMO 1/4', name: 'Alta de Incidentes', desc: 'El cliente registra el incidente desde su portal. El admin lo recibe en su panel con badge actualizado.\n\nPasos:\n1. Cliente selecciona inmueble\n2. Describe el problema (+ foto opcional)\n3. Indica franjas de disponibilidad\n4. Sistema crea incidente en estado pendiente\n5. Admin recibe notificación in-app\n\nDEMO: slide 1/4 de la demo guiada.\nFuente: Tesis §6.7 punto 5 + §6.8' },
-    'flow-06': { layer: 'FLUJO 6 · CORE · DEMO 2/4', name: 'Asignación del Técnico', desc: 'El admin elige el técnico más adecuado por especialidad y desempeño. El técnico acepta o rechaza.\n\nPasos:\n1. Admin filtra técnicos por especialidad\n2. Crea la asignación (estado pendiente)\n3. Incidente pasa a estado asignacion_solicitada\n4. Técnico recibe notificación in-app + email\n5. Técnico acepta (→ en_proceso) o rechaza (→ admin reasigna)\n\nDEMO: slide 2/4 de la demo guiada.\nFuente: Tesis §6.7 punto 6 + §6.8' },
-    'flow-07': { layer: 'FLUJO 7 · CORE · DEMO 3/4 (parte 1)', name: 'Inspección y Presupuesto', desc: 'El técnico realiza la inspección en el inmueble, la registra y elabora el presupuesto.\n\nPasos:\n1. Técnico registra inspección (descripción, causas, materiales, días)\n2. Elabora presupuesto (materiales + mano de obra)\n3. Envía el presupuesto (pasa a estado enviado)\n\nDEMO: parte 1 del slide 3/4 de la demo guiada (combinado con flujo 8).\nFuente: Tesis §6.7 punto 7 + §6.8' },
-    'flow-08': { layer: 'FLUJO 8 · CORE · DEMO 3/4 (parte 2)', name: 'Gestión de Presupuestos · doble aprobación', desc: 'El admin revisa el presupuesto, agrega la comisión ISBA y lo aprueba o rechaza. Si aprueba, el cliente lo recibe y decide.\n\nPasos:\n8.1 Admin aprueba (→ aprobado_admin) o rechaza\n8.2 Cliente aprueba (→ aprobado) o rechaza con decisión\n\nLa doble aprobación es uno de los controles clave del sistema: nada se ejecuta sin que ambos firmen.\n\nDEMO: parte 2 del slide 3/4 de la demo guiada (combinado con flujo 7).\nFuente: Tesis §6.7 punto 8 + §6.8' },
-    'flow-09': { layer: 'FLUJO 9 · CORE · DEMO 4/4', name: 'Ejecución y Cierre', desc: 'El técnico ejecuta los trabajos, registra avances y sube la conformidad. El admin la aprueba, califica y registra cobro+pago.\n\n9.1 Ejecución:\n  - Técnico registra avances periódicos\n  - Marca trabajo como completado\n  - Sube foto de conformidad firmada + comprobante\n\n9.2 Cierre:\n  - Admin aprueba conformidad (fue_resuelto=true)\n  - Califica al técnico (1-5★)\n  - Registra cobro al cliente (→ finalizado)\n  - Registra pago al técnico (operación independiente)\n\nDEMO: slide 4/4 de la demo guiada.\nFuente: Tesis §6.7 puntos 9 y 9.1 (Ejecución / Cierre) + §6.8' },
+    'flow-01': {
+      eyebrow: 'Flujo 1 de 9 · Soporte', title: 'ABM de Inmuebles',
+      sub: 'El admin mantiene el catálogo de inmuebles administrados. Es la base maestra que vincula clientes con incidentes.',
+      bpmn: [
+        {type:'start', text:'Inicio'},
+        {type:'proc',  text:'Admin ingresa datos del inmueble'},
+        {type:'proc',  text:'Asocia inmueble al cliente propietario'},
+        {type:'proc',  text:'Activa o desactiva el inmueble'},
+        {type:'end',   text:'Inmueble disponible en BD'},
+      ],
+      actores: ['Administrador'],
+      estados: ['activo', 'inactivo'],
+      footer: 'Fuente · Tesis sec. 6.7 punto 1',
+    },
+    'flow-02': {
+      eyebrow: 'Flujo 2 de 9 · Soporte', title: 'Alta de Clientes',
+      sub: 'El cliente se auto-registra desde el portal. Un trigger en la base inserta automáticamente su perfil.',
+      bpmn: [
+        {type:'start', text:'Cliente abre /register'},
+        {type:'proc',  text:'Completa el formulario'},
+        {type:'sys',   text:'Supabase Auth crea la cuenta'},
+        {type:'sys',   text:'Trigger inserta en clientes + usuarios'},
+        {type:'end',   text:'Cliente habilitado para el portal'},
+      ],
+      actores: ['Cliente', 'Sistema'],
+      estados: ['cuenta activa'],
+      footer: 'Fuente · Tesis sec. 6.7 punto 2',
+    },
+    'flow-03': {
+      eyebrow: 'Flujo 3 de 9 · Soporte', title: 'Alta de Técnicos',
+      sub: 'El técnico solicita registro. El admin verifica antes de aprobar. El sistema emite contraseña temporal por email.',
+      bpmn: [
+        {type:'start', text:'Técnico abre /register'},
+        {type:'proc',  text:'Solicita registro<br>(datos + especialidades)'},
+        {type:'sys',   text:'Solicitud queda pendiente'},
+        {type:'dec',   text:'¿Admin aprueba?',
+          yesText:'SÍ', yesNodes:[
+            {type:'sys', text:'Sistema crea cuenta + contraseña temporal'},
+            {type:'proc', text:'Email con credenciales al técnico'},
+            {type:'end', text:'Técnico activo<br>(cambia clave al primer login)'},
+          ],
+          noText:'NO', noNodes:[
+            {type:'ko', text:'Solicitud rechazada'},
+          ],
+        },
+      ],
+      actores: ['Técnico', 'Administrador'],
+      estados: ['pendiente', 'aprobada', 'rechazada'],
+      footer: 'Fuente · Tesis sec. 6.7 punto 3',
+    },
+    'flow-04': {
+      eyebrow: 'Flujo 4 de 9 · Soporte', title: 'Gestión de Especialidades',
+      sub: 'Catálogo de especialidades técnicas (plomería, electricidad, gas, etc.). Insumo para clasificar incidentes y filtrar técnicos.',
+      bpmn: [
+        {type:'start', text:'Admin entra al catálogo'},
+        {type:'proc',  text:'Crea / modifica / desactiva especialidad'},
+        {type:'end',   text:'Catálogo actualizado'},
+      ],
+      actores: ['Administrador'],
+      estados: ['activa', 'inactiva'],
+      footer: 'Fuente · Tesis sec. 6.7 punto 4',
+    },
+    'flow-05': {
+      eyebrow: 'Flujo 5 de 9 · CORE · Demo 1 de 4', title: 'Alta de Incidentes',
+      sub: 'El cliente registra el incidente desde su portal. El admin lo recibe al instante en su panel.',
+      bpmn: [
+        {type:'start', text:'Cliente autenticado'},
+        {type:'proc',  text:'Selecciona inmueble afectado'},
+        {type:'proc',  text:'Describe el problema<br>(+ foto opcional)'},
+        {type:'proc',  text:'Indica franjas de disponibilidad'},
+        {type:'sys',   text:'Sistema crea incidente<br>estado: pendiente'},
+        {type:'sys',   text:'Notifica al admin (in-app)'},
+        {type:'end',   text:'Incidente listo para asignación'},
+      ],
+      actores: ['Cliente', 'Administrador'],
+      estados: ['pendiente'],
+      footer: 'Fuente · Tesis sec. 6.7 punto 5 + sec. 6.8',
+    },
+    'flow-06': {
+      eyebrow: 'Flujo 6 de 9 · CORE · Demo 2 de 4', title: 'Asignación del Técnico al Incidente',
+      sub: 'El admin elige el técnico más adecuado por especialidad y ranking. El técnico decide.',
+      bpmn: [
+        {type:'start', text:'Incidente pendiente'},
+        {type:'proc',  text:'Admin filtra técnicos<br>por especialidad y ranking'},
+        {type:'sys',   text:'Sistema crea asignación<br>estado: pendiente'},
+        {type:'proc',  text:'Técnico recibe<br>notificación in-app + email'},
+        {type:'dec',   text:'¿Técnico acepta?',
+          yesText:'SÍ', yesNodes:[
+            {type:'sys',  text:'Asignación aceptada'},
+            {type:'end',  text:'Incidente en proceso'},
+          ],
+          noText:'NO', noNodes:[
+            {type:'ko',   text:'Estado: asignacion_solicitada'},
+            {type:'proc', text:'Admin reasigna'},
+          ],
+        },
+      ],
+      actores: ['Administrador', 'Técnico'],
+      estados: ['pendiente', 'asignacion_solicitada', 'en_proceso'],
+      footer: 'Fuente · Tesis sec. 6.7 punto 6 + sec. 6.8',
+    },
+    'flow-07': {
+      eyebrow: 'Flujo 7 de 9 · CORE · Demo 3 de 4', title: 'Inspección y Presupuesto',
+      sub: 'El técnico inspecciona el inmueble y carga el presupuesto. Se activa el ciclo de aprobación.',
+      bpmn: [
+        {type:'start', text:'Asignación aceptada'},
+        {type:'proc',  text:'Técnico registra inspección<br>(diagnóstico, causas, materiales)'},
+        {type:'proc',  text:'Elabora presupuesto<br>(materiales + mano de obra)'},
+        {type:'sys',   text:'Estado: enviado<br>(pasa al flujo 8)'},
+        {type:'end',   text:'Listo para validación'},
+      ],
+      actores: ['Técnico'],
+      estados: ['enviado'],
+      footer: 'Fuente · Tesis sec. 6.7 punto 7 + sec. 6.8',
+    },
+    'flow-08': {
+      eyebrow: 'Flujo 8 de 9 · CORE · Demo 3 de 4', title: 'Gestión de Presupuestos · doble aprobación',
+      sub: 'El control clave del sistema: nada se ejecuta sin que ambos —admin y cliente— aprueben.',
+      bpmn: [
+        {type:'start', text:'Presupuesto enviado'},
+        {type:'dec',   text:'¿Admin aprueba?',
+          yesText:'SÍ', yesNodes:[
+            {type:'sys',  text:'Estado: aprobado_admin<br>+ comisión ISBA agregada'},
+            {type:'dec',  text:'¿Cliente aprueba?',
+              yesText:'SÍ', yesNodes:[
+                {type:'sys', text:'Estado: aprobado'},
+                {type:'end', text:'Técnico habilitado<br>a ejecutar'},
+              ],
+              noText:'NO', noNodes:[
+                {type:'ko', text:'Otra oportunidad<br>o reasignar'},
+              ],
+            },
+          ],
+          noText:'NO', noNodes:[
+            {type:'ko',   text:'Estado: rechazado<br>técnico revisa'},
+          ],
+        },
+      ],
+      actores: ['Administrador', 'Cliente'],
+      estados: ['enviado', 'aprobado_admin', 'aprobado', 'rechazado'],
+      footer: 'Fuente · Tesis sec. 6.7 punto 8 + sec. 6.8',
+    },
+    'flow-09': {
+      eyebrow: 'Flujo 9 de 9 · CORE · Demo 4 de 4', title: 'Ejecución y Cierre',
+      sub: 'Trabajo en curso, conformidad firmada, calificación, y cierre financiero con cobro y pago separados.',
+      bpmn: [
+        {type:'start', text:'Presupuesto aprobado'},
+        {type:'proc',  text:'Técnico registra avances'},
+        {type:'proc',  text:'Sube foto de conformidad firmada<br>+ comprobante de compras'},
+        {type:'dec',   text:'¿Admin aprueba?',
+          yesText:'SÍ', yesNodes:[
+            {type:'sys', text:'Conformidad firmada · fue_resuelto = true'},
+            {type:'sys', text:'Califica al técnico (1-5★)'},
+            {type:'proc',text:'Registra cobro al cliente<br>(→ estado: finalizado)'},
+            {type:'proc',text:'Registra pago al técnico<br>(operación independiente)'},
+            {type:'end', text:'Incidente finalizado'},
+          ],
+          noText:'NO', noNodes:[
+            {type:'ko', text:'esta_rechazada = true<br>técnico sube nueva foto'},
+          ],
+        },
+      ],
+      actores: ['Técnico', 'Administrador'],
+      estados: ['en_proceso', 'fue_resuelto', 'finalizado'],
+      footer: 'Fuente · Tesis sec. 6.7 puntos 9 y 9.1 + sec. 6.8',
+    },
   };
+
+  // Renderer del mini-BPMN
+  function renderBpmn(nodes) {
+    if (!nodes || !nodes.length) return '';
+    const out = [];
+    nodes.forEach((n, i) => {
+      const cls = 'bn bn-' + n.type;
+      if (n.type === 'dec' && n.yesNodes) {
+        // decisión con fork
+        out.push(`<div class="${cls}">${n.text}</div>`);
+        out.push(`<div class="bn-fork" style="margin-top: 8px;">
+          <div class="bn-fork-leg">
+            <div class="bn-vbar"></div>
+            <span class="fork-label yes">${n.yesText || 'SÍ'}</span>
+            ${n.yesNodes.map(yn => `<div class="bn bn-${yn.type}">${yn.text}</div>${yn !== n.yesNodes[n.yesNodes.length-1] ? '<div class="bn-vbar"></div>' : ''}`).join('')}
+          </div>
+          <div class="bn-fork-leg">
+            <div class="bn-vbar"></div>
+            <span class="fork-label no">${n.noText || 'NO'}</span>
+            ${n.noNodes.map(nn => `<div class="bn bn-${nn.type}">${nn.text}</div>${nn !== n.noNodes[n.noNodes.length-1] ? '<div class="bn-vbar"></div>' : ''}`).join('')}
+          </div>
+        </div>`);
+      } else {
+        out.push(`<div class="${cls}">${n.text}</div>`);
+        if (i < nodes.length - 1) out.push('<div class="bn-vbar"></div>');
+      }
+    });
+    return out.join('');
+  }
+
+  // DOM refs del modal flow
+  const flowModal = document.getElementById('flowModal');
+  const flowClose = document.getElementById('flowModalClose');
+  const flowEyebrow = document.getElementById('flowModalEyebrow');
+  const flowTitle = document.getElementById('flowModalTitle');
+  const flowSub = document.getElementById('flowModalSub');
+  const flowBpmn = document.getElementById('flowBpmn');
+  const flowMeta = document.getElementById('flowMeta');
+  const flowFooter = document.getElementById('flowModalFooter');
+
+  function openFlowModal(key) {
+    const info = FLOW_INFO[key];
+    if (!info) return;
+    flowEyebrow.textContent = info.eyebrow;
+    flowTitle.textContent = info.title;
+    flowSub.textContent = info.sub;
+    flowBpmn.innerHTML = renderBpmn(info.bpmn);
+    const actoresHTML = info.actores.map(a => `<span class="chip">${a}</span>`).join('');
+    const estadosHTML = info.estados.map(e => `<span class="chip">${e}</span>`).join('');
+    flowMeta.innerHTML = `
+      <div class="flow-meta-block">
+        <div class="flow-meta-block-title">Actores que participan</div>
+        <div>${actoresHTML}</div>
+      </div>
+      <div class="flow-meta-block">
+        <div class="flow-meta-block-title">Estados que recorre</div>
+        <div>${estadosHTML}</div>
+      </div>
+    `;
+    flowFooter.textContent = info.footer;
+    flowModal.classList.add('open');
+  }
 
   document.querySelectorAll('[data-flow]').forEach(card => {
     card.style.cursor = 'pointer';
-    card.addEventListener('click', () => {
-      const key = card.dataset.flow;
-      const info = FLOW_INFO[key];
-      if (!info) return;
-      modalIcon.innerHTML = FLOW_ICON;
-      modalLayer.textContent = info.layer;
-      modalName.textContent = info.name;
-      // permitir saltos de línea
-      modalDesc.innerHTML = info.desc.split('\n').map(l => l ? l.replace(/  /g, '&nbsp;&nbsp;') : '<br>').join('<br>');
-      modal.classList.add('open');
-    });
+    card.addEventListener('click', () => openFlowModal(card.dataset.flow));
   });
+  flowClose.addEventListener('click', () => flowModal.classList.remove('open'));
+  flowModal.addEventListener('click', (e) => { if (e.target === flowModal) flowModal.classList.remove('open'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') flowModal.classList.remove('open'); });
 
   // ═══════════════════════════════════════════════════════════════
   // SEGUIMIENTO · cada fila abre modal con vínculos (UC + flujo + valor)
@@ -3887,7 +4372,7 @@
     '01': {
       eyebrow: 'Fila 01 · Alta del incidente',
       title: 'Registro no estructurado de incidentes',
-      footer: 'Tesis §4.7.3 · §6.7 punto 5 · §6.8 · RF-01',
+      footer: 'Tesis sec. 4.7.3 · sec. 6.7 punto 5 · sec. 6.8 · RF-01',
       problema: 'En ISBA, los reclamos llegaban por WhatsApp, papel o Excel — sin formato común ni un único lugar.',
       mandato: 'Módulo de Gestión de Incidentes con registro inicial vinculado a propiedades + generación automática de historial.',
       modelacion: { chips: [['UC Registrar incidente','blue'],['HU-01','blue'],['RF-01','blue'],['Flujo BPMN 5','warm']], text: 'El cliente registra desde su portal, sin intermediación.' },
@@ -3897,7 +4382,7 @@
     '02': {
       eyebrow: 'Fila 02 · Seguimiento del caso',
       title: 'Documentación manual y pérdida de información',
-      footer: 'Tesis §6.6 · §6.7 punto 9 · RF-07A',
+      footer: 'Tesis sec. 6.6 · sec. 6.7 punto 9 · RF-07A',
       problema: 'El que atendía era el único que sabía el estado. Si se ausentaba, se perdía contexto.',
       mandato: 'Generación automática de historial por incidente + comunicación entre áreas internas.',
       modelacion: { chips: [['UC Ver Timeline','blue'],['HU-07A/B/C','blue'],['RF-07A','blue'],['Flujo BPMN 9','warm']], text: 'Timeline con todos los eventos del caso, accesible a los 3 roles.' },
@@ -3907,7 +4392,7 @@
     '03': {
       eyebrow: 'Fila 03 · Gestión de técnicos',
       title: 'Sin base de técnicos ni medición de desempeño',
-      footer: 'Tesis §4.7.3 · §6.7 punto 3 · RF-03, RF-09, RF-11',
+      footer: 'Tesis sec. 4.7.3 · sec. 6.7 punto 3 · RF-03, RF-09, RF-11',
       problema: 'Sin base estructurada de técnicos. Asignación improvisada por "confianza".',
       mandato: 'Módulo de Gestión de Técnicos con contacto, especialidad e historial de trabajos y calificaciones.',
       modelacion: { chips: [['UC Asignar técnico','blue'],['UC Calificar técnico','blue'],['HU-03A/B','blue'],['HU-11','blue'],['RF-03, RF-09, RF-11','blue'],['Flujo BPMN 3','warm']], text: 'Alta de técnicos por solicitud + asignación filtrada por especialidad y ranking.' },
@@ -3917,7 +4402,7 @@
     '04': {
       eyebrow: 'Fila 04 · Comunicación',
       title: 'Comunicación descentralizada entre áreas',
-      footer: 'Tesis §6.7 punto 6 · RF-04',
+      footer: 'Tesis sec. 6.7 punto 6 · RF-04',
       problema: 'WhatsApp, llamadas y mails dispersos. Sin auditoría de quién avisó a quién y cuándo.',
       mandato: 'Notificación automática al asignar técnico y al confirmar aceptación.',
       modelacion: { chips: [['UC Asignar','blue'],['UC Aceptar Asignación','blue'],['HU-04','blue'],['RF-04','blue'],['Flujo BPMN 6','warm']], text: 'Notificación in-app + badges al asignar y aceptar.' },
@@ -3927,7 +4412,7 @@
     '05': {
       eyebrow: 'Fila 05 · Toma de decisiones',
       title: 'Sin reportes ni métricas para decidir',
-      footer: 'Tesis §4.7.3 Módulo de Reportes · RF-12',
+      footer: 'Tesis sec. 4.7.3 Módulo de Reportes · RF-12',
       problema: 'No había reportes estadísticos ni históricos. Decisiones basadas en intuición.',
       mandato: 'Módulo de Reportes operativos y estratégicos con filtros por propiedad, técnico, tipo y período.',
       modelacion: { chips: [['UC Consultar reportes','blue'],['RF-12','blue']], text: 'Indicadores calculados sobre el timeline en vivo.' },
@@ -3937,7 +4422,7 @@
     '06': {
       eyebrow: 'Fila 06 · Cierre financiero',
       title: 'Subtrabajos pagos sin haberse hecho',
-      footer: 'Tesis §6.7 puntos 9 y 9.1 · RF-07B, RF-07C, RF-07D, RF-08',
+      footer: 'Tesis sec. 6.7 puntos 9 y 9.1 · RF-07B, RF-07C, RF-07D, RF-08',
       problema: 'Riesgo concreto del modelo papel: trabajos cobrados sin estar realmente hechos.',
       mandato: 'Cierre formal del caso con conformidad firmada antes del cobro.',
       modelacion: { chips: [['UC Aprobar Conformidad','blue'],['UC Registrar Cobro','blue'],['UC Registrar Pago','blue'],['HU-08A/B','blue'],['HU-09','blue'],['HU-10','blue'],['RF-07B/C/D','blue'],['RF-08','blue'],['Flujo BPMN 9','warm']], text: 'Conformidad firmada digital + cobro y pago separados.' },
