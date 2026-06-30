@@ -302,7 +302,7 @@ export function TrabajosContent({
       tieneInspeccionPorIncidente[a.id_incidente]
     )
 
-  const EN_PROCESO_KEYS = ['visita_pendiente', 'visita_propuesta', 'visita_programada', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago']
+  const EN_PROCESO_KEYS = ['visita_pendiente', 'visita_propuesta', 'visita_programada', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'necesita_visita_reparacion', 'visita_reparacion_propuesta', 'visita_reparacion_confirmada', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago']
   const enProceso = asignaciones.filter(a => EN_PROCESO_KEYS.includes(sk(a)))
   const resueltas = asignaciones.filter(a => sk(a) === 'finalizado')
 
@@ -644,7 +644,7 @@ export function TrabajosContent({
               </button>
               </div>
               <div className="space-y-6">
-              {((['visita_pendiente', 'visita_propuesta', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
+              {((['visita_pendiente', 'visita_propuesta', 'pendiente_inspeccion', 'aceptada', 'presupuesto_enviado', 'presupuesto_cliente', 'necesita_visita_reparacion', 'visita_reparacion_propuesta', 'visita_reparacion_confirmada', 'en_curso', 'completada_pendiente', 'conformidad_rechazada', 'pendiente_pago'] as const)
                 .map(tipo => ({
                   tipo,
                   items: listaFiltrada.filter(a => sk(a) === tipo),

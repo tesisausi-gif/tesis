@@ -303,6 +303,56 @@
   .foda-list { list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-soft); }
   .foda-list li { padding: 3px 0; }
   .foda-list li::before { content: "—"; margin-right: 8px; color: var(--ink); font-weight: 700; }
+  .foda-clickable { cursor: pointer; text-decoration: underline dotted rgba(0,0,0,0.3); transition: color 0.15s; }
+  .foda-clickable:hover { color: var(--ink); text-decoration-color: currentColor; }
+  /* ─── Modal FODA mitigación ─── */
+  #fodaModal { z-index: 10002; }
+  .foda-modal-inner {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    box-shadow: 12px 12px 0 var(--ink);
+    max-width: 560px;
+    width: 90%;
+    padding: 36px 40px 32px;
+    position: relative;
+    animation: modalIn 0.25s cubic-bezier(0.16,1,0.3,1);
+  }
+  .foda-modal-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+  }
+  .foda-modal-badge.deb { background: rgba(234,88,12,0.12); color: rgb(194,65,12); }
+  .foda-modal-badge.ame { background: rgba(185,28,28,0.1); color: rgb(153,27,27); }
+  .foda-modal-title { font-size: 18px; font-weight: 800; color: var(--ink); margin-bottom: 20px; line-height: 1.3; }
+  .foda-modal-section-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-faded);
+    margin-bottom: 8px; margin-top: 16px;
+  }
+  .foda-modal-strats { list-style: none; padding: 0; margin: 0; }
+  .foda-modal-strats li {
+    padding: 8px 0 8px 16px;
+    border-left: 3px solid var(--blue);
+    font-size: 13px; line-height: 1.55; color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .foda-modal-detail { margin-top: 12px; }
+  .foda-modal-detail-item {
+    font-size: 11px; color: var(--ink-faded);
+    padding: 4px 8px; background: rgba(0,0,0,0.03);
+    border-radius: 4px; margin-bottom: 4px;
+  }
+  .foda-modal-result {
+    margin-top: 16px; padding: 10px 14px;
+    background: rgba(21,128,61,0.06);
+    border-left: 3px solid rgba(21,128,61,0.5);
+    font-size: 11px; color: var(--ink-soft); border-radius: 0 4px 4px 0;
+  }
 
   /* ─────────── Stack logos ─────────── */
   .stack-grid {
@@ -2087,11 +2137,12 @@
         <span class="foda-letter">D</span>
         <div class="foda-title">Debilidades</div>
         <ul class="foda-list">
-          <li>Divagación al momento de realizar tareas</li>
-          <li>Falta de experiencia en proyectos IT</li>
-          <li>Ritmo de trabajo vinculado a la motivación</li>
-          <li>Falta de conocimiento específico para desarrollar e implementar software</li>
-          <li>Conocimientos dispares entre miembros · Tiempo limitado</li>
+          <li class="foda-clickable" data-foda="div">Divagación al momento de realizar tareas</li>
+          <li class="foda-clickable" data-foda="exp">Falta de experiencia en proyectos IT</li>
+          <li class="foda-clickable" data-foda="mot">Ritmo de trabajo vinculado a la motivación</li>
+          <li class="foda-clickable" data-foda="cono">Falta de conocimiento específico para desarrollar e implementar software</li>
+          <li class="foda-clickable" data-foda="disp">Conocimientos dispares entre los miembros</li>
+          <li class="foda-clickable" data-foda="tiempo">Tiempo limitado</li>
         </ul>
       </div>
 
@@ -2099,11 +2150,11 @@
         <span class="foda-letter">A</span>
         <div class="foda-title">Amenazas</div>
         <ul class="foda-list">
-          <li>Finalización anticipada de la relación con la empresa</li>
-          <li>Retrasos administrativos de terceros (empresas o académicos)</li>
+          <li class="foda-clickable" data-foda="fin">Finalización anticipada de la relación con la empresa</li>
+          <li class="foda-clickable" data-foda="ret">Retrasos administrativos de terceros (empresas o académicos)</li>
         </ul>
-        <p style="margin-top: 16px; font-size: 11px; color: var(--ink-faded); border-top: 1px solid rgba(0,0,0,0.1); padding-top: 10px;">
-          <strong style="color: var(--ink);">Mitigación:</strong> Azure DevOps, capacitación semanal, márgenes de contingencia.
+        <p style="margin-top: 14px; font-size: 10px; color: var(--ink-faded); border-top: 1px solid rgba(0,0,0,0.08); padding-top: 10px;">
+          Tocá cada ítem para ver la estrategia de mitigación aplicada
         </p>
       </div>
     </div>
@@ -3791,6 +3842,19 @@
   </div>
 </div>
 
+<!-- ───────── Modal FODA · mitigación ───────── -->
+<div class="tech-modal" id="fodaModal" role="dialog" aria-modal="true">
+  <div class="foda-modal-inner">
+    <button class="tech-modal-close" id="fodaModalClose" aria-label="Cerrar">×</button>
+    <div class="foda-modal-badge" id="fodaModalBadge"></div>
+    <div class="foda-modal-title" id="fodaModalTitle"></div>
+    <div class="foda-modal-section-label">Estrategia de mitigación aplicada</div>
+    <ul class="foda-modal-strats" id="fodaModalStrats"></ul>
+    <div class="foda-modal-detail" id="fodaModalDetail"></div>
+    <div class="foda-modal-result" id="fodaModalResult" style="display:none"></div>
+  </div>
+</div>
+
 <!-- ───────── Modal Flujo · mini BPMN gráfico ───────── -->
 <div class="tech-modal" id="flowModal" role="dialog" aria-modal="true">
   <div class="flow-modal-shell">
@@ -4961,6 +5025,130 @@
     el.addEventListener('click', (e) => {
       e.stopPropagation();
       openMetodModal(el.dataset.metod);
+    });
+  });
+
+  // ─── FODA · Modal de mitigación ───────────────────────────────────────────
+
+  const FODA_MITIG = {
+    div: {
+      tipo: 'DEBILIDAD',
+      titulo: 'Divagación al momento de realizar tareas',
+      estrategias: [
+        'Antes de cada reunión se preparó una lista de temas prioritarios compartida al grupo vía Azure DevOps.',
+        'Azure DevOps para registro de tareas asignadas y sus estados, evitando desvíos de foco durante el encuentro.'
+      ],
+      resultado: '✓ Activo desde 19/6/2025 · 5 reuniones ejecutadas · sin desvío'
+    },
+    exp: {
+      tipo: 'DEBILIDAD',
+      titulo: 'Falta de experiencia en proyectos IT',
+      estrategias: [
+        'Se coordinaron reuniones con ex alumnos que ya habían pasado por la práctica profesional, para conocer sus aprendizajes y errores frecuentes.'
+      ],
+      resultado: '✓ Completado 12/7/2025 · 1 h 37 min · desvío: +7 min'
+    },
+    mot: {
+      tipo: 'DEBILIDAD',
+      titulo: 'Ritmo de trabajo vinculado a la motivación',
+      estrategias: [
+        'Meta semanal grupal e individual en Azure DevOps. Al final de cada semana, evaluación grupal de 15 minutos donde cada integrante compartió sus logros.',
+        'Kanban personal en Azure DevOps con visibilidad del progreso de todo el equipo para fomentar el compromiso grupal.',
+        'Posibilidad de intercambiar tareas si alguien se sentía bloqueado, con acompañamiento de un compañero.'
+      ],
+      resultado: '✓ Activo desde 19/6/2025 · 5 reuniones de seguimiento ejecutadas'
+    },
+    cono: {
+      tipo: 'DEBILIDAD',
+      titulo: 'Falta de conocimiento específico para desarrollar e implementar software',
+      estrategias: [
+        'Plan de capacitación individual de 2 hs/semana basado en el FODA personal de cada miembro.',
+        'Consulta a profesores y profesionales externos para dudas puntuales (bases de datos, control de versiones, arquitectura).'
+      ],
+      detalle: [
+        '👤 Giuliano — SQL · Procedimientos y Triggers · C# APIs · 22 hs completadas',
+        '👤 Faustino — React Frontend · 30 hs completadas',
+        '👤 Ramiro — C# APIs · SQL · 55 hs completadas'
+      ]
+    },
+    disp: {
+      tipo: 'DEBILIDAD',
+      titulo: 'Conocimientos dispares entre los miembros del grupo',
+      estrategias: [
+        'Repositorio compartido en Google Drive con tutoriales, guías y respuestas frecuentes como biblioteca común del equipo.',
+        'Plan de capacitación individual en base al FODA personal de cada miembro (ver ítem de conocimiento específico).'
+      ],
+      resultado: '✓ Repositorio creado el 4/7/2025 · 20 min · desvío: +10 min'
+    },
+    tiempo: {
+      tipo: 'DEBILIDAD',
+      titulo: 'Tiempo limitado',
+      estrategias: [
+        'Cronograma detallado con fechas estimadas, márgenes de contingencia y responsables por tarea.',
+        'Reuniones semanales fijas: martes 21–23 hs · sábados 17–21 hs · domingos 18–21 hs (formato virtual).'
+      ],
+      resultado: '✓ 5 reuniones · 21 hs consumidas · sin desvíos significativos'
+    },
+    fin: {
+      tipo: 'AMENAZA',
+      titulo: 'Finalización anticipada de la relación con la empresa',
+      estrategias: [
+        'Contacto semanal con el referente de la empresa (ISBA) para monitorear la continuidad del proyecto y reaccionar rápidamente ante cualquier cambio.',
+        'Plan de contingencia: en caso de finalización anticipada, inicio inmediato de tratativas con la empresa en segundo lugar de nuestra ponderación.'
+      ]
+    },
+    ret: {
+      tipo: 'AMENAZA',
+      titulo: 'Retrasos administrativos de terceros (empresas o académicos)',
+      estrategias: [
+        'Cronograma planificado con una "zona de amortiguación" de 5 a 7 días adicionales en cada etapa con dependencias externas.',
+        'Reunión inicial con la organización para conocer periodos normales de demora y solicitar información anticipada (cierres contables, periodos de alta demanda, etc.).',
+        'Tareas internas planificadas para poder avanzar en paralelo mientras se espera respuesta externa.'
+      ]
+    }
+  };
+
+  const fodaModal   = document.getElementById('fodaModal');
+  const fodaBadge   = document.getElementById('fodaModalBadge');
+  const fodaTitle   = document.getElementById('fodaModalTitle');
+  const fodaStrats  = document.getElementById('fodaModalStrats');
+  const fodaDetail  = document.getElementById('fodaModalDetail');
+  const fodaResult  = document.getElementById('fodaModalResult');
+
+  function openFodaModal(key) {
+    const info = FODA_MITIG[key];
+    if (!info) return;
+
+    fodaBadge.textContent = info.tipo;
+    fodaBadge.className = 'foda-modal-badge ' + (info.tipo === 'DEBILIDAD' ? 'deb' : 'ame');
+    fodaTitle.textContent = info.titulo;
+
+    fodaStrats.innerHTML = info.estrategias
+      .map(s => `<li>${s}</li>`)
+      .join('');
+
+    fodaDetail.innerHTML = info.detalle
+      ? '<div class="foda-modal-section-label">Capacitación ejecutada por miembro</div>' +
+        info.detalle.map(d => `<div class="foda-modal-detail-item">${d}</div>`).join('')
+      : '';
+
+    if (info.resultado) {
+      fodaResult.textContent = info.resultado;
+      fodaResult.style.display = 'block';
+    } else {
+      fodaResult.style.display = 'none';
+    }
+
+    fodaModal.classList.add('open');
+  }
+
+  document.getElementById('fodaModalClose').addEventListener('click', () => fodaModal.classList.remove('open'));
+  fodaModal.addEventListener('click', e => { if (e.target === fodaModal) fodaModal.classList.remove('open'); });
+
+  document.querySelectorAll('.foda-clickable').forEach(li => {
+    li.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openFodaModal(li.dataset.foda);
     });
   });
 
