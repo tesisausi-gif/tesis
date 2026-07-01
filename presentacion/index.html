@@ -2628,7 +2628,7 @@
       <div style="border: 1px solid var(--ink); background: var(--paper-2); padding: 14px 16px; display: flex; gap: 12px; align-items: start;" data-flow="flow-01"><div style="font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--ink-faded); letter-spacing: -0.04em; min-width: 36px;">01</div>
         <div>
           <p style="font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.2; margin: 0 0 4px;">ABM de Inmuebles</p>
-          <p style="font-size: 11px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Base maestra de propiedades vinculadas a clientes.</p>
+          <p style="font-size: 11px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Cada cliente registra y administra sus propios inmuebles.</p>
         </div>
       </div>
 
@@ -4190,17 +4190,17 @@
   const FLOW_INFO = {
     'flow-01': {
       eyebrow: 'Flujo 1 de 9 · Soporte', title: 'ABM de Inmuebles',
-      sub: 'El admin mantiene el catálogo de inmuebles administrados. Es la base maestra que vincula clientes con incidentes.',
+      sub: 'El cliente registra sus propios inmuebles en el sistema. Es la base maestra que después se vincula con los incidentes que él mismo reporta.',
       bpmn: [
-        {type:'start', text:'Inicio'},
-        {type:'proc',  text:'Admin ingresa datos del inmueble'},
-        {type:'proc',  text:'Asocia inmueble al cliente propietario'},
-        {type:'proc',  text:'Activa o desactiva el inmueble'},
-        {type:'end',   text:'Inmueble disponible en BD'},
+        {type:'start', text:'Cliente autenticado'},
+        {type:'proc',  text:'Ingresa datos del inmueble<br>(dirección, tipo, localidad)'},
+        {type:'sys',   text:'Sistema asocia automáticamente<br>al cliente actual'},
+        {type:'proc',  text:'Puede activar o desactivar<br>sus inmuebles cuando quiera'},
+        {type:'end',   text:'Inmueble activo · listo para<br>reportar incidentes sobre él'},
       ],
-      actores: ['Administrador'],
+      actores: ['Cliente'],
       estados: ['activo', 'inactivo'],
-      footer: 'Fuente · Tesis sec. 6.7 punto 1',
+      footer: 'Fuente · Tesis sec. 6.7 punto 1 · features/inmuebles/inmuebles.service.ts',
     },
     'flow-02': {
       eyebrow: 'Flujo 2 de 9 · Soporte', title: 'Alta de Clientes',
