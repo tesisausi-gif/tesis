@@ -13,7 +13,6 @@ const fadeUp = {
 }
 
 const features = [
-  'Seguimiento en tiempo real',
   'Asignación de técnicos',
   'Reportes y conformidades',
 ]

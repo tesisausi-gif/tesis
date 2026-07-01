@@ -312,7 +312,7 @@ function WipMetrica({ data }: { data: WipData }) {
         numero="WIP"
         titulo="¿Dónde se están acumulando los trabajos en este momento?"
         resumen="Muestra cuántos trabajos hay parados en cada etapa del proceso ahora mismo. Si una etapa acumula muchos más que las otras, esa es la que está frenando todo. El 'cuello' marcado en rojo es donde hay que actuar primero."
-        proceso="Muestra en tiempo real dónde están los trabajos que todavía no se cerraron, etapa por etapa. También indica quién es el responsable de desbloquear: el administrador, el técnico o el cliente."
+        proceso="Muestra dónde están los trabajos que todavía no se cerraron, etapa por etapa. También indica quién es el responsable de desbloquear: el administrador, el técnico o el cliente."
         porque="Si el trabajo se acumula en una sola etapa, mejorar las otras no sirve de nada. Es como una autopista con un semáforo en rojo: de nada sirve ampliar los carriles antes o después del semáforo. Hay que atacar el cuello primero."
         accion="🔴 Etapa marcada como cuello: actuar ahí específicamente. Si está bloqueado en Administración → revisar si hay tareas pendientes del admin. Si está en el Técnico → ver si se puede redistribuir el trabajo. Si está en el Cliente → mandarle un recordatorio."
         formula="Trabajos activos = Incidentes con estado ≠ finalizado · Estimación de tiempo = Trabajos activos ÷ Velocidad de resolución · Fuente: tabla incidentes + relaciones"

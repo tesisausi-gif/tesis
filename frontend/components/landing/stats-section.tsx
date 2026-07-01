@@ -7,8 +7,6 @@ const stats = [
   { value: '100%', label: 'trazabilidad del incidente' },
   { value: '3 roles', label: 'cliente · técnico · admin' },
   { value: 'PWA', label: 'instalable en móvil' },
-  { value: 'Tiempo real', label: 'notificaciones push' },
-  { value: 'Firma digital', label: 'conformidades' },
   { value: 'Multi-inmueble', label: 'por cliente' },
 ]
 

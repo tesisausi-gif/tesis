@@ -142,7 +142,7 @@ FLUJO DE TRABAJO (orientación operativa):
 1. INSPECCIÓN: Entrás a /tecnico/disponibles, aceptás un incidente. Luego en /tecnico/trabajos cargás la inspección con foto y descripción técnica.
 2. PRESUPUESTO: Con la inspección hecha, vas a /tecnico/presupuestos/nuevo para cargar el presupuesto (materiales, mano de obra). El admin lo revisa y si lo aprueba, se envía al cliente.
 3. EJECUCIÓN: Una vez aprobado el presupuesto por el cliente, ejecutás el trabajo.
-4. CONFORMIDAD: Subís el documento de conformidad. El cliente lo firma digitalmente. Si lo rechaza, debés subir uno nuevo.
+4. CONFORMIDAD: Subís la foto de la conformidad firmada por el cliente. Si el admin la rechaza, debés subir una nueva.
 5. COBRO: Con la conformidad firmada, registrás el pago en /tecnico/pagos.
 
 TUS CAPACIDADES (no podés hacer nada fuera de estas):

@@ -55,7 +55,7 @@ const QUICK_ACTIONS: Record<WalterRol, { label: string; message: string }[]> = {
 const WELCOME_MESSAGES: Record<WalterRol, string> = {
   cliente: '¡Hola! Soy Walter 👋\nPuedo ayudarte a diagnosticar problemas en tus propiedades, consultar el estado de tus incidentes y guiarte en el uso del sistema.',
   tecnico: '¡Hola! Soy Walter 👋\nPuedo guiarte en tu flujo de trabajo, consultar el estado de incidentes asignados y ayudarte con cualquier duda sobre el sistema.',
-  admin: '¡Hola! Soy Walter 👋\nPuedo ayudarte a analizar métricas, diagnosticar incidentes, consultar estados en tiempo real y asistirte en la gestión operativa.',
+  admin: '¡Hola! Soy Walter 👋\nPuedo ayudarte a analizar métricas, diagnosticar incidentes, consultar estados y asistirte en la gestión operativa.',
 }
 
 // ── Inner chat panel (needs AssistantRuntimeProvider context) ─────────────────
