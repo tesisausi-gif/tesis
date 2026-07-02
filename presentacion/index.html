@@ -1965,7 +1965,7 @@
         <div class="process-step"><div class="ps-num">05</div><div><div class="ps-title">Casos de uso</div><div class="ps-desc">14 UC principales en diagrama UML</div></div></div>
         <div class="process-step"><div class="ps-num">11</div><div><div class="ps-title">Indicadores</div><div class="ps-desc">Métricas operativas en vivo</div></div></div>
         <div class="process-step"><div class="ps-num">06</div><div><div class="ps-title">Flujos del proceso</div><div class="ps-desc">9 flujos agrupados por dominio</div></div></div>
-        <div class="process-step"><div class="ps-num">12</div><div><div class="ps-title">Valor agregado + cierre</div><div class="ps-desc">Aporte concreto a ISBA · preguntas</div></div></div>
+        <div class="process-step"><div class="ps-num">12</div><div><div class="ps-title">Valor agregado + cierre</div><div class="ps-desc">Aporte concreto a ISBA</div></div></div>
       </div>
     </div>
 
@@ -3107,7 +3107,7 @@
 
       <div class="arch-conn">
         <span class="arch-conn-line"></span>
-        <span class="arch-conn-label">Server Action · HTTPS</span>
+        <span class="arch-conn-label">Server Action / HTTP</span>
         <span class="arch-conn-line"></span>
       </div>
 
@@ -3135,7 +3135,7 @@
             <div class="arch-comp-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6M7 12H1m15.5-7.5l-4.5 4.5m-6 6l-4.5 4.5m13.5 0l-4.5-4.5m-6-6L4.5 4.5"/></svg>
             </div>
-            <div class="arch-comp-text"><strong>features/walter</strong><span>API + tool calling</span></div>
+            <div class="arch-comp-text"><strong>features/walter</strong><span>Chat IA + tool calling</span></div>
           </div>
         </div>
       </div>
@@ -3847,11 +3847,7 @@
       </div>
 
       <p class="eyebrow" style="color: #60A5FA; text-align: center;">DE LA PÉRDIDA DE INFORMACIÓN AL CONTROL TOTAL</p>
-      <h1 class="display-xxl" style="text-align: center; margin-bottom: 36px;">Gracias<span style="color: #60A5FA;">.</span></h1>
-
-      <p style="font-family: var(--display); font-size: 28px; color: rgba(255,255,255,0.7); font-weight: 300; margin-bottom: 56px;">
-        Preguntas <span style="color: #60A5FA;">→</span>
-      </p>
+      <h1 class="display-xxl" style="text-align: center; margin-bottom: 56px;">Gracias<span style="color: #60A5FA;">.</span></h1>
 
       <div style="display: flex; justify-content: center; gap: 32px; font-family: var(--display); font-size: 18px; font-weight: 500; color: white;">
         <span>Giuliano Vigetti</span>
@@ -4107,7 +4103,7 @@
     'client':          { layer: 'CAPA 01 · NAVEGADOR', name: '*.client.tsx', desc: 'Componentes que sí se ejecutan en el navegador. Gestionan estado local (filtros, modales, formularios) y llaman a Server Actions cuando hay que escribir en la base.' },
     'middleware':      { layer: 'CAPA 02 · VERCEL', name: 'middleware.ts', desc: 'Se ejecuta antes de cada request en el edge. Verifica el JWT de Supabase Auth y, según el rol (cliente / técnico / admin), redirige al portal correspondiente o bloquea el acceso si la ruta no le pertenece.' },
     'service-actions': { layer: 'CAPA 02 · VERCEL', name: 'features/*/service.ts', desc: 'Acá vive toda la lógica de negocio. Cada feature (incidentes, presupuestos, cobros) tiene un service.ts con funciones marcadas como "use server" — son Server Actions que se invocan desde los componentes cliente como si fueran funciones locales, con type-safety extremo a extremo. Complementan a las rutas del App Router (que definen las páginas por convención de archivos).' },
-    'walter-feature':  { layer: 'CAPA 02 · VERCEL', name: 'features/walter', desc: 'Endpoint que recibe los mensajes del chat, arma el prompt según el rol del usuario, llama a Claude con la lista de tools permitidas, ejecuta las tools que Claude decide invocar (consultas a la base) y devuelve la respuesta.' },
+    'walter-feature':  { layer: 'CAPA 02 · VERCEL', name: 'features/walter', desc: 'Server Action que recibe los mensajes del chat, arma el prompt según el rol del usuario, llama a Claude con la lista de tools permitidas, ejecuta las tools que Claude decide invocar (consultas a la base) y devuelve la respuesta.' },
     'postgresql':      { layer: 'CAPA 03A · SUPABASE', name: 'PostgreSQL', desc: 'La base relacional donde viven todos los datos: incidentes, asignaciones, presupuestos, conformidades, cobros, pagos, notificaciones, usuarios. Integridad referencial estricta — un cobro no puede existir sin su incidente.' },
     'auth-rls':        { layer: 'CAPA 03A · SUPABASE', name: 'Auth + Row Level Security', desc: 'Supabase Auth maneja login y emite JWTs. Row Level Security (RLS) son políticas a nivel de PostgreSQL que filtran las filas automáticamente según el rol — la seguridad se aplica en la base, no depende del código de la app.' },
     'storage':         { layer: 'CAPA 03A · SUPABASE', name: 'Storage', desc: 'Bucket de archivos donde se suben las fotos de diagnóstico de incidentes, las fotos de conformidad firmada y los comprobantes de compras de los técnicos. Cada archivo se sirve con URL firmada con permisos por rol.' },
