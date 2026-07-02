@@ -3482,7 +3482,7 @@
             <div class="bn-fork-leg">
               <div class="bn-vbar"></div>
               <span style="font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.2em; color: var(--danger); margin: 4px 0;">NO</span>
-              <div class="bn bn-ko">Estado: asignacion_solicitada<br>admin reasigna</div>
+              <div class="bn bn-ko">Asignación rechazada<br>incidente vuelve a asignacion_solicitada<br>admin reasigna</div>
             </div>
           </div>
         </div>
@@ -4280,13 +4280,13 @@
             {type:'end',  text:'Incidente en proceso'},
           ],
           noText:'NO', noNodes:[
-            {type:'ko',   text:'Estado: asignacion_solicitada'},
-            {type:'proc', text:'Admin reasigna'},
+            {type:'ko',   text:'Asignación rechazada<br>incidente vuelve a<br>asignacion_solicitada'},
+            {type:'proc', text:'Admin reasigna a otro técnico'},
           ],
         },
       ],
       actores: ['Administrador', 'Técnico'],
-      estados: ['pendiente', 'asignacion_solicitada', 'en_proceso'],
+      estados: ['pendiente', 'asignacion_solicitada', 'aceptada', 'rechazada', 'en_proceso'],
       footer: 'Fuente · Tesis sec. 6.7 punto 6 + sec. 6.8',
     },
     'flow-07': {
