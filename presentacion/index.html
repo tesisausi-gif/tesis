@@ -262,6 +262,24 @@
   }
   .ed-card p { font-size: 14px; color: var(--ink-soft); line-height: 1.5; }
 
+  /* Variante grande para slides con pocos elementos donde queremos tipografía proyector-friendly */
+  .ed-card.card-lg { padding: 30px 34px; }
+  .ed-card.card-lg h3 {
+    font-size: 28px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    letter-spacing: -0.015em;
+  }
+  .ed-card.card-lg p {
+    font-size: 17px;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+  .ed-card.card-lg .ed-card-num {
+    font-size: 88px;
+    opacity: 0.09;
+  }
+
   /* ─────────── FODA matriz 2x2 ─────────── */
   .foda-grid {
     display: grid;
@@ -1375,60 +1393,85 @@
   /* ─────────── Antes/Después ─────────── */
   .ad-grid {
     display: grid;
-    grid-template-columns: 1fr 80px 1fr;
+    grid-template-columns: 1fr 100px 1fr;
     gap: 0;
     align-items: stretch;
     flex: 1;
   }
   .ad-col {
-    padding: 36px;
-    border: 1px solid var(--ink);
+    padding: 40px 44px;
+    border: 1.5px solid var(--ink);
+    display: flex; flex-direction: column;
   }
   .ad-before {
     background: white;
     background-image:
-      repeating-linear-gradient(135deg, rgba(234,88,12,0.04) 0 12px, transparent 12px 24px);
+      repeating-linear-gradient(135deg, rgba(234,88,12,0.04) 0 14px, transparent 14px 28px);
   }
   .ad-after { background: var(--ink); color: var(--paper); }
   .ad-after h3, .ad-after .ad-label { color: var(--paper); }
-  .ad-after .ad-item { color: rgba(255,255,255,0.85); }
+  .ad-after .ad-item { color: rgba(255,255,255,0.92); }
   .ad-after .ad-item::before { background: #60A5FA; }
 
   .ad-arrow {
     display: flex; align-items: center; justify-content: center;
     background: var(--paper);
     font-family: var(--display);
-    font-size: 56px;
+    font-size: 84px;
+    font-weight: 700;
     color: var(--ink);
-    border-top: 1px solid var(--ink);
-    border-bottom: 1px solid var(--ink);
+    border-top: 1.5px solid var(--ink);
+    border-bottom: 1.5px solid var(--ink);
   }
   .ad-label {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.32em;
     color: var(--ink-faded);
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+    font-weight: 700;
   }
   .ad-col h3 {
     font-family: var(--display);
-    font-size: 32px;
+    font-size: 40px;
     font-weight: 700;
-    margin-bottom: 20px;
+    line-height: 1.05;
+    margin-bottom: 26px;
     color: var(--ink);
+    letter-spacing: -0.02em;
   }
-  .ad-col .ad-items { display: flex; flex-direction: column; gap: 12px; }
+  .ad-col .ad-items { display: flex; flex-direction: column; gap: 14px; flex: 1; }
   .ad-item {
-    display: flex; align-items: start; gap: 10px;
-    font-size: 14px; line-height: 1.45; color: var(--ink-soft);
+    display: flex; align-items: start; gap: 12px;
+    font-size: 18px; line-height: 1.4; color: var(--ink);
+    font-weight: 500;
   }
   .ad-item::before {
     content: ''; display: block;
-    width: 6px; height: 6px;
+    width: 8px; height: 8px;
     background: var(--warm);
     border-radius: 50%;
-    margin-top: 7px; flex-shrink: 0;
+    margin-top: 9px; flex-shrink: 0;
+  }
+  .ad-conclusion {
+    margin-top: 20px;
+    padding: 16px 20px;
+    font-family: var(--display);
+    font-size: 18px;
+    line-height: 1.35;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .ad-conclusion.warm {
+    background: var(--warm-soft);
+    border-left: 6px solid var(--warm);
+    color: var(--ink);
+  }
+  .ad-conclusion.blue {
+    background: rgba(96,165,250,0.15);
+    border-left: 6px solid #60A5FA;
+    color: white;
   }
 
   /* ─────────── Walter · avatar grande ─────────── */
@@ -1641,98 +1684,98 @@
 
   /* ─────────── Valor agregado · matriz antes/después por categoría ─────────── */
   .val-anchor {
-    border-left: 4px solid var(--mantis);
+    border-left: 6px solid var(--mantis);
     background: var(--paper-2);
-    padding: 12px 18px;
-    margin-bottom: 14px;
+    padding: 18px 26px;
+    margin-bottom: 18px;
     font-family: var(--display);
-    font-size: 16px;
+    font-size: 22px;
     font-style: italic;
     line-height: 1.3;
     color: var(--ink);
     max-width: 100%;
-    letter-spacing: -0.005em;
+    letter-spacing: -0.01em;
   }
   .val-anchor strong { font-style: normal; color: var(--mantis-deep); font-weight: 700; }
 
   .val-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 14px;
   }
   .val-card {
-    border: 1px solid var(--ink);
+    border: 1.5px solid var(--ink);
     background: white;
-    padding: 14px 16px 12px;
+    padding: 20px 22px 18px;
     display: flex; flex-direction: column;
     position: relative;
     overflow: hidden;
   }
   .val-card-cat {
     font-family: var(--mono);
-    font-size: 8.5px;
-    letter-spacing: 0.25em;
+    font-size: 11px;
+    letter-spacing: 0.28em;
     font-weight: 700;
     text-transform: uppercase;
     color: var(--mantis);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
   .val-card-title {
     font-family: var(--display);
-    font-size: 17px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--ink);
     line-height: 1.1;
     letter-spacing: -0.02em;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--ink);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid var(--ink);
   }
   .val-ba {
     display: grid;
-    grid-template-columns: 52px 1fr;
-    gap: 8px;
+    grid-template-columns: 64px 1fr;
+    gap: 10px;
     align-items: start;
-    padding: 6px 0;
+    padding: 8px 0;
   }
-  .val-ba + .val-ba { border-top: 1px dashed rgba(0,0,0,0.1); }
+  .val-ba + .val-ba { border-top: 1px dashed rgba(0,0,0,0.12); }
   .val-ba-tag {
     font-family: var(--mono);
-    font-size: 8.5px;
-    letter-spacing: 0.18em;
+    font-size: 10px;
+    letter-spacing: 0.2em;
     font-weight: 700;
     text-transform: uppercase;
-    padding: 3px 6px;
+    padding: 4px 7px;
     text-align: center;
     line-height: 1;
     border-radius: 2px;
-    margin-top: 1px;
+    margin-top: 2px;
   }
   .val-ba-tag.antes { background: var(--warm-soft); color: #9A3412; border: 1px solid var(--warm); }
   .val-ba-tag.ahora { background: var(--success-soft); color: #14532D; border: 1px solid var(--success); }
   .val-ba p {
-    font-size: 11.5px;
-    line-height: 1.35;
+    font-size: 15px;
+    line-height: 1.4;
     color: var(--ink-soft);
     margin: 0;
   }
   .val-ba.ahora p { color: var(--ink); font-weight: 500; }
   .val-card-kpi {
-    margin-top: 10px;
-    padding: 6px 8px;
+    margin-top: 14px;
+    padding: 10px 12px;
     background: var(--mantis-soft);
-    border: 1px solid var(--mantis);
-    display: flex; align-items: baseline; gap: 6px;
+    border: 1.5px solid var(--mantis);
+    display: flex; align-items: baseline; gap: 8px;
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 13px;
     color: var(--mantis-deep);
-    line-height: 1.3;
+    line-height: 1.35;
   }
   .val-card-kpi .kpi-label {
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-size: 9px;
+    letter-spacing: 0.2em;
+    font-size: 10.5px;
     color: var(--mantis-deep);
     flex-shrink: 0;
   }
@@ -1941,40 +1984,44 @@
       <span class="line"></span>
     </div>
 
-    <div style="padding-top: 100px; flex: 1; display: grid; grid-template-columns: 1.3fr 1fr; gap: 64px; align-items: start;">
+    <div style="padding-top: 80px; flex: 1; display: grid; grid-template-columns: 1.3fr 1fr; gap: 64px; align-items: start;">
       <div>
-        <div class="eyebrow">Cliente</div>
-        <h2 class="display-xl" style="margin-bottom: 24px;">ISBA<br>Propiedades<span class="mark-blue dot-end"></span></h2>
+        <div class="eyebrow">Cliente de la práctica profesional</div>
+        <h2 class="display-xxl" style="margin-bottom: 24px; line-height: 0.95;">ISBA<br>Propiedades<span class="mark-blue dot-end"></span></h2>
 
-        <div class="rule-mantis" style="margin-bottom: 24px;"></div>
+        <div class="rule-mantis" style="margin-bottom: 24px; height: 4px;"></div>
 
-        <p class="text-lead dropcap" style="max-width: 580px;">
-          Empresa cordobesa dedicada a la administración, venta y alquiler de inmuebles. Gestiona un volumen importante de propiedades y clientes, y enfrenta dificultades en la organización, registro y seguimiento de incidentes vinculados a los inmuebles que administra.
+        <p class="text-lead" style="max-width: 620px; font-size: 22px; line-height: 1.4;">
+          Inmobiliaria cordobesa que administra, vende y alquila inmuebles. Nuestro trabajo se enfoca en el <strong style="color: var(--ink);">área de mantenimiento</strong>: el equipo que resuelve los incidentes que aparecen en las propiedades que gestiona.
         </p>
 
-        <p style="margin-top: 24px; font-family: var(--mono); font-size: 11px; color: var(--ink-faded); letter-spacing: 0.1em;">
+        <p style="margin-top: 26px; padding: 14px 18px; background: var(--paper-2); border-left: 4px solid var(--mantis); font-size: 15px; line-height: 1.45; color: var(--ink); max-width: 620px;">
+          En ese circuito, el <strong>"cliente"</strong> del sistema es <em>quien reporta el incidente</em> — puede ser el propietario o el inquilino, indistintamente. Lo importante es la gestión del <strong>incidente</strong>, no la relación contractual con el inmueble.
+        </p>
+
+        <p style="margin-top: 20px; font-family: var(--mono); font-size: 12px; color: var(--ink-faded); letter-spacing: 0.15em; font-weight: 600;">
           FUENTE · Tesis sec. 4.7 · p. 47
         </p>
       </div>
 
       <div class="stagger">
         <div class="eyebrow">¿Por qué ISBA?</div>
-        <h3 class="display-md" style="margin-bottom: 28px; font-family: var(--display);">El caso ideal<span class="dot-end"></span></h3>
+        <h3 class="display-lg" style="margin-bottom: 28px; font-family: var(--display); font-size: 42px; line-height: 1;">El caso ideal<span class="dot-end"></span></h3>
 
-        <div class="ed-card" style="margin-bottom: 14px;">
+        <div class="ed-card card-lg" style="margin-bottom: 14px;">
           <div class="ed-card-num">01</div>
-          <h3>Complejidad de procesos</h3>
-          <p>Suficiente para ser un desafío, no demasiado para ser imposible.</p>
+          <h3>Complejidad justa</h3>
+          <p>Suficiente para ser un desafío. No tanta que sea imposible.</p>
         </div>
-        <div class="ed-card" style="margin-bottom: 14px;">
+        <div class="ed-card card-lg" style="margin-bottom: 14px;">
           <div class="ed-card-num">02</div>
           <h3>Acceso a la información</h3>
           <p>Total predisposición a brindarnos todo lo que necesitáramos.</p>
         </div>
-        <div class="ed-card">
+        <div class="ed-card card-lg">
           <div class="ed-card-num">03</div>
           <h3>Impacto potencial</h3>
-          <p>Un cambio como el que sugerimos podría impactar muy positivamente.</p>
+          <p>Un cambio como el propuesto podría impactar muy positivamente.</p>
         </div>
       </div>
     </div>
@@ -1994,26 +2041,25 @@
       <span class="line"></span>
     </div>
 
-    <div style="padding-top: 100px; margin-bottom: 30px;">
+    <div style="padding-top: 80px; margin-bottom: 24px;">
       <div class="eyebrow">El proceso real, antes de Mantis</div>
-      <h2 class="display-lg">Así gestionaban<br>sus incidentes<span class="mark-warm dot-end"></span></h2>
+      <h2 class="display-xl">Así gestionaban<br>sus incidentes<span class="mark-warm dot-end"></span></h2>
     </div>
 
-    <!-- Comparativa antes -->
+    <!-- Comparativa antes / después -->
     <div class="ad-grid">
       <div class="ad-col ad-before">
         <span class="ad-label">Hasta hoy</span>
         <h3>Caos disperso<br>en múltiples canales.</h3>
         <div class="ad-items">
-          <div class="ad-item">El cliente llama, manda WhatsApp o un mail.</div>
-          <div class="ad-item">Un empleado anota en papel o Excel.</div>
-          <div class="ad-item">Buscan técnico "de confianza" por teléfono.</div>
-          <div class="ad-item">Coordinan la visita de forma oral.</div>
-          <div class="ad-item">El técnico anota el presupuesto en un papel y lo entrega en mano.</div>
-          <div class="ad-item">El cliente firma un papel que se archiva en una carpeta.</div>
-          <div class="ad-item" style="margin-top: 16px; padding: 12px; background: var(--warm-soft); border-left: 4px solid var(--warm);">
-            <strong style="color: var(--ink);">Resultado:</strong>&nbsp;sin seguimiento, sin historial, sin métricas. Solo quien atendía conocía el estado.
-          </div>
+          <div class="ad-item">El reclamo llega por WhatsApp, llamada o mail.</div>
+          <div class="ad-item">Se anota en papel o Excel según quién atiende.</div>
+          <div class="ad-item">El técnico se busca de memoria, por teléfono.</div>
+          <div class="ad-item">Presupuesto y conformidad quedan en papel.</div>
+          <div class="ad-item">El estado del caso lo sabe solo quien atendió.</div>
+        </div>
+        <div class="ad-conclusion warm">
+          Sin seguimiento · sin historial · sin métricas.
         </div>
       </div>
 
@@ -2023,15 +2069,14 @@
         <span class="ad-label" style="color: #60A5FA;">Con MANTIS</span>
         <h3>Un solo lugar<br>de la verdad.</h3>
         <div class="ad-items">
-          <div class="ad-item">El cliente registra desde su portal en cualquier momento.</div>
-          <div class="ad-item">El admin recibe la notificación in-app.</div>
-          <div class="ad-item">Se sugiere técnico por especialidad y ranking.</div>
-          <div class="ad-item">La visita se coordina dentro del sistema.</div>
-          <div class="ad-item">Presupuesto digital con doble aprobación.</div>
-          <div class="ad-item">Conformidad firmada subida como foto auditable.</div>
-          <div class="ad-item" style="margin-top: 16px; padding: 12px; background: rgba(96,165,250,0.15); border-left: 4px solid #60A5FA; color: white;">
-            <strong>Resultado:</strong>&nbsp;seguimiento total, historial vivo, 12 indicadores automáticos.
-          </div>
+          <div class="ad-item">El cliente registra desde su portal, cuando quiera.</div>
+          <div class="ad-item">Cada incidente vive en el sistema con historial completo.</div>
+          <div class="ad-item">El admin asigna técnico por especialidad y ranking.</div>
+          <div class="ad-item">Presupuesto digital con doble aprobación (admin + cliente).</div>
+          <div class="ad-item">Conformidad firmada auditable · cobro y pago trazables.</div>
+        </div>
+        <div class="ad-conclusion blue">
+          Seguimiento total · historial vivo · indicadores automáticos.
         </div>
       </div>
     </div>
@@ -2051,41 +2096,41 @@
       <span class="line"></span>
     </div>
 
-    <div style="padding-top: 100px; margin-bottom: 32px;">
-      <div class="eyebrow">Síntesis de entrevistas</div>
-      <h2 class="display-lg">Los 6 problemas<br>estructurales<span class="mark-warm dot-end"></span></h2>
+    <div style="padding-top: 80px; margin-bottom: 28px;">
+      <div class="eyebrow">Síntesis de las entrevistas</div>
+      <h2 class="display-xl">Los 6 problemas<br>estructurales<span class="mark-warm dot-end"></span></h2>
     </div>
 
-    <div class="stagger" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; flex: 1;">
-      <div class="ed-card with-shadow" style="border-left: 6px solid var(--warm);">
+    <div class="stagger" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; flex: 1;">
+      <div class="ed-card card-lg with-shadow" style="border-left: 6px solid var(--warm);">
         <div class="ed-card-num">01</div>
         <h3>Estado fuera de control</h3>
-        <p>Dependía de quien gestionó inicialmente. ISBA tenía poco control real.</p>
+        <p>El seguimiento dependía de quien atendió el caso. ISBA no tenía visibilidad real.</p>
       </div>
-      <div class="ed-card with-shadow" style="border-left: 6px solid var(--warm);">
+      <div class="ed-card card-lg with-shadow" style="border-left: 6px solid var(--warm);">
         <div class="ed-card-num">02</div>
         <h3>Sin registro formal</h3>
-        <p>Dificultaba el seguimiento y saber en qué etapa estaba cada incidente.</p>
+        <p>No se sabía en qué etapa estaba cada incidente ni quién debía actuar.</p>
       </div>
-      <div class="ed-card with-shadow" style="border-left: 6px solid var(--warm);">
+      <div class="ed-card card-lg with-shadow" style="border-left: 6px solid var(--warm);">
         <div class="ed-card-num">03</div>
-        <h3>Comunicación sin registro</h3>
-        <p>Pérdida del historial técnico-cliente. Acuerdos imposibles de verificar.</p>
+        <h3>Comunicación sin rastro</h3>
+        <p>Historial técnico-cliente perdido. Acuerdos imposibles de verificar después.</p>
       </div>
-      <div class="ed-card with-shadow" style="border-left: 6px solid var(--warm);">
+      <div class="ed-card card-lg with-shadow" style="border-left: 6px solid var(--warm);">
         <div class="ed-card-num">04</div>
         <h3>Sin base de técnicos</h3>
-        <p>Búsqueda improvisada. Asignación sin verificar la especialidad adecuada.</p>
+        <p>Búsqueda improvisada por teléfono. Sin criterio de especialidad ni desempeño.</p>
       </div>
-      <div class="ed-card with-shadow" style="border-left: 6px solid var(--warm);">
+      <div class="ed-card card-lg with-shadow" style="border-left: 6px solid var(--warm);">
         <div class="ed-card-num">05</div>
         <h3>Información dispersa</h3>
-        <p>Entre llamadas, WhatsApp, mails y conversaciones personales.</p>
+        <p>La info del caso se repartía entre llamadas, WhatsApp, mails y papel.</p>
       </div>
-      <div class="ed-card with-shadow" style="border-left: 6px solid var(--warm);">
+      <div class="ed-card card-lg with-shadow" style="border-left: 6px solid var(--warm);">
         <div class="ed-card-num">06</div>
         <h3>Cero estadísticas</h3>
-        <p>Decisiones basadas en percepciones, no en datos.</p>
+        <p>Decisiones basadas en la memoria del admin, no en datos.</p>
       </div>
     </div>
 
@@ -2174,52 +2219,52 @@
       <span class="line"></span>
     </div>
 
-    <div style="padding-top: 80px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: end;">
+    <div style="padding-top: 70px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: end;">
       <div>
         <div class="eyebrow">A qué nos comprometimos · parte 1 de 2</div>
-        <h2 class="display-lg">Mandato · justificación y objetivo<span class="mark-blue dot-end"></span></h2>
+        <h2 class="display-xl">Problema y objetivo<span class="mark-blue dot-end"></span></h2>
       </div>
-      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
-        Tesis · pp. 47-49<br>secciones 4.6 y 4.7
+      <p style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; color: var(--ink-faded); text-transform: uppercase; text-align: right; font-weight: 600;">
+        Tesis · pp. 47-49<br>secciones 4.7.1 y 4.7.2
       </p>
     </div>
 
     <!-- Planteamiento del problema (de sec. 4.7.1) -->
-    <div style="background: #FFF7ED; border: 1px solid var(--warm); border-left: 6px solid var(--warm); padding: 16px 22px; margin-bottom: 14px;">
-      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; color: #9A3412; text-transform: uppercase; margin-bottom: 8px; font-weight: 700;">Planteamiento del problema · sec. 4.7.1</p>
-      <p style="font-size: 13.5px; line-height: 1.5; color: var(--ink); margin: 0 0 10px;">
-        ISBA Propiedades enfrenta dificultades en la <strong>organización, registro y seguimiento de incidentes</strong> de los inmuebles que administra, y en la <strong>comunicación entre las áreas internas y los técnicos externos</strong>.
+    <div style="background: #FFF7ED; border: 1.5px solid var(--warm); border-left: 6px solid var(--warm); padding: 22px 28px; margin-bottom: 18px;">
+      <p style="font-family: var(--mono); font-size: 12px; letter-spacing: 0.3em; color: #9A3412; text-transform: uppercase; margin-bottom: 12px; font-weight: 700;">Planteamiento del problema</p>
+      <p style="font-size: 20px; line-height: 1.4; color: var(--ink); margin: 0 0 16px; font-weight: 500;">
+        En su <strong>área de mantenimiento</strong>, ISBA tenía dificultades en la <strong style="color: #9A3412;">organización, registro y seguimiento</strong> de los incidentes de las propiedades que administra, y en la <strong style="color: #9A3412;">comunicación entre las áreas internas y los técnicos externos</strong>.
       </p>
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px;">
-        <div style="background: white; border: 1px solid var(--warm); padding: 8px 10px;">
-          <p style="font-family: var(--mono); font-size: 9px; color: var(--warm); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 3px;">FALENCIA 1</p>
-          <p style="font-size: 11px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Falta de registro estructurado</strong> de incidentes</p>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px;">
+        <div style="background: white; border: 1.5px solid var(--warm); padding: 14px 16px;">
+          <p style="font-family: var(--mono); font-size: 11px; color: var(--warm); letter-spacing: 0.18em; font-weight: 700; margin-bottom: 6px;">FALENCIA 1</p>
+          <p style="font-size: 15px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Falta de registro estructurado</strong> de incidentes</p>
         </div>
-        <div style="background: white; border: 1px solid var(--warm); padding: 8px 10px;">
-          <p style="font-family: var(--mono); font-size: 9px; color: var(--warm); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 3px;">FALENCIA 2</p>
-          <p style="font-size: 11px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Documentación manual</strong> con pérdida de información</p>
+        <div style="background: white; border: 1.5px solid var(--warm); padding: 14px 16px;">
+          <p style="font-family: var(--mono); font-size: 11px; color: var(--warm); letter-spacing: 0.18em; font-weight: 700; margin-bottom: 6px;">FALENCIA 2</p>
+          <p style="font-size: 15px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Documentación manual</strong> con pérdida de información</p>
         </div>
-        <div style="background: white; border: 1px solid var(--warm); padding: 8px 10px;">
-          <p style="font-family: var(--mono); font-size: 9px; color: var(--warm); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 3px;">FALENCIA 3</p>
-          <p style="font-size: 11px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Asignación de técnicos improvisada</strong> · sin medir desempeño</p>
+        <div style="background: white; border: 1.5px solid var(--warm); padding: 14px 16px;">
+          <p style="font-family: var(--mono); font-size: 11px; color: var(--warm); letter-spacing: 0.18em; font-weight: 700; margin-bottom: 6px;">FALENCIA 3</p>
+          <p style="font-size: 15px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Asignación improvisada</strong> de técnicos, sin medir desempeño</p>
         </div>
-        <div style="background: white; border: 1px solid var(--warm); padding: 8px 10px;">
-          <p style="font-family: var(--mono); font-size: 9px; color: var(--warm); letter-spacing: 0.15em; font-weight: 700; margin-bottom: 3px;">FALENCIA 4</p>
-          <p style="font-size: 11px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Ausencia de reportes y métricas</strong> para decidir</p>
+        <div style="background: white; border: 1.5px solid var(--warm); padding: 14px 16px;">
+          <p style="font-family: var(--mono); font-size: 11px; color: var(--warm); letter-spacing: 0.18em; font-weight: 700; margin-bottom: 6px;">FALENCIA 4</p>
+          <p style="font-size: 15px; color: var(--ink); line-height: 1.3; margin: 0;"><strong>Ausencia de reportes y métricas</strong> para decidir</p>
         </div>
       </div>
     </div>
 
     <!-- Objetivo del Sistema de Información (sec. 4.7.2) -->
-    <div style="background: var(--ink); color: var(--paper); padding: 22px 28px; margin-bottom: 14px; border-left: 6px solid var(--mantis); flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;">
-      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; color: #60A5FA; text-transform: uppercase; margin-bottom: 10px;">Objetivo del sistema · sec. 4.7.2</p>
-      <p style="font-family: var(--display); font-size: clamp(18px, 1.5vw, 22px); line-height: 1.35; color: white; font-weight: 500; margin: 0;">
-        Desarrollar un sistema de gestión de incidentes que permita <em style="color: #60A5FA; font-style: normal; font-weight: 700;">registrar y hacer seguimiento</em> de los reclamos solicitados en las propiedades gestionadas por ISBA, mejorando la <em style="color: #60A5FA; font-style: normal; font-weight: 700;">eficiencia en el seguimiento</em>, la <em style="color: #60A5FA; font-style: normal; font-weight: 700;">calidad del servicio</em> y permitiendo gestionar los técnicos para una <em style="color: #60A5FA; font-style: normal; font-weight: 700;">toma de decisiones basada en información confiable</em>.
+    <div style="background: var(--ink); color: var(--paper); padding: 32px 40px; margin-bottom: 14px; border-left: 6px solid var(--mantis); flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;">
+      <p style="font-family: var(--mono); font-size: 12px; letter-spacing: 0.3em; color: #60A5FA; text-transform: uppercase; margin-bottom: 16px; font-weight: 700;">Objetivo del sistema</p>
+      <p style="font-family: var(--display); font-size: clamp(24px, 2vw, 30px); line-height: 1.3; color: white; font-weight: 500; margin: 0; letter-spacing: -0.01em;">
+        Desarrollar un sistema que permita <em style="color: #60A5FA; font-style: normal; font-weight: 700;">registrar y hacer seguimiento</em> de los reclamos de las propiedades gestionadas por ISBA — mejorando la <em style="color: #60A5FA; font-style: normal; font-weight: 700;">eficiencia del seguimiento</em>, la <em style="color: #60A5FA; font-style: normal; font-weight: 700;">calidad del servicio</em> y habilitando una <em style="color: #60A5FA; font-style: normal; font-weight: 700;">toma de decisiones basada en información confiable</em>.
       </p>
     </div>
 
-    <p style="margin-top: auto; font-family: var(--mono); font-size: 10px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase;">
-      Fuente · Tesis · sec. 4.7.1 Planteamiento del problema + sec. 4.7.2 Objetivo · pp. 47-49
+    <p style="margin-top: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-faded); letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600;">
+      Fuente · Tesis · secciones 4.7.1 Planteamiento + 4.7.2 Objetivo · pp. 47-49
     </p>
 
     <div class="slide-footer"><span>05 · MANDATO 1/2</span><span>PROBLEMA + OBJETIVO</span></div>
@@ -2237,104 +2282,102 @@
       <span class="line"></span>
     </div>
 
-    <div style="padding-top: 80px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: end;">
+    <div style="padding-top: 70px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: end;">
       <div>
         <div class="eyebrow">A qué nos comprometimos · parte 2 de 2</div>
-        <h2 class="display-lg">Mandato · alcance y delimitación<span class="mark-blue dot-end"></span></h2>
+        <h2 class="display-xl">Alcance y delimitación<span class="mark-blue dot-end"></span></h2>
       </div>
-      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right;">
+      <p style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; color: var(--ink-faded); text-transform: uppercase; text-align: right; font-weight: 600;">
         Tesis · pp. 48-50<br>secciones 4.7.3 a 4.7.6
       </p>
     </div>
 
     <!-- 5 módulos del alcance con sub-items reales del PDF -->
-    <div style="margin-bottom: 12px;">
-      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; color: var(--success); text-transform: uppercase; margin-bottom: 8px; font-weight: 700;">✓ Alcance · 5 módulos del sistema · sec. 4.7.3</p>
-      <div class="stagger" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
-        <div style="border: 1px solid var(--success); background: #ECFDF5; padding: 10px 12px;">
-          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Gestión de Usuarios</p>
-          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">ABM de técnicos y administradores.</p>
+    <div style="margin-bottom: 16px;">
+      <p style="font-family: var(--mono); font-size: 12px; letter-spacing: 0.3em; color: var(--success); text-transform: uppercase; margin-bottom: 10px; font-weight: 700;">✓ Alcance · 5 módulos del sistema</p>
+      <div class="stagger" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+        <div style="border: 1.5px solid var(--success); background: #ECFDF5; padding: 14px 16px;">
+          <p style="font-family: var(--display); font-size: 17px; font-weight: 700; color: #14532D; line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.01em;">Gestión de Usuarios</p>
+          <p style="font-size: 13px; color: var(--ink-soft); line-height: 1.4; margin: 0;">ABM de técnicos y administradores.</p>
         </div>
-        <div style="border: 1px solid var(--success); background: #ECFDF5; padding: 10px 12px;">
-          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Gestión de Propiedades</p>
-          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">ABM de inmuebles + asociación con incidentes y técnicos.</p>
+        <div style="border: 1.5px solid var(--success); background: #ECFDF5; padding: 14px 16px;">
+          <p style="font-family: var(--display); font-size: 17px; font-weight: 700; color: #14532D; line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.01em;">Gestión de Propiedades</p>
+          <p style="font-size: 13px; color: var(--ink-soft); line-height: 1.4; margin: 0;">ABM de inmuebles + vinculación con incidentes y técnicos.</p>
         </div>
-        <div style="border: 1.5px solid var(--success); background: #ECFDF5; padding: 10px 12px; box-shadow: 3px 3px 0 var(--success);">
-          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Gestión de Incidentes <span style="font-family: var(--mono); font-size: 8px; background: #14532D; color: white; padding: 1px 4px; vertical-align: middle;">CORE</span></p>
-          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Registro inicial · historial automático · presupuesto · aprobación · estados · cierre.</p>
+        <div style="border: 2px solid var(--success); background: #ECFDF5; padding: 14px 16px; box-shadow: 4px 4px 0 var(--success);">
+          <p style="font-family: var(--display); font-size: 17px; font-weight: 700; color: #14532D; line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.01em;">Gestión de Incidentes <span style="font-family: var(--mono); font-size: 10px; background: #14532D; color: white; padding: 2px 6px; vertical-align: 2px;">CORE</span></p>
+          <p style="font-size: 13px; color: var(--ink-soft); line-height: 1.4; margin: 0;">Registro · historial · presupuesto · doble aprobación · estados · cierre.</p>
         </div>
-        <div style="border: 1px solid var(--success); background: #ECFDF5; padding: 10px 12px;">
-          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Gestión de Técnicos</p>
-          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Base con contacto + especialidad. Historial y calificaciones.</p>
+        <div style="border: 1.5px solid var(--success); background: #ECFDF5; padding: 14px 16px;">
+          <p style="font-family: var(--display); font-size: 17px; font-weight: 700; color: #14532D; line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.01em;">Gestión de Técnicos</p>
+          <p style="font-size: 13px; color: var(--ink-soft); line-height: 1.4; margin: 0;">Base con especialidades, historial y calificaciones de desempeño.</p>
         </div>
-        <div style="border: 1px solid var(--success); background: #ECFDF5; padding: 10px 12px;">
-          <p style="font-family: var(--display); font-size: 13px; font-weight: 700; color: #14532D; line-height: 1.15; margin: 0 0 6px;">Reportes</p>
-          <p style="font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin: 0;">Operativos + estratégicos. Filtros por propiedad, técnico, tipo y período.</p>
+        <div style="border: 1.5px solid var(--success); background: #ECFDF5; padding: 14px 16px;">
+          <p style="font-family: var(--display); font-size: 17px; font-weight: 700; color: #14532D; line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.01em;">Reportes</p>
+          <p style="font-size: 13px; color: var(--ink-soft); line-height: 1.4; margin: 0;">Operativos y estratégicos con filtros por propiedad, técnico, tipo y período.</p>
         </div>
       </div>
     </div>
 
     <!-- 3 columnas: Fuera de alcance · Límites · Actores -->
-    <div class="stagger" style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 12px; flex: 1; min-height: 0;">
+    <div class="stagger" style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 14px; flex: 1; min-height: 0;">
 
       <!-- FUERA DE ALCANCE -->
-      <div style="border: 1px solid var(--warm); border-left: 4px solid var(--warm); padding: 12px 16px; background: white; display: flex; flex-direction: column;">
-        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--warm); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--warm);">✕ Fuera de alcance · sec. 4.7.4</p>
-        <ul style="list-style: none; padding: 0; margin: 0; font-size: 11.5px; line-height: 1.4; color: var(--ink-soft); flex: 1;">
-          <li style="padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.08); display: flex; gap: 8px;"><span style="color: var(--warm); font-weight: 700;">·</span>Denuncias, infracciones o multas (exceden el ámbito de mantenimiento)</li>
-          <li style="padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.08); display: flex; gap: 8px;"><span style="color: var(--warm); font-weight: 700;">·</span>Módulos de gestión financiera o contable (emisión/cobranza de facturas)</li>
-          <li style="padding: 5px 0; border-bottom: 1px dashed rgba(0,0,0,0.08); display: flex; gap: 8px;"><span style="color: var(--warm); font-weight: 700;">·</span>Integración con CRM o sistemas externos de facturación</li>
-          <li style="padding: 5px 0; display: flex; gap: 8px;"><span style="color: var(--warm); font-weight: 700;">·</span>Consideraciones legales sobre datos personales o términos de uso</li>
+      <div style="border: 1.5px solid var(--warm); border-left: 6px solid var(--warm); padding: 16px 18px; background: white; display: flex; flex-direction: column;">
+        <p style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; color: var(--warm); text-transform: uppercase; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1.5px solid var(--warm);">✕ Fuera de alcance</p>
+        <ul style="list-style: none; padding: 0; margin: 0; font-size: 14px; line-height: 1.4; color: var(--ink); flex: 1;">
+          <li style="padding: 7px 0; border-bottom: 1px dashed rgba(0,0,0,0.1); display: flex; gap: 10px;"><span style="color: var(--warm); font-weight: 700;">·</span>Denuncias, infracciones o multas</li>
+          <li style="padding: 7px 0; border-bottom: 1px dashed rgba(0,0,0,0.1); display: flex; gap: 10px;"><span style="color: var(--warm); font-weight: 700;">·</span>Gestión financiera/contable y facturación</li>
+          <li style="padding: 7px 0; border-bottom: 1px dashed rgba(0,0,0,0.1); display: flex; gap: 10px;"><span style="color: var(--warm); font-weight: 700;">·</span>Integración con CRM o sistemas externos</li>
+          <li style="padding: 7px 0; display: flex; gap: 10px;"><span style="color: var(--warm); font-weight: 700;">·</span>Aspectos legales de datos personales</li>
         </ul>
       </div>
 
       <!-- LÍMITES -->
-      <div style="border: 1px solid var(--mantis); border-left: 4px solid var(--mantis); padding: 12px 16px; background: white; display: flex; flex-direction: column;">
-        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--mantis); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--mantis);">Límites del proyecto · sec. 4.7.5</p>
-        <div style="display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 11.5px; line-height: 1.35; color: var(--ink); margin-bottom: 8px;">
-          <span style="font-family: var(--mono); font-weight: 700; color: var(--mantis); font-size: 9px; letter-spacing: 0.2em; align-self: start; padding-top: 2px;">DESDE</span>
+      <div style="border: 1.5px solid var(--mantis); border-left: 6px solid var(--mantis); padding: 16px 18px; background: white; display: flex; flex-direction: column;">
+        <p style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; color: var(--mantis); text-transform: uppercase; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1.5px solid var(--mantis);">Límites del proyecto</p>
+        <div style="display: grid; grid-template-columns: 76px 1fr; gap: 10px 14px; font-size: 14px; line-height: 1.4; color: var(--ink); margin-bottom: 12px;">
+          <span style="font-family: var(--mono); font-weight: 700; color: white; background: var(--mantis); font-size: 10.5px; letter-spacing: 0.2em; padding: 4px 6px; text-align: center; align-self: start;">DESDE</span>
           <span>Registro inicial del incidente por un cliente o por el área administrativa.</span>
-          <span style="font-family: var(--mono); font-weight: 700; color: var(--mantis); font-size: 9px; letter-spacing: 0.2em; align-self: start; padding-top: 2px;">HASTA</span>
-          <span>Cierre definitivo con documentación del trabajo, aprobación del cliente y generación del reporte (o cierre por rechazo).</span>
+          <span style="font-family: var(--mono); font-weight: 700; color: white; background: var(--mantis); font-size: 10.5px; letter-spacing: 0.2em; padding: 4px 6px; text-align: center; align-self: start;">HASTA</span>
+          <span>Cierre definitivo con conformidad, aprobación del cliente y reporte final.</span>
         </div>
-        <ul style="list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 1.4; color: var(--ink-soft); border-top: 1px dashed var(--ink-faded); padding-top: 8px;">
-          <li style="padding: 3px 0;">+ Incluye asignación, ejecución y control de técnicos.</li>
-          <li style="padding: 3px 0;">– Excluye cobranzas y sanciones.</li>
-          <li style="padding: 3px 0;">– Sólo operaciones internas de ISBA, sin interacción con terceros.</li>
-        </ul>
+        <div style="border-top: 1px dashed var(--ink-faded); padding-top: 10px; font-size: 12.5px; line-height: 1.4; color: var(--ink-soft);">
+          <span style="color: var(--success); font-weight: 700;">+</span> Sólo operaciones internas del área de mantenimiento de la inmobiliaria.
+        </div>
       </div>
 
       <!-- ACTORES -->
-      <div style="border: 1px solid var(--ink); border-left: 4px solid var(--ink); padding: 12px 16px; background: white; display: flex; flex-direction: column;">
-        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.3em; color: var(--ink); text-transform: uppercase; font-weight: 700; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--ink);">Actores involucrados · sec. 4.7.6</p>
-        <div style="display: flex; flex-direction: column; gap: 9px; flex: 1;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: white; font-family: var(--display); font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">A</div>
+      <div style="border: 1.5px solid var(--ink); border-left: 6px solid var(--ink); padding: 16px 18px; background: white; display: flex; flex-direction: column;">
+        <p style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; color: var(--ink); text-transform: uppercase; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1.5px solid var(--ink);">Actores involucrados</p>
+        <div style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: white; font-family: var(--display); font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">A</div>
             <div>
-              <p style="font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.15;">Administrador</p>
-              <p style="font-size: 10.5px; color: var(--ink-faded); margin: 0; line-height: 1.3;">Personal de ISBA Propiedades</p>
+              <p style="font-size: 15px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.15;">Administrador</p>
+              <p style="font-size: 12.5px; color: var(--ink-faded); margin: 0; line-height: 1.3;">Personal del área de administración</p>
             </div>
           </div>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--mantis); color: white; font-family: var(--display); font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">C</div>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--mantis); color: white; font-family: var(--display); font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">C</div>
             <div>
-              <p style="font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.15;">Cliente</p>
-              <p style="font-size: 10.5px; color: var(--ink-faded); margin: 0; line-height: 1.3;">Propietarios o inquilinos que reportan incidentes</p>
+              <p style="font-size: 15px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.15;">Cliente</p>
+              <p style="font-size: 12.5px; color: var(--ink-faded); margin: 0; line-height: 1.3;">Quien reporta el incidente sobre un inmueble</p>
             </div>
           </div>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--warm); color: white; font-family: var(--display); font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">T</div>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--warm); color: white; font-family: var(--display); font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">T</div>
             <div>
-              <p style="font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.15;">Técnico</p>
-              <p style="font-size: 10.5px; color: var(--ink-faded); margin: 0; line-height: 1.3;">Internos o externos</p>
+              <p style="font-size: 15px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.15;">Técnico</p>
+              <p style="font-size: 12.5px; color: var(--ink-faded); margin: 0; line-height: 1.3;">Prestador interno o externo</p>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <p style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase;">
-      Fuente · Tesis · sec. 4.7.3 Alcance + 4.7.4 Fuera de alcance + 4.7.5 Límites + 4.7.6 Actores · pp. 48-50
+    <p style="margin-top: 12px; font-family: var(--mono); font-size: 11px; color: var(--ink-faded); letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600;">
+      Fuente · Tesis · secciones 4.7.3 a 4.7.6 · pp. 48-50
     </p>
 
     <div class="slide-footer"><span>05 · MANDATO 2/2</span><span>ALCANCE · FUERA DE ALCANCE · LÍMITES · ACTORES</span></div>
@@ -2480,7 +2523,7 @@
           <line class="uc-actor" x1="0" y1="60" x2="-18" y2="90"/>
           <line class="uc-actor" x1="0" y1="60" x2="18" y2="90"/>
           <text class="uc-actor-label" x="0" y="118">Cliente</text>
-          <text class="uc-actor-role" x="0" y="135">propietario / inquilino</text>
+          <text class="uc-actor-role" x="0" y="135">quien reporta el incidente</text>
         </g>
 
         <!-- TÉCNICO (derecha arriba) -->
