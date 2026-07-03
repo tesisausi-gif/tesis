@@ -100,7 +100,13 @@ Verificado con `grep` exacto + `eslint` + `knip` (instalado como devDep, correr 
 - **`e2dd6db`** — deps prod sin uso: `@radix-ui/react-avatar`, `resend`, `@supabase/auth-helpers-nextjs`.
 - **NO tocado (falso positivo):** `public/sw.js` (se registra dinámicamente).
 - **Pendiente de confirmación de Fausti (parecen features intencionales no cableadas):** `components/admin/aprobar-presupuestos-content.client.tsx`, `components/tecnico/cambiar-password-primer-acceso.client.tsx`.
-- **Pendiente (grande, requiere cuidado):** knip reporta ~127 exports + 48 tipos + 11 enum members sin usar → revisar por feature, hay falsos positivos posibles. Además 5 estados "fetch cargado-pero-no-leído" en incidente-detail-modal (tecnicos/fiabilidad/compromiso/presInspeccionId/categoriasDisponibles) — sacarlos toca lógica de fetch.
+- **`5d7bf6e`** — 3 funciones de service muertas (0 usos verificado incluyendo llamadas internas, superseded): `enviarPresupuesto` (→ crearPresupuesto ya crea en 'enviado'), `crearConformidad` (→ crearConformidadPorTecnico), `firmarConformidad` (legacy). + import huérfano CreateConformidadDTO. Verificado con `next build` OK.
+
+**Método de verificación reforzado (crítico, pedido de Fausti):** NO guiarse solo por knip (marca "export sin usar" aunque se use internamente — ej. `getPresupuesto` tiene 4 usos internos). Por cada candidato: grep exacto de usos reales (import externo + llamada interna) = 0, chequear intención (si hay duda, NO borrar), y `tsc --noEmit` + `next build` como compuerta final. **Todo lo borrado se probó con build exitoso → no rompió nada.**
+
+- **PENDIENTE DE DECISIÓN de Fausti (verificado 0 usos, pero payment-related y sensible):** 6 funciones CRUD genéricas en `features/pagos/pagos.service.ts` (getPago, crearPago, actualizarPago, eliminarPago, getPagosDelPresupuesto, getPagosDelCliente) — superseded por `registrarPagoTecnico`/`registrarCobroCliente`. `getPagosForAdmin` del mismo archivo SÍ se usa (no tocar). No las borré por prudencia (tema pagos).
+- **KEPT por duda de intención (NO borrar):** `calificarIncidenteAdmin` (0 usos pero puede ser feature admin intencional), `getIncidenteById`, y los 2 archivos (`aprobar-presupuestos-content`, `cambiar-password-primer-acceso` técnico).
+- **Pendiente (grande, bajo valor):** resto de exports/tipos/enum members que marca knip → muchos son falsos positivos (uso interno). Revisar por feature solo si sobra tiempo. + 5 estados "fetch cargado-pero-no-leído" en incidente-detail-modal (sacarlos toca lógica de fetch).
 
 ## Candidatos aún sin abordar (menor severidad, lógica de negocio)
 - ~~`actualizarIncidente` permite regresiones de estado~~ → resuelto al borrar la UI muerta (commit `e2722ad`); la función server aún aceptaría `estado_actual` pero ningún caller vivo lo usa.
