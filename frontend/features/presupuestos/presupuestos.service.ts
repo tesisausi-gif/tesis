@@ -277,46 +277,6 @@ export async function actualizarPresupuesto(
   }
 }
 
-/**
- * Enviar presupuesto (marcar como enviado)
- */
-export async function enviarPresupuesto(idPresupuesto: number): Promise<ActionResult> {
-  try {
-    const supabase = await createClient()
-
-    // Obtener id_incidente para la notificación
-    const { data: pres } = await supabase
-      .from('presupuestos')
-      .select('id_incidente')
-      .eq('id_presupuesto', idPresupuesto)
-      .single()
-
-    const { error } = await supabase
-      .from('presupuestos')
-      .update({ estado_presupuesto: EstadoPresupuesto.ENVIADO })
-      .eq('id_presupuesto', idPresupuesto)
-
-    if (error) return { success: false, error: translateDbError(error) }
-
-    // Notificar al admin que hay un presupuesto para revisar
-    if (pres?.id_incidente) {
-      try {
-        const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
-        await crearNotificacionAdmin({
-          tipo: 'presupuesto_enviado_admin',
-          titulo: 'Presupuesto para revisar',
-          mensaje: `El técnico envió un presupuesto para el incidente #${pres.id_incidente}. Revisalo y aprobalo para continuar.`,
-          id_incidente: pres.id_incidente,
-          id_presupuesto: idPresupuesto,
-        })
-      } catch { /* no bloquear la operación principal */ }
-    }
-
-    return { success: true, data: undefined }
-  } catch (error) {
-    return { success: false, error: 'Error inesperado al enviar presupuesto' }
-  }
-}
 
 /**
  * Aprobar presupuesto (admin/gestor) — guarda comisión y notifica al técnico

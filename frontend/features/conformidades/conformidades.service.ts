@@ -14,7 +14,7 @@ import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
 import type { ActionResult } from '@/shared/types'
-import type { Conformidad, CreateConformidadDTO } from './conformidades.types'
+import type { Conformidad } from './conformidades.types'
 
 /**
  * Obtener la conformidad de un incidente (si existe)
@@ -126,68 +126,7 @@ export async function getConformidadesPorIncidentes(idIncidentes: number[]) {
   return data || []
 }
 
-/**
- * Crear una conformidad (admin)
- */
-export async function crearConformidad(dto: CreateConformidadDTO): Promise<ActionResult> {
-  try {
-    const supabase = await createAdminClient()
 
-    const { data: existing } = await supabase
-      .from('conformidades')
-      .select('id_conformidad')
-      .eq('id_incidente', dto.id_incidente)
-      .maybeSingle()
-
-    if (existing) {
-      return { success: false, error: 'Ya existe una conformidad para este incidente' }
-    }
-
-    const { data: conformidad, error } = await supabase
-      .from('conformidades')
-      .insert({
-        id_incidente: dto.id_incidente,
-        id_cliente: dto.id_cliente,
-        tipo_conformidad: dto.tipo_conformidad ?? 'intermedia',
-        esta_firmada: 0,
-      })
-      .select('id_conformidad')
-      .single()
-
-    if (error) return { success: false, error: translateDbError(error) }
-
-    // Notificar al cliente que tiene una conformidad para firmar (fire-and-forget)
-    const { notificarConformidadParaFirmar } = await import('@/features/notificaciones/notificaciones.service')
-    notificarConformidadParaFirmar(conformidad.id_conformidad, dto.id_cliente, dto.id_incidente).catch(console.error)
-
-    return { success: true, data: undefined }
-  } catch {
-    return { success: false, error: 'Error inesperado al crear conformidad' }
-  }
-}
-
-/**
- * Firmar una conformidad (cliente)
- */
-export async function firmarConformidad(idConformidad: number, observaciones?: string | null): Promise<ActionResult> {
-  try {
-    const supabase = await createClient()
-
-    const { error } = await supabase
-      .from('conformidades')
-      .update({
-        esta_firmada: 1,
-        fecha_conformidad: new Date().toISOString(),
-        observaciones: observaciones ?? null,
-      })
-      .eq('id_conformidad', idConformidad)
-
-    if (error) return { success: false, error: translateDbError(error) }
-    return { success: true, data: undefined }
-  } catch {
-    return { success: false, error: 'Error inesperado al firmar conformidad' }
-  }
-}
 
 /**
  * Técnico sube foto de la conformidad física firmada por el cliente.
