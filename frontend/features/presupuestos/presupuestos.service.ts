@@ -161,6 +161,9 @@ export async function getPresupuestosDelCliente(idCliente: number): Promise<Pres
       )
     `)
     .eq('incidentes.id_cliente_reporta', idCliente)
+    // El cliente solo ve presupuestos ya revisados por el admin (con comisión incluida).
+    // Los estados 'borrador'/'enviado' son internos técnico↔admin y no deben mostrarse.
+    .in('estado_presupuesto', ['aprobado_admin', 'aprobado', 'rechazado'])
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
@@ -214,9 +217,21 @@ export async function crearPresupuesto(data: {
 
     if (error) return { success: false, error: translateDbError(error) }
 
-    // Notificar al cliente (fire-and-forget)
-    const { notificarPresupuestoCreado } = await import('@/features/notificaciones/notificaciones.service')
-    notificarPresupuestoCreado(presupuesto.id_presupuesto).catch(console.error)
+    // Notificar al ADMIN para que revise y cargue el cargo administrativo.
+    // Importante: NO se notifica al cliente todavía. El cliente recién ve el
+    // presupuesto cuando el admin lo aprueba (aprobarPresupuesto), momento en el
+    // que el precio ya incluye la comisión de la inmobiliaria. Así el cliente
+    // nunca ve el precio "crudo" del técnico ni puede deducir el cargo de ISBA.
+    try {
+      const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
+      await crearNotificacionAdmin({
+        tipo: 'presupuesto_enviado_admin',
+        titulo: 'Presupuesto para revisar',
+        mensaje: `El técnico cargó un presupuesto para el incidente #${data.id_incidente}. Revisalo, agregá el cargo administrativo y aprobalo para enviarlo al cliente.`,
+        id_incidente: data.id_incidente,
+        id_presupuesto: presupuesto.id_presupuesto,
+      })
+    } catch { /* no bloquear la operación principal */ }
 
     return { success: true, data: presupuesto as Presupuesto }
   } catch (error) {

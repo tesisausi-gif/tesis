@@ -79,6 +79,9 @@ export default function PresupuestosClientePage() {
                     incidentes!inner (id_incidente, descripcion_problema, categoria, id_cliente_reporta)
                 `)
                 .eq('incidentes.id_cliente_reporta', usuario.id_cliente)
+                // Solo presupuestos ya revisados por el admin (precio con comisión).
+                // 'enviado'/'borrador' son internos técnico↔admin: el cliente no los ve.
+                .in('estado_presupuesto', ['aprobado_admin', 'aprobado', 'rechazado'])
                 .order('fecha_creacion', { ascending: false })
 
             if (error) { toast.error('Error al cargar presupuestos'); return }

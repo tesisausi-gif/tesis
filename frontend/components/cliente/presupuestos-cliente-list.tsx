@@ -119,7 +119,12 @@ export function PresupuestosClienteList({
     (p) => p.estado_presupuesto === EstadoPresupuesto.APROBADO_ADMIN,
   )
   const presupuestosHistorico = presupuestos.filter(
-    (p) => p.estado_presupuesto !== EstadoPresupuesto.APROBADO_ADMIN,
+    (p) =>
+      p.estado_presupuesto !== EstadoPresupuesto.APROBADO_ADMIN &&
+      // 'enviado'/'borrador' son internos técnico↔admin (precio sin comisión):
+      // el cliente no debe verlos hasta que el admin apruebe y cargue el cargo.
+      p.estado_presupuesto !== EstadoPresupuesto.ENVIADO &&
+      p.estado_presupuesto !== EstadoPresupuesto.BORRADOR,
   )
 
   // Desglose con comisión admin incluida en mano de obra
