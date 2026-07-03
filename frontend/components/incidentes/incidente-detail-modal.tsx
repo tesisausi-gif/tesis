@@ -17,8 +17,6 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import {
   AlertCircle,
@@ -32,9 +30,7 @@ import {
   ClipboardList,
   DollarSign,
   Building2,
-  UserPlus,
   Settings,
-  Save,
   Loader2,
   Send,
   XCircle,
@@ -55,7 +51,7 @@ import {
   Ban,
   HardHat,
 } from 'lucide-react'
-import { EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
+import { EstadoPresupuesto } from '@/shared/types/enums'
 import { SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
 import { InspeccionesList } from './inspecciones-list'
 import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
@@ -63,15 +59,14 @@ import {
   getIncidenteCompleto,
   getAsignacionesDelIncidente,
   getTimelineData,
-  actualizarIncidente,
 } from '@/features/incidentes/incidentes.service'
-import { crearAsignacion, completarAsignacion } from '@/features/asignaciones/asignaciones.service'
+import { completarAsignacion } from '@/features/asignaciones/asignaciones.service'
 import { getTecnicosParaAsignacion, getEspecialidadesActivas, getFiabilidadTecnicos } from '@/features/usuarios/usuarios.service'
 import type { FiabilidadTecnico } from '@/features/usuarios/usuarios.service'
 import { getPresupuestosDelIncidente, crearPresupuesto, aprobarPresupuesto, rechazarPresupuesto, responderOportunidadTecnico } from '@/features/presupuestos/presupuestos.service'
 import { getConformidadDelIncidente, crearConformidadPorTecnico, aprobarConformidad, rechazarConformidad } from '@/features/conformidades/conformidades.service'
 import { crearAvance } from '@/features/avances/avances.service'
-import { getFranjasDisponibilidad, guardarFranjasDisponibilidad, getCompromisoDeAsignacion, guardarCompromisoTecnico } from '@/features/disponibilidad/disponibilidad.service'
+import { getFranjasDisponibilidad, guardarFranjasDisponibilidad, getCompromisoDeAsignacion } from '@/features/disponibilidad/disponibilidad.service'
 import { CalendarioDisponibilidad } from '@/components/ui/calendario-disponibilidad'
 import type { FranjaInput } from '@/components/ui/calendario-disponibilidad'
 import type { CompromisoTecnico } from '@/features/disponibilidad/disponibilidad.types'
@@ -179,11 +174,6 @@ interface Props {
 
 // Estados que el admin puede asignar manualmente.
 // 'resuelto' NO está incluido — solo se alcanza via aprobación de conformidad.
-const ESTADOS_INCIDENTE = [
-  'pendiente',
-  'en_proceso',
-]
-
 const ESTADOS_LABELS: Record<string, string> = {
   'pendiente': 'Pendiente',
   'en_proceso': 'En Proceso',
@@ -511,7 +501,6 @@ function DisponibilidadReparacionPanel({
 
 export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate, onDarBaja, onCancelarIncidente, rol = 'admin', initialTab, hideTabs = false }: Props) {
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('detalles')
   const [incidente, setIncidente] = useState<IncidenteCompleto | null>(null)
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
@@ -530,10 +519,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const [visitaReparacionActiva, setVisitaReparacionActiva] = useState<VisitaResumen | null>(null)
 
   // Form state para gestión
-  const [nuevoEstado, setNuevoEstado] = useState('')
-  const [nuevaCategoria, setNuevaCategoria] = useState('')
-  const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState('')
-  const [observacionesAsignacion, setObservacionesAsignacion] = useState('')
 
   // Form state para presupuesto
   const [presDescripcion, setPresDescripcion] = useState('')
@@ -626,7 +611,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       const incidenteData = await getIncidenteCompleto(incidenteId)
 
       setIncidente(incidenteData as unknown as IncidenteCompleto)
-      setNuevoEstado(incidenteData.estado_actual || '')
       // Cargar asignaciones
       const asignacionesData = await getAsignacionesDelIncidente(incidenteId)
       setAsignaciones(asignacionesData as unknown as Asignacion[])
@@ -1132,72 +1116,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     setTimeline(timelineEvents)
   }
 
-  const guardarCambios = async () => {
-    if (!incidenteId) return
 
-    setSaving(true)
-    try {
-      const updates: Record<string, string | null> = {}
-
-      if (nuevoEstado && nuevoEstado !== incidente?.estado_actual) {
-        updates.estado_actual = nuevoEstado
-      }
-
-      if (nuevaCategoria && nuevaCategoria !== incidente?.categoria) {
-        updates.categoria = nuevaCategoria === '__NONE__' ? null : nuevaCategoria
-      }
-
-      if (Object.keys(updates).length > 0) {
-        const result = await actualizarIncidente(incidenteId, updates)
-
-        if (!result.success) {
-          toast.error('Error al actualizar incidente', { description: result.error })
-          return
-        }
-
-        toast.success('Incidente actualizado')
-        await cargarIncidente()
-        onUpdate?.()
-      }
-    } catch (error) {
-      console.error('Error:', error)
-      toast.error('Error inesperado')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const asignarTecnico = async () => {
-    if (!incidenteId || !tecnicoSeleccionado) {
-      toast.error('Selecciona un técnico')
-      return
-    }
-
-    setSaving(true)
-    try {
-      const result = await crearAsignacion({
-        id_incidente: incidenteId,
-        id_tecnico: parseInt(tecnicoSeleccionado),
-        observaciones: observacionesAsignacion || null,
-      })
-
-      if (!result.success) {
-        toast.error('Error al asignar técnico', { description: result.error })
-        return
-      }
-
-      toast.success('Técnico asignado exitosamente')
-      setTecnicoSeleccionado('')
-      setObservacionesAsignacion('')
-      await cargarIncidente()
-      onUpdate?.()
-    } catch (error) {
-      console.error('Error:', error)
-      toast.error('Error inesperado')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   const handleAvance = async () => {
     if (!incidenteId || !avanceDesc.trim()) return
@@ -2034,159 +1953,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                 )}
               </div>
             </div>)}
-
-            {/* Tab Gestión legacy — eliminado, ahora el stepper admin maneja esto */}
-            {false && rol === 'admin' && (
-              <TabsContent value="gestion" className="space-y-6 mt-4">
-                {/* Cambiar Estado y Categoría */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    Estado
-                  </h4>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Estado</Label>
-                      <Select value={nuevoEstado} onValueChange={setNuevoEstado}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar estado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ESTADOS_INCIDENTE.map((estado) => (
-                            <SelectItem key={estado} value={estado}>
-                              {ESTADOS_LABELS[estado] || estado}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Categoría</Label>
-                      <Select value={nuevaCategoria} onValueChange={setNuevaCategoria}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Asignar categoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__NONE__">Sin categoría</SelectItem>
-                          {categoriasDisponibles.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={guardarCambios}
-                    disabled={saving}
-                    className="w-full"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {saving ? 'Guardando...' : 'Guardar Cambios'}
-                  </Button>
-                </div>
-
-                <Separator />
-
-                {/* Asignar Técnico */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-sm text-gray-500 flex items-center gap-2">
-                    <UserPlus className="h-4 w-4" />
-                    Asignar Técnico
-                  </h4>
-
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label>Técnico</Label>
-                      <Select value={tecnicoSeleccionado} onValueChange={setTecnicoSeleccionado}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar técnico" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tecnicos.map((tecnico) => {
-                            const f = fiabilidad[tecnico.id_tecnico]
-                            const rechazos = f?.rechazadas ?? 0
-                            const cancelaciones = f?.canceladas ?? 0
-                            const total = f?.totalAsignaciones ?? 0
-                            const stats = total > 0
-                              ? [
-                                  rechazos > 0 ? `${rechazos} rechazó` : null,
-                                  cancelaciones > 0 ? `${cancelaciones} canceló` : null,
-                                ].filter(Boolean).join(' · ')
-                              : null
-                            return (
-                              <SelectItem key={tecnico.id_tecnico} value={tecnico.id_tecnico.toString()}>
-                                <div className="flex flex-col">
-                                  <span>{tecnico.nombre} {tecnico.apellido} {tecnico.especialidad && `(${tecnico.especialidad})`}</span>
-                                  {stats ? (
-                                    <span className="text-[10px] text-amber-600">{stats} de {total} asignaciones</span>
-                                  ) : total > 0 ? (
-                                    <span className="text-[10px] text-emerald-600">Sin rechazos ni cancelaciones</span>
-                                  ) : null}
-                                </div>
-                              </SelectItem>
-                            )
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Observaciones (opcional)</Label>
-                      <Textarea
-                        value={observacionesAsignacion}
-                        onChange={(e) => setObservacionesAsignacion(e.target.value)}
-                        placeholder="Instrucciones o notas para el técnico..."
-                        rows={3}
-                      />
-                    </div>
-
-                    <Button
-                      onClick={asignarTecnico}
-                      disabled={saving || !tecnicoSeleccionado}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      {saving ? 'Asignando...' : 'Asignar Técnico'}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Asignaciones actuales */}
-                {asignaciones.length > 0 && (
-                  <>
-                    <Separator />
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm text-gray-500">Asignaciones Actuales</h4>
-                      {asignaciones.map((asig) => (
-                        <div key={asig.id_asignacion} className="bg-gray-50 p-3 rounded-lg">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium">
-                                {asig.tecnicos?.nombre} {asig.tecnicos?.apellido}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Asignado: {asig.fecha_asignacion ? format(new Date(asig.fecha_asignacion), "dd/MM/yy HH:mm", { locale: es }) : ''}
-                              </p>
-                            </div>
-                            <Badge variant="outline">{ESTADO_ASIGNACION_LABELS[asig.estado_asignacion] || asig.estado_asignacion}</Badge>
-                          </div>
-                          {asig.observaciones && (
-                            <p className="text-xs text-gray-600 mt-2 bg-white p-2 rounded">
-                              {asig.observaciones}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </TabsContent>
-            )}
 
             {/* Tab Inspecciones (para técnicos con asignación confirmada) */}
             {hasTecnicoTabs && incidente && activeTab === 'inspecciones' && (
