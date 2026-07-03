@@ -329,18 +329,24 @@ export async function aprobarPresupuesto(
     const supabase = await createClient()
     await requireAdminOrGestorId()
 
-    // Obtener costos base para recalcular total
+    // Obtener costos base y estado actual para recalcular total y validar transición
     const { data: pres, error: errGet } = await supabase
       .from('presupuestos')
-      .select('costo_materiales, costo_mano_obra')
+      .select('costo_materiales, costo_mano_obra, estado_presupuesto')
       .eq('id_presupuesto', idPresupuesto)
       .single()
 
     if (errGet || !pres) return { success: false, error: 'Presupuesto no encontrado' }
 
+    // Solo se aprueba desde 'enviado' o (re-ajuste del cargo) 'aprobado_admin'.
+    // Nunca degradar uno ya aprobado por el cliente, ni tocar rechazados/vencidos.
+    if (!['enviado', 'aprobado_admin'].includes(pres.estado_presupuesto as string)) {
+      return { success: false, error: 'Este presupuesto ya no puede aprobarse (ya fue aprobado por el cliente, rechazado o vencido).' }
+    }
+
     const costoTotal = (pres.costo_materiales || 0) + (pres.costo_mano_obra || 0) + gastosAdministrativos
 
-    const { error } = await supabase
+    const { data: actualizado, error } = await supabase
       .from('presupuestos')
       .update({
         estado_presupuesto: EstadoPresupuesto.APROBADO_ADMIN,
@@ -348,8 +354,13 @@ export async function aprobarPresupuesto(
         costo_total: costoTotal,
       })
       .eq('id_presupuesto', idPresupuesto)
+      .in('estado_presupuesto', ['enviado', 'aprobado_admin'])
+      .select('id_presupuesto')
 
     if (error) return { success: false, error: translateDbError(error) }
+    if (!actualizado || actualizado.length === 0) {
+      return { success: false, error: 'El presupuesto cambió de estado. Recargá e intentá de nuevo.' }
+    }
 
     // Notificar al cliente para que revise y apruebe (email, fire-and-forget)
     const { notificarPresupuestoAprobadoAdmin } = await import('@/features/notificaciones/notificaciones.service')
@@ -398,14 +409,21 @@ export async function rechazarPresupuesto(
     const { createAdminClient } = await import('@/shared/lib/supabase/admin')
     const supabase = createAdminClient()
 
-    // Obtener id_incidente del presupuesto
+    // Obtener id_incidente y estado del presupuesto
     const { data: pres, error: errGet } = await supabase
       .from('presupuestos')
-      .select('id_incidente')
+      .select('id_incidente, estado_presupuesto')
       .eq('id_presupuesto', idPresupuesto)
       .single()
 
     if (errGet || !pres) return { success: false, error: 'Presupuesto no encontrado' }
+
+    // Solo se rechaza desde 'enviado' o 'aprobado_admin'. Un presupuesto ya
+    // aprobado por el cliente (trabajo en curso) no debe rechazarse ni devolver el
+    // incidente a 'pendiente'; tampoco tocar rechazados/vencidos.
+    if (!['enviado', 'aprobado_admin'].includes(pres.estado_presupuesto as string)) {
+      return { success: false, error: 'Este presupuesto ya no puede rechazarse (ya fue aprobado por el cliente, rechazado o vencido).' }
+    }
 
     // Detectar si es presupuesto adicional (ya existe uno aprobado para el incidente)
     const { data: presAprobados } = await supabase
@@ -417,8 +435,9 @@ export async function rechazarPresupuesto(
 
     const esAdicional = presAprobados && presAprobados.length > 0
 
-    // Marcar presupuesto como rechazado
-    const { error } = await supabase
+    // Marcar presupuesto como rechazado (condicional: solo si sigue en un estado
+    // rechazable, para no pisar un cambio de estado concurrente)
+    const { data: rechazado, error } = await supabase
       .from('presupuestos')
       .update({
         estado_presupuesto: EstadoPresupuesto.RECHAZADO,
@@ -426,8 +445,13 @@ export async function rechazarPresupuesto(
         rechazado_por: 'admin',
       })
       .eq('id_presupuesto', idPresupuesto)
+      .in('estado_presupuesto', ['enviado', 'aprobado_admin'])
+      .select('id_presupuesto')
 
     if (error) return { success: false, error: translateDbError(error) }
+    if (!rechazado || rechazado.length === 0) {
+      return { success: false, error: 'El presupuesto cambió de estado. Recargá e intentá de nuevo.' }
+    }
 
     if (esAdicional) {
       // Presupuesto adicional rechazado: el técnico continúa con lo que tiene
