@@ -92,8 +92,18 @@ Leyenda estado: ⏳ implementado, falta prueba manual · ✅ probado OK · 🔵 
 | Trello #241 | Revisar TODAS las métricas/PPIs con BMAD (¿cuáles aportan valor?) | 🔵 Pendiente (post-defensa o cuando se pueda). |
 | Interno | Renombrar identificadores de código (`satisfaccionCliente`, key `isc`) | Cosmético, junto con #241. |
 
+## Limpieza de código muerto (chore) — ⏳
+Verificado con `grep` exacto + `eslint` + `knip` (instalado como devDep, correr `npm run knip`). Todo con `tsc --noEmit` OK.
+- **`e2722ad`** — Tab "Gestión" legacy del modal de incidente (estaba con `{false && ...}`, inalcanzable): ~153 líneas de JSX + funciones `guardarCambios`/`asignarTecnico` (duplicadas; la asignación real vive en `gestionar-pendiente-modal.tsx` y la calificación admin en `aprobarConformidad`) + imports/estados huérfanos. Cierra el hallazgo "actualizarIncidente permite regresiones" (la única UI que pasaba `estado_actual` era esta, muerta).
+- **`798d23d`** — feature `features/calificaciones/` (service+types) muerta tras quitar la calificación del cliente. La tabla `calificaciones` sigue viva. + instalado `knip`.
+- **`000520c`** — 4 componentes sin uso (`ui/form.tsx`, `ui/calendar.tsx`, `shared/foto-uploader`, `tecnico/notificaciones-card`) + deps `react-hook-form`, `@hookform/resolvers`.
+- **`e2dd6db`** — deps prod sin uso: `@radix-ui/react-avatar`, `resend`, `@supabase/auth-helpers-nextjs`.
+- **NO tocado (falso positivo):** `public/sw.js` (se registra dinámicamente).
+- **Pendiente de confirmación de Fausti (parecen features intencionales no cableadas):** `components/admin/aprobar-presupuestos-content.client.tsx`, `components/tecnico/cambiar-password-primer-acceso.client.tsx`.
+- **Pendiente (grande, requiere cuidado):** knip reporta ~127 exports + 48 tipos + 11 enum members sin usar → revisar por feature, hay falsos positivos posibles. Además 5 estados "fetch cargado-pero-no-leído" en incidente-detail-modal (tecnicos/fiabilidad/compromiso/presInspeccionId/categoriasDisponibles) — sacarlos toca lógica de fetch.
+
 ## Candidatos aún sin abordar (menor severidad, lógica de negocio)
-- `actualizarIncidente` permite regresiones arbitrarias de estado.
+- ~~`actualizarIncidente` permite regresiones de estado~~ → resuelto al borrar la UI muerta (commit `e2722ad`); la función server aún aceptaría `estado_actual` pero ningún caller vivo lo usa.
 - Orden pago/cobro del técnico (pago posible antes del cobro; sin recordatorio de cobro pendiente).
 - Validación de que la suma del presupuesto sea coherente.
 
