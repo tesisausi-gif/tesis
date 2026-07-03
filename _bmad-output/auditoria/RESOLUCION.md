@@ -114,7 +114,9 @@ Verificado con `grep` exacto + `eslint` + `knip` (instalado como devDep, correr 
 - **Verificado NO-bug:** "montos de presupuesto sin validar suma" — el `costo_total` del técnico se recalcula al aprobar el admin (`materiales+mano_obra+comisión`); no hay inconsistencia real.
 - **Moot:** "editar/borrar calificación no recalcula promedio" — las funciones vivían en `calificaciones.service.ts`, ya eliminado (estaba muerto).
 
-Con esto, los temas de **lógica de negocio / consistencia funcional** de la auditoría quedan cubiertos. Pendiente NO-negocio: presentación #233, seguridad (fuera de alcance), PDF (delegado).
+- **C6 — rechazarVisita dejaba huérfano (commit `79ea412`)** — al rechazar el cliente el horario, el incidente quedaba 'en_proceso' sin técnico. Ahora vuelve a 'pendiente' + cierre de residuos. (Era el último crítico de negocio sin cubrir.) tsc + build OK.
+
+Con esto, los **7 hallazgos CRÍTICOS y los MEDIOS** de negocio (logica-de-negocio.md) quedan cubiertos. Solo restan MENORES cosméticos (enums sin 'cancelado', vencimientos dependientes del page-load, recordatorios de pago/cobro pendiente). Pendiente NO-negocio: presentación #233, seguridad (fuera de alcance), PDF (delegado).
 - Validación de que la suma del presupuesto sea coherente.
 
 ## Fuera de alcance de esta tanda (seguridad — despriorizado por Fausti)
