@@ -247,6 +247,19 @@ export async function rechazarVisita(idVisita: number, motivo?: string): Promise
       .eq('id_tecnico',   visita.id_tecnico)
       .in('estado_asignacion', ['aceptada', 'en_curso'])
 
+    // El incidente vuelve a estado re-asignable: si no, quedaría 'en_proceso' sin
+    // técnico activo (huérfano irrecuperable). Además se cierran los residuos
+    // (libera calendario, cancela visitas, anula inspecciones y presupuestos en
+    // vuelo) para que el técnico que reasigne el admin arranque limpio.
+    await supabase
+      .from('incidentes')
+      .update({ estado_actual: 'pendiente' })
+      .eq('id_incidente', visita.id_incidente)
+    try {
+      const { cerrarResiduosDeIncidente } = await import('@/features/asignaciones/asignaciones.service')
+      await cerrarResiduosDeIncidente(visita.id_incidente)
+    } catch { /* no bloquear */ }
+
     // Notificar al admin para reasignar
     try {
       const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')

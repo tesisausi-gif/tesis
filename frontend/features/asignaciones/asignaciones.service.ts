@@ -377,7 +377,7 @@ export async function crearAsignacion(data: {
  *    ni el nuevo técnico herede el precio/inspección del anterior
  * Cada paso es tolerante a fallos para no bloquear la operación principal.
  */
-async function cerrarResiduosDeIncidente(
+export async function cerrarResiduosDeIncidente(
   idIncidente: number,
   opciones: { cerrarPresupuestos?: boolean } = {},
 ): Promise<void> {
