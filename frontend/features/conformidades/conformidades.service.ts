@@ -287,16 +287,27 @@ export async function aprobarConformidad(
     const inc = conf.incidentes as any
     const idIncidente = conf.id_incidente
     const asigs = Array.isArray(inc?.asignaciones_tecnico) ? inc.asignaciones_tecnico : []
-    const asig = asigs.find((a: any) => a.estado_asignacion === 'completada') || asigs[0]
+    // Solo el técnico realmente vinculado al trabajo (nunca uno cancelado/rechazado
+    // de una asignación previa): sin fallback a asigs[0] para no calificar/notificar
+    // al técnico equivocado.
+    const asig = asigs.find((a: any) => ['completada', 'en_curso', 'aceptada'].includes(a.estado_asignacion))
     const idTecnico = asig?.id_tecnico
 
-    // 1. Marcar conformidad como aprobada
-    const { error: errUpd } = await supabase
+    // 1. Marcar conformidad como aprobada — de forma IDEMPOTENTE: solo si todavía
+    //    no estaba aprobada. Si un segundo click (o UI vieja) reintenta, este UPDATE
+    //    no afecta filas y salimos sin volver a calificar. Así se evita la
+    //    calificación duplicada que ensuciaba el promedio del técnico.
+    const { data: firmada, error: errUpd } = await supabase
       .from('conformidades')
       .update({ esta_firmada: 1, fecha_conformidad: new Date().toISOString() })
       .eq('id_conformidad', idConformidad)
+      .neq('esta_firmada', 1)
+      .select('id_conformidad')
 
     if (errUpd) return { success: false, error: errUpd.message }
+    if (!firmada || firmada.length === 0) {
+      return { success: false, error: 'La conformidad ya fue aprobada anteriormente.' }
+    }
 
     // 2. Crear calificación si tenemos técnico y actualizar stats del técnico
     if (idTecnico) {
@@ -405,7 +416,10 @@ export async function rechazarConformidad(idConformidad: number): Promise<Action
     // Obtener id_tecnico del asignado
     const inc = conf.incidentes as any
     const asigs = Array.isArray(inc?.asignaciones_tecnico) ? inc.asignaciones_tecnico : []
-    const asig = asigs.find((a: any) => a.estado_asignacion === 'completada') || asigs[0]
+    // Solo el técnico realmente vinculado al trabajo (nunca uno cancelado/rechazado
+    // de una asignación previa): sin fallback a asigs[0] para no calificar/notificar
+    // al técnico equivocado.
+    const asig = asigs.find((a: any) => ['completada', 'en_curso', 'aceptada'].includes(a.estado_asignacion))
     const idTecnico = asig?.id_tecnico
 
     // Notificar al técnico: email (fire-and-forget)
