@@ -174,15 +174,25 @@ export async function aceptarAsignacion(
       .eq('id_incidente', idIncidente)
       .single()
 
-    const { error: errorAsignacion } = await supabase
+    // Aceptar SOLO si la asignación sigue pendiente (evita revivir un incidente
+    // cancelado/reasignado y evita doble aceptación por otro técnico)
+    const { data: asigActualizada, error: errorAsignacion } = await supabase
       .from('asignaciones_tecnico')
       .update({
         estado_asignacion: 'aceptada',
         fecha_aceptacion: new Date().toISOString(),
       })
       .eq('id_asignacion', idAsignacion)
+      .eq('estado_asignacion', 'pendiente')
+      .select('id_asignacion')
 
     if (errorAsignacion) return { success: false, error: errorAsignacion.message }
+    if (!asigActualizada || asigActualizada.length === 0) {
+      return {
+        success: false,
+        error: 'La asignación ya no está disponible: el incidente pudo haber sido cancelado o reasignado.',
+      }
+    }
 
     // Marcar otras asignaciones pendientes del mismo incidente como superadas
     // (otro técnico aceptó primero — no cuenta como rechazo del técnico)
@@ -193,10 +203,13 @@ export async function aceptarAsignacion(
       .eq('estado_asignacion', 'pendiente')
       .neq('id_asignacion', idAsignacion)
 
+    // Pasar a en_proceso SOLO si el incidente sigue esperando asignación
+    // (un incidente cancelado no debe revivir)
     const { error: errorIncidente } = await supabase
       .from('incidentes')
       .update({ estado_actual: 'en_proceso' })
       .eq('id_incidente', idIncidente)
+      .in('estado_actual', ['asignacion_solicitada', 'pendiente'])
 
     if (errorIncidente) return { success: false, error: errorIncidente.message }
 
@@ -348,6 +361,59 @@ export async function crearAsignacion(data: {
 }
 
 /**
+ * Rutina única de "cierre de residuos" de un incidente.
+ * Deja el incidente sin cabos sueltos cuando se cancela o se reasigna:
+ *  - libera el compromiso de calendario del técnico (fecha_visita_programada)
+ *  - cancela las visitas activas (propuesta/confirmada)
+ *  - anula las inspecciones vigentes
+ *  - cierra los presupuestos en vuelo (opcional) para que no reviva el incidente
+ *    ni el nuevo técnico herede el precio/inspección del anterior
+ * Cada paso es tolerante a fallos para no bloquear la operación principal.
+ */
+async function cerrarResiduosDeIncidente(
+  idIncidente: number,
+  opciones: { cerrarPresupuestos?: boolean } = {},
+): Promise<void> {
+  const { cerrarPresupuestos = true } = opciones
+  const admin = createAdminClient()
+
+  // 1. Liberar el compromiso de calendario del técnico
+  try {
+    const { liberarCompromisoDeIncidente } = await import('@/features/disponibilidad/disponibilidad.service')
+    await liberarCompromisoDeIncidente(idIncidente)
+  } catch { /* no bloquear */ }
+
+  // 2. Cancelar visitas activas
+  try {
+    await admin
+      .from('visitas')
+      .update({ estado: 'cancelada' })
+      .eq('id_incidente', idIncidente)
+      .in('estado', ['propuesta', 'confirmada'])
+  } catch { /* no bloquear */ }
+
+  // 3. Anular inspecciones vigentes
+  try {
+    await admin
+      .from('inspecciones')
+      .update({ esta_anulada: true })
+      .eq('id_incidente', idIncidente)
+      .eq('esta_anulada', false)
+  } catch { /* no bloquear */ }
+
+  // 4. Cerrar presupuestos en vuelo (no toca los ya rechazados/vencidos)
+  if (cerrarPresupuestos) {
+    try {
+      await admin
+        .from('presupuestos')
+        .update({ estado_presupuesto: 'rechazado', fecha_modificacion: new Date().toISOString() })
+        .eq('id_incidente', idIncidente)
+        .in('estado_presupuesto', ['borrador', 'enviado', 'aprobado_admin', 'aprobado'])
+    } catch { /* no bloquear */ }
+  }
+}
+
+/**
  * Técnico cancela una asignación ya aceptada.
  * Consecuencias:
  * - La asignación queda como 'cancelada'
@@ -397,22 +463,10 @@ export async function cancelarAsignacionAceptada(
     const tec = asig?.tecnicos as any
     const tecNombre = tec ? `${tec.nombre} ${tec.apellido}` : 'El técnico'
 
-    // 5b. Cancelar visita activa en tabla visitas (propuesta o confirmada)
-    try {
-      const { createAdminClient: adminForVisitas } = await import('@/shared/lib/supabase/admin')
-      await adminForVisitas()
-        .from('visitas')
-        .update({ estado: 'cancelada' })
-        .eq('id_incidente', idIncidente)
-        .eq('id_tecnico', idTecnico)
-        .in('estado', ['propuesta', 'confirmada'])
-    } catch { /* no bloquear */ }
-
-    // 5c. Liberar fecha_visita_programada de asignaciones_tecnico
-    try {
-      const { liberarCompromisoDeIncidente } = await import('@/features/disponibilidad/disponibilidad.service')
-      await liberarCompromisoDeIncidente(idIncidente)
-    } catch { /* no bloquear */ }
+    // 5b/5c. Cierre de residuos: libera calendario, cancela visitas, anula
+    // inspecciones y cierra presupuestos en vuelo para que el nuevo técnico
+    // arranque limpio en la reasignación.
+    await cerrarResiduosDeIncidente(idIncidente)
 
     // 6. Notificar al admin
     try {
@@ -537,6 +591,9 @@ export async function cancelarIncidenteCliente(
 
     if (error) return { success: false, error: error.message }
 
+    // Cierre de residuos (defensivo: cubre visita propuesta durante asignacion_solicitada)
+    await cerrarResiduosDeIncidente(idIncidente)
+
     // Notificar al admin
     try {
       const { crearNotificacionAdmin } = await import('@/features/notificaciones/notificaciones-inapp.service')
@@ -616,6 +673,10 @@ export async function cancelarIncidente(
       .eq('id_incidente', idIncidente)
 
     if (errInc) return { success: false, error: errInc.message }
+
+    // 4b. Cierre de residuos: libera calendario, cancela visitas, anula
+    // inspecciones y cierra presupuestos en vuelo (evita el "incidente zombie")
+    await cerrarResiduosDeIncidente(idIncidente)
 
     // 5. Notificaciones
     try {
@@ -711,6 +772,10 @@ export async function darDeBajaIncidente(
       .eq('id_incidente', idIncidente)
 
     if (errInc) return { success: false, error: errInc.message }
+
+    // 5b. Cierre de residuos: el nuevo técnico arranca limpio (sin heredar
+    // presupuesto/inspección del anterior) y se libera el calendario/visitas
+    await cerrarResiduosDeIncidente(idIncidente)
 
     // 6. Notificaciones al técnico y al cliente
     try {
