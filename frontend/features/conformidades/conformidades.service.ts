@@ -364,7 +364,7 @@ export async function aprobarConformidad(
           id_cliente: conf.id_cliente,
           tipo: 'incidente_resuelto',
           titulo: '¡Tu incidente fue resuelto!',
-          mensaje: `El incidente #${idIncidente} fue marcado como resuelto por la administración. Podés calificar al técnico desde el módulo de Incidentes.`,
+          mensaje: `El incidente #${idIncidente} fue marcado como resuelto por la administración. ¡Gracias por confiar en nosotros!`,
           id_incidente: idIncidente,
         })
       } catch { /* no bloquear la operación principal */ }

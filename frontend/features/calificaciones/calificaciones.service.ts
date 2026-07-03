@@ -116,61 +116,10 @@ export async function getCalificacion(idCalificacion: number): Promise<Calificac
   return (data as unknown as CalificacionConDetalles) || null
 }
 
-/**
- * Verificar si ya existe calificación para un incidente.
- * La tabla no tiene id_cliente, así que se verifica por id_incidente.
- */
-export async function existeCalificacionDelCliente(idIncidente: number): Promise<boolean> {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('calificaciones')
-    .select('id_calificacion')
-    .eq('id_incidente', idIncidente)
-
-  if (error) throw error
-  return (data?.length ?? 0) > 0
-}
-
 // --- Escrituras ---
-
-/**
- * Crear calificación de cliente para un técnico
- */
-export async function crearCalificacion(data: {
-  id_incidente: number
-  id_tecnico: number
-  puntuacion: number
-  comentarios?: string | null
-  resolvio_problema?: number
-}): Promise<ActionResult<Calificacion>> {
-  try {
-    const supabase = await createClient()
-
-    if (data.puntuacion < 1 || data.puntuacion > 5) {
-      return { success: false, error: 'La puntuación debe estar entre 1 y 5' }
-    }
-
-    const existe = await existeCalificacionDelCliente(data.id_incidente)
-    if (existe) {
-      return { success: false, error: 'Ya existe una calificación para este incidente' }
-    }
-
-    const { data: calificacion, error } = await supabase
-      .from('calificaciones')
-      .insert({
-        ...data,
-        fecha_calificacion: new Date().toISOString(),
-      })
-      .select()
-      .single()
-
-    if (error) return { success: false, error: translateDbError(error) }
-    return { success: true, data: calificacion as Calificacion }
-  } catch (error) {
-    return { success: false, error: 'Error inesperado al crear calificación' }
-  }
-}
+// Nota: el CLIENTE no califica al técnico. La calificación del técnico la registra
+// la administración al aprobar la conformidad (features/conformidades). Por eso se
+// eliminaron crearCalificacion/existeCalificacionDelCliente (calificación del cliente).
 
 /**
  * Actualizar calificación

@@ -58,7 +58,6 @@ import {
 import { EstadoIncidente, EstadoPresupuesto } from '@/shared/types/enums'
 import { SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
 import { InspeccionesList } from './inspecciones-list'
-import { CalificacionTecnico } from '@/components/cliente/calificacion-tecnico'
 import { getInspeccionesDelIncidente } from '@/features/inspecciones/inspecciones.service'
 import {
   getIncidenteCompleto,
@@ -1510,7 +1509,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         ) : incidente ? (() => {
           const hasTecnicoTabs = rol === 'tecnico' && asignaciones.some(a => a.estado_asignacion !== 'rechazada')
           const hasClientePresupuesto = rol === 'cliente' && presupuestos.length > 0
-          const hasCalificacion = rol === 'cliente' && (incidente.estado_actual === EstadoIncidente.RESUELTO || incidente.estado_actual === 'finalizado')
           const hasPagosTab = rol === 'cliente' && (incidente.estado_actual === 'resuelto' || incidente.estado_actual === 'finalizado')
           const hasPagosTecnicoTab = rol === 'tecnico' && conformidad?.url_documento
           const hasAdminStepperTabs = rol === 'admin' && asignaciones.some(a =>
@@ -1615,7 +1613,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   { id: 'timeline', label: 'Timeline' },
                   ...(hasClientePresupuesto ? [{ id: 'presupuesto', label: 'Presupuesto' }] : []),
                   ...(hasPagosTab ? [{ id: 'pagos', label: 'Pagos' }] : []),
-                  ...(hasCalificacion ? [{ id: 'calificacion', label: 'Calificar' }] : []),
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -3321,28 +3318,6 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     )}
                   </>
                 ) : null}
-              </div>
-            )}
-
-            {/* Tab Calificación (para clientes cuando está resuelto) */}
-            {rol === 'cliente' && incidente && (incidente.estado_actual === EstadoIncidente.RESUELTO || incidente.estado_actual === 'finalizado') && asignaciones.length > 0 && activeTab === 'calificacion' && (
-              <div className="mt-4">
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    Califica al técnico que resolvió tu incidente
-                  </p>
-                  {asignaciones.map((asignacion) => (
-                    <CalificacionTecnico
-                      key={asignacion.id_asignacion}
-                      incidenteId={incidente.id_incidente}
-                      idTecnico={asignacion.id_tecnico}
-                      nombreTecnico={`${asignacion.tecnicos?.nombre} ${asignacion.tecnicos?.apellido}`}
-                      onCalificacionCreated={() => {
-                        toast.success('¡Gracias por tu calificación!')
-                      }}
-                    />
-                  ))}
-                </div>
               </div>
             )}
 

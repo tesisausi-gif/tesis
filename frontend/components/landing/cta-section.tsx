@@ -70,7 +70,7 @@ export function CTASection() {
               Reportá incidentes en tus propiedades
             </p>
             <ul className="space-y-2.5 mb-8 flex-1">
-              {['Reportes con foto y descripción', 'Seguí el estado desde tu portal', 'Calificá el servicio recibido'].map((item) => (
+              {['Reportes con foto y descripción', 'Seguí el estado desde tu portal', 'Aprobá o rechazá los presupuestos'].map((item) => (
                 <li key={item} className="flex items-center gap-2.5 text-sm text-slate-400"
                   style={{ fontFamily: 'var(--font-outfit)' }}>
                   <CheckCircle className="h-3.5 w-3.5 shrink-0 text-blue-400" />
