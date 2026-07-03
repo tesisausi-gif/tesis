@@ -333,7 +333,7 @@ export async function getIncidentesPorTipoInmueble(): Promise<CalorInmueble[]> {
     .sort((a, b) => b.totalIncidentes - a.totalIncidentes)
 }
 
-// ─── 7. Satisfacción del Cliente ─────────────────────────────────────────────
+// ─── 7. Calidad del Servicio ─────────────────────────────────────────────────
 
 export interface SatisfaccionCliente {
   promedioGeneral: number

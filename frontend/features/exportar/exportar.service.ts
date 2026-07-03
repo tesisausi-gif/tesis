@@ -823,7 +823,7 @@ export async function getR6DesempenoTecnicos(filtros: {
   return { totalTecnicos, promedioProductividad, promedioSatisfaccion, tecnicos: result }
 }
 
-// ─── R7: Satisfacción Mantis ─────────────────────────────────────────────────
+// ─── R7: Calidad del Servicio ────────────────────────────────────────────────
 
 export async function getR7Satisfaccion(filtros: {
   fechaDesde?: string
@@ -1192,7 +1192,7 @@ export async function getR11ComparativoDesempenio(filtros: {
     { indicador: 'Incidentes resueltos', periodo1: kp1.resueltos, periodo2: kp2.resueltos, cambioPorcentaje: calcCambio(kp1.resueltos, kp2.resueltos), tendencia: tendencia(kp1.resueltos, kp2.resueltos) },
     { indicador: 'Días promedio resolución', periodo1: kp1.promDias, periodo2: kp2.promDias, cambioPorcentaje: calcCambio(kp1.promDias, kp2.promDias), tendencia: tendencia(kp2.promDias, kp1.promDias) },
     { indicador: 'Ingresos ($)', periodo1: kp1.ingresos, periodo2: kp2.ingresos, cambioPorcentaje: calcCambio(kp1.ingresos, kp2.ingresos), tendencia: tendencia(kp1.ingresos, kp2.ingresos) },
-    { indicador: 'Satisfacción promedio', periodo1: kp1.promCal, periodo2: kp2.promCal, cambioPorcentaje: calcCambio(kp1.promCal, kp2.promCal), tendencia: tendencia(kp1.promCal, kp2.promCal) },
+    { indicador: 'Calidad promedio', periodo1: kp1.promCal, periodo2: kp2.promCal, cambioPorcentaje: calcCambio(kp1.promCal, kp2.promCal), tendencia: tendencia(kp1.promCal, kp2.promCal) },
   ]
 
   return {

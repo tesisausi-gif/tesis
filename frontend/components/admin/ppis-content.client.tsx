@@ -1088,7 +1088,7 @@ function Sp8Metrica({ data }: { data: Sp8Data }) {
   )
 }
 
-// ─── KPI-1 · Índice de Satisfacción del Cliente (ISC) ────────────────────────
+// ─── KPI-1 · Índice de Calidad del Servicio (ICS) ────────────────────────────
 
 function EstrellasFijas({ valor, max = 5 }: { valor: number; max?: number }) {
   return (
@@ -1140,13 +1140,13 @@ function IscMetrica({ data }: { data: IscData }) {
     <div className="space-y-5">
 
       <ExplicacionMetrica
-        numero="ISC"
-        titulo="¿Qué tan contentos quedaron los clientes con el servicio recibido?"
-        resumen="Es la calificación de 1 a 5 que dan los clientes al cerrarse cada trabajo. Cuanto más alto, mejor. Lo importante es ver la tendencia: si viene bajando mes a mes, hay algo que mejorar aunque el número todavía parezca aceptable."
-        proceso="Promedio de las calificaciones que dan los clientes al terminar un trabajo. Permite ver qué técnico genera más satisfacción, en qué tipo de problema los clientes quedan menos conformes, y cómo evolucionó la satisfacción mes a mes."
-        porque="Todos los demás indicadores miden el proceso desde adentro. Este mide cómo lo vive el cliente. Un proceso que parece funcionar bien internamente puede generar clientes insatisfechos si hay problemas de trato, comunicación o expectativas mal gestionadas. Es la prueba definitiva de si el servicio realmente funciona."
+        numero="ICS"
+        titulo="¿Qué tan buena es la calidad del trabajo que entregan los técnicos?"
+        resumen="Es la calificación de 1 a 5 que la inmobiliaria le asigna a cada trabajo al cerrarse. Cuanto más alto, mejor. Lo importante es ver la tendencia: si viene bajando mes a mes, hay algo que mejorar aunque el número todavía parezca aceptable."
+        proceso="Promedio de las calificaciones de calidad que la inmobiliaria asigna al terminar cada trabajo. Permite ver qué técnico trabaja mejor, en qué tipo de problema baja la calidad, y cómo evolucionó mes a mes."
+        porque="Los demás indicadores miden el proceso desde adentro. Este mide la calidad final del trabajo entregado. Un proceso que parece funcionar bien internamente puede igual entregar trabajos de baja calidad. Es la prueba de si el servicio realmente se hace bien."
         accion="🔴 Si está en rojo: ver si el problema es la demora (trabajos que tardan mucho), la calidad del trabajo (muchos rechazos del admin), o el trato del técnico (calificaciones bajas aunque el trabajo esté bien). Cada causa tiene una solución distinta."
-        formula="ISC = Promedio de calificaciones en escala 1–5 · Verde ≥ 4.5 | Amarillo 3.5–4.4 | Rojo < 3.5 · Fuente: calificaciones.puntuacion + calificaciones.resolvio_problema"
+        formula="ICS = Promedio de calificaciones en escala 1–5 · Verde ≥ 4.5 | Amarillo 3.5–4.4 | Rojo < 3.5 · Fuente: calificaciones.puntuacion + calificaciones.resolvio_problema"
       />
 
       {/* KPI Global + Distribución de estrellas */}
@@ -1155,7 +1155,7 @@ function IscMetrica({ data }: { data: IscData }) {
         {/* Score global */}
         <div className={`rounded-2xl border-2 p-5 flex flex-col justify-between col-span-1 ${col.bg} ${col.border}`}>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Satisfacción promedio</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Calidad promedio</p>
             <div className={`text-6xl font-bold tabular-nums leading-none ${col.text}`}>
               {data.promedioGlobal !== null ? data.promedioGlobal.toFixed(1) : '—'}
             </div>
@@ -1168,9 +1168,9 @@ function IscMetrica({ data }: { data: IscData }) {
             <SemaforoBadge
               s={data.semaforoGlobal}
               texto={
-                data.semaforoGlobal === 'verde'    ? 'Satisfacción alta' :
-                data.semaforoGlobal === 'amarillo' ? 'Satisfacción media' :
-                data.semaforoGlobal === 'rojo'     ? 'Satisfacción baja' :
+                data.semaforoGlobal === 'verde'    ? 'Calidad alta' :
+                data.semaforoGlobal === 'amarillo' ? 'Calidad media' :
+                data.semaforoGlobal === 'rojo'     ? 'Calidad baja' :
                 'Sin datos'
               }
             />
@@ -1242,10 +1242,10 @@ function IscMetrica({ data }: { data: IscData }) {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
               <Wrench className="h-4 w-4 text-slate-400" />
-              ISC por Técnico
+              ICS por Técnico
             </CardTitle>
             <p className="text-xs text-slate-400">
-              Ordenado de mayor a menor satisfacción. La diferencia entre técnicos revela variabilidad en la experiencia del cliente que no está explicada por el proceso, sino por las personas.
+              Ordenado de mayor a menor calidad. La diferencia entre técnicos revela variabilidad en la calidad del trabajo que no está explicada por el proceso, sino por las personas.
             </p>
           </CardHeader>
           <CardContent>
@@ -1265,10 +1265,10 @@ function IscMetrica({ data }: { data: IscData }) {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
               <Tag className="h-4 w-4 text-slate-400" />
-              ISC por Categoría
+              ICS por Categoría
             </CardTitle>
             <p className="text-xs text-slate-400">
-              Categorías con ISC bajo pueden indicar trabajos más complejos, mayor tiempo de resolución o expectativas del cliente más difíciles de gestionar en esa especialidad.
+              Categorías con ICS bajo pueden indicar trabajos más complejos o mayor tiempo de resolución en esa especialidad.
             </p>
           </CardHeader>
           <CardContent>
@@ -1307,7 +1307,7 @@ function IscMetrica({ data }: { data: IscData }) {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
             <TrendingUp className="h-4 w-4 text-slate-400" />
-            Evolución Mensual del ISC
+            Evolución Mensual del ICS
           </CardTitle>
           <p className="text-xs text-slate-400">
             La tendencia es más informativa que el valor puntual. Una caída sostenida por 2 o más meses consecutivos requiere análisis cruzado con TCR y TCI para identificar la causa raíz.
@@ -1737,7 +1737,7 @@ function OeeMetrica({ data }: { data: OeeData }) {
         titulo="¿Cómo rinde cada técnico? Respuesta, velocidad y calidad en un solo número"
         resumen="Un puntaje del 0% al 100% que resume tres cosas de cada técnico: qué tan seguido acepta los trabajos que le asignan, qué tan rápido los termina, y qué tan bien los hace. Cuanto más alto, mejor técnico. Permite comparar técnicos de forma justa."
         proceso="Combina tres indicadores en uno: (1) Disponibilidad: acepta los trabajos que le asignan. (2) Eficiencia: los termina en un tiempo razonable para ese tipo de trabajo. (3) Calidad: el administrador no tuvo que rechazar su trabajo."
-        porque="Si solo miramos la satisfacción del cliente o los rechazos por separado, podemos no ver el problema completo. Un técnico puede tener buenas calificaciones pero siempre estar lento, o aceptar todos los trabajos pero hacer muchos mal. Este puntaje combina todo para tener una imagen completa de cada persona."
+        porque="Si solo miramos la calidad del servicio o los rechazos por separado, podemos no ver el problema completo. Un técnico puede tener buenas calificaciones pero siempre estar lento, o aceptar todos los trabajos pero hacer muchos mal. Este puntaje combina todo para tener una imagen completa de cada persona."
         accion="🔴 Si está en rojo: ver cuál de los tres factores lo baja. Disponibilidad baja → el técnico rechaza o no responde los trabajos → hablar con él sobre su carga. Velocidad baja → le cuesta terminar a tiempo → puede necesitar más herramientas o capacitación. Calidad baja → le rechazan mucho el trabajo → necesita supervisión o instrucciones más claras."
         formula="IRT = Disponibilidad × Velocidad × Calidad · D = aceptaciones/total asignaciones · V = trabajos a tiempo/total trabajos · C = trabajos sin rechazo/total trabajos · Verde >75% | Amarillo 55–75% | Rojo <55%"
       />
@@ -2017,7 +2017,7 @@ export function PpisContent({ ppis }: { ppis: TodosPpisData }) {
 
   const estadosPorTab: Record<SubTab, { label: string; semaforo: Semaforo }[]> = {
     tiempo:   [{ label: 'Tiempo promedio', semaforo: ppis.tci.semaforoGlobal }, { label: 'Carga del sistema', semaforo: ppis.cb2.semaforoRatio }],
-    calidad:  [{ label: 'Sin correcciones', semaforo: ppis.fpy.semaforoGlobal }, { label: 'Rechazos', semaforo: ppis.tcr.semaforoGlobal }, { label: 'Satisfacción', semaforo: ppis.isc.semaforoGlobal }],
+    calidad:  [{ label: 'Sin correcciones', semaforo: ppis.fpy.semaforoGlobal }, { label: 'Rechazos', semaforo: ppis.tcr.semaforoGlobal }, { label: 'Calidad', semaforo: ppis.isc.semaforoGlobal }],
     proceso:  [{ label: 'Reasignaciones', semaforo: ppis.reasignacion.semaforoGlobal }, { label: 'Horarios rechazados', semaforo: ppis.sp9.semaforoGlobal }, { label: 'Cancel. clientes', semaforo: ppis.cancelacionCliente.semaforo }, { label: 'Disp. vencida', semaforo: ppis.disponibilidadVencida.semaforo }],
     finanzas: [{ label: 'Por cobrar', semaforo: ppis.sp8.dpcSemaforo }, { label: 'Por pagar', semaforo: ppis.sp8.dptSemaforo }],
     tecnicos: [{ label: 'Rendimiento', semaforo: ppis.oee.semaforoGlobal }],

@@ -812,7 +812,7 @@ function TabR6({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
     finally { setCargando(false) }
   }
 
-  const cols = ['#', 'Técnico', 'Especialidad', 'Asignados', 'Cerrados', 'Rechazadas', 'Productividad %', 'Días resp. prom.', 'Satisfacción ★']
+  const cols = ['#', 'Técnico', 'Especialidad', 'Asignados', 'Cerrados', 'Rechazadas', 'Productividad %', 'Días resp. prom.', 'Calidad ★']
   const filas = resultado?.tecnicos.map(t => ({
     '#': t.rankingPos,
     'Técnico': `${t.nombre} ${t.apellido}`,
@@ -822,7 +822,7 @@ function TabR6({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
     'Rechazadas': t.rechazadas,
     'Productividad %': fmtPct(t.productividad),
     'Días resp. prom.': t.promedioDiasRespuesta > 0 ? fmtN(t.promedioDiasRespuesta) : '—',
-    'Satisfacción ★': t.satisfaccion != null ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
+    'Calidad ★': t.satisfaccion != null ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
   })) ?? []
 
   return (
@@ -850,7 +850,7 @@ function TabR6({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
           <div className="grid grid-cols-3 gap-3">
             <KpiCard label="Total técnicos" valor={String(resultado.totalTecnicos)} />
             <KpiCard label="Productividad prom." valor={fmtPct(resultado.promedioProductividad)} />
-            <KpiCard label="Satisfacción prom." valor={resultado.promedioSatisfaccion > 0 ? `${fmtN(resultado.promedioSatisfaccion)} ★` : 'N/A'} />
+            <KpiCard label="Calidad prom." valor={resultado.promedioSatisfaccion > 0 ? `${fmtN(resultado.promedioSatisfaccion)} ★` : 'N/A'} />
           </div>
           <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -925,7 +925,7 @@ function TabR7({ tecnicos }: { tecnicos: TecnicoSelect[] }) {
           </div>
           <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm">Satisfacción por técnico</CardTitle>
+              <CardTitle className="text-sm">Calidad por técnico</CardTitle>
               <BotonesExport disabled={!filas.length} cargando={cargando}
                 onCSV={() => descargarCSV(generarCSV(cols, filas), `r7_satisfaccion_${hoy()}.csv`)}
                 onPDF={() => abrirPDF(7, { fechaDesde: desde, fechaHasta: hasta, idTecnico: tecnico === 'todos' ? undefined : tecnico, calificacionMinima: calMin || undefined })}
@@ -1261,11 +1261,11 @@ function TabR12() {
     finally { setCargando(false) }
   }
 
-  const colsTec = ['Top Técnicos', 'Asignados', 'Cerrados', 'Satisfacción ★']
+  const colsTec = ['Top Técnicos', 'Asignados', 'Cerrados', 'Calidad ★']
   const filasTec = resultado?.topTecnicos.map(t => ({
     'Top Técnicos': `${t.nombre} ${t.apellido}`,
     'Asignados': t.asignados, 'Cerrados': t.cerrados,
-    'Satisfacción ★': t.satisfaccion > 0 ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
+    'Calidad ★': t.satisfaccion > 0 ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
   })) ?? []
 
   const colsProp = ['Propiedad', 'Dirección', 'Incidentes']
@@ -1303,7 +1303,7 @@ function TabR12() {
             <KpiCard label="Ingresos totales" valor={fmt$(resultado.totalIngresos)} />
             <KpiCard label="Costos totales" valor={fmt$(resultado.totalCostos)} />
             <KpiCard label="Rentabilidad neta" valor={fmt$(resultado.rentabilidadNeta)} />
-            <KpiCard label="Satisfacción prom." valor={resultado.satisfaccionPromedio > 0 ? `${fmtN(resultado.satisfaccionPromedio)} ★` : 'N/A'} />
+            <KpiCard label="Calidad prom." valor={resultado.satisfaccionPromedio > 0 ? `${fmtN(resultado.satisfaccionPromedio)} ★` : 'N/A'} />
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
@@ -1466,12 +1466,12 @@ export function ExportarContent() {
     { value: 'r3', label: 'Vol. Técnicos', icon: Users, desc: 'Asignaciones', info: 'Muestra la carga de trabajo real de cada técnico: cuántos trabajos tomó, cerró y tiene en curso. Útil para detectar sobrecarga o subutilización.' },
     { value: 'r4', label: 'Propiedades', icon: Building2, desc: 'Con más incidentes', info: 'Identifica las propiedades con mayor frecuencia de incidentes y costos de mantenimiento. Permite justificar inspecciones o renegociar contratos.' },
     { value: 'r5', label: 'Rentabilidad', icon: DollarSign, desc: 'Por refacción', info: 'Muestra la comisión real de Mantis (cobrado al cliente menos pagado al técnico) por cada tipo de servicio. Permite priorizar categorías más rentables.' },
-    { value: 'r6', label: 'Desempeño', icon: Star, desc: 'Ranking técnicos', info: 'Ranking integral de técnicos: productividad (cierre de trabajos), asignaciones rechazadas, tiempo de respuesta y satisfacción del cliente. No disponible en ninguna otra sección.' },
-    { value: 'r7', label: 'Satisfacción', icon: Star, desc: 'Calificaciones Mantis', info: 'Distribución detallada de calificaciones por técnico con comentarios reales de clientes. Permite detectar problemas de atención antes de que escalen.' },
+    { value: 'r6', label: 'Desempeño', icon: Star, desc: 'Ranking técnicos', info: 'Ranking integral de técnicos: productividad (cierre de trabajos), asignaciones rechazadas, tiempo de respuesta y calidad del servicio. No disponible en ninguna otra sección.' },
+    { value: 'r7', label: 'Calidad', icon: Star, desc: 'Calificaciones Mantis', info: 'Distribución detallada de calificaciones de calidad por técnico con comentarios de cada evaluación. Permite detectar problemas de calidad antes de que escalen.' },
     { value: 'r8', label: 'Costos', icon: Wrench, desc: 'Mantenimiento', info: 'Desglose de costos de presupuesto (materiales, mano de obra, gastos admin) por categoría. Requiere que los presupuestos estén cargados con montos reales.' },
     { value: 'r10', label: 'Rent. Inmueble', icon: Building2, desc: 'Por propiedad', info: 'Compara ingresos vs costos por propiedad, mostrando cuáles generan mayor margen. Útil para priorizar la cartera y negociar condiciones con propietarios.' },
-    { value: 'r11', label: 'Comparativo', icon: TrendingUp, desc: 'Período a período', info: 'Compara KPIs clave (incidentes, tiempos, ingresos, satisfacción) entre dos períodos consecutivos, mostrando tendencia de mejora o deterioro del negocio.' },
-    { value: 'r12', label: 'Dashboard', icon: LayoutDashboard, desc: 'Indicadores globales', info: 'Resumen ejecutivo de todos los indicadores clave en un solo informe: volumen, tiempos, ingresos, satisfacción y top técnicos/propiedades. Ideal para reportes a directivos.' },
+    { value: 'r11', label: 'Comparativo', icon: TrendingUp, desc: 'Período a período', info: 'Compara KPIs clave (incidentes, tiempos, ingresos, calidad) entre dos períodos consecutivos, mostrando tendencia de mejora o deterioro del negocio.' },
+    { value: 'r12', label: 'Dashboard', icon: LayoutDashboard, desc: 'Indicadores globales', info: 'Resumen ejecutivo de todos los indicadores clave en un solo informe: volumen, tiempos, ingresos, calidad y top técnicos/propiedades. Ideal para reportes a directivos.' },
     { value: 'r13', label: 'Medios de Pago', icon: DollarSign, desc: 'Cobros y pagos', info: 'Analiza qué métodos de pago usan clientes y técnicos, con montos por método. Permite evaluar la adopción de medios digitales y detectar preferencias.' },
   ]
 

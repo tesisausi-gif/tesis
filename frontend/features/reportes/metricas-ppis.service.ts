@@ -1187,7 +1187,7 @@ export async function getSp8Data(): Promise<Sp8Data> {
   }
 }
 
-// ─── KPI-1 · Índice de Satisfacción del Cliente (ISC) ────────────────────────
+// ─── KPI-1 · Índice de Calidad del Servicio (ICS) ────────────────────────────
 
 export interface IscPorTecnico {
   id_tecnico: number
@@ -1230,7 +1230,7 @@ function iscSemaforo(promedio: number | null): Semaforo {
 }
 
 /**
- * Calcula el Índice de Satisfacción del Cliente (ISC) — KPI-1.
+ * Calcula el Índice de Calidad del Servicio (ICS) — KPI-1.
  *
  * Es la validación externa de todos los PPIs: mide si el cliente percibe
  * que el servicio mejoró. PPIs en verde pero ISC cayendo indica un problema

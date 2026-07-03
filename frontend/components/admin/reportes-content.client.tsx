@@ -422,11 +422,11 @@ export function ReportesContent({ data }: { data: ReportesData }) {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                 <Activity className="h-4 w-4 text-amber-600 shrink-0" />
-                <TitleTooltip texto="¿Quién trabaja mejor? Ordena a los técnicos por incidentes completados, qué tan rápido aceptan los trabajos y la calificación que les dan los clientes.">
+                <TitleTooltip texto="¿Quién trabaja mejor? Ordena a los técnicos por incidentes completados, qué tan rápido aceptan los trabajos y su calificación de calidad.">
                   Rendimiento
                 </TitleTooltip>
               </CardTitle>
-              <CardDescription>Trabajos completados, tasa de aceptación y calificación del cliente</CardDescription>
+              <CardDescription>Trabajos completados, tasa de aceptación y calidad del servicio</CardDescription>
             </CardHeader>
             <CardContent>
               {rendimientoTecnicos.filter(t => tecnicoMatch(t.nombre, t.apellido)).length === 0 ? (
@@ -560,9 +560,9 @@ export function ReportesContent({ data }: { data: ReportesData }) {
         <GrupoHeader
           icon={Star}
           titulo="Clientes & KPIs Operativos"
-          descripcion="Satisfacción del cliente e indicadores clave del sistema"
+          descripcion="Calidad del servicio e indicadores clave del sistema"
           color="violet"
-          tooltip="Cómo perciben los clientes el servicio y qué tan bien está funcionando el sistema en general. Son los números que resumen si el negocio está yendo bien."
+          tooltip="La calidad del servicio evaluada por la inmobiliaria y qué tan bien está funcionando el sistema en general. Son los números que resumen si el negocio está yendo bien."
         />
 
         <div className="grid gap-5 lg:grid-cols-2">
@@ -571,8 +571,8 @@ export function ReportesContent({ data }: { data: ReportesData }) {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                 <Star className="h-4 w-4 text-yellow-500 shrink-0" />
-                <TitleTooltip texto="¿Qué tan contentos quedaron los clientes? Muestra las calificaciones que dejaron tras cada resolución y si el problema quedó realmente solucionado.">
-                  Satisfacción del cliente
+                <TitleTooltip texto="Calidad del trabajo que la inmobiliaria evalúa tras cada resolución, y si el problema quedó realmente solucionado.">
+                  Calidad del servicio
                 </TitleTooltip>
               </CardTitle>
               <CardDescription>Calificaciones post-resolución y tasa de conformidad firmada</CardDescription>
