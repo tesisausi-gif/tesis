@@ -162,7 +162,22 @@ export async function registrarCobroCliente(params: {
       if (emp) nombreAdmin = `${emp.nombre} ${emp.apellido}`
     }
 
-    const { error } = await createAdminClient()
+    const admin = createAdminClient()
+
+    // Anti-duplicado: no registrar dos veces el cobro del mismo presupuesto
+    // (doble click / UI vieja). El listado de pendientes ya lo oculta tras el
+    // primer cobro; este guard lo hace a prueba de fallos para no cobrar de más.
+    const { data: cobroExistente } = await admin
+      .from('cobros_clientes')
+      .select('id_presupuesto')
+      .eq('id_presupuesto', params.idPresupuesto)
+      .limit(1)
+      .maybeSingle()
+    if (cobroExistente) {
+      return { success: false, error: 'Este presupuesto ya tiene un cobro registrado.' }
+    }
+
+    const { error } = await admin
       .from('cobros_clientes')
       .insert({
         id_incidente: params.idIncidente,

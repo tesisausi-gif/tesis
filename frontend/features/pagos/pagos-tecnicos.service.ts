@@ -189,7 +189,22 @@ export async function registrarPagoTecnico(
       if (emp) nombreAdmin = `${emp.nombre} ${emp.apellido}`
     }
 
-    const { error } = await createAdminClient()
+    const admin = createAdminClient()
+
+    // Anti-duplicado: no registrar dos veces el pago del mismo presupuesto
+    // (doble click / UI vieja). El listado de pendientes ya lo oculta tras el
+    // primer pago; este guard lo hace a prueba de fallos para no pagar de más.
+    const { data: pagoExistente } = await admin
+      .from('pagos_tecnicos')
+      .select('id_presupuesto')
+      .eq('id_presupuesto', idPresupuesto)
+      .limit(1)
+      .maybeSingle()
+    if (pagoExistente) {
+      return { success: false, error: 'Este presupuesto ya tiene un pago registrado al técnico.' }
+    }
+
+    const { error } = await admin
       .from('pagos_tecnicos')
       .insert({
         id_tecnico: idTecnico,
