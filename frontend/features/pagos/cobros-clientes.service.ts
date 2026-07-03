@@ -60,7 +60,10 @@ export async function getPendientesCobroCliente(): Promise<PendienteCobroCliente
       )
     `)
     .eq('estado_presupuesto', 'aprobado')
-    .eq('incidentes.estado_actual', 'en_proceso')
+    // Incluir 'finalizado' además de 'en_proceso': si el incidente se finalizó al
+    // cobrar el presupuesto original pero quedó un adicional aprobado sin cobrar,
+    // debe seguir apareciendo como cobro pendiente (los ya cobrados se filtran abajo).
+    .in('incidentes.estado_actual', ['en_proceso', 'finalizado'])
     .order('fecha_creacion', { ascending: false })
 
   if (error) throw error
@@ -178,11 +181,30 @@ export async function registrarCobroCliente(params: {
 
     if (error) return { success: false, error: translateDbError(error) }
 
-    // Cobro registrado → incidente pasa a finalizado (verdaderamente cerrado)
-    await createAdminClient()
-      .from('incidentes')
-      .update({ estado_actual: 'finalizado' })
+    // Cobro registrado. Finalizar el incidente SOLO si ya no quedan otros
+    // presupuestos aprobados sin cobrar (p. ej. un presupuesto adicional). Si se
+    // finalizara acá sin más, el adicional quedaría inalcanzable para el cobro y
+    // la inmobiliaria terminaría pagándoselo al técnico sin cobrárselo al cliente.
+    const adminCierre = createAdminClient()
+    const { data: aprobadosDelIncidente } = await adminCierre
+      .from('presupuestos')
+      .select('id_presupuesto')
       .eq('id_incidente', params.idIncidente)
+      .eq('estado_presupuesto', 'aprobado')
+
+    const idsAprobados = (aprobadosDelIncidente || []).map((p: any) => p.id_presupuesto)
+    const { data: cobradosDelIncidente } = idsAprobados.length
+      ? await adminCierre.from('cobros_clientes').select('id_presupuesto').in('id_presupuesto', idsAprobados)
+      : { data: [] as any[] }
+    const cobradosSet = new Set((cobradosDelIncidente || []).map((c: any) => c.id_presupuesto))
+    const quedanSinCobrar = idsAprobados.some((id: number) => !cobradosSet.has(id))
+
+    if (!quedanSinCobrar) {
+      await adminCierre
+        .from('incidentes')
+        .update({ estado_actual: 'finalizado' })
+        .eq('id_incidente', params.idIncidente)
+    }
 
     // Notificar al cliente que se le registró el cobro
     try {
