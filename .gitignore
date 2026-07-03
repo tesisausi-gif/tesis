@@ -77,3 +77,8 @@ documentacion/Nuevos_BPMN_Especificos.md
 documentacion/presentacion_tesis.md
 documentacion/presentacion_tesis.html
 documentacion/presentacion_tesis.pdf
+.mcp.json
+.mcp-profile
+
+# BMAD (per-machine, se instala con npx bmad-method) y logs de Playwright MCP
+.playwright-mcp/
