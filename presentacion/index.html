@@ -2494,7 +2494,7 @@
         <!-- Cliente (origen ~95,360) → sus UCs -->
         <line class="uc-assoc uc-assoc-cli" x1="120" y1="360" x2="308" y2="150"/>
         <line class="uc-assoc uc-assoc-cli" x1="120" y1="360" x2="740" y2="450"/>
-        <line class="uc-assoc uc-assoc-cli" x1="120" y1="360" x2="1172" y2="260"/>
+        <line class="uc-assoc uc-assoc-adm" x1="1360" y1="560" x2="1172" y2="260"/>
         <line class="uc-assoc uc-assoc-cli" x1="120" y1="360" x2="740" y2="600"/>
         <!-- Técnico (origen ~1390,210) → sus UCs -->
         <line class="uc-assoc uc-assoc-tec" x1="1360" y1="210" x2="524" y2="260"/>
@@ -2609,7 +2609,7 @@
           <ellipse cx="1172" cy="150" rx="92" ry="28"/>
           <text x="1172" y="154">Aprobar conformidad</text>
         </g>
-        <g class="uc-node" data-uc="calificar-tecnico" data-actors="cli">
+        <g class="uc-node" data-uc="calificar-tecnico" data-actors="adm">
           <ellipse cx="1172" cy="260" rx="92" ry="28"/>
           <text x="1172" y="264">Calificar técnico</text>
         </g>
@@ -3238,7 +3238,7 @@
             <li>→ Ver presupuestos y aprobar o rechazar</li>
             <li>→ Confirmar o rechazar visita propuesta</li>
             <li>→ Ver conformidad y estado del trabajo</li>
-            <li>→ Calificar al técnico al finalizar</li>
+            <li>→ Gestionar sus inmuebles (alta y edición)</li>
             <li>→ Notificaciones in-app</li>
           </ul>
         </div>
@@ -4139,7 +4139,7 @@
     'registrar-avance': { layer: 'ACTOR · TÉCNICO  ·  HU-07A  ·  RF-07A', name: 'Registrar avance', desc: 'El técnico registra los avances del trabajo: descripción, porcentaje completado y fecha. Los avances quedan visibles en la pestaña de ejecución y en el timeline.' },
     'subir-conformidad': { layer: 'ACTOR · TÉCNICO  ·  HU-09  ·  RF-07D', name: 'Subir conformidad', desc: 'Al finalizar el trabajo, el técnico marca el incidente como completado y sube la foto de la conformidad firmada por el cliente + el comprobante de compras.' },
     'aprobar-conformidad': { layer: 'ACTOR · ADMINISTRADOR  ·  HU-10  ·  RF-08', name: 'Aprobar conformidad', desc: 'El admin revisa la foto de conformidad. Si aprueba, registra la calificación del técnico (1-5★) y el incidente queda marcado como resuelto (fue_resuelto = true). Si rechaza, el técnico debe subir una nueva foto.' },
-    'calificar-tecnico': { layer: 'ACTOR · CLIENTE  ·  HU-11  ·  RF-09', name: 'Calificar técnico', desc: 'Una vez finalizado el incidente, el cliente puede calificar al técnico con una puntuación de 1 a 5 estrellas + comentario. La calificación actualiza el promedio del técnico.' },
+    'calificar-tecnico': { layer: 'ACTOR · ADMINISTRADOR  ·  HU-11  ·  RF-09', name: 'Calificar técnico', desc: 'Al aprobar la conformidad, la administración evalúa la calidad del trabajo del técnico con una puntuación de 1 a 5 estrellas + comentario. La calificación actualiza el promedio del técnico usado en el ranking de asignación.' },
     'registrar-cobro': { layer: 'ACTOR · ADMINISTRADOR  ·  HU-08A  ·  RF-07B', name: 'Registrar cobro al cliente', desc: 'El admin registra el cobro al cliente: monto, método de pago (efectivo, transferencia, débito, crédito), comprobante y observaciones. Al registrarse, el incidente pasa a estado finalizado.' },
     'registrar-pago-tecnico': { layer: 'ACTOR · ADMINISTRADOR  ·  HU-08B  ·  RF-07C', name: 'Registrar pago al técnico', desc: 'El admin registra el pago al técnico por el trabajo realizado: monto, método y comprobante. Es una operación independiente del cobro al cliente.' },
     'ver-timeline': { layer: 'TRANSVERSAL  ·  HU-07B/C  ·  RF-07A', name: 'Ver timeline del incidente', desc: 'Los 3 roles pueden consultar la línea de tiempo del incidente: registro, asignación, inspección, presupuesto, avances, conformidad, cobro y pago. Cada evento es expandible para ver su detalle. La vista se adapta al rol (cliente ve menos, admin ve todo).' },
@@ -4617,14 +4617,14 @@
   const RF_ICON_SVG  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>';
 
   const HU_INFO_TRACE = {
-    'HU-01':    { name:'HU-01 — Registrar incidente',          desc:'Como cliente quiero registrar un incidente desde mi portal: selecciono el inmueble, describo el problema, adjunto fotos opcionales e indico mi disponibilidad horaria. El sistema genera un legajo digital y notifica al administrador en tiempo real.' },
+    'HU-01':    { name:'HU-01 — Registrar incidente',          desc:'Como cliente quiero registrar un incidente desde mi portal: selecciono el inmueble, describo el problema, adjunto fotos opcionales e indico mi disponibilidad horaria. El sistema genera un legajo digital y notifica de inmediato al administrador.' },
     'HU-03A/B': { name:'HU-03A/B — Alta de técnicos',          desc:'HU-03A: Como técnico quiero solicitar mi registro completando datos y especialidades. HU-03B: Como admin quiero aprobar o rechazar solicitudes de técnicos; el sistema genera y envía las credenciales temporales automáticamente.' },
     'HU-04':    { name:'HU-04 — Asignar / Aceptar asignación', desc:'Como admin quiero asignar al técnico más adecuado filtrando por especialidad y ranking. Como técnico quiero recibir la notificación in-app y confirmar o rechazar la asignación. El incidente pasa a en_proceso solo si acepta.' },
     'HU-07A/B/C':{ name:'HU-07A/B/C — Avances y Timeline',     desc:'HU-07A: Como técnico registro avances con descripción y porcentaje. HU-07B: Como técnico veo el timeline completo del incidente. HU-07C: Como cliente veo el historial de eventos de mi incidente adaptado a mi rol.' },
     'HU-08A/B': { name:'HU-08A/B — Cobro y pago',              desc:'HU-08A: Como admin registro el cobro al cliente (monto, método, comprobante). HU-08B: Como admin registro el pago al técnico como operación independiente. Ambas son necesarias para cerrar el incidente.' },
     'HU-09':    { name:'HU-09 — Subir conformidad',             desc:'Como técnico, al finalizar el trabajo subo la foto de la conformidad firmada por el cliente junto al comprobante de compra de materiales. Esto activa la revisión del administrador.' },
     'HU-10':    { name:'HU-10 — Aprobar conformidad',           desc:'Como admin reviso la foto de conformidad subida por el técnico. Si apruebo, registro la calificación del técnico (1-5★) y el incidente queda marcado como resuelto. Si rechazo, el técnico debe subir una nueva foto.' },
-    'HU-11':    { name:'HU-11 — Calificar técnico',             desc:'Como cliente puedo calificar al técnico con 1 a 5 estrellas más un comentario opcional. La calificación actualiza el promedio del técnico que se usa para ordenar la lista de asignación.' },
+    'HU-11':    { name:'HU-11 — Calificar técnico',             desc:'Como administrador, al aprobar la conformidad, califico al técnico con 1 a 5 estrellas más un comentario opcional. La calificación actualiza el promedio del técnico que se usa para ordenar la lista de asignación.' },
   };
 
   const RF_INFO_TRACE = {
@@ -4637,9 +4637,9 @@
     'RF-07D':        { name:'RF-07D — Conformidad digital',        desc:'El sistema debe permitir subir y almacenar la foto de la conformidad firmada por el cliente como evidencia auditable de que el trabajo fue realizado.' },
     'RF-07B/C/D':    { name:'RF-07B/C/D — Cierre financiero',      desc:'Conjunto de requerimientos de cierre: conformidad digital firmada (RF-07D), cobro al cliente (RF-07B) y pago al técnico (RF-07C).' },
     'RF-08':         { name:'RF-08 — Aprobación de conformidad',   desc:'El sistema debe permitir al admin revisar la foto de conformidad y aprobarla o rechazarla, registrando calificación del técnico y observaciones.' },
-    'RF-09':         { name:'RF-09 — Calificación de técnicos',    desc:'El sistema debe permitir calificar a los técnicos con 1 a 5 estrellas. La calificación actualiza el ranking que ordena la lista de asignación.' },
+    'RF-09':         { name:'RF-09 — Calificación de técnicos',    desc:'El sistema debe permitir que la administración califique a los técnicos con 1 a 5 estrellas al cerrar el trabajo. La calificación actualiza el ranking que ordena la lista de asignación.' },
     'RF-11':         { name:'RF-11 — Historial de trabajos',       desc:'El sistema debe mantener el historial completo de trabajos de cada técnico, con estado, calificación y observaciones para cada incidente.' },
-    'RF-12':         { name:'RF-12 — Métricas y reportes',         desc:'El sistema debe exponer indicadores de proceso calculados en tiempo real: tiempo de ciclo, tasa de primera vez, WIP, satisfacción del cliente y más.' },
+    'RF-12':         { name:'RF-12 — Métricas y reportes',         desc:'El sistema debe exponer indicadores de proceso calculados de forma automática: tiempo de ciclo, tasa de primera vez, WIP, calidad del servicio y más.' },
     'RF-03, RF-09, RF-11': { name:'RF-03, RF-09, RF-11 — Gestión de técnicos', desc:'Conjunto: padrón de técnicos con especialidades (RF-03), sistema de calificación y ranking (RF-09) e historial completo de trabajos por técnico (RF-11).' },
   };
 
