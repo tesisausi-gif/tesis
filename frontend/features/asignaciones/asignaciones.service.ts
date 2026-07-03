@@ -306,20 +306,27 @@ export async function crearAsignacion(data: {
     const { createAdminClient } = await import('@/shared/lib/supabase/admin')
     const supabase = createAdminClient()
 
-    // Bloquear si ya hay una asignación pendiente de respuesta (Opción A: exclusiva)
-    const { data: pendiente } = await supabase
+    // Bloquear si el incidente ya tiene un técnico ocupándolo: ya sea una asignación
+    // pendiente de respuesta o una ya activa (aceptada/en_curso/completada). Así se
+    // evita tener dos técnicos sobre el mismo incidente. Para cambiar de técnico, el
+    // admin primero debe darlo de baja (eso cancela la asignación anterior).
+    const { data: ocupada } = await supabase
       .from('asignaciones_tecnico')
-      .select('id_asignacion, tecnicos(nombre, apellido)')
+      .select('id_asignacion, estado_asignacion, tecnicos(nombre, apellido)')
       .eq('id_incidente', data.id_incidente)
-      .eq('estado_asignacion', 'pendiente')
+      .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso', 'completada'])
+      .limit(1)
       .maybeSingle()
 
-    if (pendiente) {
-      const tec = (pendiente as any).tecnicos
+    if (ocupada) {
+      const tec = (ocupada as any).tecnicos
       const nombre = tec ? `${tec.nombre} ${tec.apellido}` : 'un técnico'
+      const esPendiente = (ocupada as any).estado_asignacion === 'pendiente'
       return {
         success: false,
-        error: `${nombre} ya tiene una asignación pendiente de respuesta. Esperá a que acepte o rechace antes de asignar a otro técnico.`,
+        error: esPendiente
+          ? `${nombre} ya tiene una asignación pendiente de respuesta. Esperá a que acepte o rechace antes de asignar a otro técnico.`
+          : `El incidente ya tiene a ${nombre} asignado. Para cambiar de técnico, primero dalo de baja del incidente.`,
       }
     }
 
