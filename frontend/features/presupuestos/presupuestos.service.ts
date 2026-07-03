@@ -710,12 +710,35 @@ export async function rechazarPresupuestoCliente(
     if (presupuesto.id_incidente) {
       const { data: asig } = await supabaseAdmin
         .from('asignaciones_tecnico')
-        .select('id_asignacion')
+        .select('id_asignacion, id_tecnico')
         .eq('id_incidente', presupuesto.id_incidente)
         .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
         .maybeSingle()
       if (asig) {
         await supabaseAdmin.from('asignaciones_tecnico').update({ estado_asignacion: 'rechazada' }).eq('id_asignacion', asig.id_asignacion)
+
+        // Desvincular al técnico de forma consistente (igual que el rechazo del admin):
+        // anular su inspección para que no la herede el próximo técnico, y avisarle
+        // que su asignación fue revocada (no dejarlo desvinculado en silencio).
+        if (asig.id_tecnico) {
+          await supabaseAdmin
+            .from('inspecciones')
+            .update({ esta_anulada: true })
+            .eq('id_incidente', presupuesto.id_incidente)
+            .eq('id_tecnico', asig.id_tecnico)
+            .eq('esta_anulada', false)
+          try {
+            const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+            await crearNotificacion({
+              id_tecnico: asig.id_tecnico,
+              tipo: 'presupuesto_rechazado_cliente',
+              titulo: 'El cliente rechazó tu presupuesto',
+              mensaje: `El cliente rechazó tu presupuesto del incidente #${presupuesto.id_incidente}. Tu asignación fue revocada.`,
+              id_incidente: presupuesto.id_incidente,
+              id_presupuesto: idPresupuesto,
+            })
+          } catch { /* no bloquear */ }
+        }
       }
       await supabaseAdmin.from('incidentes').update({ estado_actual: 'pendiente' }).eq('id_incidente', presupuesto.id_incidente)
 
@@ -784,12 +807,34 @@ export async function rechazarPresupuestoConDecision(
     if (decision === 'nuevo_tecnico') {
       const { data: asig } = await supabaseAdmin
         .from('asignaciones_tecnico')
-        .select('id_asignacion')
+        .select('id_asignacion, id_tecnico')
         .eq('id_incidente', idIncidente)
         .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
         .maybeSingle()
       if (asig) {
         await supabaseAdmin.from('asignaciones_tecnico').update({ estado_asignacion: 'rechazada' }).eq('id_asignacion', asig.id_asignacion)
+
+        // Desvincular al técnico de forma consistente: anular su inspección (que no la
+        // herede el nuevo técnico) y avisarle que quedó fuera del incidente.
+        if (asig.id_tecnico) {
+          await supabaseAdmin
+            .from('inspecciones')
+            .update({ esta_anulada: true })
+            .eq('id_incidente', idIncidente)
+            .eq('id_tecnico', asig.id_tecnico)
+            .eq('esta_anulada', false)
+          try {
+            const { crearNotificacion } = await import('@/features/notificaciones/notificaciones-inapp.service')
+            await crearNotificacion({
+              id_tecnico: asig.id_tecnico,
+              tipo: 'presupuesto_rechazado_cliente',
+              titulo: 'El cliente pidió otro técnico',
+              mensaje: `El cliente rechazó tu presupuesto del incidente #${idIncidente} y solicitó un técnico diferente. Tu asignación fue revocada.`,
+              id_incidente: idIncidente,
+              id_presupuesto: idPresupuesto,
+            })
+          } catch { /* no bloquear */ }
+        }
       }
       await supabaseAdmin.from('incidentes').update({ estado_actual: 'pendiente' }).eq('id_incidente', idIncidente)
 
