@@ -108,9 +108,13 @@ Verificado con `grep` exacto + `eslint` + `knip` (instalado como devDep, correr 
 - **KEPT por duda de intención (NO borrar):** `calificarIncidenteAdmin` (0 usos pero puede ser feature admin intencional), `getIncidenteById`, y los 2 archivos (`aprobar-presupuestos-content`, `cambiar-password-primer-acceso` técnico).
 - **Pendiente (grande, bajo valor):** resto de exports/tipos/enum members que marca knip → muchos son falsos positivos (uso interno). Revisar por feature solo si sobra tiempo. + 5 estados "fetch cargado-pero-no-leído" en incidente-detail-modal (sacarlos toca lógica de fetch).
 
-## Candidatos aún sin abordar (menor severidad, lógica de negocio)
-- ~~`actualizarIncidente` permite regresiones de estado~~ → resuelto al borrar la UI muerta (commit `e2722ad`); la función server aún aceptaría `estado_actual` pero ningún caller vivo lo usa.
-- Orden pago/cobro del técnico (pago posible antes del cobro; sin recordatorio de cobro pendiente).
+## Lógica de negocio — cierre
+- ~~`actualizarIncidente` permite regresiones de estado~~ → resuelto al borrar la UI muerta (commit `e2722ad`); ningún caller vivo pasa `estado_actual`.
+- **Doble pago/cobro (commit `4662319`)** — anti-duplicado en `registrarPagoTecnico` y `registrarCobroCliente`. Pago y cobro son independientes por diseño (no se fuerza orden). tsc + build OK.
+- **Verificado NO-bug:** "montos de presupuesto sin validar suma" — el `costo_total` del técnico se recalcula al aprobar el admin (`materiales+mano_obra+comisión`); no hay inconsistencia real.
+- **Moot:** "editar/borrar calificación no recalcula promedio" — las funciones vivían en `calificaciones.service.ts`, ya eliminado (estaba muerto).
+
+Con esto, los temas de **lógica de negocio / consistencia funcional** de la auditoría quedan cubiertos. Pendiente NO-negocio: presentación #233, seguridad (fuera de alcance), PDF (delegado).
 - Validación de que la suma del presupuesto sea coherente.
 
 ## Fuera de alcance de esta tanda (seguridad — despriorizado por Fausti)
