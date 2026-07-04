@@ -119,5 +119,18 @@ Verificado con `grep` exacto + `eslint` + `knip` (instalado como devDep, correr 
 Con esto, los **7 hallazgos CRÍTICOS y los MEDIOS** de negocio (logica-de-negocio.md) quedan cubiertos. Solo restan MENORES cosméticos (enums sin 'cancelado', vencimientos dependientes del page-load, recordatorios de pago/cobro pendiente). Pendiente NO-negocio: presentación #233, seguridad (fuera de alcance), PDF (delegado).
 - Validación de que la suma del presupuesto sea coherente.
 
+## Presentación de defensa (card #233 + #224) — ⏳ verificado en navegador, falta pushear
+Los 7 pedidos de la card #233 + los ítems de calidad de #224. Cada cambio se verificó abriendo la presentación en un server local + navegador (screenshots). Detalle en [presentacion.md](presentacion.md).
+- **`98eba07`** — Pedido 1: slide nueva del "dolor real" ("Lo que ese caos le costaba a ISBA") tras los 6 problemas.
+- **`3ce6bf0`** — Pedido 2: matriz alineada 1:1 con los 6 problemas (mismos títulos/orden, fila "Estado fuera de control", sin "Subtrabajos") + banda de valor + modales sincronizados.
+- **`f9ba554`** — Pedidos 3+4: se quitó "Problema y objetivo" y se fusionó con "Alcance" en una sola slide "El mandato" (objetivo + DESDE→HASTA + módulos + fuera de alcance + actores).
+- **`07f9a6e`** — Pedido 5 (parcial): metodología, correcciones objetivas ("Defensa preparada", "seguimiento semanal"). Cronograma/fechas → Giuliano.
+- **`beb6cda`** — Pedido 6: portales con mini-pipeline por rol + remate "mismo dato, tres miradas".
+- **`e1fb6f8`** — Pedido 6.1: Walter muestra una conversación (pregunta→tool→respuesta) por rol en vez del catálogo.
+- **`aed67ef`** — #224: términos vetados ("trazabilidad"/"tiempo real") eliminados.
+- **`4a02ee1`** — #224: numeración coherente (hoja de ruta sin "Flujos" duplicado; Conocé a Mantis=10, Indicadores=11).
+- **`795410b`** (anterior) — coherencia con el sistema: el cliente no califica al técnico.
+- **PENDIENTE (subjetivo/creativo, para revisar con Fausti):** reubicar FODA junto a Metodología (Sally 2.2), dieta de texto de Valor agregado y Flujos (2.1), cronograma de metodología (Giuliano).
+
 ## Fuera de alcance de esta tanda (seguridad — despriorizado por Fausti)
 Los hallazgos del informe [arquitectura-seguridad.md](arquitectura-seguridad.md) (guards de autorización faltantes, `createAdminClient` que bypassa RLS, Walter confiando en el `rol` del cliente, bucket de documentos público, IDOR de lectura) **no** se tocaron en esta tanda. Quedan documentados ahí para retomar.
