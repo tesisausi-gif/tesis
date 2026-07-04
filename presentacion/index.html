@@ -2700,16 +2700,16 @@
       <span class="line"></span>
     </div>
 
-    <div style="padding-top: 90px; margin-bottom: 16px;">
-      <div class="eyebrow">Seguimiento punta a punta</div>
-      <h2 class="display-lg">Cada problema<br>tiene su solución<span class="mark-blue dot-end"></span></h2>
-      <p class="text-lead" style="margin-top: 12px; max-width: 740px;">
-        El hilo conductor de la tesis. <strong style="color: var(--ink);">Cliqueá cualquier fila</strong> para ver el detalle del mandato y los casos de uso.
-      </p>
+    <div style="padding-top: 56px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: end;">
+      <div>
+        <div class="eyebrow">Seguimiento punta a punta</div>
+        <h2 class="display-lg">Cada problema tiene su solución<span class="mark-blue dot-end"></span></h2>
+      </div>
+      <p style="font-family: var(--mono); font-size: 11px; color: var(--ink-faded); letter-spacing: 0.1em; text-align: right; margin: 0 0 6px;">Cliqueá una fila<br>para ver el detalle</p>
     </div>
 
     <!-- Leyenda de siglas -->
-    <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 12px; background: var(--paper-2); border: 1px dashed var(--ink-faded); font-family: var(--mono); font-size: 11px; color: var(--ink-soft);">
+    <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 12px; background: var(--paper-2); border: 1px dashed var(--ink-faded); font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft);">
       <span><strong style="color: var(--ink);">RF</strong> = Requerimiento Funcional</span>
       <span style="color: var(--ink-faded);">·</span>
       <span><strong style="color: var(--ink);">UC</strong> = Caso de Uso (UML / ISO 29148)</span>
@@ -2730,51 +2730,60 @@
     <div class="stagger">
       <div class="traza traza-clickable" data-trace="01">
         <div class="cell cell-num">01</div>
-        <div class="cell"><strong>Registro no estructurado</strong> de incidentes</div>
-        <div class="cell">Módulo de Gestión de Incidentes con registro inicial vinculado a inmuebles</div>
-        <div class="cell">Flujo Alta de Incidentes · UC Registrar Incidente</div>
-        <div class="cell">Portal cliente — incidentes con descripción, foto y disponibilidad horaria</div>
-        <div class="cell cell-valor">Legajo digital único</div>
+        <div class="cell"><strong>Estado fuera de control</strong> — sin visibilidad del avance</div>
+        <div class="cell">Máquina de estados que refleja cada etapa del incidente</div>
+        <div class="cell">Flujo Ejecución · UC Ver Timeline</div>
+        <div class="cell">Estado y sub-estados visibles en los 3 portales</div>
+        <div class="cell cell-valor">Cualquiera responde el estado en segundos</div>
       </div>
       <div class="traza traza-clickable" data-trace="02">
         <div class="cell cell-num">02</div>
-        <div class="cell"><strong>Documentación manual</strong> y pérdida de información</div>
-        <div class="cell">Generación automática del historial de cada incidente</div>
-        <div class="cell">Flujo Ejecución y Seguimiento · UC Ver Timeline</div>
-        <div class="cell">Timeline cronológico con todos los eventos del caso</div>
-        <div class="cell cell-valor">Cero pérdida de información</div>
+        <div class="cell"><strong>Sin registro formal</strong> de incidentes</div>
+        <div class="cell">Módulo de Incidentes con registro inicial vinculado a inmuebles</div>
+        <div class="cell">Flujo Alta de Incidentes · UC Registrar Incidente</div>
+        <div class="cell">Portal cliente — descripción, foto y disponibilidad</div>
+        <div class="cell cell-valor">Legajo digital único</div>
       </div>
       <div class="traza traza-clickable" data-trace="03">
         <div class="cell cell-num">03</div>
-        <div class="cell"><strong>Sin base de técnicos</strong> ni medición de desempeño</div>
-        <div class="cell">Módulo de Gestión de Técnicos con historial y calificaciones</div>
-        <div class="cell">Flujo Alta de Técnicos · UC Asignar · UC Calificar Técnico</div>
-        <div class="cell">ABM técnicos + solicitudes de registro + calificación 1–5★</div>
-        <div class="cell cell-valor">Selección informada</div>
+        <div class="cell"><strong>Comunicación sin rastro</strong> entre las partes</div>
+        <div class="cell">Notificación al técnico al asignarlo y al admin al aceptar</div>
+        <div class="cell">Flujo Asignación · UC Asignar / Aceptar</div>
+        <div class="cell">Notificaciones in-app + badges por rol</div>
+        <div class="cell cell-valor">Un solo canal auditable</div>
       </div>
       <div class="traza traza-clickable" data-trace="04">
         <div class="cell cell-num">04</div>
-        <div class="cell"><strong>Comunicación descentralizada</strong> entre áreas</div>
-        <div class="cell">Notificación al técnico al asignarlo y al admin al aceptar</div>
-        <div class="cell">Flujo Asignación · UC Asignar / Aceptar Asignación</div>
-        <div class="cell">Notificaciones in-app + badges por rol en el sidebar</div>
-        <div class="cell cell-valor">Un solo canal auditable</div>
+        <div class="cell"><strong>Sin base de técnicos</strong> ni medición de desempeño</div>
+        <div class="cell">Módulo de Técnicos con historial y calificaciones</div>
+        <div class="cell">Flujo Alta de Técnicos · UC Asignar · UC Calificar</div>
+        <div class="cell">ABM técnicos + solicitudes + calificación 1–5★</div>
+        <div class="cell cell-valor">Selección informada</div>
       </div>
       <div class="traza traza-clickable" data-trace="05">
         <div class="cell cell-num">05</div>
-        <div class="cell"><strong>Sin reportes ni métricas</strong> para decidir</div>
-        <div class="cell">Módulo de Reportes operativos y estratégicos con filtros</div>
-        <div class="cell">UC Consultar reportes · indicadores derivados del timeline</div>
-        <div class="cell">Dashboard admin con semáforos, tendencias y filtros por período</div>
-        <div class="cell cell-valor">Decisiones con datos</div>
+        <div class="cell"><strong>Información dispersa</strong> en llamadas, chat y papel</div>
+        <div class="cell">Generación automática del historial de cada incidente</div>
+        <div class="cell">Flujo Ejecución y Seguimiento · UC Ver Timeline</div>
+        <div class="cell">Timeline cronológico con todos los eventos</div>
+        <div class="cell cell-valor">Cero pérdida de información</div>
       </div>
       <div class="traza traza-clickable" data-trace="06">
         <div class="cell cell-num">06</div>
-        <div class="cell"><strong>Subtrabajos pagos</strong> sin haberse hecho</div>
-        <div class="cell">Cierre formal del caso con conformidad firmada antes del cobro</div>
-        <div class="cell">Flujo Cierre · UC Aprobar Conformidad + Registrar Cobro + Pago</div>
-        <div class="cell">Foto firmada del cliente + cobro y pago separados por destinatario</div>
-        <div class="cell cell-valor">Nada se cobra sin estar hecho</div>
+        <div class="cell"><strong>Cero estadísticas</strong> para decidir</div>
+        <div class="cell">Módulo de Reportes con filtros por propiedad, técnico y período</div>
+        <div class="cell">UC Consultar reportes · indicadores del timeline</div>
+        <div class="cell">Dashboard admin con semáforos y tendencias</div>
+        <div class="cell cell-valor">Decisiones con datos</div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--ink); color: var(--paper); padding: 11px 24px; margin-top: 10px; border-left: 6px solid var(--mantis);">
+      <p style="font-family: var(--display); font-size: clamp(15px, 1.25vw, 19px); line-height: 1.3; color: white; font-weight: 500; margin: 0;">¿Para qué? Para que ISBA <em style="color: #60A5FA; font-style: normal; font-weight: 700;">gestione más incidentes con la misma estructura, cobre todo lo que hace y retenga a sus propietarios.</em></p>
+      <div style="display: flex; gap: 8px; flex-shrink: 0;">
+        <span style="font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #86EFAC; border: 1px solid #15803D; padding: 5px 10px; white-space: nowrap;">+ capacidad</span>
+        <span style="font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #86EFAC; border: 1px solid #15803D; padding: 5px 10px; white-space: nowrap;">+ cobranza</span>
+        <span style="font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #86EFAC; border: 1px solid #15803D; padding: 5px 10px; white-space: nowrap;">+ retención</span>
       </div>
     </div>
 
@@ -4410,27 +4419,37 @@
   // Cada estación es texto corto + chips opcionales para resaltar RFs/UCs/Flujos
   const TRACE_INFO = {
     '01': {
-      eyebrow: 'Fila 01 · Alta del incidente',
-      title: 'Registro no estructurado de incidentes',
-      footer: 'Tesis sec. 4.7.3 · sec. 6.7 punto 5 · sec. 6.8 · RF-01',
+      eyebrow: 'Problema 01 · Visibilidad del estado',
+      title: 'Estado fuera de control',
+      footer: 'Tesis sec. 6.6 · máquina de estados · RF-07A',
+      problema: 'El seguimiento dependía de quien atendió el caso. Nadie más sabía en qué etapa estaba el incidente.',
+      mandato: 'Máquina de estados que refleja cada etapa del incidente (pendiente → en proceso → finalizado), con sub-estados.',
+      modelacion: { chips: [['UC Ver Timeline','blue'],['Máquina de estados','blue'],['Flujo 9','warm']], text: 'Cada acción del flujo mueve el incidente a un estado/sub-estado definido.' },
+      sistema: { chips: [['3 portales','blue']], text: 'El estado y su sub-estado se ven en el portal del cliente, del técnico y del admin, siempre sincronizados.' },
+      valor: 'Cualquiera en ISBA responde el estado de un incidente en segundos.'
+    },
+    '02': {
+      eyebrow: 'Problema 02 · Alta del incidente',
+      title: 'Sin registro formal de incidentes',
+      footer: 'Tesis sec. 4.7.3 · sec. 6.7 punto 5 · RF-01',
       problema: 'En ISBA, los reclamos llegaban por WhatsApp, papel o Excel — sin formato común ni un único lugar.',
       mandato: 'Módulo de Gestión de Incidentes con registro inicial vinculado a propiedades + generación automática de historial.',
       modelacion: { chips: [['UC Registrar incidente','blue'],['HU-01','blue'],['RF-01','blue'],['Flujo 5','warm']], text: 'El cliente registra desde su portal, sin intermediación.' },
       sistema: { chips: [['Portal cliente','blue']], text: 'Form en /cliente/incidentes/nuevo con descripción, foto y franjas de disponibilidad. Se ve en la Demo 1/4.' },
       valor: 'Legajo digital único, accesible y centralizado.'
     },
-    '02': {
-      eyebrow: 'Fila 02 · Seguimiento del caso',
-      title: 'Documentación manual y pérdida de información',
-      footer: 'Tesis sec. 6.6 · sec. 6.7 punto 9 · RF-07A',
-      problema: 'El que atendía era el único que sabía el estado. Si se ausentaba, se perdía contexto.',
-      mandato: 'Generación automática de historial por incidente + comunicación entre áreas internas.',
-      modelacion: { chips: [['UC Ver Timeline','blue'],['HU-07A/B/C','blue'],['RF-07A','blue'],['Flujo 9','warm']], text: 'Timeline con todos los eventos del caso, accesible a los 3 roles.' },
-      sistema: { chips: [['Modal del incidente','blue']], text: 'Timeline cronológico con vista adaptada al rol (cliente ve menos, admin ve todo).' },
-      valor: 'Cero pérdida de información — seguimiento completo del ciclo.'
-    },
     '03': {
-      eyebrow: 'Fila 03 · Gestión de técnicos',
+      eyebrow: 'Problema 03 · Comunicación',
+      title: 'Comunicación sin rastro entre las partes',
+      footer: 'Tesis sec. 6.7 punto 6 · RF-04',
+      problema: 'WhatsApp, llamadas y mails dispersos. Sin registro de quién avisó a quién y cuándo.',
+      mandato: 'Notificación automática al asignar técnico y al confirmar aceptación.',
+      modelacion: { chips: [['UC Asignar','blue'],['UC Aceptar Asignación','blue'],['HU-04','blue'],['RF-04','blue'],['Flujo 6','warm']], text: 'Notificación in-app + badges al asignar y aceptar.' },
+      sistema: { chips: [['Notificaciones in-app','blue']], text: 'Badges en sidebar de cada rol. Se ve en la Demo 2/4.' },
+      valor: 'Un solo canal auditable, sin pérdida ni duplicación de mensajes.'
+    },
+    '04': {
+      eyebrow: 'Problema 04 · Gestión de técnicos',
       title: 'Sin base de técnicos ni medición de desempeño',
       footer: 'Tesis sec. 4.7.3 · sec. 6.7 punto 3 · RF-03, RF-09, RF-11',
       problema: 'Sin base estructurada de técnicos. Asignación improvisada por "confianza".',
@@ -4439,35 +4458,25 @@
       sistema: { chips: [['ABM Técnicos','blue']], text: 'Panel admin con solicitudes auto-aprobables + calificación 1–5★ con promedio.' },
       valor: 'Selección informada por desempeño y especialidad.'
     },
-    '04': {
-      eyebrow: 'Fila 04 · Comunicación',
-      title: 'Comunicación descentralizada entre áreas',
-      footer: 'Tesis sec. 6.7 punto 6 · RF-04',
-      problema: 'WhatsApp, llamadas y mails dispersos. Sin auditoría de quién avisó a quién y cuándo.',
-      mandato: 'Notificación automática al asignar técnico y al confirmar aceptación.',
-      modelacion: { chips: [['UC Asignar','blue'],['UC Aceptar Asignación','blue'],['HU-04','blue'],['RF-04','blue'],['Flujo 6','warm']], text: 'Notificación in-app + badges al asignar y aceptar.' },
-      sistema: { chips: [['Notificaciones in-app','blue']], text: 'Badges en sidebar de cada rol. Se ve en la Demo 2/4.' },
-      valor: 'Un solo canal auditable, sin pérdida ni duplicación de mensajes.'
-    },
     '05': {
-      eyebrow: 'Fila 05 · Toma de decisiones',
-      title: 'Sin reportes ni métricas para decidir',
+      eyebrow: 'Problema 05 · Seguimiento del caso',
+      title: 'Información dispersa en mil canales',
+      footer: 'Tesis sec. 6.6 · sec. 6.7 punto 9 · RF-07A',
+      problema: 'La info del caso se repartía entre llamadas, WhatsApp, mails y papel. El que atendía era el único que sabía.',
+      mandato: 'Generación automática del historial por incidente, accesible a los 3 roles.',
+      modelacion: { chips: [['UC Ver Timeline','blue'],['HU-07A/B/C','blue'],['RF-07A','blue'],['Flujo 9','warm']], text: 'Timeline con todos los eventos del caso, accesible a los 3 roles.' },
+      sistema: { chips: [['Modal del incidente','blue']], text: 'Timeline cronológico con vista adaptada al rol (cliente ve menos, admin ve todo).' },
+      valor: 'Cero pérdida de información — seguimiento completo del ciclo.'
+    },
+    '06': {
+      eyebrow: 'Problema 06 · Toma de decisiones',
+      title: 'Cero estadísticas para decidir',
       footer: 'Tesis sec. 4.7.3 Módulo de Reportes · RF-12',
-      problema: 'No había reportes estadísticos ni históricos. Decisiones basadas en intuición.',
+      problema: 'No había reportes estadísticos ni históricos. Decisiones basadas en la memoria del admin.',
       mandato: 'Módulo de Reportes operativos y estratégicos con filtros por propiedad, técnico, tipo y período.',
       modelacion: { chips: [['UC Consultar reportes','blue'],['RF-12','blue']], text: 'Indicadores calculados sobre el timeline en vivo.' },
       sistema: { chips: [['Dashboard admin','blue'],['Walter IA','success']], text: 'Dashboard con semáforos, tendencias y filtros. Walter responde consultas en lenguaje natural.' },
       valor: 'Decisiones con datos reales, en vivo.'
-    },
-    '06': {
-      eyebrow: 'Fila 06 · Cierre financiero',
-      title: 'Subtrabajos pagos sin haberse hecho',
-      footer: 'Tesis sec. 6.7 puntos 9 y 9.1 · RF-07B, RF-07C, RF-07D, RF-08',
-      problema: 'Riesgo concreto del modelo papel: trabajos cobrados sin estar realmente hechos.',
-      mandato: 'Cierre formal del caso con conformidad firmada antes del cobro.',
-      modelacion: { chips: [['UC Aprobar Conformidad','blue'],['UC Registrar Cobro','blue'],['UC Registrar Pago','blue'],['HU-08A/B','blue'],['HU-09','blue'],['HU-10','blue'],['RF-07B/C/D','blue'],['RF-08','blue'],['Flujo 9','warm']], text: 'Conformidad firmada digital + cobro y pago separados.' },
-      sistema: { chips: [['Módulo Pagos','blue']], text: 'Foto de conformidad firmada por el cliente + cobro y pago como operaciones independientes. Se ve en la Demo 4/4.' },
-      valor: 'Nada se cobra sin estar hecho. Conformidad firmada digital como evidencia auditable.'
     },
   };
 
