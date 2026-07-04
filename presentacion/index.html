@@ -4651,6 +4651,7 @@
       eyebrow: 'Rol cliente · 4 tools',
       title: 'Walter para el cliente',
       desc: 'El cliente le pregunta a Walter por sus propios incidentes o le pide reportar uno nuevo. Walter sólo accede a la información del cliente que pregunta.',
+      chat: { q: '¿Cómo viene el arreglo de la pérdida en Urquiza 1550?', tool: 'consultar_estado_incidente', a: 'El incidente #142 está En proceso — el técnico ya cargó el presupuesto y está esperando tu aprobación.' },
       groups: [
         {
           label: 'Consultar sus incidentes',
@@ -4672,6 +4673,7 @@
       eyebrow: 'Rol técnico · 2 tools',
       title: 'Walter para el técnico',
       desc: 'El técnico consulta los incidentes que se le asignaron a él. Walter no le muestra incidentes de otros técnicos ni datos operativos del admin.',
+      chat: { q: '¿Qué tengo asignado para esta semana?', tool: 'listar_incidentes', a: 'Tenés 3 incidentes asignados: #142 (aceptado), #150 (pendiente de aceptar) y #151 (con visita programada).' },
       groups: [
         {
           label: 'Consultar sus asignaciones',
@@ -4686,6 +4688,7 @@
       eyebrow: 'Rol administrador · 12 tools',
       title: 'Walter para el administrador',
       desc: 'El admin tiene acceso a toda la operación. Walter responde sobre cualquier entidad del sistema y puede calcular métricas para alimentar gráficos.',
+      chat: { q: '¿Qué técnico de plomería tiene mejor calificación y menos carga?', tool: 'consultar_tecnicos', a: 'Carlos Gómez — 4.8★ en plomería, con solo 2 incidentes activos ahora mismo.' },
       groups: [
         {
           label: 'Métricas y reportes',
@@ -4752,10 +4755,19 @@
       `;
     }).join('');
 
+    const c = data.chat;
+    const chatHTML = c ? `
+      <div style="background: var(--paper-2); border: 1px solid var(--ink-faded); padding: 14px 16px; margin: 12px 0 14px; display: flex; flex-direction: column; gap: 9px;">
+        <div style="align-self: flex-end; max-width: 80%; background: var(--mantis); color: white; padding: 8px 13px; border-radius: 12px 12px 2px 12px; font-size: 14px; line-height: 1.35;">${c.q}</div>
+        <div style="align-self: center; font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--mantis-deep); background: var(--mantis-soft); border: 1px solid var(--mantis); padding: 3px 11px; letter-spacing: 0.04em;">${c.tool}()</div>
+        <div style="align-self: flex-start; max-width: 84%; background: white; border: 1px solid var(--ink-faded); color: var(--ink); padding: 8px 13px; border-radius: 12px 12px 12px 2px; font-size: 14px; line-height: 1.4;"><strong style="color: var(--mantis-deep);">Walter:</strong> ${c.a}</div>
+      </div>` : '';
+
     walterPanel.innerHTML = `
       <div class="walter-panel-eyebrow">${data.eyebrow}</div>
       <h3 class="walter-panel-title">${data.title}</h3>
       <p class="walter-panel-desc">${data.desc}</p>
+      ${chatHTML}
       <div class="walter-panel-meta">
         <span class="pill-blue">${totalTools} tool${totalTools > 1 ? 's' : ''}</span>
         <span style="font-family: var(--mono); font-size: 11px; color: var(--ink-faded); letter-spacing: 0.15em; text-transform: uppercase;">disponibles para este rol</span>
