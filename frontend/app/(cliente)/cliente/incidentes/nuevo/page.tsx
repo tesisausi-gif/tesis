@@ -425,7 +425,7 @@ export default function NuevoIncidentePage() {
         </div>
 
         {/* ── Paso 03: Disponibilidad ── */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 space-y-3">
+        <div className={`bg-white rounded-2xl p-5 border space-y-3 ${diasSinFranja.length > 0 ? 'border-red-200' : 'border-gray-100'}`}>
           <div className="flex items-start gap-3">
             <span className="text-4xl font-black text-amber-100 leading-none select-none">03</span>
             <div className="pt-0.5">
@@ -440,14 +440,29 @@ export default function NuevoIncidentePage() {
             onChange={setFranjas}
             onDiasSinFranjaChange={setDiasSinFranja}
           />
+
+          {diasSinFranja.length > 0 && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+              <span className="text-red-400 text-sm leading-none mt-0.5">!</span>
+              <p className="text-xs text-red-600 leading-snug">
+                Agregá un horario para{' '}
+                <strong>
+                  {diasSinFranja
+                    .map(d => new Date(d + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }))
+                    .join(', ')}
+                </strong>
+                {' '}o destildá esos días del calendario.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ── Botón enviar ── */}
         <div className="pt-1 pb-6">
           <Button
             type="submit"
-            disabled={submitting}
-            className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-base gap-2 shadow-sm shadow-amber-200 transition-all active:scale-[0.98]"
+            disabled={submitting || diasSinFranja.length > 0}
+            className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-base gap-2 shadow-sm shadow-amber-200 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>

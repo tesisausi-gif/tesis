@@ -78,7 +78,9 @@ interface WalterChatPanelProps {
   onClearIncidenteCreado: () => void
   showCalendario: boolean
   calendarioFranjas: FranjaInput[]
+  calendarioDiasSinFranja: string[]
   onCalendarioChange: (franjas: FranjaInput[]) => void
+  onCalendarioDiasSinFranjaChange: (dias: string[]) => void
   onCalendarioConfirm: () => void
   inmueblesList: WalterInmuebleOption[] | null
   onInmuebleSelect: () => void
@@ -261,7 +263,9 @@ function WalterChatPanel({
   onClearIncidenteCreado,
   showCalendario,
   calendarioFranjas,
+  calendarioDiasSinFranja,
   onCalendarioChange,
+  onCalendarioDiasSinFranjaChange,
   onCalendarioConfirm,
   inmueblesList,
   onInmuebleSelect,
@@ -452,18 +456,32 @@ function WalterChatPanel({
                 modo="editar"
                 franjas={calendarioFranjas}
                 onChange={onCalendarioChange}
+                onDiasSinFranjaChange={onCalendarioDiasSinFranjaChange}
                 className="text-sm"
               />
             </div>
             <div className="px-3 py-3 border-t border-slate-100 shrink-0">
+              {calendarioDiasSinFranja.length > 0 && (
+                <p className="text-[11px] text-red-500 text-center px-1 mb-1">
+                  Falta agregar horario para:{' '}
+                  <strong>
+                    {calendarioDiasSinFranja
+                      .map(d => new Date(d + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }))
+                      .join(', ')}
+                  </strong>
+                </p>
+              )}
               <button
                 onClick={() => {
                   const validas = calendarioFranjas.filter(f => f.hora_inicio && f.hora_fin)
-                  if (!validas.length) return
+                  if (!validas.length || calendarioDiasSinFranja.length > 0) return
                   onCalendarioConfirm()
                   sendQuickAction(`Disponibilidad confirmada.\nDISPONIBILIDAD_JSON:${JSON.stringify(validas)}`)
                 }}
-                disabled={calendarioFranjas.filter(f => f.hora_inicio && f.hora_fin).length === 0}
+                disabled={
+                  calendarioFranjas.filter(f => f.hora_inicio && f.hora_fin).length === 0 ||
+                  calendarioDiasSinFranja.length > 0
+                }
                 className="w-full py-2.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: 'linear-gradient(135deg, #0e1929 0%, #1e3a5f 100%)', color: '#93c5fd' }}
               >
@@ -624,6 +642,7 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
   const [incidenteCreado, setIncidenteCreado] = useState<{ id_incidente: number } | null>(null)
   const [showCalendario, setShowCalendario] = useState(false)
   const [calendarioFranjas, setCalendarioFranjas] = useState<FranjaInput[]>([])
+  const [calendarioDiasSinFranja, setCalendarioDiasSinFranja] = useState<string[]>([])
   const [inmueblesList, setInmueblesList] = useState<WalterInmuebleOption[] | null>(null)
   const [links, setLinks] = useState<WalterLink[] | null>(null)
 
@@ -889,8 +908,10 @@ export function AIHelpChat({ variant = 'floating', rol = 'cliente' }: AIHelpChat
           onClearIncidenteCreado={() => setIncidenteCreado(null)}
           showCalendario={showCalendario}
           calendarioFranjas={calendarioFranjas}
+          calendarioDiasSinFranja={calendarioDiasSinFranja}
           onCalendarioChange={setCalendarioFranjas}
-          onCalendarioConfirm={() => { setShowCalendario(false); setCalendarioFranjas([]) }}
+          onCalendarioDiasSinFranjaChange={setCalendarioDiasSinFranja}
+          onCalendarioConfirm={() => { setShowCalendario(false); setCalendarioFranjas([]); setCalendarioDiasSinFranja([]) }}
           inmueblesList={inmueblesList}
           onInmuebleSelect={() => setInmueblesList(null)}
           links={links}
