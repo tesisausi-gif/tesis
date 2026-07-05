@@ -101,37 +101,64 @@ export async function getPagosParaExportar(filtro?: FiltroFechas): Promise<FilaP
   const { createAdminClient: admin } = await import('@/shared/lib/supabase/admin')
   const supabase = admin()
 
-  let query = supabase
-    .from('pagos')
+  // El flujo real registra el dinero en cobros_clientes (ingresos) y
+  // pagos_tecnicos (egresos); la tabla genérica `pagos` quedó sin escritores.
+  let qCobros = supabase
+    .from('cobros_clientes')
     .select(`
-      id_pago,
-      fecha_pago,
-      monto_pagado,
-      tipo_pago,
-      metodo_pago,
-      numero_comprobante,
+      id_cobro, fecha_cobro, monto_cobro, metodo_pago, referencia_pago,
+      incidentes (id_incidente, descripcion_problema)
+    `)
+    .order('fecha_cobro', { ascending: false })
+  let qPagosTec = supabase
+    .from('pagos_tecnicos')
+    .select(`
+      id_pago_tecnico, fecha_pago, monto_pago, metodo_pago, referencia_pago,
       incidentes (id_incidente, descripcion_problema)
     `)
     .order('fecha_pago', { ascending: false })
 
-  if (filtro?.fechaDesde) query = query.gte('fecha_pago', filtro.fechaDesde)
-  if (filtro?.fechaHasta) query = query.lte('fecha_pago', filtro.fechaHasta)
+  if (filtro?.fechaDesde) {
+    qCobros = qCobros.gte('fecha_cobro', filtro.fechaDesde)
+    qPagosTec = qPagosTec.gte('fecha_pago', filtro.fechaDesde)
+  }
+  if (filtro?.fechaHasta) {
+    qCobros = qCobros.lte('fecha_cobro', filtro.fechaHasta)
+    qPagosTec = qPagosTec.lte('fecha_pago', filtro.fechaHasta)
+  }
 
-  const { data, error } = await query
-  if (error) throw error
+  const [cobrosRes, pagosTecRes] = await Promise.all([qCobros, qPagosTec])
+  if (cobrosRes.error) throw cobrosRes.error
+  if (pagosTecRes.error) throw pagosTecRes.error
 
-  return (data || []).map((row: any) => ({
-    id_pago: row.id_pago,
-    fecha_pago: row.fecha_pago ?? '',
-    monto_pagado: row.monto_pagado ?? 0,
-    tipo_pago: row.tipo_pago ?? '',
-    metodo_pago: row.metodo_pago ?? '',
-    numero_comprobante: row.numero_comprobante ?? '',
-    incidente_id: row.incidentes?.id_incidente ?? 0,
-    incidente_descripcion: row.incidentes?.descripcion_problema ?? '',
-    cliente_nombre: '',
-    cliente_apellido: '',
-  }))
+  const filas: FilaPagoExport[] = [
+    ...(cobrosRes.data || []).map((row: any) => ({
+      id_pago: row.id_cobro,
+      fecha_pago: row.fecha_cobro ?? '',
+      monto_pagado: row.monto_cobro ?? 0,
+      tipo_pago: 'cobro_cliente',
+      metodo_pago: row.metodo_pago ?? '',
+      numero_comprobante: row.referencia_pago ?? '',
+      incidente_id: row.incidentes?.id_incidente ?? 0,
+      incidente_descripcion: row.incidentes?.descripcion_problema ?? '',
+      cliente_nombre: '',
+      cliente_apellido: '',
+    })),
+    ...(pagosTecRes.data || []).map((row: any) => ({
+      id_pago: row.id_pago_tecnico,
+      fecha_pago: row.fecha_pago ?? '',
+      monto_pagado: row.monto_pago ?? 0,
+      tipo_pago: 'pago_tecnico',
+      metodo_pago: row.metodo_pago ?? '',
+      numero_comprobante: row.referencia_pago ?? '',
+      incidente_id: row.incidentes?.id_incidente ?? 0,
+      incidente_descripcion: row.incidentes?.descripcion_problema ?? '',
+      cliente_nombre: '',
+      cliente_apellido: '',
+    })),
+  ]
+  filas.sort((a, b) => (b.fecha_pago || '').localeCompare(a.fecha_pago || ''))
+  return filas
 }
 
 export async function getTecnicosParaExportar(): Promise<FilaTecnicoExport[]> {
@@ -490,16 +517,17 @@ export async function getR4PropiedadesMasIncidentes(filtros: {
   const incidenteIds = (incidentes || []).map((i: any) => i.id_incidente)
   let pagosData: any[] = []
   if (incidenteIds.length > 0) {
-    const { data: pagos } = await supabase
-      .from('pagos')
-      .select('id_incidente, monto_pagado')
+    // Costo por propiedad = lo cobrado al cliente por sus incidentes (cobros_clientes)
+    const { data: cobros } = await supabase
+      .from('cobros_clientes')
+      .select('id_incidente, monto_cobro')
       .in('id_incidente', incidenteIds)
-    pagosData = pagos || []
+    pagosData = cobros || []
   }
 
   const pagosPorIncidente: Record<number, number> = {}
   for (const p of pagosData) {
-    pagosPorIncidente[p.id_incidente] = (pagosPorIncidente[p.id_incidente] || 0) + (p.monto_pagado || 0)
+    pagosPorIncidente[p.id_incidente] = (pagosPorIncidente[p.id_incidente] || 0) + (p.monto_cobro || 0)
   }
 
   const inmuebleMap: Record<number, any> = {}
@@ -1065,18 +1093,19 @@ export async function getR10RentabilidadInmueble(filtros: {
     return { ingresosTotal: 0, costosTotal: 0, rentabilidadNeta: 0, margenGlobal: 0, inmuebles: [] }
   }
 
-  const [pagosRes, presupuestosRes] = await Promise.all([
-    supabase.from('pagos').select('id_incidente, monto_pagado').in('id_incidente', incIds),
-    supabase.from('presupuestos').select('id_incidente, costo_total').in('id_incidente', incIds),
+  // Ingresos = cobros al cliente; costos = pagos al técnico (egresos reales).
+  const [cobrosRes, pagosTecRes] = await Promise.all([
+    supabase.from('cobros_clientes').select('id_incidente, monto_cobro').in('id_incidente', incIds),
+    supabase.from('pagos_tecnicos').select('id_incidente, monto_pago').in('id_incidente', incIds),
   ])
 
   const ingresosPorIncidente: Record<number, number> = {}
-  for (const p of (pagosRes.data || [])) {
-    ingresosPorIncidente[p.id_incidente] = (ingresosPorIncidente[p.id_incidente] || 0) + (p.monto_pagado || 0)
+  for (const p of (cobrosRes.data || [])) {
+    ingresosPorIncidente[p.id_incidente] = (ingresosPorIncidente[p.id_incidente] || 0) + (p.monto_cobro || 0)
   }
   const costosPorIncidente: Record<number, number> = {}
-  for (const p of (presupuestosRes.data || [])) {
-    costosPorIncidente[p.id_incidente] = (costosPorIncidente[p.id_incidente] || 0) + (p.costo_total || 0)
+  for (const p of (pagosTecRes.data || [])) {
+    costosPorIncidente[p.id_incidente] = (costosPorIncidente[p.id_incidente] || 0) + (p.monto_pago || 0)
   }
 
   const inmuebleMap: Record<number, any> = {}
@@ -1156,17 +1185,18 @@ export async function getR11ComparativoDesempenio(filtros: {
   const p2Hasta = fmt(d3)
 
   const fetchKpis = async (desde: string, hasta: string) => {
-    const [incRes, pagosRes, calRes] = await Promise.all([
+    const [incRes, cobrosRes, calRes] = await Promise.all([
       supabase.from('incidentes').select('id_incidente, estado_actual, fecha_registro, fecha_cierre')
         .gte('fecha_registro', desde).lte('fecha_registro', hasta),
-      supabase.from('pagos').select('monto_pagado, fecha_pago')
-        .gte('fecha_pago', desde).lte('fecha_pago', hasta),
+      // Ingresos = cobros al cliente (la tabla `pagos` quedó sin escritores)
+      supabase.from('cobros_clientes').select('monto_cobro, fecha_cobro')
+        .gte('fecha_cobro', desde).lte('fecha_cobro', hasta),
       supabase.from('calificaciones').select('puntuacion, fecha_calificacion')
         .gte('fecha_calificacion', desde).lte('fecha_calificacion', hasta),
     ])
 
     const incs = incRes.data || []
-    const pagos = pagosRes.data || []
+    const pagos = cobrosRes.data || []
     const cals = calRes.data || []
 
     const resueltos = incs.filter(i => i.estado_actual === 'finalizado' || i.estado_actual === 'resuelto')
@@ -1174,7 +1204,7 @@ export async function getR11ComparativoDesempenio(filtros: {
       .filter(i => i.fecha_registro && i.fecha_cierre)
       .map(i => diasEntre(i.fecha_registro, i.fecha_cierre))
     const promDias = dias.length > 0 ? dias.reduce((a, b) => a + b, 0) / dias.length : 0
-    const ingresos = pagos.reduce((s, p) => s + (p.monto_pagado || 0), 0)
+    const ingresos = pagos.reduce((s, p) => s + (p.monto_cobro || 0), 0)
     const puntuaciones = cals.map(c => c.puntuacion || 0)
     const promCal = puntuaciones.length > 0 ? puntuaciones.reduce((a, b) => a + b, 0) / puntuaciones.length : 0
 
@@ -1221,13 +1251,17 @@ export async function getR12IndicadoresGlobales(filtros: {
   const [incRes, pagosRes, presRes, calRes, asigRes] = await Promise.all([
     incQuery,
     (() => {
-      let q = supabase.from('pagos').select('monto_pagado, fecha_pago')
-      if (filtros.fechaDesde) q = q.gte('fecha_pago', filtros.fechaDesde)
-      if (filtros.fechaHasta) q = q.lte('fecha_pago', filtros.fechaHasta)
+      // Ingresos = cobros al cliente (la tabla `pagos` quedó sin escritores)
+      let q = supabase.from('cobros_clientes').select('monto_cobro, fecha_cobro')
+      if (filtros.fechaDesde) q = q.gte('fecha_cobro', filtros.fechaDesde)
+      if (filtros.fechaHasta) q = q.lte('fecha_cobro', filtros.fechaHasta)
       return q
     })(),
     (() => {
-      let q = supabase.from('presupuestos').select('costo_total, incidentes (fecha_registro)')
+      // Costos = pagos al técnico (egresos reales)
+      let q = supabase.from('pagos_tecnicos').select('monto_pago, fecha_pago')
+      if (filtros.fechaDesde) q = q.gte('fecha_pago', filtros.fechaDesde)
+      if (filtros.fechaHasta) q = q.lte('fecha_pago', filtros.fechaHasta)
       return q
     })(),
     (() => {
@@ -1252,8 +1286,8 @@ export async function getR12IndicadoresGlobales(filtros: {
   const promedioResolucionDias = diasList.length > 0
     ? diasList.reduce((a, b) => a + b, 0) / diasList.length : 0
 
-  const totalIngresos = (pagosRes.data || []).reduce((s, p) => s + (p.monto_pagado || 0), 0)
-  const totalCostos = (presRes.data || []).reduce((s, p: any) => s + (p.costo_total || 0), 0)
+  const totalIngresos = (pagosRes.data || []).reduce((s, p: any) => s + (p.monto_cobro || 0), 0)
+  const totalCostos = (presRes.data || []).reduce((s, p: any) => s + (p.monto_pago || 0), 0)
 
   const puntuaciones = (calRes.data || []).map((c: any) => c.puntuacion || 0)
   const satisfaccionPromedio = puntuaciones.length > 0

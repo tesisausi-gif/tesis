@@ -21,6 +21,7 @@ import { createClient } from '@/shared/lib/supabase/client'
 import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG } from '@/shared/utils/colors'
 import type { Incidente } from '@/features/incidentes/incidentes.types'
 import { getFranjasDisponibilidad, guardarFranjasDisponibilidad } from '@/features/disponibilidad/disponibilidad.service'
+import { hoyArgentina } from '@/shared/utils/fechas'
 import { cancelarIncidenteCliente } from '@/features/asignaciones/asignaciones.service'
 import type { VisitaResumen } from '@/features/visitas/visitas.types'
 
@@ -323,8 +324,8 @@ export function IncidentesContent({
               const pendienteCobroCfg = pendienteCobro ? SUB_ESTADO_EN_PROCESO_CONFIG['pendiente_pago'] : null
               // Acciones de autogestión: el cliente puede cancelar o editar disponibilidad
               const puedeAutogestionar = incidente.estado_actual === 'pendiente' || incidente.estado_actual === 'asignacion_solicitada'
-              // Alertas de ejecución
-              const hoy = new Date().toISOString().slice(0, 10)
+              // Alertas de ejecución — fecha calendario ARGENTINA, no UTC
+              const hoy = hoyArgentina()
               const visitaRaw = visitasPorIncidente[incidente.id_incidente] ?? null
               const necesitaDisponibilidadReparacion = incidentesNecesitanDisponibilidadReparacion.includes(incidente.id_incidente)
               // Ignorar visita si:

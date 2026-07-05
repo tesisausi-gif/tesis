@@ -21,6 +21,7 @@ import { GestionarPendienteModal } from '@/components/admin/gestionar-pendiente-
 import type { IncidenteConClienteAdmin } from '@/features/incidentes/incidentes.types'
 import { Paginacion } from '@/components/ui/paginacion'
 import { ESTADO_INCIDENTE_CONFIG, SUB_ESTADO_EN_PROCESO_CONFIG, type SubEstadoEnProceso } from '@/shared/utils/colors'
+import { conformidadVigente } from '@/shared/utils/conformidades'
 import { normalizeSearch } from '@/shared/utils'
 import { darDeBajaIncidente, cancelarIncidente } from '@/features/asignaciones/asignaciones.service'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
@@ -89,14 +90,15 @@ function getAccionPendiente(inc: IncidenteConClienteAdmin): AccionPendiente {
   if (estado === 'en_proceso') {
     // Trabajo completado y aprobado — espera cobro al cliente
     if (inc.fue_resuelto) return { tipo: 'pendiente_pago' }
-    const confRechazada = inc.conformidades?.find(c => c.esta_rechazada)
-    if (confRechazada) return { tipo: 'conformidad_rechazada' }
+    // Solo la conformidad VIGENTE decide el sub-estado: una rechazada histórica
+    // no debe tapar a la resubida pendiente de revisión.
+    const confVigente = conformidadVigente(inc.conformidades)
+    if (confVigente?.esta_rechazada) return { tipo: 'conformidad_rechazada' }
     const presPendiente = inc.presupuestos?.find(p => p.estado_presupuesto === 'enviado')
     if (presPendiente) return { tipo: 'presupuesto_enviado' }
     const presClientePendiente = inc.presupuestos?.find(p => p.estado_presupuesto === 'aprobado_admin')
     if (presClientePendiente) return { tipo: 'presupuesto_cliente' }
-    const confPendiente = inc.conformidades?.find(c => c.url_documento && !c.esta_firmada && !c.esta_rechazada)
-    if (confPendiente) return { tipo: 'completada_pendiente' }
+    if (confVigente?.url_documento && !confVigente.esta_firmada) return { tipo: 'completada_pendiente' }
     const asigActiva = inc.asignaciones_tecnico?.find(a => ['aceptada', 'en_curso'].includes(a.estado_asignacion))
     const presAprobado = inc.presupuestos?.find(p => p.estado_presupuesto === 'aprobado')
     if (asigActiva?.estado_asignacion === 'aceptada' && !presAprobado) {

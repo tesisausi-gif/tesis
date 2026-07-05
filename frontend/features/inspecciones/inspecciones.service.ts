@@ -122,6 +122,22 @@ export async function crearInspeccion(data: {
       return { success: false, error: 'Ya existe un presupuesto activo para este incidente. No se pueden agregar más inspecciones.' }
     }
 
+    // Guard de secuencia: la inspección solo puede cargarla el técnico con la
+    // asignación ACEPTADA (o en curso). Con la asignación todavía 'pendiente'
+    // el incidente sigue en asignacion_solicitada y una inspección lo dejaría
+    // en un estado que ningún flujo posterior espera.
+    const { data: asigVigente } = await supabaseAdmin
+      .from('asignaciones_tecnico')
+      .select('id_asignacion')
+      .eq('id_incidente', data.id_incidente)
+      .eq('id_tecnico', data.id_tecnico)
+      .in('estado_asignacion', ['aceptada', 'en_curso'])
+      .limit(1)
+
+    if (!asigVigente || asigVigente.length === 0) {
+      return { success: false, error: 'Tenés que aceptar la asignación antes de cargar la inspección.' }
+    }
+
     const { data: inspeccion, error } = await supabase
       .from('inspecciones')
       .insert({

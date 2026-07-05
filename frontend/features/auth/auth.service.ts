@@ -101,9 +101,10 @@ export async function requireAdmin(): Promise<UsuarioActual> {
 }
 
 /**
- * Obtiene el id del admin/gestor o lanza error si no existe
+ * Guard de autorización: lanza error si el usuario no es admin/gestor.
+ * No devuelve ningún id — user.id es un UUID y parseInt(UUID) daba NaN/basura;
+ * ningún caller usaba el valor, así que la firma ahora es honesta (void).
  */
-export async function requireAdminOrGestorId(): Promise<number> {
-  const user = await requireAdmin()
-  return parseInt(user.id, 10)
+export async function requireAdminOrGestorId(): Promise<void> {
+  await requireAdmin()
 }

@@ -8,6 +8,7 @@ import { getMetricasDashboard } from '@/features/incidentes/incidentes.service'
 import { guardarFranjasDisponibilidad } from '@/features/disponibilidad/disponibilidad.service'
 import { crearNotificacionAdmin } from '@/features/notificaciones/notificaciones-inapp.service'
 import { STORAGE_BUCKET, STORAGE_PATHS } from '@/features/documentos/documentos.types'
+import { hoyArgentina } from '@/shared/utils/fechas'
 import type { WalterMessage, WalterRol, WalterResponse, WalterSuggestedAction, WalterChart, WalterInmuebleOption, WalterLink } from './walter.types'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -15,8 +16,8 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 // ── System prompts por rol ────────────────────────────────────────────────────
 
 function buildClienteSystemPrompt(): string {
-  const hoy = new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-  const hoyISO = new Date().toISOString().slice(0, 10)
+  const hoy = new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' })
+  const hoyISO = hoyArgentina()
 
   return `Sos Walter, el asistente virtual de Mantis para clientes de la inmobiliaria.
 Fecha de hoy: ${hoy} (${hoyISO}).
@@ -205,7 +206,7 @@ c) consultar_solicitudes_registro — Solicitudes de técnicos que quieren regis
 
 d) consultar_presupuestos — Información sobre presupuestos emitidos. Cantidad y monto por estado (borrador, enviado, aprobado_admin = esperando cliente, aprobado, rechazado, vencido). Útil para "cuántos presupuestos pendientes de aprobación", "cuánto facturamos este mes", "presupuestos vencidos". Filtros: estado, fecha_desde, fecha_hasta.
 
-e) consultar_pagos_cobros — Resumen financiero de pagos. Total cobrado neto, distribución por tipo (adelanto, parcial, total, reembolso), listado reciente. Filtros: tipo_pago, fecha_desde, fecha_hasta.
+e) consultar_pagos_cobros — Resumen financiero real: total cobrado a clientes, total pagado a técnicos y neto, con listado de movimientos recientes. Filtros: tipo_pago ('cobro_cliente' | 'pago_tecnico'), fecha_desde, fecha_hasta.
 
 f) consultar_conformidades — Conformidades de cliente + satisfacción. Counts (firmadas, pendientes, rechazadas), calificación promedio del cliente (1-5), distribución por estrellas, tasa de resolución del problema (%). Filtro: estado.
 
@@ -428,14 +429,14 @@ const CONSULTAR_PRESUPUESTOS_TOOL: Anthropic.Tool = {
 const CONSULTAR_PAGOS_TOOL: Anthropic.Tool = {
   name: 'consultar_pagos_cobros',
   description:
-    'Resumen financiero de pagos. Devuelve total cobrado a clientes, cantidad de pagos, distribución por tipo_pago (adelanto, parcial, total, reembolso) con monto y cantidad por cada tipo, y un listado de los pagos más recientes con monto, tipo y fecha. Usalo para preguntas sobre cobros del mes, total facturado, distribución de pagos, etc.',
+    'Resumen financiero real del sistema. Devuelve total cobrado a clientes (cobros_clientes), total pagado a técnicos (pagos_tecnicos), el neto, y un listado de los movimientos más recientes con monto, tipo y fecha. Usalo para preguntas sobre cobros del mes, total facturado, pagos a técnicos, etc.',
   input_schema: {
     type: 'object',
     properties: {
       tipo_pago: {
         type: 'string',
-        enum: ['adelanto', 'parcial', 'total', 'reembolso'],
-        description: 'Filtrar por tipo de pago.',
+        enum: ['cobro_cliente', 'pago_tecnico'],
+        description: 'Filtrar por tipo de movimiento: cobros al cliente o pagos al técnico.',
       },
       fecha_desde: {
         type: 'string',
@@ -676,6 +677,15 @@ async function executeConsultarEstado(idIncidente: number, rol: WalterRol): Prom
           esta_firmada,
           esta_rechazada,
           url_documento
+        ),
+        inspecciones (
+          id_inspeccion,
+          esta_anulada
+        ),
+        visitas (
+          tipo,
+          estado,
+          fecha_visita
         )
       `)
       .eq('id_incidente', idIncidente)
@@ -709,6 +719,15 @@ async function executeConsultarEstado(idIncidente: number, rol: WalterRol): Prom
       }
     }
     // admin puede ver cualquiera
+
+    // El cliente NUNCA debe ver el precio de presupuestos que el admin todavía
+    // no aprobó (borrador/enviado = costo crudo del técnico SIN la comisión).
+    // Misma regla que app/(cliente)/cliente/presupuestos/page.tsx.
+    if (rol === 'cliente' && Array.isArray(data.presupuestos)) {
+      data.presupuestos = (data.presupuestos as Array<{ estado_presupuesto: string; costo_total: number }>).filter(
+        (p) => !['borrador', 'enviado'].includes(p.estado_presupuesto),
+      )
+    }
 
     return JSON.stringify(data, null, 2)
   } catch (err) {
@@ -822,7 +841,7 @@ async function executeConsultarTecnicos(input: {
 
     let query = supabase
       .from('tecnicos')
-      .select('id_tecnico, nombre, apellido, especialidad, calificacion_promedio, cantidad_trabajos_realizados, esta_activo', { count: 'exact' })
+      .select('id_tecnico, nombre, apellido, especialidad, especialidades, calificacion_promedio, cantidad_trabajos_realizados, esta_activo', { count: 'exact' })
 
     if (typeof input.esta_activo === 'boolean') {
       query = query.eq('esta_activo', input.esta_activo)
@@ -859,17 +878,27 @@ async function executeConsultarTecnicos(input: {
       nombre: string
       apellido: string
       especialidad: string | null
+      especialidades: string[] | null
       calificacion_promedio: number | null
       cantidad_trabajos_realizados: number | null
       esta_activo: boolean | number
     }>
 
-    // Filtro por especialidad: hacemos lookup secundario porque las especialidades
-    // pueden estar en la tabla puente tecnicos_especialidades. Para simplificar
-    // y mantener compatibilidad, comparamos contra la especialidad primaria.
+    // Filtro por especialidad: la fuente de verdad es el array `especialidades`
+    // (el campo singular es solo el primer elemento). Mismo patrón con fallback
+    // que usa TecnicosTab.tsx en el panel admin.
     if (input.especialidad) {
       const target = input.especialidad.toLowerCase().trim()
-      tecnicos = tecnicos.filter(t => (t.especialidad ?? '').toLowerCase().trim() === target).slice(0, limit)
+      tecnicos = tecnicos
+        .filter(t => {
+          const lista: string[] = t.especialidades?.length
+            ? t.especialidades
+            : t.especialidad
+              ? [t.especialidad]
+              : []
+          return lista.some(e => (e ?? '').toLowerCase().trim() === target)
+        })
+        .slice(0, limit)
     }
 
     const resultado = {
@@ -1035,62 +1064,73 @@ async function executeConsultarPagos(input: {
     const supabase = createAdminClient()
     const limit = clampLimit(input.limit, 10, 50)
 
-    let listQuery = supabase
-      .from('pagos')
-      .select('id_pago, id_incidente, tipo_pago, monto_pagado, metodo_pago, fecha_pago')
+    // El dinero real vive en cobros_clientes (ingresos) y pagos_tecnicos (egresos).
+    const incluirCobros = !input.tipo_pago || input.tipo_pago === 'cobro_cliente'
+    const incluirPagosTec = !input.tipo_pago || input.tipo_pago === 'pago_tecnico'
+
+    let qCobros = supabase
+      .from('cobros_clientes')
+      .select('id_cobro, id_incidente, monto_cobro, metodo_pago, fecha_cobro')
+      .order('fecha_cobro', { ascending: false })
+    let qPagosTec = supabase
+      .from('pagos_tecnicos')
+      .select('id_pago_tecnico, id_incidente, monto_pago, metodo_pago, fecha_pago')
       .order('fecha_pago', { ascending: false })
-      .limit(limit)
 
-    let aggQuery = supabase.from('pagos').select('tipo_pago, monto_pagado')
-
-    if (input.tipo_pago) {
-      listQuery = listQuery.eq('tipo_pago', input.tipo_pago)
-      aggQuery = aggQuery.eq('tipo_pago', input.tipo_pago)
-    }
     if (input.fecha_desde) {
-      listQuery = listQuery.gte('fecha_pago', input.fecha_desde)
-      aggQuery = aggQuery.gte('fecha_pago', input.fecha_desde)
+      qCobros = qCobros.gte('fecha_cobro', input.fecha_desde)
+      qPagosTec = qPagosTec.gte('fecha_pago', input.fecha_desde)
     }
     if (input.fecha_hasta) {
-      listQuery = listQuery.lte('fecha_pago', input.fecha_hasta)
-      aggQuery = aggQuery.lte('fecha_pago', input.fecha_hasta)
+      qCobros = qCobros.lte('fecha_cobro', input.fecha_hasta)
+      qPagosTec = qPagosTec.lte('fecha_pago', input.fecha_hasta)
     }
 
-    const [listRes, aggRes] = await Promise.all([listQuery, aggQuery])
-    if (listRes.error) return `Error al consultar pagos: ${listRes.error.message}`
-    if (aggRes.error) return `Error al consultar pagos: ${aggRes.error.message}`
+    const [cobrosRes, pagosTecRes] = await Promise.all([
+      incluirCobros ? qCobros : Promise.resolve({ data: [], error: null }),
+      incluirPagosTec ? qPagosTec : Promise.resolve({ data: [], error: null }),
+    ])
+    if (cobrosRes.error) return `Error al consultar cobros: ${cobrosRes.error.message}`
+    if (pagosTecRes.error) return `Error al consultar pagos a técnicos: ${pagosTecRes.error.message}`
 
-    const todos = (aggRes.data || []) as Array<{ tipo_pago: string; monto_pagado: number | null }>
-    const porTipoMap: Record<string, { cantidad: number; monto_total: number }> = {}
-    let totalCobrado = 0
-    for (const p of todos) {
-      const t = p.tipo_pago || 'sin_tipo'
-      if (!porTipoMap[t]) porTipoMap[t] = { cantidad: 0, monto_total: 0 }
-      const monto = Number(p.monto_pagado ?? 0)
-      porTipoMap[t].cantidad++
-      porTipoMap[t].monto_total += monto
-      if (t !== 'reembolso') totalCobrado += monto
-      else totalCobrado -= monto
-    }
-    const distribucion_por_tipo = Object.entries(porTipoMap).map(([tipo, v]) => ({
-      tipo,
-      cantidad: v.cantidad,
-      monto_total: Math.round(v.monto_total * 100) / 100,
-    }))
+    const cobros = (cobrosRes.data || []) as any[]
+    const pagosTec = (pagosTecRes.data || []) as any[]
 
-    const resultado = {
-      total_pagos: todos.length,
-      total_cobrado_neto: Math.round(totalCobrado * 100) / 100,
-      filtros_aplicados: { tipo_pago: input.tipo_pago ?? null, fecha_desde: input.fecha_desde ?? null, fecha_hasta: input.fecha_hasta ?? null },
-      distribucion_por_tipo,
-      pagos_recientes: (listRes.data || []).map((p: any) => ({
-        id: p.id_pago,
+    const totalCobradoClientes = cobros.reduce((s, c) => s + Number(c.monto_cobro ?? 0), 0)
+    const totalPagadoTecnicos = pagosTec.reduce((s, p) => s + Number(p.monto_pago ?? 0), 0)
+
+    const movimientos = [
+      ...cobros.map((c: any) => ({
+        id: c.id_cobro,
+        id_incidente: c.id_incidente,
+        tipo: 'cobro_cliente',
+        monto: Number(c.monto_cobro ?? 0),
+        metodo: c.metodo_pago,
+        fecha: c.fecha_cobro,
+      })),
+      ...pagosTec.map((p: any) => ({
+        id: p.id_pago_tecnico,
         id_incidente: p.id_incidente,
-        tipo: p.tipo_pago,
-        monto: Number(p.monto_pagado ?? 0),
+        tipo: 'pago_tecnico',
+        monto: Number(p.monto_pago ?? 0),
         metodo: p.metodo_pago,
         fecha: p.fecha_pago,
       })),
+    ]
+      .sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')))
+      .slice(0, limit)
+
+    const resultado = {
+      total_movimientos: cobros.length + pagosTec.length,
+      total_cobrado_clientes: Math.round(totalCobradoClientes * 100) / 100,
+      total_pagado_tecnicos: Math.round(totalPagadoTecnicos * 100) / 100,
+      neto: Math.round((totalCobradoClientes - totalPagadoTecnicos) * 100) / 100,
+      filtros_aplicados: { tipo_pago: input.tipo_pago ?? null, fecha_desde: input.fecha_desde ?? null, fecha_hasta: input.fecha_hasta ?? null },
+      distribucion_por_tipo: [
+        { tipo: 'cobro_cliente', cantidad: cobros.length, monto_total: Math.round(totalCobradoClientes * 100) / 100 },
+        { tipo: 'pago_tecnico', cantidad: pagosTec.length, monto_total: Math.round(totalPagadoTecnicos * 100) / 100 },
+      ],
+      movimientos_recientes: movimientos,
     }
     return JSON.stringify(resultado, null, 2)
   } catch (err) {
@@ -1470,7 +1510,9 @@ async function executeConsultarAging(input: {
       .from('incidentes')
       .select('id_incidente, descripcion_problema, estado_actual, categoria, nivel_prioridad, fecha_registro')
       .lte('fecha_registro', cutoffIso)
-      .neq('estado_actual', 'finalizado')
+      // "Atrasado" = activo: excluir también cancelados y resueltos
+      // (mismo criterio que metricas-ppis para incidentes sin avanzar).
+      .not('estado_actual', 'in', '("finalizado","resuelto","cancelado")')
 
     if (estadoFiltro === 'pendiente') {
       query = query.in('estado_actual', ['pendiente', 'asignacion_solicitada'])
@@ -1586,9 +1628,9 @@ async function executeCrearIncidente(
       return { success: false, error: 'Debés indicar al menos una franja de disponibilidad.' }
     }
 
-    // Validar fechas: reales, no pasadas, dentro del próximo mes
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
+    // Validar fechas: reales, no pasadas, dentro del próximo mes.
+    // "Hoy" en fecha calendario ARGENTINA (el server corre en UTC).
+    const hoy = new Date(hoyArgentina() + 'T00:00:00')
     const limiteMax = new Date(hoy)
     limiteMax.setDate(limiteMax.getDate() + 31)
 
@@ -1632,8 +1674,17 @@ async function executeCrearIncidente(
 
     const idIncidente = incidente.id_incidente
 
-    // Guardar franjas de disponibilidad
-    await guardarFranjasDisponibilidad(idIncidente, params.franjas)
+    // Guardar franjas de disponibilidad — si falla, Walter debe decirlo
+    // (un incidente sin disponibilidad no puede coordinarse).
+    const resFranjas = await guardarFranjasDisponibilidad(idIncidente, params.franjas)
+    if (!resFranjas.success) {
+      console.error('[Walter crear_incidente franjas]', resFranjas.error)
+      return {
+        success: false,
+        id_incidente: idIncidente,
+        error: `El incidente #${idIncidente} se creó pero NO se pudo guardar la disponibilidad horaria. Indicale al usuario que la cargue desde el detalle del incidente.`,
+      }
+    }
 
     // Subir foto si hay una del diagnóstico
     if (imageBase64 && imageMime) {

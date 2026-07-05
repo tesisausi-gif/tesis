@@ -136,7 +136,8 @@ function BarChart({ chart }: { chart: WalterChart }) {
 
 function PieDonutChart({ chart }: { chart: WalterChart }) {
   const donut = chart.type === 'donut'
-  const total = chart.data.reduce((s, d) => s + d.value, 0)
+  // Guard división por cero: con datos todo-cero el gráfico quedaba en NaN
+  const total = chart.data.reduce((s, d) => s + d.value, 0) || 1
   const CX = 50, CY = 50, R = donut ? 28 : 38, INNER_R = 16
 
   function polarXY(angleDeg: number, r: number) {

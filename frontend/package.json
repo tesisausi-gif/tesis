@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "knip": "knip"
+    "knip": "knip",
+    "test": "tsx --test tests/unit/*.test.ts",
+    "test:db": "tsx tests/e2e-lifecycle-db.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",

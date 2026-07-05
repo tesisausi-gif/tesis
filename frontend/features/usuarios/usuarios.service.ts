@@ -505,15 +505,22 @@ export async function rechazarSolicitud(idSolicitud: number): Promise<ActionResu
   try {
     const supabase = await createClient()
 
-    const { error } = await supabase
+    // Transición condicional: solo se puede rechazar una solicitud PENDIENTE
+    // (evita pisar una ya aprobada desde otra pestaña/admin).
+    const { data, error } = await supabase
       .from('solicitudes_registro')
       .update({
         estado_solicitud: 'rechazada',
         fecha_aprobacion: new Date().toISOString(),
       })
       .eq('id_solicitud', idSolicitud)
+      .eq('estado_solicitud', 'pendiente')
+      .select('id_solicitud')
 
     if (error) return { success: false, error: translateDbError(error) }
+    if (!data || data.length === 0) {
+      return { success: false, error: 'La solicitud ya fue procesada (aprobada o rechazada previamente)' }
+    }
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: 'Error inesperado al rechazar solicitud' }
@@ -588,11 +595,35 @@ export async function aprobarSolicitudTecnico(
     return { success: false, error: 'Error al crear perfil de técnico' }
   }
 
-  // 4. Actualizar `usuarios`: rol a 'tecnico', vincular id_tecnico, marcar cambio de contraseña
-  const { error: updError } = await supabase
+  // 4. Crear la fila en `usuarios`. El trigger AFTER INSERT sobre auth.users fue
+  // eliminado (migración 20260625000002) y admin.createUser con email_confirm no
+  // dispara el trigger de confirmación → la fila hay que insertarla acá.
+  // Si un trigger legacy la hubiera creado, se actualiza en su lugar.
+  const { data: usuarioExistente } = await supabase
     .from('usuarios')
-    .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico, debe_cambiar_password: true })
+    .select('id')
     .eq('id', authUserId)
+    .maybeSingle()
+
+  const { error: updError } = usuarioExistente
+    ? await supabase
+        .from('usuarios')
+        .update({ rol: 'tecnico', id_tecnico: tecnicoInsert.id_tecnico, debe_cambiar_password: true })
+        .eq('id', authUserId)
+    : await supabase
+        .from('usuarios')
+        .insert({
+          id: authUserId,
+          nombre: solicitud.nombre,
+          apellido: solicitud.apellido,
+          correo_electronico: solicitud.email,
+          rol: 'tecnico',
+          id_tecnico: tecnicoInsert.id_tecnico,
+          esta_activo: true,
+          debe_cambiar_password: true,
+          fecha_creacion: new Date().toISOString(),
+          fecha_modificacion: new Date().toISOString(),
+        })
 
   if (updError) {
     try { await supabase.from('tecnicos').delete().eq('id_tecnico', tecnicoInsert.id_tecnico) } catch {}
@@ -814,6 +845,94 @@ export async function crearEmpleado(data: {
 
     if (!authData.user) {
       return { success: false, error: 'No se pudo crear el usuario' }
+    }
+
+    // El trigger AFTER INSERT sobre auth.users fue eliminado (migración
+    // 20260625000002: las filas públicas se crean recién al confirmar email,
+    // pero admin.createUser inserta YA confirmado y no dispara ningún trigger).
+    // Por eso acá hay que crear las filas públicas explícitamente.
+    const authUserId = authData.user.id
+
+    const { data: usuarioExistente } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('id', authUserId)
+      .maybeSingle()
+
+    if (!usuarioExistente) {
+      let idCliente: number | null = null
+      let idTecnico: number | null = null
+      const ahora = new Date().toISOString()
+
+      if (data.rol === 'cliente') {
+        const { data: clienteInsert, error: clienteError } = await supabase
+          .from('clientes')
+          .insert({
+            nombre: data.nombre,
+            apellido: data.apellido,
+            correo_electronico: data.email,
+            telefono: data.telefono ?? null,
+            dni: data.dni ?? null,
+            esta_activo: true,
+            fecha_creacion: ahora,
+            fecha_modificacion: ahora,
+          })
+          .select('id_cliente')
+          .single()
+        if (clienteError || !clienteInsert) {
+          try { await supabase.auth.admin.deleteUser(authUserId) } catch {}
+          return { success: false, error: 'Error al crear el perfil de cliente' }
+        }
+        idCliente = clienteInsert.id_cliente
+      }
+
+      if (data.rol === 'tecnico') {
+        const { data: tecnicoInsert, error: tecnicoError } = await supabase
+          .from('tecnicos')
+          .insert({
+            nombre: data.nombre,
+            apellido: data.apellido,
+            correo_electronico: data.email,
+            telefono: data.telefono ?? null,
+            dni: data.dni ?? null,
+            direccion: data.direccion ?? null,
+            especialidad: data.especialidad ?? null,
+            calificacion_promedio: null,
+            cantidad_trabajos_realizados: 0,
+            esta_activo: true,
+          })
+          .select('id_tecnico')
+          .single()
+        if (tecnicoError || !tecnicoInsert) {
+          try { await supabase.auth.admin.deleteUser(authUserId) } catch {}
+          return { success: false, error: 'Error al crear el perfil de técnico' }
+        }
+        idTecnico = tecnicoInsert.id_tecnico
+      }
+
+      const { error: usuarioError } = await supabase
+        .from('usuarios')
+        .insert({
+          id: authUserId,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          correo_electronico: data.email,
+          rol: data.rol,
+          id_cliente: idCliente,
+          id_tecnico: idTecnico,
+          esta_activo: true,
+          debe_cambiar_password: data.rol === 'cliente',
+          fecha_creacion: ahora,
+          fecha_modificacion: ahora,
+        })
+
+      if (usuarioError) {
+        // Compensación: no dejar cuentas a medias
+        try { if (idCliente) await supabase.from('clientes').delete().eq('id_cliente', idCliente) } catch {}
+        try { if (idTecnico) await supabase.from('tecnicos').delete().eq('id_tecnico', idTecnico) } catch {}
+        try { await supabase.auth.admin.deleteUser(authUserId) } catch {}
+        return { success: false, error: 'Error al crear el usuario en el sistema' }
+      }
     }
 
     return { success: true, data: undefined }

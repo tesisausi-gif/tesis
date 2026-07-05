@@ -8,6 +8,7 @@
  */
 
 import { createAdminClient } from '@/shared/lib/supabase/admin'
+import { conformidadVigente } from '@/shared/utils/conformidades'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -445,9 +446,10 @@ export async function getWipData(): Promise<WipData> {
     .select(`
       id_incidente,
       estado_actual,
+      fue_resuelto,
       asignaciones_tecnico (estado_asignacion),
       presupuestos (estado_presupuesto),
-      conformidades (url_documento, esta_firmada, esta_rechazada),
+      conformidades (id_conformidad, url_documento, esta_firmada, esta_rechazada),
       inspecciones (id_inspeccion)
     `)
     .not('estado_actual', 'in', '("finalizado","resuelto")')
@@ -486,6 +488,7 @@ export async function getWipData(): Promise<WipData> {
     en_ejecucion:              0,
     conformidad_pendiente:     0,
     conformidad_rechazada:     0,
+    esperando_cobro:           0,
   }
 
   for (const inc of activos) {
@@ -508,12 +511,16 @@ export async function getWipData(): Promise<WipData> {
 
     if (estado === 'en_proceso') {
       // Verificar sub-estado (misma lógica que getAccionPendiente en el cliente)
-      const confRechazada = confs.some((c: any) => c.esta_rechazada === true || c.esta_rechazada === 1)
-      if (confRechazada) { conteos.conformidad_rechazada++; continue }
+      // Trabajo terminado y aprobado — solo falta cobrar al cliente
+      if (inc.fue_resuelto) { conteos.esperando_cobro++; continue }
 
-      const confPendiente = confs.some((c: any) =>
-        c.url_documento && !(c.esta_firmada === 1 || c.esta_firmada === true) && !(c.esta_rechazada === 1 || c.esta_rechazada === true)
-      )
+      // Solo la conformidad VIGENTE decide (las rechazadas históricas no cuentan)
+      const confVigente = conformidadVigente(confs as { id_conformidad: number; esta_rechazada?: boolean | null }[]) as any
+      if (confVigente?.esta_rechazada === true || confVigente?.esta_rechazada === 1) {
+        conteos.conformidad_rechazada++; continue
+      }
+
+      const confPendiente = confVigente?.url_documento && !(confVigente.esta_firmada === 1 || confVigente.esta_firmada === true)
       if (confPendiente) { conteos.conformidad_pendiente++; continue }
 
       const presEnviado = press.some((p: any) => p.estado_presupuesto === 'enviado')
@@ -546,6 +553,7 @@ export async function getWipData(): Promise<WipData> {
     { id: 'en_ejecucion',               nombre: 'Trabajo en ejecución',             responsable: 'Técnico',         color: 'bg-green-400'   },
     { id: 'conformidad_pendiente',      nombre: 'Conformidad — esperando revisión', responsable: 'Administración',  color: 'bg-purple-400'  },
     { id: 'conformidad_rechazada',      nombre: 'Conformidad rechazada',            responsable: 'Técnico',         color: 'bg-red-400'     },
+    { id: 'esperando_cobro',            nombre: 'Esperando cobro al cliente',       responsable: 'Administración',  color: 'bg-teal-400'    },
   ]
 
   const maxCount = Math.max(...Object.values(conteos), 1)
@@ -1082,19 +1090,26 @@ export async function getSp8Data(): Promise<Sp8Data> {
   const supabase = createAdminClient()
   const hoy = new Date()
 
-  // ── DPC: presupuestos aprobados de incidentes finalizados sin cobro ──────────
+  // ── DPC: deuda EXIGIBLE — presupuestos aprobados sin cobro de incidentes con
+  // trabajo terminado (fue_resuelto). El incidente pasa a 'finalizado' recién al
+  // cobrar TODO, así que la deuda real vive en 'en_proceso' (sub-estado
+  // pendiente_pago); se incluye 'finalizado' por el caso adicional-sin-cobrar.
   const { data: presupuestosFinalizados } = await supabase
     .from('presupuestos')
     .select(`
       id_presupuesto, id_incidente, costo_total, fecha_creacion,
       incidentes!inner (
         estado_actual,
+        fue_resuelto,
         id_cliente_reporta,
         clientes:id_cliente_reporta ( nombre, apellido )
       )
     `)
     .eq('estado_presupuesto', 'aprobado')
-    .in('incidentes.estado_actual', ['finalizado', 'resuelto'])
+    // OJO: en la DB real fue_resuelto es INTEGER 0/1 (la migración a BOOLEAN
+    // no está aplicada); el literal 1 castea bien en ambos tipos, `true` NO.
+    .eq('incidentes.fue_resuelto', 1)
+    .in('incidentes.estado_actual', ['en_proceso', 'finalizado'])
 
   const idsFinalizados = (presupuestosFinalizados || []).map((p: any) => p.id_presupuesto)
 

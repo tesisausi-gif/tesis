@@ -56,12 +56,23 @@ export async function solicitarRecuperacionPassword(
       .update({ debe_cambiar_password: true })
       .eq('id', usuario.id)
 
-    // 5. Enviar email con la contraseña temporal
-    await enviarPasswordTemporal({
-      destinatario: emailLower,
-      nombre: usuario.nombre ?? emailLower,
-      passwordTemporal,
-    })
+    // 5. Enviar email con la contraseña temporal.
+    // OJO: a esta altura la contraseña YA fue reemplazada (paso 3). Si el envío
+    // falla, el mensaje debe decirlo honestamente — un "intentá de nuevo"
+    // genérico dejaría al usuario sin saber que su contraseña vieja ya no sirve.
+    try {
+      await enviarPasswordTemporal({
+        destinatario: emailLower,
+        nombre: usuario.nombre ?? emailLower,
+        passwordTemporal,
+      })
+    } catch (emailError) {
+      console.error('[recuperar-password] Falló el envío del email:', emailError)
+      return {
+        success: false,
+        error: 'Se generó una nueva contraseña pero no pudimos enviártela por email. Volvé a intentar en unos minutos: se generará otra contraseña nueva. Si sigue fallando, contactá a la administración.',
+      }
+    }
 
     return { success: true, data: undefined }
   } catch {

@@ -228,27 +228,28 @@ export interface EstadoFinanciero {
 export async function getEstadoFinanciero(): Promise<EstadoFinanciero> {
   const supabase = createAdminClient()
 
-  const [presRes, pagosRes] = await Promise.all([
+  // Lo cobrado real vive en cobros_clientes (la tabla `pagos` quedó sin escritores).
+  const [presRes, cobrosRes] = await Promise.all([
     supabase
       .from('presupuestos')
       .select('costo_total, estado_presupuesto')
       .eq('estado_presupuesto', 'aprobado'),
     supabase
-      .from('pagos')
-      .select('tipo_pago, monto_pagado, id_incidente'),
+      .from('cobros_clientes')
+      .select('metodo_pago, monto_cobro, id_incidente'),
   ])
 
   const presupuestos = presRes.data || []
-  const pagos = (pagosRes.data || []) as any[]
+  const pagos = (cobrosRes.data || []) as any[]
 
   const totalPresupuestado = presupuestos.reduce((acc: number, p: any) => acc + (p.costo_total || 0), 0)
-  const totalCobrado = pagos.reduce((acc, p) => acc + (p.monto_pagado || 0), 0)
+  const totalCobrado = pagos.reduce((acc, p) => acc + (p.monto_cobro || 0), 0)
 
   const distMap: Record<string, { monto: number; cantidad: number }> = {}
   for (const p of pagos) {
-    const tipo = p.tipo_pago || 'otro'
+    const tipo = p.metodo_pago || 'otro'
     if (!distMap[tipo]) distMap[tipo] = { monto: 0, cantidad: 0 }
-    distMap[tipo].monto += p.monto_pagado || 0
+    distMap[tipo].monto += p.monto_cobro || 0
     distMap[tipo].cantidad++
   }
 

@@ -156,9 +156,9 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
       kpis = [
         { label: 'Total técnicos', valor: String(r.totalTecnicos) },
         { label: 'Productividad prom.', valor: fmtPct(r.promedioProductividad) },
-        { label: 'Satisfacción prom.', valor: r.promedioSatisfaccion > 0 ? `${fmtN(r.promedioSatisfaccion)} ★` : 'N/A' },
+        { label: 'Calidad prom.', valor: r.promedioSatisfaccion > 0 ? `${fmtN(r.promedioSatisfaccion)} ★` : 'N/A' },
       ]
-      cabeceras = ['#', 'Técnico', 'Especialidad', 'Asignados', 'Cerrados', 'Rechazadas', 'Productividad %', 'Días resp.', 'Satisfacción ★']
+      cabeceras = ['#', 'Técnico', 'Especialidad', 'Asignados', 'Cerrados', 'Rechazadas', 'Productividad %', 'Días resp.', 'Calidad ★']
       filas = r.tecnicos.map(t => ({
         '#': t.rankingPos, 'Técnico': `${t.nombre} ${t.apellido}`,
         'Especialidad': t.especialidad || '—',
@@ -166,11 +166,11 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
         'Rechazadas': t.rechazadas,
         'Productividad %': fmtPct(t.productividad),
         'Días resp.': t.promedioDiasRespuesta > 0 ? fmtN(t.promedioDiasRespuesta) : '—',
-        'Satisfacción ★': t.satisfaccion != null ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
+        'Calidad ★': t.satisfaccion != null ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
       }))
 
     } else if (tipo === 7) {
-      titulo = 'Satisfacción Mantis'
+      titulo = 'Calidad del Servicio Mantis'
       const r = await getR7Satisfaccion({ fechaDesde, fechaHasta, idTecnico, calificacionMinima })
       kpis = [
         { label: 'Promedio global', valor: `${fmtN(r.promedioGlobal)} ★` },
@@ -239,13 +239,13 @@ export default async function ImprimirPage({ searchParams }: PageProps) {
         { label: 'Días prom. resolución', valor: fmtN(r.promedioResolucionDias) },
         { label: 'Ingresos', valor: fmt$(r.totalIngresos) },
         { label: 'Costos', valor: fmt$(r.totalCostos) },
-        { label: 'Satisfacción', valor: r.satisfaccionPromedio > 0 ? `${fmtN(r.satisfaccionPromedio)} ★` : 'N/A' },
+        { label: 'Calidad', valor: r.satisfaccionPromedio > 0 ? `${fmtN(r.satisfaccionPromedio)} ★` : 'N/A' },
       ]
-      cabeceras = ['Top Técnicos', 'Asignados', 'Cerrados', 'Satisfacción ★']
+      cabeceras = ['Top Técnicos', 'Asignados', 'Cerrados', 'Calidad ★']
       filas = r.topTecnicos.map(t => ({
         'Top Técnicos': `${t.nombre} ${t.apellido}`,
         'Asignados': t.asignados, 'Cerrados': t.cerrados,
-        'Satisfacción ★': t.satisfaccion > 0 ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
+        'Calidad ★': t.satisfaccion > 0 ? `${fmtN(t.satisfaccion)} ★` : 'N/A',
       }))
 
     } else if (tipoStr === 'incidentes') {

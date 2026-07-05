@@ -2,6 +2,7 @@
 
 import { translateDbError } from '@/shared/lib/db-errors'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
+import { hoyArgentina } from '@/shared/utils/fechas'
 import type { ActionResult } from '@/shared/types'
 import type { Visita, VisitaResumen, TipoVisita } from './visitas.types'
 
@@ -289,7 +290,7 @@ export async function rechazarVisita(idVisita: number, motivo?: string): Promise
 export async function processarVisitasVencidas(): Promise<void> {
   try {
     const supabase = createAdminClient()
-    const hoy = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD'
+    const hoy = hoyArgentina()
 
     // Buscar visitas propuestas cuya fecha ya pasó
     const { data: vencidas } = await supabase

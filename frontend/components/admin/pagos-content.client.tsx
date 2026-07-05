@@ -864,7 +864,6 @@ function TabRegistroHistorico({ realizadosTecnicos, realizadosCobroCliente }: { 
 }
 
 interface PagosContentProps {
-  pagos: unknown[]
   pendientesTecnicos: PendientePagoTecnico[]
   realizadosTecnicos: PagoTecnicoRegistrado[]
   pendientesCobroCliente: PendienteCobroCliente[]

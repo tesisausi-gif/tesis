@@ -13,11 +13,14 @@
 import { translateDbError } from '@/shared/lib/db-errors'
 import { createClient } from '@/shared/lib/supabase/server'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
+import { conformidadVigente } from '@/shared/utils/conformidades'
 import type { ActionResult } from '@/shared/types'
 import type { Conformidad } from './conformidades.types'
 
 /**
- * Obtener la conformidad de un incidente (si existe)
+ * Obtener la conformidad VIGENTE de un incidente (si existe).
+ * Un incidente puede tener varias filas (rechazadas históricas + resubida);
+ * se devuelve la vigente según la regla canónica de conformidadVigente().
  */
 export async function getConformidadDelIncidente(idIncidente: number): Promise<Conformidad | null> {
   const supabase = await createClient()
@@ -26,10 +29,9 @@ export async function getConformidadDelIncidente(idIncidente: number): Promise<C
     .from('conformidades')
     .select('*')
     .eq('id_incidente', idIncidente)
-    .maybeSingle()
 
   if (error) throw error
-  return data as Conformidad | null
+  return conformidadVigente((data ?? []) as Conformidad[])
 }
 
 /**
@@ -106,6 +108,7 @@ export async function getIncidentesConConformidadSubida(idIncidentes: number[]):
     .in('id_incidente', idIncidentes)
     .not('url_documento', 'is', null)
     .neq('esta_firmada', 1)
+    .eq('esta_rechazada', false)
 
   return (data || []).map((c: any) => c.id_incidente)
 }

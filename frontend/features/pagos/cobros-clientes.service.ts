@@ -384,9 +384,11 @@ import { requireClienteId } from '@/features/auth/auth.service'
 
 /**
  * Pagos de un incidente específico del cliente actual.
+ * Un incidente puede tener MÁS de un presupuesto aprobado a la vez
+ * (original + adicional), por eso `pendientes` es una lista.
  */
 export async function getMisPagosDeIncidente(idIncidente: number): Promise<{
-  pendiente: MiCobroPendiente | null
+  pendientes: MiCobroPendiente[]
   realizados: MiCobroRealizado[]
 }> {
   // Autorización + autorización por id_cliente_reporta del incidente.
@@ -396,8 +398,8 @@ export async function getMisPagosDeIncidente(idIncidente: number): Promise<{
   // como filtro estricto para mantener el aislamiento.
   const supabase = createAdminClient()
 
-  // Presupuesto aprobado de este incidente, verificando que sea del cliente
-  const { data: pres } = await supabase
+  // Presupuestos aprobados de este incidente, verificando que sea del cliente
+  const { data: presupuestos } = await supabase
     .from('presupuestos')
     .select(`
       id_presupuesto, id_incidente, costo_total, fecha_creacion,
@@ -406,9 +408,9 @@ export async function getMisPagosDeIncidente(idIncidente: number): Promise<{
     .eq('id_incidente', idIncidente)
     .eq('estado_presupuesto', 'aprobado')
     .eq('incidentes.id_cliente_reporta', idCliente)
-    .maybeSingle()
+    .order('fecha_creacion', { ascending: true })
 
-  if (!pres) return { pendiente: null, realizados: [] }
+  if (!presupuestos?.length) return { pendientes: [], realizados: [] }
 
   const { data: cobros } = await supabase
     .from('cobros_clientes')
@@ -420,18 +422,20 @@ export async function getMisPagosDeIncidente(idIncidente: number): Promise<{
     .order('fecha_cobro', { ascending: false })
 
   const cobradoIds = new Set((cobros || []).map((c: any) => c.id_presupuesto))
-  const inc = pres.incidentes as any
+  const inc = presupuestos[0].incidentes as any
 
-  const pendiente: MiCobroPendiente | null = cobradoIds.has(pres.id_presupuesto) ? null : {
-    id_presupuesto: pres.id_presupuesto,
-    id_incidente: pres.id_incidente,
-    descripcion_problema: inc?.descripcion_problema || '',
-    categoria: inc?.categoria || null,
-    monto_a_pagar: Number(pres.costo_total) || 0,
-    fecha_presupuesto: pres.fecha_creacion,
-    id_inmueble: null,
-    direccion_inmueble: null,
-  }
+  const pendientes: MiCobroPendiente[] = presupuestos
+    .filter((p: any) => !cobradoIds.has(p.id_presupuesto))
+    .map((p: any) => ({
+      id_presupuesto: p.id_presupuesto,
+      id_incidente: p.id_incidente,
+      descripcion_problema: inc?.descripcion_problema || '',
+      categoria: inc?.categoria || null,
+      monto_a_pagar: Number(p.costo_total) || 0,
+      fecha_presupuesto: p.fecha_creacion,
+      id_inmueble: null,
+      direccion_inmueble: null,
+    }))
 
   const realizados: MiCobroRealizado[] = (cobros || []).map((c: any) => ({
     id_cobro: c.id_cobro,
@@ -449,5 +453,5 @@ export async function getMisPagosDeIncidente(idIncidente: number): Promise<{
     direccion_inmueble: null,
   }))
 
-  return { pendiente, realizados }
+  return { pendientes, realizados }
 }

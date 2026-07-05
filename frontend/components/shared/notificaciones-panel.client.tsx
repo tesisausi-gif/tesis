@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/shared/lib/supabase/client'
+import { getCurrentUser } from '@/features/auth/auth.service'
 import {
   marcarNotificacionLeida,
   marcarTodasLeidas,
@@ -309,20 +310,33 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
 
   useEffect(() => {
     const supabase = createClient()
-    const channel = supabase
-      .channel(`notificaciones-panel-${rol}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, (payload) => {
-        const nueva = payload.new as Notificacion
-        if (nueva.fecha_leida) return
-        const esParaEsteRol =
-          (rol === 'admin' && nueva.para_admin) ||
-          (rol === 'tecnico' && nueva.id_tecnico != null && !nueva.para_admin) ||
-          (rol === 'cliente' && nueva.id_cliente != null && !nueva.para_admin)
-        if (!esParaEsteRol) return
-        setItems(prev => [nueva, ...prev])
-      })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    let cancelado = false
+
+    // El filtro por rol NO alcanza: dos técnicos (o dos clientes) conectados a la
+    // vez recibirían las notificaciones del otro. Hay que comparar contra el
+    // id_tecnico/id_cliente del usuario logueado.
+    getCurrentUser().then((user) => {
+      if (cancelado || !user) return
+      channel = supabase
+        .channel(`notificaciones-panel-${rol}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, (payload) => {
+          const nueva = payload.new as Notificacion
+          if (nueva.fecha_leida) return
+          const esParaEsteUsuario =
+            (rol === 'admin' && nueva.para_admin) ||
+            (rol === 'tecnico' && !nueva.para_admin && nueva.id_tecnico != null && nueva.id_tecnico === user.id_tecnico) ||
+            (rol === 'cliente' && !nueva.para_admin && nueva.id_cliente != null && nueva.id_cliente === user.id_cliente)
+          if (!esParaEsteUsuario) return
+          setItems(prev => [nueva, ...prev])
+        })
+        .subscribe()
+    }).catch(() => { /* sin usuario no hay suscripción */ })
+
+    return () => {
+      cancelado = true
+      if (channel) supabase.removeChannel(channel)
+    }
   }, [rol])
 
   // Eliminar 1 notificación (delete real, no marcar como leída)

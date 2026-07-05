@@ -23,6 +23,8 @@ interface CalendarioDisponibilidadProps {
   modo: 'editar' | 'ver' | 'comprometer'
   franjas?: FranjaInput[]
   onChange?: (franjas: FranjaInput[]) => void
+  /** Fechas (YYYY-MM-DD) seleccionadas en el calendario que aún no tienen ninguna franja horaria. */
+  onDiasSinFranjaChange?: (dias: string[]) => void
   onComprometer?: (data: { fecha: string; horaInicio: string; horaFin: string }) => void
   compromisoActual?: CompromisoActual | null
   className?: string
@@ -341,6 +343,7 @@ export function CalendarioDisponibilidad({
   modo,
   franjas = [],
   onChange,
+  onDiasSinFranjaChange,
   onComprometer,
   compromisoActual,
   className,
@@ -383,6 +386,14 @@ export function CalendarioDisponibilidad({
   }, []) // solo al montar
 
   const emitChange = useCallback((dates: Date[], slots: typeof slotsByDate) => {
+    // Días marcados en el calendario que quedaron sin ninguna franja horaria:
+    // el consumidor puede bloquear el submit hasta que se completen.
+    if (onDiasSinFranjaChange) {
+      const sinFranja = dates
+        .map(fechaToISO)
+        .filter(k => !slots[k] || slots[k].length === 0)
+      onDiasSinFranjaChange(sinFranja)
+    }
     if (!onChange) return
     const result: FranjaInput[] = []
     for (const fecha of Object.keys(slots)) {
@@ -391,7 +402,7 @@ export function CalendarioDisponibilidad({
       }
     }
     onChange(result)
-  }, [onChange])
+  }, [onChange, onDiasSinFranjaChange])
 
   const handleSelectDates = (dates: Date[] | undefined) => {
     const next = dates ?? []

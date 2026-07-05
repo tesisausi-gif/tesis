@@ -2,7 +2,7 @@
 
 import nodemailer from 'nodemailer'
 
-const APP_URL = 'https://tesis-three-drab.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tesis-three-drab.vercel.app'
 
 function getTransport() {
   const user = process.env.GMAIL_USER

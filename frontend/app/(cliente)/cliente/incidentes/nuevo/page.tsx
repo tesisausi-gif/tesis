@@ -48,6 +48,7 @@ export default function NuevoIncidentePage() {
   const [inmuebleSeleccionado, setInmuebleSeleccionado] = useState('')
   const [descripcion, setDescripcion] = useState(searchParams.get('descripcion') ?? '')
   const [franjas, setFranjas] = useState<FranjaInput[]>([])
+  const [diasSinFranja, setDiasSinFranja] = useState<string[]>([])
   const [fotoArchivo, setFotoArchivo] = useState<File | null>(null)
   const [fotoPreview, setFotoPreview] = useState<string | null>(null)
 
@@ -170,6 +171,16 @@ export default function NuevoIncidentePage() {
       isSubmittingRef.current = false
       return
     }
+    // TODOS los días seleccionados deben tener franja horaria: no se descarta
+    // ninguno en silencio (los días sin horario confunden a técnico y admin).
+    if (diasSinFranja.length > 0) {
+      const listado = diasSinFranja
+        .map(d => new Date(d + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }))
+        .join(', ')
+      toast.error(`Agregá un horario para cada día seleccionado (falta: ${listado}) o destildá esos días del calendario.`)
+      isSubmittingRef.current = false
+      return
+    }
     const franjasConSlot = franjas.filter(f => f.hora_inicio && f.hora_fin)
     if (franjasConSlot.length === 0) {
       toast.error('Agregá horarios para los días seleccionados')
@@ -202,8 +213,14 @@ export default function NuevoIncidentePage() {
         return
       }
 
-      // Guardar franjas de disponibilidad
-      await guardarFranjasDisponibilidad(data.id_incidente, franjasConSlot)
+      // Guardar franjas de disponibilidad — si falla, avisar: el incidente
+      // quedaría sin disponibilidad y ningún técnico podría coordinar visita.
+      const resFranjas = await guardarFranjasDisponibilidad(data.id_incidente, franjasConSlot)
+      if (!resFranjas.success) {
+        toast.warning('Incidente creado, pero no se pudo guardar tu disponibilidad', {
+          description: 'Abrí el incidente y volvé a cargar tus días y horarios disponibles.',
+        })
+      }
 
       // Subir foto de diagnóstico si el cliente adjuntó una
       if (fotoArchivo) {
@@ -421,6 +438,7 @@ export default function NuevoIncidentePage() {
             modo="editar"
             franjas={franjas}
             onChange={setFranjas}
+            onDiasSinFranjaChange={setDiasSinFranja}
           />
         </div>
 

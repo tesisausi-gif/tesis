@@ -2,6 +2,7 @@
 
 import { translateDbError } from '@/shared/lib/db-errors'
 import { createAdminClient } from '@/shared/lib/supabase/admin'
+import { hoyArgentina } from '@/shared/utils/fechas'
 import type { ActionResult } from '@/shared/types'
 import type { FranjaDisponibilidad, FranjaAgenda } from './disponibilidad.types'
 
@@ -272,7 +273,7 @@ export async function getFranjasAgendaTecnico(idTecnico: number): Promise<Franja
 export async function procesarDisponibilidadVencida(): Promise<void> {
   try {
     const supabase = createAdminClient()
-    const hoy = new Date().toISOString().slice(0, 10)
+    const hoy = hoyArgentina()
 
     // Traer todas las franjas de inspección
     const { data: todasFranjas } = await supabase
@@ -363,7 +364,7 @@ export async function getIncidentesNecesitanNuevaDisponibilidadInspeccion(
 ): Promise<number[]> {
   if (!ids.length) return []
   const supabase = createAdminClient()
-  const hoy = new Date().toISOString().slice(0, 10)
+  const hoy = hoyArgentina()
 
   const { data: marcados } = await supabase
     .from('incidentes')

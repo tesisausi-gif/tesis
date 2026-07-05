@@ -196,10 +196,12 @@ export async function getTimelineData(idIncidente: number) {
       .eq('id_incidente', idIncidente)
       .order('fecha_creacion', { ascending: true }),
     supabase
-      .from('pagos')
-      .select('*')
+      // El cobro real al cliente vive en cobros_clientes; se alias-ea a los
+      // nombres históricos (id_pago/monto_pagado/fecha_pago) que consume el timeline.
+      .from('cobros_clientes')
+      .select('id_pago:id_cobro, monto_pagado:monto_cobro, fecha_pago:fecha_cobro, metodo_pago, referencia_pago, observaciones')
       .eq('id_incidente', idIncidente)
-      .order('fecha_pago', { ascending: true }),
+      .order('fecha_cobro', { ascending: true }),
     supabase
       .from('avances_reparacion')
       .select('*, tecnicos(nombre, apellido)')

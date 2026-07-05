@@ -486,6 +486,28 @@ export async function cancelarAsignacionAceptada(
       })
     } catch { /* no bloquear la operación principal */ }
 
+    // 7. Notificar al cliente (mismo criterio que darDeBajaIncidente: su
+    // incidente retrocede a pendiente y tiene que saber por qué).
+    try {
+      const adminClient = createAdminClient()
+      const { data: inc } = await adminClient
+        .from('incidentes')
+        .select('id_cliente_reporta')
+        .eq('id_incidente', idIncidente)
+        .single()
+      const idCliente = inc?.id_cliente_reporta
+      if (idCliente) {
+        const { crearNotificacionCliente } = await import('@/features/notificaciones/notificaciones-inapp.service')
+        await crearNotificacionCliente({
+          id_cliente: idCliente,
+          tipo: 'asignacion_cancelada',
+          titulo: 'Cambio en tu incidente',
+          mensaje: `El técnico asignado no podrá atender tu incidente #${idIncidente}. Ya estamos buscando un reemplazo: tu incidente está nuevamente pendiente de asignación.`,
+          id_incidente: idIncidente,
+        })
+      }
+    } catch { /* no bloquear la operación principal */ }
+
     return { success: true, data: undefined }
   } catch {
     return { success: false, error: 'Error inesperado al cancelar la asignación' }
@@ -723,11 +745,14 @@ export async function darDeBajaIncidente(
   try {
     const adminClient = createAdminClient()
 
-    // 1. Verificar que no haya conformidad con foto subida
+    // 1. Verificar que no haya conformidad VIGENTE con foto subida.
+    // Una conformidad rechazada (sin resubida) no bloquea: si el técnico se
+    // desentiende tras el rechazo, el admin debe poder darlo de baja y reasignar.
     const { data: conformidades } = await adminClient
       .from('conformidades')
       .select('id_conformidad')
       .eq('id_incidente', idIncidente)
+      .eq('esta_rechazada', false)
       .not('url_documento', 'is', null)
 
     if (conformidades && conformidades.length > 0) {

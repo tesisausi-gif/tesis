@@ -7,6 +7,7 @@ import { getMisIncidentesPagados } from '@/features/pagos/pagos-tecnicos.service
 import { getInspeccionesDeTecnico } from '@/features/inspecciones/inspecciones.service'
 import { getVisitasActivasPorIncidentes } from '@/features/visitas/visitas.service'
 import { getFranjasParaIncidentes } from '@/features/disponibilidad/disponibilidad.service'
+import { conformidadVigente } from '@/shared/utils/conformidades'
 import { TrabajosContent } from '@/components/tecnico/trabajos-content.client'
 
 export default async function TecnicoTrabajosPage() {
@@ -41,9 +42,16 @@ export default async function TecnicoTrabajosPage() {
     getFranjasParaIncidentes(idIncidentes),
   ])
 
-  const conformidadesPorIncidente: Record<number, { id_conformidad: number; id_incidente: number; esta_firmada: number | boolean; esta_rechazada?: boolean | null; url_documento: string | null }> = {}
+  // Puede haber varias filas por incidente (rechazadas históricas + resubida):
+  // agrupar y quedarse con la VIGENTE de cada incidente.
+  const conformidadesAgrupadas: Record<number, typeof conformidades> = {}
   for (const c of conformidades) {
-    conformidadesPorIncidente[c.id_incidente] = c
+    ;(conformidadesAgrupadas[c.id_incidente] ??= []).push(c)
+  }
+  const conformidadesPorIncidente: Record<number, { id_conformidad: number; id_incidente: number; esta_firmada: number | boolean; esta_rechazada?: boolean | null; url_documento: string | null }> = {}
+  for (const [idInc, lista] of Object.entries(conformidadesAgrupadas)) {
+    const vigente = conformidadVigente(lista)
+    if (vigente) conformidadesPorIncidente[Number(idInc)] = vigente
   }
 
   const asignacionesConVisitas = asignaciones.map(a => ({

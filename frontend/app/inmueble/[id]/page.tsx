@@ -15,24 +15,28 @@ export default async function InmuebleDetallePage({ params }: Props) {
     return notFound()
   }
 
+  // notFound() LANZA: no debe llamarse dentro de un try que lo capture, ni
+  // envolver el JSX (los errores de datos se degradaban a 404 silenciosos).
+  let inmueble: Awaited<ReturnType<typeof getInmuebleById>> | null = null
+  let incidentes: Awaited<ReturnType<typeof getIncidentesByInmueble>> = []
   try {
-    const [inmueble, incidentes] = await Promise.all([
+    ;[inmueble, incidentes] = await Promise.all([
       getInmuebleById(idInmueble),
       getIncidentesByInmueble(idInmueble),
     ])
-
-    if (!inmueble) {
-      return notFound()
-    }
-
-    return (
-      <InmuebleDetalleContent
-        inmueble={inmueble}
-        incidentes={incidentes as any}
-      />
-    )
   } catch (error) {
     console.error('Error loading inmueble detail:', error)
+    throw error
+  }
+
+  if (!inmueble) {
     return notFound()
   }
+
+  return (
+    <InmuebleDetalleContent
+      inmueble={inmueble}
+      incidentes={incidentes as any}
+    />
+  )
 }

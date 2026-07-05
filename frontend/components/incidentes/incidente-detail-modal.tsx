@@ -552,8 +552,8 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const comprobanteInputRef = useRef<HTMLInputElement>(null)
 
   const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([])
-  const [pagosIncidente, setPagosIncidente] = useState<{ pendiente: MiCobroPendiente | null, realizados: MiCobroRealizado[] } | null>(null)
-  const [pagosTecnicoIncidente, setPagosTecnicoIncidente] = useState<{ pendiente: MiPagoPendiente | null, recibidos: MiPagoRecibido[] } | null>(null)
+  const [pagosIncidente, setPagosIncidente] = useState<{ pendientes: MiCobroPendiente[], realizados: MiCobroRealizado[] } | null>(null)
+  const [pagosTecnicoIncidente, setPagosTecnicoIncidente] = useState<{ pendientes: MiPagoPendiente[], recibidos: MiPagoRecibido[] } | null>(null)
   const [cargandoPagos, setCargandoPagos] = useState(false)
 
   useEffect(() => {
@@ -577,13 +577,13 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         setCargandoPagos(true)
         getMisPagosDeIncidente(incidenteId)
           .then(setPagosIncidente)
-          .catch(() => setPagosIncidente({ pendiente: null, realizados: [] }))
+          .catch(() => setPagosIncidente({ pendientes: [], realizados: [] }))
           .finally(() => setCargandoPagos(false))
       } else if (rol === 'tecnico' && !pagosTecnicoIncidente) {
         setCargandoPagos(true)
         getMisPagosTecnicoDeIncidente(incidenteId)
           .then(setPagosTecnicoIncidente)
-          .catch(() => setPagosTecnicoIncidente({ pendiente: null, recibidos: [] }))
+          .catch(() => setPagosTecnicoIncidente({ pendientes: [], recibidos: [] }))
           .finally(() => setCargandoPagos(false))
       }
     }
@@ -1162,9 +1162,25 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
     }
   }
 
+  // La UI promete "JPG, PNG, HEIC, PDF — máx. 10 MB": validarlo de verdad
+  // (misma regla que documentos.service.ts, este flujo sube directo a Storage).
+  const MAX_ARCHIVO_CONFORMIDAD = 10 * 1024 * 1024
+  const validarArchivoConformidad = (file: File): boolean => {
+    if (file.size > MAX_ARCHIVO_CONFORMIDAD) {
+      toast.error(`El archivo supera los 10 MB (pesa ${(file.size / 1024 / 1024).toFixed(1)} MB). Sacá la foto en menor calidad o comprimila.`)
+      return false
+    }
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      toast.error('Formato no soportado. Subí una imagen (JPG, PNG, HEIC) o un PDF.')
+      return false
+    }
+    return true
+  }
+
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!validarArchivoConformidad(file)) { e.target.value = ''; return }
     setFotoFile(file)
     setFotoPreview(URL.createObjectURL(file))
   }
@@ -1172,8 +1188,15 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
   const handleSubirConformidad = async () => {
     if (!incidenteId || !fotoFile || !comprobanteFile) return
     setUploadingFoto(true)
+    const supabase = createClient()
+    // Para poder borrar los archivos si el registro no se concreta (huérfanos)
+    const subidos: string[] = []
+    const limpiarSubidos = async () => {
+      if (subidos.length) {
+        try { await supabase.storage.from('conformidades').remove(subidos) } catch { /* best effort */ }
+      }
+    }
     try {
-      const supabase = createClient()
       const ts = Date.now()
 
       // Subir foto de conformidad
@@ -1183,6 +1206,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         .from('conformidades')
         .upload(pathFoto, fotoFile, { upsert: false })
       if (errFoto) { toast.error('Error al subir la foto: ' + errFoto.message); return }
+      subidos.push(uploadFoto.path)
       const { data: { publicUrl: fotoUrl } } = supabase.storage.from('conformidades').getPublicUrl(uploadFoto.path)
 
       // Subir comprobante de compras
@@ -1191,7 +1215,12 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
       const { data: uploadComp, error: errComp } = await supabase.storage
         .from('conformidades')
         .upload(pathComp, comprobanteFile, { upsert: false })
-      if (errComp) { toast.error('Error al subir el comprobante: ' + errComp.message); return }
+      if (errComp) {
+        toast.error('Error al subir el comprobante: ' + errComp.message)
+        await limpiarSubidos()
+        return
+      }
+      subidos.push(uploadComp.path)
       const { data: { publicUrl: comprobanteUrl } } = supabase.storage.from('conformidades').getPublicUrl(uploadComp.path)
 
       const res = await crearConformidadPorTecnico(incidenteId, fotoUrl, comprobanteUrl)
@@ -1204,9 +1233,22 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
         await cargarIncidente()
         onUpdate?.()
       } else {
+        // El registro no se creó: borrar los archivos recién subidos para no
+        // dejar huérfanos en Storage. Si el motivo es "ya existe una conformidad
+        // pendiente" (típico reintento tras un timeout donde el 1er envío SÍ
+        // entró), refrescar para que el técnico vea su conformidad cargada.
+        await limpiarSubidos()
         toast.error(res.error ?? 'Error al enviar conformidad')
+        if (res.error?.includes('Ya existe una conformidad')) {
+          setFotoFile(null)
+          setFotoPreview(null)
+          setComprobanteFile(null)
+          setComprobantePreview(null)
+          await cargarIncidente()
+        }
       }
     } catch {
+      await limpiarSubidos()
       toast.error('Error inesperado al subir los archivos')
     } finally {
       setUploadingFoto(false)
@@ -2541,7 +2583,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       <p>Debés completar el trabajo antes de poder cargar la conformidad.</p>
                     </div>
                   </div>
-                ) : conformidad ? (
+                ) : conformidad && !conformidad.esta_rechazada ? (
                   <div className={`rounded-lg border p-4 space-y-3 ${
                     (conformidad.esta_firmada === true || conformidad.esta_firmada === 1)
                       ? 'bg-emerald-50 border-emerald-200'
@@ -2571,6 +2613,14 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {conformidad?.esta_rechazada && (
+                      <div className="rounded-lg bg-red-50 border border-red-200 p-3 flex items-start gap-2">
+                        <XCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-red-800">
+                          La administración rechazó la foto anterior. Subí una nueva foto clara de la conformidad firmada por el cliente.
+                        </p>
+                      </div>
+                    )}
                     <p className="text-sm text-gray-600">
                       Tomá una foto de la conformidad física firmada por el cliente y subila aquí. La administración la revisará para cerrar el incidente.
                     </p>
@@ -2641,6 +2691,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                         onChange={(e) => {
                           const file = e.target.files?.[0]
                           if (!file) return
+                          if (!validarArchivoConformidad(file)) { e.target.value = ''; return }
                           setComprobanteFile(file)
                           const reader = new FileReader()
                           reader.onload = (ev) => setComprobantePreview(ev.target?.result as string)
@@ -2920,18 +2971,20 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </div>
                 ) : pagosIncidente ? (
                   <>
-                    {/* Pago pendiente */}
-                    {pagosIncidente.pendiente && (
-                      <div className="rounded-xl border-2 border-orange-200 bg-orange-50 overflow-hidden">
+                    {/* Pagos pendientes (puede haber original + adicional) */}
+                    {pagosIncidente.pendientes.map((pend, i) => (
+                      <div key={pend.id_presupuesto} className="rounded-xl border-2 border-orange-200 bg-orange-50 overflow-hidden">
                         <div className="bg-orange-500 px-4 py-3 flex items-center gap-2">
                           <Clock className="h-4 w-4 text-white flex-shrink-0" />
-                          <p className="text-white font-bold text-sm">Pago pendiente</p>
+                          <p className="text-white font-bold text-sm">
+                            Pago pendiente{pagosIncidente.pendientes.length > 1 ? (i === 0 ? ' — presupuesto original' : ' — adicional') : ''}
+                          </p>
                         </div>
                         <div className="p-4 space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-gray-600">Monto a pagar</span>
                             <span className="text-2xl font-bold text-orange-600">
-                              ${pagosIncidente.pendiente.monto_a_pagar.toLocaleString('es-AR')}
+                              ${pend.monto_a_pagar.toLocaleString('es-AR')}
                             </span>
                           </div>
                           <div className="rounded-lg bg-white border border-orange-100 px-3 py-2.5 flex items-start gap-2">
@@ -2942,7 +2995,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           </div>
                         </div>
                       </div>
-                    )}
+                    ))}
 
                     {/* Historial de pagos */}
                     {pagosIncidente.realizados.length > 0 && (
@@ -2980,7 +3033,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                     )}
 
                     {/* Sin pagos */}
-                    {!pagosIncidente.pendiente && pagosIncidente.realizados.length === 0 && (
+                    {pagosIncidente.pendientes.length === 0 && pagosIncidente.realizados.length === 0 && (
                       <div className="text-center py-10">
                         <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                           <DollarSign className="h-6 w-6 text-gray-400" />
@@ -3003,28 +3056,30 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                   </div>
                 ) : pagosTecnicoIncidente ? (
                   <>
-                    {/* Pago pendiente de cobrar */}
-                    {pagosTecnicoIncidente.pendiente && (
-                      <div className="rounded-xl border-2 border-amber-200 bg-amber-50 overflow-hidden">
+                    {/* Pagos pendientes de recibir (puede haber original + adicional) */}
+                    {pagosTecnicoIncidente.pendientes.map((pend, i) => (
+                      <div key={pend.id_presupuesto} className="rounded-xl border-2 border-amber-200 bg-amber-50 overflow-hidden">
                         <div className="bg-amber-500 px-4 py-3 flex items-center gap-2">
                           <Clock className="h-4 w-4 text-white flex-shrink-0" />
-                          <p className="text-white font-bold text-sm">Pago pendiente de recibir</p>
+                          <p className="text-white font-bold text-sm">
+                            Pago pendiente de recibir{pagosTecnicoIncidente.pendientes.length > 1 ? (i === 0 ? ' — presupuesto original' : ' — adicional') : ''}
+                          </p>
                         </div>
                         <div className="p-4 space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-gray-600">Monto a recibir</span>
                             <span className="text-2xl font-bold text-amber-600">
-                              ${pagosTecnicoIncidente.pendiente.monto_a_recibir.toLocaleString('es-AR')}
+                              ${pend.monto_a_recibir.toLocaleString('es-AR')}
                             </span>
                           </div>
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <div className="bg-white rounded-lg border border-amber-100 px-3 py-2">
                               <p className="text-xs text-gray-500">Materiales</p>
-                              <p className="font-semibold">${pagosTecnicoIncidente.pendiente.costo_materiales.toLocaleString('es-AR')}</p>
+                              <p className="font-semibold">${pend.costo_materiales.toLocaleString('es-AR')}</p>
                             </div>
                             <div className="bg-white rounded-lg border border-amber-100 px-3 py-2">
                               <p className="text-xs text-gray-500">Mano de obra</p>
-                              <p className="font-semibold">${pagosTecnicoIncidente.pendiente.costo_mano_obra.toLocaleString('es-AR')}</p>
+                              <p className="font-semibold">${pend.costo_mano_obra.toLocaleString('es-AR')}</p>
                             </div>
                           </div>
                           <div className="rounded-lg bg-white border border-amber-100 px-3 py-2.5 flex items-start gap-2">
@@ -3035,7 +3090,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                           </div>
                         </div>
                       </div>
-                    )}
+                    ))}
 
                     {/* Pagos recibidos */}
                     {pagosTecnicoIncidente.recibidos.length > 0 && (
@@ -3074,7 +3129,7 @@ export function IncidenteDetailModal({ incidenteId, open, onOpenChange, onUpdate
                       </div>
                     )}
 
-                    {!pagosTecnicoIncidente.pendiente && pagosTecnicoIncidente.recibidos.length === 0 && (
+                    {pagosTecnicoIncidente.pendientes.length === 0 && pagosTecnicoIncidente.recibidos.length === 0 && (
                       <div className="text-center py-10">
                         <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                           <DollarSign className="h-6 w-6 text-gray-400" />

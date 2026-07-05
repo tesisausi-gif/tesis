@@ -401,10 +401,12 @@ export async function getMisPagosComoTecnico(): Promise<{ pendientes: MiPagoPend
 import { requireTecnicoId } from '@/features/auth/auth.service'
 
 /**
- * Pago pendiente y recibidos del técnico actual para un incidente específico.
+ * Pagos pendientes y recibidos del técnico actual para un incidente específico.
+ * Un incidente puede tener MÁS de un presupuesto aprobado a la vez
+ * (original + adicional), por eso `pendientes` es una lista.
  */
 export async function getMisPagosTecnicoDeIncidente(idIncidente: number): Promise<{
-  pendiente: MiPagoPendiente | null
+  pendientes: MiPagoPendiente[]
   recibidos: MiPagoRecibido[]
 }> {
   // Autorización + filtro por id_tecnico. Admin client por la misma razón:
@@ -413,14 +415,14 @@ export async function getMisPagosTecnicoDeIncidente(idIncidente: number): Promis
   const idTecnico = await requireTecnicoId()
   const supabase = createAdminClient()
 
-  const { data: pres } = await supabase
+  const { data: presupuestos } = await supabase
     .from('presupuestos')
     .select('id_presupuesto, id_incidente, costo_materiales, costo_mano_obra, fecha_creacion, incidentes(descripcion_problema, categoria)')
     .eq('id_incidente', idIncidente)
     .eq('estado_presupuesto', 'aprobado')
-    .maybeSingle()
+    .order('fecha_creacion', { ascending: true })
 
-  if (!pres) return { pendiente: null, recibidos: [] }
+  if (!presupuestos?.length) return { pendientes: [], recibidos: [] }
 
   const { data: pagos } = await supabase
     .from('pagos_tecnicos')
@@ -430,22 +432,26 @@ export async function getMisPagosTecnicoDeIncidente(idIncidente: number): Promis
     .order('fecha_pago', { ascending: false })
 
   const pagadosIds = new Set((pagos || []).map((p: any) => p.id_presupuesto))
-  const inc = pres.incidentes as any
-  const mat = Number(pres.costo_materiales) || 0
-  const mdo = Number(pres.costo_mano_obra) || 0
+  const inc = presupuestos[0].incidentes as any
 
-  const pendiente: MiPagoPendiente | null = pagadosIds.has(pres.id_presupuesto) ? null : {
-    id_presupuesto: pres.id_presupuesto,
-    id_incidente: pres.id_incidente,
-    descripcion_problema: inc?.descripcion_problema || '',
-    categoria: inc?.categoria || null,
-    costo_materiales: mat,
-    costo_mano_obra: mdo,
-    monto_a_recibir: mat + mdo,
-    fecha_presupuesto: pres.fecha_creacion,
-    id_inmueble: null,
-    direccion_inmueble: null,
-  }
+  const pendientes: MiPagoPendiente[] = presupuestos
+    .filter((p: any) => !pagadosIds.has(p.id_presupuesto))
+    .map((p: any) => {
+      const mat = Number(p.costo_materiales) || 0
+      const mdo = Number(p.costo_mano_obra) || 0
+      return {
+        id_presupuesto: p.id_presupuesto,
+        id_incidente: p.id_incidente,
+        descripcion_problema: inc?.descripcion_problema || '',
+        categoria: inc?.categoria || null,
+        costo_materiales: mat,
+        costo_mano_obra: mdo,
+        monto_a_recibir: mat + mdo,
+        fecha_presupuesto: p.fecha_creacion,
+        id_inmueble: null,
+        direccion_inmueble: null,
+      }
+    })
 
   const recibidos: MiPagoRecibido[] = (pagos || []).map((p: any) => ({
     id_pago_tecnico: p.id_pago_tecnico,
@@ -463,5 +469,5 @@ export async function getMisPagosTecnicoDeIncidente(idIncidente: number): Promis
     direccion_inmueble: null,
   }))
 
-  return { pendiente, recibidos }
+  return { pendientes, recibidos }
 }
