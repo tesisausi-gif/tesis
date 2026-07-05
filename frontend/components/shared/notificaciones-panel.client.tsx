@@ -310,32 +310,59 @@ export function NotificacionesPanel({ notificaciones: inicial, rol }: Props) {
 
   useEffect(() => {
     const supabase = createClient()
-    let channel: ReturnType<typeof supabase.channel> | null = null
     let cancelado = false
+    // Buffer de eventos que llegan antes de que getCurrentUser() resuelva.
+    // getCurrentUser() es un Server Action y hace un round-trip al servidor
+    // (~300-500ms). Sin buffer, las notificaciones que llegan en ese lapso
+    // se pierden y el panel nunca las muestra.
+    const pendingBuffer: Notificacion[] = []
+    let userInfo: { id_tecnico?: number | null; id_cliente?: number | null } | null = null
 
-    // El filtro por rol NO alcanza: dos técnicos (o dos clientes) conectados a la
-    // vez recibirían las notificaciones del otro. Hay que comparar contra el
-    // id_tecnico/id_cliente del usuario logueado.
+    const esParaEsteUsuario = (n: Notificacion) => {
+      if (n.fecha_leida) return false
+      if (!userInfo) return false
+      return (
+        (rol === 'admin' && n.para_admin) ||
+        (rol === 'tecnico' && !n.para_admin && n.id_tecnico != null && n.id_tecnico === userInfo.id_tecnico) ||
+        (rol === 'cliente' && !n.para_admin && n.id_cliente != null && n.id_cliente === userInfo.id_cliente)
+      )
+    }
+
+    // Suscribirse INMEDIATAMENTE, sin esperar a getCurrentUser()
+    const channel = supabase
+      .channel(`notificaciones-panel-${rol}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, (payload) => {
+        const nueva = payload.new as Notificacion
+        if (!userInfo) {
+          // Aún no tenemos datos del usuario: bufferear para procesar después
+          pendingBuffer.push(nueva)
+          return
+        }
+        if (!esParaEsteUsuario(nueva)) return
+        setItems(prev => {
+          if (prev.some(n => n.id_notificacion === nueva.id_notificacion)) return prev
+          return [nueva, ...prev]
+        })
+      })
+      .subscribe()
+
+    // Resolver identidad del usuario en paralelo; procesar los eventos bufferados
     getCurrentUser().then((user) => {
       if (cancelado || !user) return
-      channel = supabase
-        .channel(`notificaciones-panel-${rol}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, (payload) => {
-          const nueva = payload.new as Notificacion
-          if (nueva.fecha_leida) return
-          const esParaEsteUsuario =
-            (rol === 'admin' && nueva.para_admin) ||
-            (rol === 'tecnico' && !nueva.para_admin && nueva.id_tecnico != null && nueva.id_tecnico === user.id_tecnico) ||
-            (rol === 'cliente' && !nueva.para_admin && nueva.id_cliente != null && nueva.id_cliente === user.id_cliente)
-          if (!esParaEsteUsuario) return
-          setItems(prev => [nueva, ...prev])
+      userInfo = { id_tecnico: user.id_tecnico, id_cliente: user.id_cliente }
+      // Vaciar el buffer acumulado durante la espera del Server Action
+      const paraAgregar = pendingBuffer.splice(0).filter(esParaEsteUsuario)
+      if (paraAgregar.length > 0) {
+        setItems(prev => {
+          const nuevos = paraAgregar.filter(n => !prev.some(p => p.id_notificacion === n.id_notificacion))
+          return nuevos.length ? [...nuevos.reverse(), ...prev] : prev
         })
-        .subscribe()
-    }).catch(() => { /* sin usuario no hay suscripción */ })
+      }
+    }).catch(() => {})
 
     return () => {
       cancelado = true
-      if (channel) supabase.removeChannel(channel)
+      supabase.removeChannel(channel)
     }
   }, [rol])
 

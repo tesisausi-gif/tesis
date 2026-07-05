@@ -194,7 +194,7 @@ export async function getFranjasAgendaTecnico(idTecnico: number): Promise<Franja
     .from('asignaciones_tecnico')
     .select('id_asignacion, id_incidente, estado_asignacion')
     .eq('id_tecnico', idTecnico)
-    .in('estado_asignacion', ['pendiente', 'aceptada', 'en_curso'])
+    .in('estado_asignacion', ['aceptada', 'en_curso'])
 
   if (!asignaciones || asignaciones.length === 0) return []
 

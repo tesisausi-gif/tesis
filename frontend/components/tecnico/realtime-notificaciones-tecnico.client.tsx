@@ -16,29 +16,36 @@ export function RealtimeNotificacionesTecnico() {
 
   useEffect(() => {
     const supabase = createClient()
-    let channel: ReturnType<typeof supabase.channel> | null = null
     let cancelado = false
+    const pendingBuffer: Notificacion[] = []
+    let idTecnico: number | null = null
+
+    const procesarNotificacion = (nueva: Notificacion) => {
+      if (idTecnico === null || nueva.id_tecnico !== idTecnico) return
+      if (vistasRef.current.has(nueva.id_notificacion)) return
+      vistasRef.current.add(nueva.id_notificacion)
+      toast.info(nueva.titulo, { duration: 5000 })
+      window.dispatchEvent(new CustomEvent('tecnico-badges-refresh'))
+    }
+
+    const channel = supabase
+      .channel('notif-tecnico-global-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, (payload) => {
+        const nueva = payload.new as Notificacion
+        if (idTecnico === null) { pendingBuffer.push(nueva); return }
+        procesarNotificacion(nueva)
+      })
+      .subscribe()
 
     getCurrentUser().then((user) => {
       if (cancelado || !user?.id_tecnico) return
-
-      channel = supabase
-        .channel('notif-tecnico-global-realtime')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, (payload) => {
-          const nueva = payload.new as Notificacion
-          if (nueva.id_tecnico !== user.id_tecnico) return
-          if (vistasRef.current.has(nueva.id_notificacion)) return
-          vistasRef.current.add(nueva.id_notificacion)
-
-          toast.info(nueva.titulo, { duration: 5000 })
-          window.dispatchEvent(new CustomEvent('tecnico-badges-refresh'))
-        })
-        .subscribe()
+      idTecnico = user.id_tecnico
+      pendingBuffer.splice(0).forEach(procesarNotificacion)
     }).catch(() => {})
 
     return () => {
       cancelado = true
-      if (channel) supabase.removeChannel(channel)
+      supabase.removeChannel(channel)
     }
   }, [])
 
