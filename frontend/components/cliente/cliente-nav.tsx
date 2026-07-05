@@ -29,13 +29,20 @@ function ClienteNavComponent() {
     const refresh = () => getClienteBadgeCounts().then(setCounts).catch(() => {})
     refresh()
 
+    window.addEventListener('cliente-badges-refresh', refresh)
+
     const channel = supabase
       .channel('cliente-badges-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cobros_clientes' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'asignaciones_tecnico' }, refresh)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, refresh)
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      supabase.removeChannel(channel)
+      window.removeEventListener('cliente-badges-refresh', refresh)
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogout = useCallback(async () => {

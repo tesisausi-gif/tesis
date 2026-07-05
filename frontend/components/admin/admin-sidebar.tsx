@@ -91,6 +91,7 @@ export function AdminSidebar() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cobros_clientes' },      refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos_tecnicos' },       refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes_registro' }, refresh)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, refresh)
       .subscribe()
 
     return () => {

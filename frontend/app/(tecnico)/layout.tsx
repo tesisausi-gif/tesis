@@ -1,6 +1,7 @@
 'use client'
 
 import { TecnicoNav } from '@/components/tecnico/tecnico-nav'
+import { RealtimeNotificacionesTecnico } from '@/components/tecnico/realtime-notificaciones-tecnico.client'
 import { AIHelpChat } from '@/components/ai-help-chat'
 import { PageTransitionProvider, PageTransition } from '@/components/ui/page-transition'
 import { PullToRefresh } from '@/components/ui/pull-to-refresh'
@@ -22,6 +23,7 @@ export default function TecnicoLayout({
     <PageTransitionProvider routes={tecnicoRoutes}>
       <div className="min-h-screen bg-gray-50 pb-16">
         <TecnicoNav />
+        <RealtimeNotificacionesTecnico />
         <PullToRefresh>
           <main className="p-4 overflow-hidden">
             <PageTransition>

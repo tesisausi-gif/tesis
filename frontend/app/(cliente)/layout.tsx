@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { ClienteNav } from '@/components/cliente/cliente-nav'
+import { RealtimeNotificacionesCliente } from '@/components/cliente/realtime-notificaciones-cliente.client'
 import { CambiarPasswordPrimerAcceso } from '@/components/cliente/cambiar-password-primer-acceso.client'
 import { VerificarEmailOverlay } from '@/components/cliente/verificar-email-overlay.client'
 import { AIHelpChat } from '@/components/ai-help-chat'
@@ -69,6 +70,7 @@ export default function ClienteLayout({
     <PageTransitionProvider routes={clienteRoutes}>
       <div className="min-h-screen bg-gray-50 pb-16">
         <ClienteNav />
+        <RealtimeNotificacionesCliente />
         <PullToRefresh>
           <main className="p-4 overflow-hidden">
             <PageTransition>

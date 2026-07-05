@@ -36,6 +36,7 @@ function TecnicoNavComponent() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'asignaciones_tecnico' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuestos' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conformidades' }, refresh)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' }, refresh)
       .subscribe()
 
     return () => {
