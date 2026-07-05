@@ -4076,13 +4076,14 @@
     'registrar-presupuesto': { layer: 'ACTOR · TÉCNICO  ·  HU-05  ·  RF-05', name: 'Registrar presupuesto', desc: 'El técnico elabora el presupuesto con materiales, mano de obra y descripción detallada. Al enviarlo, el presupuesto pasa a estado enviado para revisión del admin.' },
     'aprobar-presup-admin': { layer: 'ACTOR · ADMINISTRADOR  ·  HU-06A  ·  RF-06', name: 'Aprobar presupuesto (admin)', desc: 'El admin revisa el presupuesto del técnico, define los gastos administrativos (comisión ISBA) y lo aprueba o rechaza. Si aprueba, pasa a aprobado_admin y se envía al cliente.' },
     'aprobar-presup-cliente': { layer: 'ACTOR · CLIENTE  ·  HU-06B  ·  RF-06', name: 'Aprobar presupuesto (cliente)', desc: 'El cliente, desde su portal, ve el presupuesto con el detalle completo y decide si aprobarlo o rechazarlo. Su decisión habilita o no la ejecución del trabajo.' },
-    'registrar-avance': { layer: 'ACTOR · TÉCNICO  ·  HU-07A  ·  RF-07A', name: 'Registrar avance', desc: 'El técnico registra los avances del trabajo: descripción, porcentaje completado y fecha. Los avances quedan visibles en la pestaña de ejecución y en el timeline.' },
+    'registrar-avance': { layer: 'ACTOR · TÉCNICO  ·  HU-07A  ·  RF-07A', name: 'Registrar avance', desc: 'El técnico registra los avances del trabajo: descripción y fecha. Los avances quedan visibles en la pestaña de ejecución y en el timeline.' },
     'subir-conformidad': { layer: 'ACTOR · TÉCNICO  ·  HU-09  ·  RF-07D', name: 'Subir conformidad', desc: 'Al finalizar el trabajo, el técnico marca el incidente como completado y sube la foto de la conformidad firmada por el cliente + el comprobante de compras.' },
     'aprobar-conformidad': { layer: 'ACTOR · ADMINISTRADOR  ·  HU-10  ·  RF-08', name: 'Aprobar conformidad', desc: 'El admin revisa la foto de conformidad. Si aprueba, registra la calificación del técnico (1-5★) y el incidente queda marcado como resuelto (fue_resuelto = true). Si rechaza, el técnico debe subir una nueva foto.' },
     'calificar-tecnico': { layer: 'ACTOR · ADMINISTRADOR  ·  HU-11  ·  RF-09', name: 'Calificar técnico', desc: 'Al aprobar la conformidad, la administración evalúa la calidad del trabajo del técnico con una puntuación de 1 a 5 estrellas + comentario. La calificación actualiza el promedio del técnico usado en el ranking de asignación.' },
     'registrar-cobro': { layer: 'ACTOR · ADMINISTRADOR  ·  HU-08A  ·  RF-07B', name: 'Registrar cobro al cliente', desc: 'El admin registra el cobro al cliente: monto, método de pago (efectivo, transferencia, débito, crédito), comprobante y observaciones. Al registrarse, el incidente pasa a estado finalizado.' },
     'registrar-pago-tecnico': { layer: 'ACTOR · ADMINISTRADOR  ·  HU-08B  ·  RF-07C', name: 'Registrar pago al técnico', desc: 'El admin registra el pago al técnico por el trabajo realizado: monto, método y comprobante. Es una operación independiente del cobro al cliente.' },
     'ver-timeline': { layer: 'TRANSVERSAL  ·  HU-07B/C  ·  RF-07A', name: 'Ver timeline del incidente', desc: 'Los 3 roles pueden consultar la línea de tiempo del incidente: registro, asignación, inspección, presupuesto, avances, conformidad, cobro y pago. Cada evento es expandible para ver su detalle. La vista se adapta al rol (cliente ve menos, admin ve todo).' },
+    'consultar-reportes': { layer: 'ACTOR · ADMINISTRADOR  ·  RF-12', name: 'Consultar reportes y métricas', desc: 'El administrador accede al dashboard de métricas con PPIs de proceso calculados en tiempo real: Tiempo de Ciclo (TCI), Tasa de Primera Vez (FPY), WIP, Tasa de Cancelación, Tasa de Reasignación y más. También puede consultar a Walter IA en lenguaje natural sobre el estado operativo del sistema.' },
   };
 
   document.querySelectorAll('.uc-node').forEach(node => {
@@ -4167,15 +4168,22 @@
   const FLOW_INFO = {
     'flow-01': {
       eyebrow: 'Flujo 1 de 9 · Soporte', title: 'ABM de Inmuebles',
-      sub: 'El cliente registra sus propios inmuebles en el sistema. Es la base maestra que después se vincula con los incidentes que él mismo reporta.',
+      sub: 'El cliente registra y administra sus propios inmuebles desde su portal. El admin solo puede dar de baja un inmueble si no tiene incidentes en curso.',
       bpmn: [
         {type:'start', text:'Cliente autenticado'},
-        {type:'proc',  text:'Ingresa datos del inmueble<br>(dirección, tipo, localidad)'},
-        {type:'sys',   text:'Sistema asocia automáticamente<br>al cliente actual'},
-        {type:'proc',  text:'Puede activar o desactivar<br>sus inmuebles cuando quiera'},
-        {type:'end',   text:'Inmueble activo · listo para<br>reportar incidentes sobre él'},
+        {type:'proc',  text:'Completa formulario de propiedad<br>(calle, altura, piso/dpto, barrio, localidad, tipo)'},
+        {type:'sys',   text:'Sistema inserta inmueble<br>esta_activo = true · vinculado al cliente por sesión'},
+        {type:'end',   text:'Propiedad registrada y activa'},
+        {type:'dec',   text:'Admin solicita baja posteriormente<br>(operación independiente)',
+          yesText:'Sin incidentes en curso', yesNodes:[
+            {type:'end', text:'esta_activo = false<br>(inmueble dado de baja)'},
+          ],
+          noText:'Con incidentes en curso', noNodes:[
+            {type:'ko', text:'Operación bloqueada<br>no se puede dar de baja'},
+          ],
+        },
       ],
-      actores: ['Cliente'],
+      actores: ['Cliente', 'Administrador'],
       estados: ['activo', 'inactivo'],
       footer: 'Fuente · Tesis sec. 6.7 punto 1 · features/inmuebles/inmuebles.service.ts',
     },
@@ -4550,7 +4558,7 @@
     'UC Aprobar Conformidad':  'aprobar-conformidad',
     'UC Registrar Cobro':      'registrar-cobro',
     'UC Registrar Pago':       'registrar-pago-tecnico',
-    'UC Consultar reportes':   null,
+    'UC Consultar reportes':   'consultar-reportes',
   };
   const BPMN_NUM_MAP = { '3':'flow-03','5':'flow-05','6':'flow-06','7':'flow-07','8':'flow-08','9':'flow-09' };
   const HU_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>';
@@ -4560,7 +4568,7 @@
     'HU-01':    { name:'HU-01 — Registrar incidente',          desc:'Como cliente quiero registrar un incidente desde mi portal: selecciono el inmueble, describo el problema, adjunto fotos opcionales e indico mi disponibilidad horaria. El sistema genera un legajo digital y notifica de inmediato al administrador.' },
     'HU-03A/B': { name:'HU-03A/B — Alta de técnicos',          desc:'HU-03A: Como técnico quiero solicitar mi registro completando datos y especialidades. HU-03B: Como admin quiero aprobar o rechazar solicitudes de técnicos; el sistema genera y envía las credenciales temporales automáticamente.' },
     'HU-04':    { name:'HU-04 — Asignar / Aceptar asignación', desc:'Como admin quiero asignar al técnico más adecuado filtrando por especialidad y ranking. Como técnico quiero recibir la notificación in-app y confirmar o rechazar la asignación. El incidente pasa a en_proceso solo si acepta.' },
-    'HU-07A/B/C':{ name:'HU-07A/B/C — Avances y Timeline',     desc:'HU-07A: Como técnico registro avances con descripción y porcentaje. HU-07B: Como técnico veo el timeline completo del incidente. HU-07C: Como cliente veo el historial de eventos de mi incidente adaptado a mi rol.' },
+    'HU-07A/B/C':{ name:'HU-07A/B/C — Avances y Timeline',     desc:'HU-07A: Como técnico registro avances con descripción del trabajo realizado. HU-07B: Como técnico veo el timeline completo del incidente. HU-07C: Como cliente veo el historial de eventos de mi incidente adaptado a mi rol.' },
     'HU-08A/B': { name:'HU-08A/B — Cobro y pago',              desc:'HU-08A: Como admin registro el cobro al cliente (monto, método, comprobante). HU-08B: Como admin registro el pago al técnico como operación independiente. Ambas son necesarias para cerrar el incidente.' },
     'HU-09':    { name:'HU-09 — Subir conformidad',             desc:'Como técnico, al finalizar el trabajo subo la foto de la conformidad firmada por el cliente junto al comprobante de compra de materiales. Esto activa la revisión del administrador.' },
     'HU-10':    { name:'HU-10 — Aprobar conformidad',           desc:'Como admin reviso la foto de conformidad subida por el técnico. Si apruebo, registro la calificación del técnico (1-5★) y el incidente queda marcado como resuelto. Si rechazo, el técnico debe subir una nueva foto.' },
