@@ -229,6 +229,32 @@
   }
   .mantis-mark-lg img { width: 100%; height: 100%; object-fit: cover; }
 
+  /* ─────────── Slide 0 · Screensaver DVD ─────────── */
+  #dvd-slide { padding: 0; }
+  .dvd-stage {
+    position: absolute; inset: 0; overflow: hidden;
+    background: #000;
+  }
+  .dvd-logo {
+    position: absolute; top: 0; left: 0;
+    will-change: transform;
+  }
+  .dvd-logo .mantis-mark {
+    width: 128px; height: 128px; border-radius: 28px;
+  }
+  .dvd-hint {
+    position: absolute; bottom: 32px; left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: rgba(255,255,255,0.26);
+    animation: dvd-hint-pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes dvd-hint-pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.9; }
+  }
+
   /* ─────────── Pills / badges ─────────── */
   .pill {
     display: inline-flex; align-items: center; gap: 8px;
@@ -2145,9 +2171,23 @@
 <div class="slides">
 
 <!-- ═══════════════════════════════════════════════════════════════
+     00 — SCREENSAVER (logo rebotando estilo DVD, fondo negro)
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="dvd-slide" data-no-anim="true" data-background-color="#000000">
+  <div class="dvd-stage">
+    <div class="dvd-logo" id="dvdLogo">
+      <div class="mantis-mark">
+        <img src="mantis-icon.png" alt="Mantis">
+      </div>
+    </div>
+    <div class="dvd-hint">Presioná → para comenzar</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
      01 — PORTADA
      ═══════════════════════════════════════════════════════════════ -->
-<section class="slide-hero">
+<section id="s-portada" class="slide-hero">
   <div class="slide-pad" style="justify-content: space-between;">
     <div class="slide-corner">
       <span class="dot"></span>
@@ -3873,6 +3913,72 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════
+     18b — PATRONES DE FONDO · del parche a la causa (la IA como extra)
+     ═══════════════════════════════════════════════════════════════ -->
+<section>
+  <div class="slide-pad">
+    <div class="slide-corner">
+      <span class="dot"></span>
+      <span>10 · Conocé a Mantis · Patrones de fondo</span>
+      <span class="line"></span>
+    </div>
+
+    <!-- HERO -->
+    <div style="padding-top: 52px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: end; gap: 40px;">
+      <div>
+        <div class="eyebrow">Del reclamo suelto a la decisión de fondo</div>
+        <h2 class="display-lg">Patrones de fondo<span class="mark-blue dot-end"></span></h2>
+        <p class="text-body" style="margin-top: 10px; max-width: 800px;">
+          Una propiedad va acumulando arreglos del mismo tipo sin que nadie lo note — cuatro visitas de electricidad en un año que, sueltas, parecen incidentes aislados. MANTIS <strong style="color: var(--ink);">las junta solo</strong>: agrupa las obras repetidas por propiedad y rubro y las pone adelante, para decidir si conviene <strong style="color: var(--ink);">atacar la causa de fondo</strong> en vez de seguir pagando parches.
+        </p>
+      </div>
+      <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right; flex-shrink: 0;">
+        Sale de datos que ya existen<br>cero configuración · a la vista en Informes
+      </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 44px; flex: 1; min-height: 0; align-items: stretch;">
+
+      <!-- Qué hace -->
+      <div style="display: flex; flex-direction: column;">
+        <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.25em; color: var(--ink-faded); text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Qué hace</p>
+        <div class="stagger">
+          <div class="process-step"><div class="ps-num">01</div><div><div class="ps-title">Detecta lo crónico</div><div class="ps-desc">Junta las obras del mismo rubro en una misma propiedad y las ordena de peor a mejor: las más repetidas y apretadas en el tiempo, primero.</div></div></div>
+          <div class="process-step"><div class="ps-num">02</div><div><div class="ps-title">Te deja actuar</div><div class="ps-desc">De un click arrancás una obra que ataca la causa —ya pre-cargada— o descartás el patrón si fue casualidad. La bandeja se vacía a medida que decidís.</div></div></div>
+          <div class="process-step"><div class="ps-num">03</div><div><div class="ps-title">Cierra el círculo</div><div class="ps-desc">Si el problema vuelve después de la obra de fondo, reaparece avisando <em>"el arreglo no aguantó"</em>. El sistema controla si la inversión sirvió.</div></div></div>
+        </div>
+      </div>
+
+      <!-- Qué le aporta -->
+      <div style="display: flex; flex-direction: column;">
+        <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.25em; color: var(--ink-faded); text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Qué le aporta al negocio</p>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="background: var(--paper-2); border-left: 4px solid var(--mantis); padding: 14px 16px;">
+            <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 3px;">Menos plata en parches</div>
+            <div style="font-size: 14px; color: var(--ink-faded); line-height: 1.4;">Cada visita repetida cuesta. Atacar la causa una vez suele salir menos que cuatro arreglos que no la resuelven.</div>
+          </div>
+          <div style="background: var(--paper-2); border-left: 4px solid var(--mantis); padding: 14px 16px;">
+            <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 3px;">Decisiones con evidencia, no de memoria</div>
+            <div style="font-size: 14px; color: var(--ink-faded); line-height: 1.4;">El patrón queda a la vista de la inmobiliaria; no depende de que alguien "se acuerde" de que ya pasó tres veces.</div>
+          </div>
+          <div style="background: var(--paper-2); border-left: 4px solid var(--mantis); padding: 14px 16px;">
+            <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 3px;">Se adelanta al reclamo</div>
+            <div style="font-size: 14px; color: var(--ink-faded); line-height: 1.4;">Encuentra el problema crónico antes de que el inquilino vuelva a llamar — y le da a la inmobiliaria un argumento concreto para hablar con el propietario.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- La IA es un extra, no un requisito -->
+    <div style="margin-top: 18px; padding: 15px 18px; background: var(--paper-2); border-left: 4px solid var(--mantis); font-size: 14.5px; color: var(--ink); line-height: 1.5;">
+      <strong style="color: var(--ink);">La inteligencia artificial es un extra, no un requisito.</strong> El sistema detecta el patrón y te deja decidir por tu cuenta. Y si querés, <strong style="color: var(--ink);">Walter</strong> lee las notas de inspección del técnico y te dice si de verdad es el mismo problema de fondo —citando las palabras del técnico— para ahorrarte leerlas una por una. Propone; la decisión siempre es tuya.
+    </div>
+
+    <div class="slide-footer"><span>10 · PATRONES DE FONDO</span><span>DEL PARCHE A LA CAUSA · LA IA COMO EXTRA</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
      XX — DEMO GUIADA · INTRO (4 flujos en vivo)
      ═══════════════════════════════════════════════════════════════ -->
 <section class="slide-hero">
@@ -5519,9 +5625,8 @@
   document.addEventListener('mousemove', (e) => {
     const slide = document.querySelector('.reveal .slides section.present');
     if (!slide || !slide.classList.contains('slide-hero')) return;
-    // Excluir slide de cierre (Gracias) y otras intermedias — sólo portada (index 0)
-    const allSlides = Array.from(document.querySelectorAll('.reveal .slides > section'));
-    if (allSlides.indexOf(slide) !== 0) return;
+    // Excluir slide de cierre (Gracias) y otras intermedias — sólo portada
+    if (slide.id !== 's-portada') return;
     const cx = (e.clientX / window.innerWidth - 0.5) * 2;
     const cy = (e.clientY / window.innerHeight - 0.5) * 2;
     const marks = slide.querySelectorAll('.mantis-mark, .mantis-mark-lg');
@@ -5530,6 +5635,74 @@
       m.style.transition = 'transform 0.4s ease-out';
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════
+  // SLIDE 0 · Screensaver estilo DVD — el logo rebota contra las paredes
+  // ═══════════════════════════════════════════════════════════════
+  (function dvdScreensaver() {
+    const slide = document.getElementById('dvd-slide');
+    const logo = document.getElementById('dvdLogo');
+    if (!slide || !logo) return;
+    const mark = logo.querySelector('.mantis-mark');
+
+    // Paleta de glow que va rotando en cada choque (guiño al DVD que cambia de color)
+    const glows = [
+      '0 0 44px 4px rgba(5,150,105,0.55)',   // esmeralda (brand)
+      '0 0 44px 4px rgba(52,211,153,0.55)',  // esmeralda claro
+      '0 0 44px 4px rgba(245,158,11,0.55)',  // ámbar
+      '0 0 44px 4px rgba(56,189,248,0.55)',  // celeste
+      '0 0 44px 4px rgba(167,139,250,0.55)', // violeta
+      '0 0 44px 4px rgba(244,114,182,0.55)', // rosa
+    ];
+    let glowIdx = 0;
+    const nextGlow = () => {
+      glowIdx = (glowIdx + 1) % glows.length;
+      if (mark) mark.style.boxShadow = glows[glowIdx];
+    };
+
+    const SPEED = 200; // px por segundo
+    let x = 120, y = 90, vx = 1, vy = 1;
+    let started = false, rafId = null, lastTs = null;
+
+    function frame(ts) {
+      if (lastTs == null) lastTs = ts;
+      const dt = Math.min((ts - lastTs) / 1000, 0.05); // cap por si hubo un stall
+      lastTs = ts;
+
+      const W = slide.clientWidth, H = slide.clientHeight;
+      const w = logo.offsetWidth, h = logo.offsetHeight;
+      const maxX = W - w, maxY = H - h;
+
+      x += vx * SPEED * dt;
+      y += vy * SPEED * dt;
+
+      let hit = false;
+      if (x <= 0)      { x = 0;    vx = Math.abs(vx);  hit = true; }
+      else if (x >= maxX) { x = maxX; vx = -Math.abs(vx); hit = true; }
+      if (y <= 0)      { y = 0;    vy = Math.abs(vy);  hit = true; }
+      else if (y >= maxY) { y = maxY; vy = -Math.abs(vy); hit = true; }
+      if (hit) nextGlow();
+
+      logo.style.transform = `translate(${x}px, ${y}px)`;
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function start() {
+      if (started) return;
+      started = true;
+      if (mark) { mark.style.boxShadow = glows[0]; mark.style.transition = 'box-shadow 0.4s ease-out'; }
+      lastTs = null;
+      rafId = requestAnimationFrame(frame);
+    }
+    function stop() {
+      started = false;
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    }
+
+    const sync = (curr) => { (curr === slide) ? start() : stop(); };
+    deck.on('ready', (e) => sync(e.currentSlide));
+    deck.on('slidechanged', (e) => sync(e.currentSlide));
+  })();
 
   // ═══════════════════════════════════════════════════════════════
   // CONTADORES animados (en slides con números grandes data-count)
