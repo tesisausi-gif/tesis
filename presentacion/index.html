@@ -3920,13 +3920,31 @@
       <div>
         <div class="eyebrow">Del reclamo suelto a la decisión de fondo</div>
         <h2 class="display-lg">Patrones de fondo<span class="mark-blue dot-end"></span></h2>
-        <p class="text-body" style="margin-top: 10px; max-width: 800px;">
-          Una propiedad va acumulando arreglos del mismo tipo sin que nadie lo note — cuatro visitas de electricidad en un año que, sueltas, parecen incidentes aislados. MANTIS <strong style="color: var(--ink);">las junta solo</strong>: agrupa las obras repetidas por propiedad y rubro y las pone adelante, para decidir si conviene <strong style="color: var(--ink);">atacar la causa de fondo</strong> en vez de seguir pagando parches.
+        <p class="text-body" style="margin-top: 10px; max-width: 700px;">
+          MANTIS agrupa las obras que <strong style="color: var(--ink);">se repiten</strong> en una propiedad y las pone adelante — para <strong style="color: var(--ink);">atacar la causa de fondo</strong>, no seguir pagando parches.
         </p>
       </div>
       <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-faded); text-transform: uppercase; text-align: right; flex-shrink: 0;">
         Sale de datos que ya existen<br>cero configuración · a la vista en Informes
       </p>
+    </div>
+
+    <!-- Visual: el patrón suelto que se colapsa en una causa de fondo -->
+    <div style="display: flex; align-items: center; gap: 22px; border: 1.5px solid var(--ink); background: white; padding: 15px 24px; margin-bottom: 20px;">
+      <div style="flex-shrink: 0;">
+        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--warm); font-weight: 700; margin: 0 0 8px;">4 visitas sueltas</p>
+        <div style="display: flex; gap: 7px;">
+          <span style="width: 36px; height: 36px; border: 1.5px solid var(--warm); background: #FFF7ED; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--warm)" stroke="var(--warm)" stroke-width="1.5" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+          <span style="width: 36px; height: 36px; border: 1.5px solid var(--warm); background: #FFF7ED; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--warm)" stroke="var(--warm)" stroke-width="1.5" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+          <span style="width: 36px; height: 36px; border: 1.5px solid var(--warm); background: #FFF7ED; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--warm)" stroke="var(--warm)" stroke-width="1.5" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+          <span style="width: 36px; height: 36px; border: 1.5px solid var(--warm); background: #FFF7ED; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--warm)" stroke="var(--warm)" stroke-width="1.5" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+        </div>
+      </div>
+      <span style="font-family: var(--display); font-size: 34px; color: var(--mantis); font-weight: 700; flex-shrink: 0; line-height: 1;">→</span>
+      <div style="flex-shrink: 0;">
+        <p style="font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mantis-deep); font-weight: 700; margin: 0 0 8px;">1 causa de fondo</p>
+        <div style="border: 2px solid var(--mantis); background: #ECFDF5; color: #14532D; font-family: var(--display); font-weight: 700; font-size: 16px; padding: 8px 18px;">Reemplazar el tablero, no cada síntoma</div>
+      </div>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 44px; flex: 1; min-height: 0; align-items: stretch;">
@@ -3935,9 +3953,9 @@
       <div style="display: flex; flex-direction: column;">
         <p style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.25em; color: var(--ink-faded); text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">Qué hace</p>
         <div class="stagger">
-          <div class="process-step"><div class="ps-num">01</div><div><div class="ps-title">Junta lo que se repite</div><div class="ps-desc">Agrupa las obras del mismo rubro en una misma propiedad y las ordena de peor a mejor: las más repetidas y apretadas en el tiempo, primero. No juzga nada — solo las pone juntas a la vista.</div></div></div>
-          <div class="process-step"><div class="ps-num">02</div><div><div class="ps-title">Te deja actuar</div><div class="ps-desc">De un click arrancás una obra que ataca la causa —ya pre-cargada— o descartás el patrón si fue casualidad. La bandeja se vacía a medida que decidís.</div></div></div>
-          <div class="process-step"><div class="ps-num">03</div><div><div class="ps-title">No se pierde de vista</div><div class="ps-desc">Si más adelante vuelve a entrar una obra del rubro en esa propiedad, reaparece en la bandeja para que la mires de nuevo — el sistema no se olvida.</div></div></div>
+          <div class="process-step"><div class="ps-num">01</div><div><div class="ps-title">Junta lo que se repite</div><div class="ps-desc">Mismo rubro, misma propiedad. Las más repetidas, primero.</div></div></div>
+          <div class="process-step"><div class="ps-num">02</div><div><div class="ps-title">Te deja actuar</div><div class="ps-desc">Un click: obra de fondo pre-cargada, o descartás el patrón.</div></div></div>
+          <div class="process-step"><div class="ps-num">03</div><div><div class="ps-title">No se olvida</div><div class="ps-desc">Si el rubro vuelve a esa propiedad, reaparece en la bandeja.</div></div></div>
         </div>
       </div>
 
@@ -3947,15 +3965,15 @@
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div style="background: var(--paper-2); border-left: 4px solid var(--mantis); padding: 14px 16px;">
             <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 3px;">Menos plata en parches</div>
-            <div style="font-size: 14px; color: var(--ink-faded); line-height: 1.4;">Cada visita repetida cuesta. Atacar la causa una vez suele salir menos que cuatro arreglos que no la resuelven.</div>
+            <div style="font-size: 14px; color: var(--ink-faded); line-height: 1.4;">Atacar la causa una vez cuesta menos que cuatro arreglos que no la resuelven.</div>
           </div>
           <div style="background: var(--paper-2); border-left: 4px solid var(--mantis); padding: 14px 16px;">
-            <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 3px;">Decisiones con evidencia, no de memoria</div>
-            <div style="font-size: 14px; color: var(--ink-faded); line-height: 1.4;">Lo que se repite queda a la vista de la inmobiliaria; no depende de que alguien "se acuerde" de que ya pasó tres veces.</div>
+            <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 3px;">Evidencia, no memoria</div>
+            <div style="font-size: 14px; color: var(--ink-faded); line-height: 1.4;">Lo que se repite queda a la vista; no depende de que alguien se acuerde.</div>
           </div>
           <div style="background: var(--paper-2); border-left: 4px solid var(--mantis); padding: 14px 16px;">
             <div style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 3px;">Se adelanta al reclamo</div>
-            <div style="font-size: 14px; color: var(--ink-faded); line-height: 1.4;">Pone a la vista lo que se viene repitiendo antes de que el inquilino vuelva a llamar, para poder adelantarse.</div>
+            <div style="font-size: 14px; color: var(--ink-faded); line-height: 1.4;">Lo ves antes de que el inquilino vuelva a llamar.</div>
           </div>
         </div>
       </div>
@@ -3964,13 +3982,13 @@
     <!-- Acá se luce Walter · la IA como extra que ahorra tiempo -->
     <div style="margin-top: 18px; padding: 16px 18px; background: var(--paper-2); border-left: 4px solid var(--mantis);">
       <div style="font-size: 14.5px; color: var(--ink); line-height: 1.5;">
-        <strong style="color: var(--ink);">Y acá se luce Walter, el asistente con IA.</strong> El sistema ve que un rubro se repite; Walter va un paso más: lee las <strong style="color: var(--ink);">notas de inspección del técnico</strong> —texto libre, escrito a mano en cada visita— y descubre si detrás hay <strong style="color: var(--ink);">una misma causa de fondo</strong> o son coincidencias, <strong style="color: var(--ink);">citando las palabras del propio técnico</strong>. Lo que a una persona le llevaría abrir y leer obra por obra, lo resuelve de una.
+        <strong style="color: var(--ink);">Y acá se luce Walter, el asistente con IA.</strong> Lee las <strong style="color: var(--ink);">notas de inspección del técnico</strong> y dice si detrás hay <strong style="color: var(--ink);">una misma causa de fondo</strong> o son coincidencias — citando las palabras del propio técnico.
       </div>
       <div style="margin-top: 8px; font-size: 12.5px; color: var(--ink-faded); line-height: 1.45;">
-        <em>Ej.: cuatro visitas de electricidad → «las cuatro notas hablan del mismo tablero sulfatado: es de fondo, conviene reemplazarlo». Pero si fueran el termotanque, el portón y el aire → «son cosas distintas, no es de fondo».</em>
+        <em>Ej.: 4 visitas de electricidad → «las cuatro notas hablan del mismo tablero sulfatado: conviene reemplazarlo».</em>
       </div>
-      <div style="margin-top: 8px; font-size: 12.5px; color: var(--mantis-deep); font-weight: 700; letter-spacing: 0.01em;">
-        Un extra que ahorra tiempo, no un requisito — propone, y la decisión siempre es tuya.
+      <div style="margin-top: 8px; font-size: 12.5px; color: var(--mantis-deep); font-weight: 700;">
+        Propone; la decisión siempre es tuya.
       </div>
     </div>
 
@@ -4380,7 +4398,7 @@
         <div class="eyebrow">Resultado para el cliente</div>
         <h2 class="display-lg">Valor agregado<br>aportado a ISBA<span class="mark-blue dot-end"></span></h2>
       </div>
-      <div class="pill pill-blue" style="font-size: 11px;">7 áreas concretas</div>
+      <div class="pill pill-blue" style="font-size: 11px;">8 áreas concretas</div>
     </div>
 
     <!-- Frase ancla -->
@@ -4395,7 +4413,7 @@
         <div class="val-card-cat">Operativo</div>
         <h3 class="val-card-title">Un funnel, un solo lugar de la verdad</h3>
         <div class="val-ba ahora"><span class="val-ba-tag ahora">Ahora</span><p>Cada reclamo entra por una sola puerta y se sigue por etapas visibles en un tablero. Cero reclamos perdidos.</p></div>
-        <div class="val-card-kpi"><span class="kpi-label">KPI</span> tiempo de ciclo + gestiones estancadas por etapa</div>
+        <div class="val-card-kpi"><span class="kpi-label">Dato</span> tiempo de ciclo + gestiones estancadas por etapa</div>
       </div>
 
       <!-- 2. Seguimiento -->
@@ -4403,7 +4421,7 @@
         <div class="val-card-cat">Seguimiento</div>
         <h3 class="val-card-title">Historial inmutable por gestión</h3>
         <div class="val-ba ahora"><span class="val-ba-tag ahora">Ahora</span><p>Cada transición deja su evento con fecha cierta: evidencia ante conflictos por plazos de reparación.</p></div>
-        <div class="val-card-kpi"><span class="kpi-label">KPI</span> 100% de gestiones con timeline completo</div>
+        <div class="val-card-kpi"><span class="kpi-label">Dato</span> 100% de gestiones con timeline completo</div>
       </div>
 
       <!-- 3. Financiero -->
@@ -4411,7 +4429,7 @@
         <div class="val-card-cat">Financiero</div>
         <h3 class="val-card-title">Circuito económico documentado</h3>
         <div class="val-ba ahora"><span class="val-ba-tag ahora">Ahora</span><p>Nota de cobro y comprobante de liquidación en PDF, enviados por email. Montos congelados al cobrar.</p></div>
-        <div class="val-card-kpi"><span class="kpi-label">KPI</span> cobrado vs liquidado por mes · fee de la casa separado</div>
+        <div class="val-card-kpi"><span class="kpi-label">Dato</span> cobrado vs liquidado por mes · fee de la casa separado</div>
       </div>
 
       <!-- 4. Calidad / Riesgo -->
@@ -4419,7 +4437,7 @@
         <div class="val-card-cat">Calidad y riesgo</div>
         <h3 class="val-card-title">Técnicos medidos, no "de confianza"</h3>
         <div class="val-ba ahora"><span class="val-ba-tag ahora">Ahora</span><p>Enrolamiento con documentación + calificación por obra + cumplimiento de plazo y de presupuesto medidos.</p></div>
-        <div class="val-card-kpi"><span class="kpi-label">KPI</span> score del técnico: estrellas + desvío de plazo + rendición</div>
+        <div class="val-card-kpi"><span class="kpi-label">Dato</span> score del técnico: estrellas + desvío de plazo + rendición</div>
       </div>
 
       <!-- 5. Relación con propietarios -->
@@ -4427,7 +4445,7 @@
         <div class="val-card-cat">Relación con propietarios</div>
         <h3 class="val-card-title">La propiedad cuenta su historia</h3>
         <div class="val-ba ahora"><span class="val-ba-tag ahora">Ahora</span><p>Legajos por período de ocupación + PDF "Resumen de obras" + emails de estado automáticos a inquilino y propietario.</p></div>
-        <div class="val-card-kpi"><span class="kpi-label">KPI</span> historial de obras por propiedad · PDF "Resumen de obras"</div>
+        <div class="val-card-kpi"><span class="kpi-label">Dato</span> historial de obras por propiedad · PDF "Resumen de obras"</div>
       </div>
 
       <!-- 6. Adopción -->
@@ -4435,15 +4453,23 @@
         <div class="val-card-cat">Adopción · simplicidad</div>
         <h3 class="val-card-title">Nadie externo tiene que aprenderlo</h3>
         <div class="val-ba ahora"><span class="val-ba-tag ahora">Ahora</span><p>Inquilinos y propietarios siguen usando los canales de siempre. Solo 4 roles internos usan el sistema — y el técnico, desde el celular.</p></div>
-        <div class="val-card-kpi"><span class="kpi-label">KPI</span> 4 roles internos · cero usuarios externos que capacitar</div>
+        <div class="val-card-kpi"><span class="kpi-label">Dato</span> 4 roles internos · cero usuarios externos que capacitar</div>
       </div>
 
-      <!-- 7. Inteligencia · Walter -->
-      <div class="val-card zoom-clickable" data-zoom="valor-7" style="grid-column: 1 / -1; border-color: var(--mantis);">
+      <!-- 7. Anticipación · patrones de fondo -->
+      <div class="val-card zoom-clickable" data-zoom="valor-8">
+        <div class="val-card-cat">Anticipación · patrones</div>
+        <h3 class="val-card-title">Del parche a la causa de fondo</h3>
+        <div class="val-ba ahora"><span class="val-ba-tag ahora">Ahora</span><p>El sistema junta las obras que se repiten en un mismo inmueble para que una persona —o Walter— vea si hay una causa común y la ataque, en vez de seguir cubriendo parches.</p></div>
+        <div class="val-card-kpi"><span class="kpi-label">Dato</span> obras repetidas por propiedad y rubro, agrupadas y al frente</div>
+      </div>
+
+      <!-- 8. Inteligencia · Walter -->
+      <div class="val-card zoom-clickable" data-zoom="valor-7" style="grid-column: span 2; border-color: var(--mantis);">
         <div class="val-card-cat">Inteligencia · Walter</div>
         <h3 class="val-card-title">Preguntale al sistema en lenguaje natural</h3>
         <div class="val-ba ahora"><span class="val-ba-tag ahora">Ahora</span><p>Walter (IA) responde lo que ningún informe fijo arma —los pendientes del día, la agenda de un técnico, "¿cómo registro un cobro?"— sobre los mismos datos que los informes, y te deja en la pantalla justa para accionar.</p></div>
-        <div class="val-card-kpi"><span class="kpi-label">KPI</span> 18 herramientas acotadas por rol · sobre las mismas fuentes que los informes</div>
+        <div class="val-card-kpi"><span class="kpi-label">Dato</span> 18 herramientas acotadas por rol · sobre las mismas fuentes que los informes</div>
       </div>
     </div>
 
@@ -6053,13 +6079,14 @@
     'demo-3': { eyebrow: 'Demo guiada · 3/5 · Flujo 7', title: 'Inspección y presupuesto', body: 'Inspección obligatoria, presupuesto y quién paga.<p><strong>Técnico + Gestor</strong></p>' },
     'demo-4': { eyebrow: 'Demo guiada · 4/5 · Flujo 8', title: 'Ejecución y conformidad', body: 'Avances con fotos, rendición y conformidad firmada.<p><strong>Técnico · celular</strong></p>' },
     'demo-5': { eyebrow: 'Demo guiada · 5/5 · Flujo 9', title: 'Cobro y liquidación', body: 'Nota de cobro, liquidación al técnico y calificación.<p><strong>Financiero</strong></p>' },
-    'valor-1': { eyebrow: 'Valor agregado · Operativo', title: 'Un funnel, un solo lugar de la verdad', body: 'Cada reclamo entra por una sola puerta y se sigue por etapas visibles en un tablero. Cero reclamos perdidos.<p><strong>KPI</strong> tiempo de ciclo + gestiones estancadas por etapa</p>' },
-    'valor-2': { eyebrow: 'Valor agregado · Seguimiento', title: 'Historial inmutable por gestión', body: 'Cada transición deja su evento con fecha cierta: evidencia ante conflictos por plazos de reparación.<p><strong>KPI</strong> 100% de gestiones con timeline completo</p>' },
-    'valor-3': { eyebrow: 'Valor agregado · Financiero', title: 'Circuito económico documentado', body: 'Nota de cobro y comprobante de liquidación en PDF, enviados por email. Montos congelados al cobrar.<p><strong>KPI</strong> cobrado vs liquidado por mes · fee de la casa separado</p>' },
-    'valor-4': { eyebrow: 'Valor agregado · Calidad y riesgo', title: 'Técnicos medidos, no "de confianza"', body: 'Enrolamiento con documentación + calificación por obra + cumplimiento de plazo y de presupuesto medidos.<p><strong>KPI</strong> score del técnico: estrellas + desvío de plazo + rendición</p>' },
-    'valor-5': { eyebrow: 'Valor agregado · Relación con propietarios', title: 'La propiedad cuenta su historia', body: 'Legajos por período de ocupación + PDF "Resumen de obras" + emails de estado automáticos a inquilino y propietario.<p><strong>KPI</strong> historial de obras por propiedad · PDF "Resumen de obras"</p>' },
-    'valor-6': { eyebrow: 'Valor agregado · Adopción · simplicidad', title: 'Nadie externo tiene que aprenderlo', body: 'Inquilinos y propietarios siguen usando los canales de siempre. Solo 4 roles internos usan el sistema — y el técnico, desde el celular.<p><strong>KPI</strong> 4 roles internos · cero usuarios externos que capacitar</p>' },
-    'valor-7': { eyebrow: 'Valor agregado · Inteligencia · Walter', title: 'Preguntale al sistema en lenguaje natural', body: 'Walter (IA) responde lo que ningún informe fijo arma —los pendientes del día, la agenda de un técnico, "¿cómo registro un cobro?"— sobre los mismos datos que los informes, y te deja en la pantalla justa para accionar.<p><strong>KPI</strong> 18 herramientas acotadas por rol · sobre las mismas fuentes que los informes</p>' },
+    'valor-1': { eyebrow: 'Valor agregado · Operativo', title: 'Un funnel, un solo lugar de la verdad', body: 'Cada reclamo entra por una sola puerta y se sigue por etapas visibles en un tablero. Cero reclamos perdidos.<p><strong>Dato</strong> tiempo de ciclo + gestiones estancadas por etapa</p>' },
+    'valor-2': { eyebrow: 'Valor agregado · Seguimiento', title: 'Historial inmutable por gestión', body: 'Cada transición deja su evento con fecha cierta: evidencia ante conflictos por plazos de reparación.<p><strong>Dato</strong> 100% de gestiones con timeline completo</p>' },
+    'valor-3': { eyebrow: 'Valor agregado · Financiero', title: 'Circuito económico documentado', body: 'Nota de cobro y comprobante de liquidación en PDF, enviados por email. Montos congelados al cobrar.<p><strong>Dato</strong> cobrado vs liquidado por mes · fee de la casa separado</p>' },
+    'valor-4': { eyebrow: 'Valor agregado · Calidad y riesgo', title: 'Técnicos medidos, no "de confianza"', body: 'Enrolamiento con documentación + calificación por obra + cumplimiento de plazo y de presupuesto medidos.<p><strong>Dato</strong> score del técnico: estrellas + desvío de plazo + rendición</p>' },
+    'valor-5': { eyebrow: 'Valor agregado · Relación con propietarios', title: 'La propiedad cuenta su historia', body: 'Legajos por período de ocupación + PDF "Resumen de obras" + emails de estado automáticos a inquilino y propietario.<p><strong>Dato</strong> historial de obras por propiedad · PDF "Resumen de obras"</p>' },
+    'valor-6': { eyebrow: 'Valor agregado · Adopción · simplicidad', title: 'Nadie externo tiene que aprenderlo', body: 'Inquilinos y propietarios siguen usando los canales de siempre. Solo 4 roles internos usan el sistema — y el técnico, desde el celular.<p><strong>Dato</strong> 4 roles internos · cero usuarios externos que capacitar</p>' },
+    'valor-7': { eyebrow: 'Valor agregado · Inteligencia · Walter', title: 'Preguntale al sistema en lenguaje natural', body: 'Walter (IA) responde lo que ningún informe fijo arma —los pendientes del día, la agenda de un técnico, "¿cómo registro un cobro?"— sobre los mismos datos que los informes, y te deja en la pantalla justa para accionar.<p><strong>Dato</strong> 18 herramientas acotadas por rol · sobre las mismas fuentes que los informes</p>' },
+    'valor-8': { eyebrow: 'Valor agregado · Anticipación · patrones', title: 'Del parche a la causa de fondo', body: 'El sistema junta las obras que se repiten en un mismo inmueble para que una persona —o Walter— vea si hay una causa común y la ataque, en vez de seguir cubriendo parches.<p><strong>Dato</strong> obras repetidas por propiedad y rubro, agrupadas y al frente</p>' },
     'juego-dinero': { title: 'Trabajo sin respaldo', body: 'Cada reclamo vivía en mails y anotaciones sueltas; ante un conflicto de plazos, no había registro con qué respaldarse.' },
     'juego-confianza': { title: 'Decisiones a ojo', body: 'Sin reportes ni métricas, a quién asignar o dónde se traba el proceso se decidía por intuición, no con datos.' },
     'juego-crecimiento': { title: 'El proceso no escalaba', body: 'Cada gestión nueva sumaba llamadas y seguimiento a mano: más volumen traía más desorden, no más capacidad.' },
